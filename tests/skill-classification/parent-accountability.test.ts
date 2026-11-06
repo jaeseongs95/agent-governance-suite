@@ -25,7 +25,7 @@ it("binds parent accountability after frozen r27 without changing prior source-s
     bytes: predecessor.length, digest: hash(predecessor)});
   const domain = JSON.parse(read("tests/skill-classification/fixtures.intake-domain-neutral-source-successor.json").toString("utf8"));
   const current = loadCurrentSourceBindings(rootDirectory);
-  expect(current.manifest).toMatchObject({revision: "intake-domain-neutral-source-binding-r30"});
+  expect(current.manifest).toMatchObject({revision: "ags38-contract-docs-source-binding-r31"});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(previous.bindings.map((binding: {path: string}) => binding.path));
   for (const binding of manifest.bindings) {
     expect(binding.previousDigest).toBe(previous.bindings.find((row: {path: string}) => row.path === binding.path).digest);

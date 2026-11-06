@@ -12,4 +12,13 @@
 | PR-03 | r31 public manifest | r30 부모 bytes·hash, 원본 3개 hash와 현재 3개 hash 대조 | 승인된 경로 3개만 정확 결속, 임의·stale digest 거부 | NOT_RUN |
 | PR-04 | `loadCurrentSourceBindings`; 격리 복사한 JSON manifest만 변조 | r31 파일에 다른 bytes 추가 후 공개 loader 호출 | CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH, frozen 원본은 수정 없음 | NOT_RUN |
 
-TEST: `pnpm exec vitest run tests/skill-classification/live-bootstrap/provider-observation-retention.test.ts tests/skill-classification/source-binding-successor.test.ts tests/skill-classification/live-bootstrap/bootstrap-fixture-reuse.test.ts`. 로컬 제품 시험은 금지되어 실행하지 않는다. 보존 조건·source 검사를 완화하지 않는다.
+TEST: `pnpm exec vitest run tests/skill-classification/live-bootstrap/provider-observation-retention.test.ts tests/skill-classification/source-binding-successor.test.ts tests/skill-classification/live-bootstrap/bootstrap-fixture-reuse.test.ts tests/skill-classification/parent-accountability.test.ts`. 로컬 제품 시험은 금지되어 실행하지 않는다. 보존 조건·source 검사를 완화하지 않는다.
+
+정적 확인(제품 시험 아님):
+
+- Node 표준 라이브러리로 manifest JSON과 원문 bytes를 읽어 대조했다. 60경로 중 r30 상태의 불일치는 위 3개이며 r31 적용 후 0개다. 기존 tracked frozen manifest 변경은 0개다.
+- r31은 2,107 bytes, `sha256:0dd7fdf3baa5b12a9cd6d533145acfe8b2b9770453188a327c8b6f2aa5918499`다. r30 부모는 10,378 bytes, `sha256:13ccf86f29b547cc17491df7d4edeb8c464b153cf8be45f22de5bc02b8639aad`로 유지했다.
+- 이전 descriptor와 참조 원문 6개는 `a281139387af096e696f8d50cc089ad09e9291fc`의 exact hash로 확인했다. 현재와 selected clause를 비교하면 acceptance는 모두 동일하고 `session-board:exclusions[3]`만 D29의 실제 caller 계약 문구로 바뀌었다. 과거 회귀는 당시 bytes를, PR-03은 현재 bytes와 inventory를 각각 검증한다.
+- 최신 통합 `34959b0654fe0f81e72331afcfbca100ae90d31e`와 입력 기준 `9f6fe1e85a414a51cb78e8c0baf9ddd27b897fb0` 사이에서 이 60경로의 Git blob 변경은 0개다.
+- `node --check`로 변경 TypeScript 구문을 검사하고 `git diff --check`를 실행했다. runtime provider 구현·기존 retention helper는 변경하지 않았다. PR-01~04 실제 제품 실행은 모두 NOT_RUN이며 원격 TEST가 필요하다.
+- Claude builder의 `SHARED_ROOTS`와 English builder의 `CODEX_PATHS`는 `tests/`를 포함하지 않는다. 이번 successor와 평가 추적부는 발행물 생성 경로에 추가하지 않았다.

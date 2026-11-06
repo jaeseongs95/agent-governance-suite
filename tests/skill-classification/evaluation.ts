@@ -389,17 +389,24 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, domain.frozenPredecessor.path) !== integratedPath || integratedBytes.length !== domain.frozenPredecessor.bytes || hashBytes(integratedBytes) !== domain.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings];
+  const contractDocsPath = resolve(repo, "tests/skill-classification/fixtures.ags38-contract-docs-source-successor.json");
+  const contractDocsBytes = readFileSync(contractDocsPath);
+  if (hashBytes(contractDocsBytes) !== "sha256:0dd7fdf3baa5b12a9cd6d533145acfe8b2b9770453188a327c8b6f2aa5918499") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const contractDocs = JSON.parse(contractDocsBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, contractDocs.frozenPredecessor.path) !== domainPath || domainBytes.length !== contractDocs.frozenPredecessor.bytes || hashBytes(domainBytes) !== contractDocs.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: domain.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath);
+  const currentManifest = {...manifest, revision: contractDocs.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(domainBytes),
+    manifest: currentManifest, files, digest: hashBytes(contractDocsBytes),
     /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
     resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);

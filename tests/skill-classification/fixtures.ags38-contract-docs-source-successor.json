@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "ags38-contract-docs-source-binding-r31",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "a281139387af096e696f8d50cc089ad09e9291fc",
+  "acceptedSourceRevision": "9f6fe1e85a414a51cb78e8c0baf9ddd27b897fb0",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.intake-domain-neutral-source-successor.json",
+    "bytes": 10378,
+    "digest": "sha256:13ccf86f29b547cc17491df7d4edeb8c464b153cf8be45f22de5bc02b8639aad"
+  },
+  "sourceChangeRefs": [
+    {
+      "defectId": "AGS3-D-0006",
+      "commits": [
+        "7c414d1d910803dd4b6dcaa6c457cf8efcb38a16"
+      ],
+      "scope": "Acceptance classification source digests follow approved evidence documentation; selected clauses unchanged."
+    },
+    {
+      "defectId": "AGS3-D-0029",
+      "commits": [
+        "6c0921d94c1188744cd227c432e20e54377b8567",
+        "e14fc72de5638258a6726d239b947ae531a8ead3"
+      ],
+      "scope": "Board caller documentation and its classification source digests follow the observed-caller contract."
+    }
+  ],
+  "bindings": [
+    {
+      "path": "skills/acceptance-evidence-validator/classification.json",
+      "previousDigest": "sha256:0f014b4abc19bfb98a78e9b736afd0785b59d97a6f24b8f5b3febced73880a8c",
+      "digest": "sha256:4ce9af6edc26969b41c776135e591bc0674f5d366445207083baf73d2899aff7",
+      "bytes": 3935
+    },
+    {
+      "path": "skills/session-board/classification.json",
+      "previousDigest": "sha256:7df8a0d55377d9315899955ccae63d9623113517fdd49e91adb6201d2c25442e",
+      "digest": "sha256:858968497e4d721fb34328db0ac67b3d27c19d97fe7bf9837b4ccfc4f6653e8a",
+      "bytes": 2817
+    },
+    {
+      "path": "skills/session-board/references/entry-details.md",
+      "previousDigest": "sha256:b89b50e2bacf86ca9268505d244336d5cbb212a7894ce629125201f512b8efce",
+      "digest": "sha256:4c0571608a124e96da1b27510a8c42775b3c84396c46abb11a915f57f103a196",
+      "bytes": 4368
+    }
+  ],
+  "fixtureFileRewritten": false,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN"
+}
