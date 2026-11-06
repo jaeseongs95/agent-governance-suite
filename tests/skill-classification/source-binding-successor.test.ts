@@ -368,7 +368,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
   expect(retire.labelChanges).toEqual([]);
   expect(retire.priceAndBudgetChanges).toEqual([]);
   expect(retire.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: blocked.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: neutral.revision});
   const retiredPaths = ["skills/context-continuity/SKILL.md", "skills/context-continuity/classification.json", "skills/context-continuity/references/entry-details.md"];
   const tools = ["checkpoint_context", "inspect_context", "load_context", "suppress_context_restore", "purge_direct_context"];
   expect(retire.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json",
@@ -468,7 +468,7 @@ it("chains the role and delegation intake source after the retirement source, ch
   expect(role.labelChanges).toEqual([]);
   expect(role.priceAndBudgetChanges).toEqual([]);
   expect(role.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: blocked.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: neutral.revision});
   expect(role.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json",
     "skills/coordinate-subagents/classification.json", "skills/coordinate-subagents/references/entry-details.md"]);
   const base = (relativePath: string) => sourceAt(role.sourceBaseRevision, relativePath,
@@ -552,7 +552,7 @@ it("chains the intake purpose-check source after the role source, rewording only
   expect(purpose.labelChanges).toEqual([]);
   expect(purpose.priceAndBudgetChanges).toEqual([]);
   expect(purpose.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: blocked.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: neutral.revision});
   expect(purpose.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]);
   const base = (relativePath: string) => sourceAt(purpose.sourceBaseRevision, relativePath,
     purpose.bindings.find((binding: LaterBinding) => binding.path === relativePath).previousDigest);
@@ -627,7 +627,7 @@ it("chains the intake move after the purpose-check source, moving the intake blo
   expect(move.labelChanges).toEqual([]);
   expect(move.priceAndBudgetChanges).toEqual([]);
   expect(move.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: blocked.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: neutral.revision});
   expect(move.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]);
   const base = (relativePath: string) => sourceAt(move.sourceBaseRevision, relativePath,
     move.bindings.find((binding: LaterBinding) => binding.path === relativePath).previousDigest);
@@ -708,7 +708,7 @@ it("chains the intake blocked-step rule after the intake move, rewording only in
   expect(blocked.labelChanges).toEqual([]);
   expect(blocked.priceAndBudgetChanges).toEqual([]);
   expect(blocked.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: blocked.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: neutral.revision});
   const intake = "skills/orchestrator/references/intake.md", descriptor = "skills/orchestrator/classification.json";
   expect(blocked.bindings.map((binding: LaterBinding) => binding.path)).toEqual([descriptor, intake]);
   const base = (relativePath: string) => sourceAt(blocked.sourceBaseRevision, relativePath,
@@ -1027,7 +1027,7 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: "intake-blocked-step-source-binding-r26"});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: "field-neutral-wording-source-binding-r27"});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const historical = mainSource(source.path);
