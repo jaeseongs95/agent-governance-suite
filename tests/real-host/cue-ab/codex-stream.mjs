@@ -10,7 +10,8 @@ if (!runDir || !repoDir || !Number.isFinite(Number(timeoutSec)) || Number(timeou
   throw new Error("usage: node codex-stream.mjs <runDir> <repoDir> <timeoutSec> <model> <effort>");
 }
 const turns = JSON.parse(readFileSync(process.env.CUE_TASKS_FILE, "utf8"));
-const overrides = JSON.parse(readFileSync(process.env.CUE_CODEX_ARGV_FILE, "utf8"));
+const pluginPin = process.env.CUE_PLUGIN_PIN_FILE ? JSON.parse(readFileSync(process.env.CUE_PLUGIN_PIN_FILE, "utf8")) : null;
+const overrides = pluginPin ? [] : JSON.parse(readFileSync(process.env.CUE_CODEX_ARGV_FILE, "utf8"));
 const command = process.env.CODEX_CMD ? JSON.parse(process.env.CODEX_CMD) : [process.env.CODEX_BIN ?? "codex"];
 requireLinux();
 const errFd = openSync(path.join(runDir, "stream.err"), "wx");
@@ -76,6 +77,7 @@ createInterface({ input: child.stdout }).on("line", line => {
     return;
   }
   if (!/account|auth|login/iu.test(message.method ?? "")) appendFileSync(path.join(runDir, turnNumber ? `turn-${turnNumber}.jsonl` : "startup.jsonl"), line + "\n");
+  if (pluginPin && /^hook\//u.test(message.method ?? "")) appendFileSync(path.join(runDir, "native-callbacks.jsonl"), line + "\n");
   if (message.id !== undefined) {
     // The harness never auto-approves a permission request or guesses a human answer.
     send({ id: message.id, error: { code: -32601, message: "Trial client does not authorize interactive requests" } });
@@ -98,6 +100,22 @@ try {
     threadId = started.thread?.id;
     if (!threadId) throw new Error("thread/start returned no thread id");
     writeFileSync(path.join(runDir, "session.json"), JSON.stringify({ hostPid: child.pid, threadId, transport: "native-app-server", requestedModel: model, requestedEffort: effort }));
+    if (pluginPin) {
+      // Check only the root-installed candidate's declared binding; this is not proof of callback execution.
+      const hookInventory = await request("hooks/list", { cwds: [repoDir] });
+      const selectedHooks = (hookInventory?.data ?? []).flatMap(entry => entry.hooks ?? []).filter(hook => hook.pluginId === pluginPin.pluginId);
+      const hooks = selectedHooks.map(hook => ({ key: hook.key, eventName: hook.eventName, source: hook.source, sourcePath: hook.sourcePath,
+        pluginId: hook.pluginId, enabled: hook.enabled, trustStatus: hook.trustStatus, currentHash: hook.currentHash }));
+      const inventory = await request("mcpServerStatus/list", { threadId, cursor: null, limit: 100 });
+      const servers = (inventory?.data ?? []).filter(server => server.pluginId === pluginPin.pluginId);
+      const mcp = servers.map(server => ({ name: server.name, pluginId: server.pluginId, runtimeStatus: server.runtimeStatus,
+        toolNames: Object.values(server.tools ?? {}).map(tool => tool.name).sort() }));
+      writeFileSync(path.join(runDir, "native-plugin-discovered.json"), JSON.stringify({ pluginPin, declaredHooks: hooks, mcp,
+        wholeEffectiveConfiguration: "NOT_CLAIMED", actualCallbackAndAdmission: "REQUIRES_RUNTIME_EVIDENCE" }, null, 2));
+      if (!hooks.some(hook => hook.enabled && hook.source === "plugin") || mcp.length !== 1 || mcp[0].runtimeStatus !== "connected"
+        || !mcp[0].toolNames.includes("start_workflow")) throw new Error("PINNED_NATIVE_PLUGIN_NOT_READY");
+      return;
+    }
     const expected = JSON.parse(readFileSync(path.join(runDir, "composition.json"), "utf8"));
     const hookInventory = await request("hooks/list", { cwds: [repoDir] });
     const hooks = verifyCodexHooks(hookInventory, expected.normalizedHooks, repoDir);

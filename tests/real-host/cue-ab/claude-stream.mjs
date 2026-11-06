@@ -10,6 +10,7 @@ const [runDir, repoDir, timeoutSec, ...claudeArgs] = process.argv.slice(2);
 if (!runDir || !repoDir || !Number.isFinite(Number(timeoutSec)) || Number(timeoutSec) <= 0 || Number(timeoutSec) * 1000 > 2 ** 31 - 1) throw new Error("usage: node claude-stream.mjs <runDir> <repoDir> <turnTimeoutSec> <claude args...>");
 requireLinux();
 const turns = process.env.CUE_TASKS_FILE ? JSON.parse(readFileSync(process.env.CUE_TASKS_FILE, "utf8")) : DEFAULT_TURNS;
+const pluginPin = process.env.CUE_PLUGIN_PIN_FILE ? JSON.parse(readFileSync(process.env.CUE_PLUGIN_PIN_FILE, "utf8")) : null;
 const bin = process.env.CLAUDE_BIN ?? "claude";
 const command = bin.endsWith(".mjs") ? [process.execPath, bin] : [bin];
 const errFd = openSync(path.join(runDir, "stream.err"), "a");
@@ -71,6 +72,10 @@ createInterface({ input: child.stdout }).on("line", line => {
     if (observedSessions.size !== 1 || (requestedSession && event.session_id !== requestedSession)) { abort(new Error("CLAUDE_SESSION_MIXED")); return; }
   }
   appendFileSync(path.join(runDir, turnNumber ? `turn-${turnNumber}.jsonl` : "startup.jsonl"), line + "\n");
+  if (pluginPin && event.type === "system" && /^hook_/u.test(event.subtype ?? "")) appendFileSync(path.join(runDir, "native-callbacks.jsonl"), line + "\n");
+  if (pluginPin && event.type === "system" && event.subtype === "init") writeFileSync(path.join(runDir, "native-plugin-discovered.json"), JSON.stringify({ pluginPin,
+    observedPlugins: event.plugins ?? null, observedMcpServers: event.mcp_servers ?? null, effectiveModel: event.model ?? null,
+    nativePluginDataAndMcpDb: "REQUIRES_OWN_CALLBACK_CORRELATION", wholeEffectiveConfiguration: "NOT_CLAIMED" }, null, 2));
   if (event.type !== "result") return;
   if (!resultWaiter) { abort(new Error("Unexpected Claude result without an active trial turn")); return; }
   const waiter = resultWaiter; resultWaiter = undefined;
@@ -79,7 +84,7 @@ createInterface({ input: child.stdout }).on("line", line => {
   else waiter.resolve();
 });
 try {
-  if (process.env.CUE_TASKS_FILE) await deadline(async () => {
+  if (process.env.CUE_TASKS_FILE && !pluginPin) await deadline(async () => {
     const initialized = await control({ subtype: "initialize", hooks: null });
     if (!initialized || typeof initialized !== "object") throw new Error("CLAUDE_INITIALIZE_UNOBSERVABLE");
     const inventory = await control({ subtype: "mcp_status" });

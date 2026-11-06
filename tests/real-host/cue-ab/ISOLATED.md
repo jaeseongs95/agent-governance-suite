@@ -1,5 +1,9 @@
 # AGS38 동일 프로세스 시험 경로
 
+**현재 행동시험 경로는 [NATIVE-PLUGIN.md](./NATIVE-PLUGIN.md)의 `plugin-run.mjs`다.** root의 후속 지시에 따라 공식 TEST plugin 로딩과 자기 callback/admission/cue/행동 관측으로 범위를 바꿨다. 아래 9fb source-composition 설계·receipt 장벽은 원본 비교 기록으로 보존하며 새 행동시험에서 실행하지 않는다. B1~B9의 행동 rubric과 같은 세션·실패 보존 원칙은 새 경로에서도 유지한다.
+
+## 9fb source-composition 보존 기록
+
 기준 소스 `b3a697c30f1890d54d6d52e897b8b666547551f0`. 이 경로는 Linux TEST 전용 시험 하네스이며 제품·배포물 변경은 없다. 실제 CLI·모델·서버 실행 결과는 전부 NOT_RUN이다. 기존 `prepare.sh`, `snapshot.sh`, `host-loop.sh`, `cleanup.sh`를 호출하지 않는다. 기존 snapshot의 config 전체 복사, Codex 전역 plugin/marketplace 등록·삭제를 수행하지 않는다. Windows는 파일 생성·child 실행 전에 UNSUPPORTED_PLATFORM으로 거부한다.
 
 ## 현재 준비 상태와 한계
