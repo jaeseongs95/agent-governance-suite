@@ -90,6 +90,29 @@ describe("D0008 workflow database persistence and competing connections", () => 
       expect(f.current()).toEqual(before);
     } finally { database.close(); }
   });
+  it("AP-S06 preserves identity observations when an approved replacement conflicts with another active root", () => {
+    const f = fixture();
+    f.gate();
+    const task = { ...f.root.taskEnvelope, taskId: "other-root", scope: { included: ["other.ts"], excluded: [] },
+      workUnits: [{ ...f.root.taskEnvelope.workUnits[0]!, writeTargets: ["other.ts"] }] };
+    const frame = { ...f.root.frame, targetArtifacts: [{ ...f.root.frame.targetArtifacts[0]!, locator: "other.ts" }] };
+    const blocker = f.service.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: task, frame, userApprovalRefs: [] });
+    expect(blocker.error).toBeNull();
+    const replacement = { schemaVersion: "1.0.0", parentRootId: f.root.rootId, taskEnvelope: { ...task, taskId: "replacement" }, frame, userApprovalRefs: [] };
+    const pending = f.prepare(f.service, "replace-root", replacement).pending;
+    f.record(pending);
+    const before = f.current();
+    const database = new DatabaseSync(f.databasePath);
+    try {
+      database.exec("DELETE FROM convergence_root_identities;");
+      const result = f.service.executePreparedRootOperation(pending, f.access, new AbortController().signal);
+      expect(result.error?.code).toBe("ROOT_CONFLICT");
+      expect(f.current()).toEqual(before);
+      expect(f.store.getConvergenceSnapshot(blocker.data!.rootId)!.root).toEqual(blocker.data);
+      expect(database.prepare("SELECT root_id FROM convergence_root_identities ORDER BY root_id").all())
+        .toEqual([f.root.rootId, blocker.data!.rootId].sort().map(root_id => ({ root_id })));
+    } finally { database.close(); }
+  });
   for (const priorVersion of [5, 6]) it(`AP-S01 migrates a populated v${priorVersion} database and reopens without losing existing data`, () => {
     const f = fixture();
     f.store.getOrCreateSecret("migration-fixture", () => "fixture-value");
