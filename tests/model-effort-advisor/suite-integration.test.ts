@@ -2,6 +2,7 @@ import { Ajv2020 } from "ajv/dist/2020.js";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { modelPolicySchema } from "../../runtime/model-policy.mjs";
 
 const schemaPath = fileURLToPath(new URL(
   "../../skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json",
@@ -20,14 +21,14 @@ const cases = fixture.cases;
 
 describe("model-effort-advisor", () => {
   it("keeps representative outputs inside ModelEffortAdvice.v1", () => {
-    const validate = new Ajv2020({ allErrors: true, strict: false }).compile(schema);
+    const validate = new Ajv2020({ allErrors: true, strict: false }).addSchema(modelPolicySchema).compile(schema);
     for (const testCase of cases) {
       expect(validate(testCase.output), `${testCase.id}: ${JSON.stringify(validate.errors)}`).toBe(true);
     }
   });
 
   it("rejects invalid observation claims, risk floors, and recommendation ranges", () => {
-    const validate = new Ajv2020({ allErrors: true, strict: false }).compile(schema);
+    const validate = new Ajv2020({ allErrors: true, strict: false }).addSchema(modelPolicySchema).compile(schema);
     for (const testCase of fixture.invalidCases) {
       expect(validate(testCase.output), testCase.id).toBe(false);
     }

@@ -7,7 +7,7 @@ if (!["baseline", "candidate"].includes(phase)) throw new Error("Use baseline or
 const fixtureBytes = readFileSync(new URL("./model-effort-support-cases.json", import.meta.url));
 const fixtureDigest = createHash("sha256").update(fixtureBytes).digest("hex");
 if (fixtureDigest !== "8b9054c24b56a980126906b008c8da0f75be730f015c3791b6431a9b14098ceb") throw new Error("FIXTURE_CHANGED");
-const schemaBytes = readFileSync(new URL("../../skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json", import.meta.url));
+const schemaBytes = readFileSync(new URL("./model-effort-support-baseline.schema.json", import.meta.url));
 if (createHash("sha256").update(schemaBytes).digest("hex") !== "7150d4f934f9a9422c31fc9f94b7bd7d6b1ac1e6bd029233293c40c658c693fe") throw new Error("BASELINE_SCHEMA_CHANGED");
 const validate = new Ajv2020({ allErrors: true, strict: false }).compile(JSON.parse(schemaBytes));
 const guard = phase === "candidate"

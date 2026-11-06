@@ -32,7 +32,7 @@
         },
         "reasoningEffort": {
           "type": ["string", "null"],
-          "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra", null]
+          "anyOf": [{ "$ref": "https://skill-suite.local/contracts/model-policy.v1.schema.json#/$defs/reasoningEffort" }, { "type": "null" }]
         }
       }
     },
@@ -64,8 +64,8 @@
       "properties": {
         "modelClassMin": { "enum": ["lightweight", "general", "deep", "frontier"] },
         "modelClassMax": { "enum": ["lightweight", "general", "deep", "frontier"] },
-        "reasoningEffortMin": { "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"] },
-        "reasoningEffortMax": { "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"] },
+        "reasoningEffortMin": { "$ref": "https://skill-suite.local/contracts/model-policy.v1.schema.json#/$defs/reasoningEffort" },
+        "reasoningEffortMax": { "$ref": "https://skill-suite.local/contracts/model-policy.v1.schema.json#/$defs/reasoningEffort" },
         "exactModel": { "type": ["string", "null"], "minLength": 1 },
         "confidence": { "enum": ["low", "medium", "high"] }
       }
@@ -114,7 +114,7 @@
               "source": { "enum": ["runtime", "user", "screenshot"] },
               "model": { "type": "string" },
               "modelClass": { "enum": ["lightweight", "general", "deep", "frontier"] },
-              "reasoningEffort": { "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"] }
+              "reasoningEffort": { "$ref": "https://skill-suite.local/contracts/model-policy.v1.schema.json#/$defs/reasoningEffort" }
             }
           }
         }

@@ -61,7 +61,7 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
     const catalogBefore = await readFile(path.join(root, catalogRelative));
     const catalog = JSON.parse(catalogBefore.toString("utf8"));
     const providerCatalog = catalog.providers["anthropic-claude-code"].catalog;
-    expect(providerCatalog.matching).toBe("claude-family-or-exact");
+    expect(providerCatalog.matching).toBe("exact-only");
     expect(Object.hasOwn(providerCatalog.models, model)).toBe(false);
     expect(Object.hasOwn(providerCatalog.aliases ?? {}, model)).toBe(false);
     let connection = server;

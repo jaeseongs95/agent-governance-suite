@@ -1,4 +1,5 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { HIGH_RISK_MINIMUM } from "../../runtime/model-policy.mjs";
 import path from "node:path";
 
 import {
@@ -2082,8 +2083,8 @@ export class WorkflowService {
     return {
       policyId: "semantic-execution-assurance-v1",
       kind: "semantic",
-      minimumModelClass: highRisk ? "general" : null,
-      minimumReasoningEffort: highRisk ? "high" : null,
+      minimumModelClass: highRisk ? HIGH_RISK_MINIMUM.modelClass : null,
+      minimumReasoningEffort: highRisk ? HIGH_RISK_MINIMUM.reasoningEffort : null,
       observationRequired: true,
     };
   }
