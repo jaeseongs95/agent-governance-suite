@@ -1,6 +1,6 @@
 import { isHookEntry } from "./hook-entry.js";
 import { actorAccess } from "./input-observation.js";
-import { hookFailure, hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
+import { hookFailure, hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure, writeDiagnostic } from "./hook-error-diagnostics.js";
 import "./builtin-hook-host-adapters.js";
 import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -113,7 +113,7 @@ function reportHookFailure(phase: HookFailurePhase, error: unknown, detail?: Hoo
   if (!observed) reason = ownedReason ?? reason;
   const failure: SessionMessageHookFailure = Object.freeze({ phase, reason, reasonBasis,
     ...(ownedReason ? {producerReason: ownedReason} : {}), ...(step ? { step } : {}) });
-  try { writeFailureDiagnostic("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ ...failure, context }), (line) => console.error(line)); }
+  try { writeDiagnostic("session-message-hook", "peer-hook-failure", { ...failure, context }); }
   catch { /* A broken diagnostic sink cannot block a hook or authorize replay. */ }
   if (PERSISTED_HOOK_PHASES.has(phase)) {
     // A hook refused before any broker contact (unverified host birth) leaves no state: it never creates the directory.

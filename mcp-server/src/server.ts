@@ -25,6 +25,7 @@ import { CATALOGS } from "./i18n-catalog.generated.js";
 import { BoardFormatError, locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../skills/session-board/scripts/board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
 import { contractFailure, failureContext, failureReason, retainFailureSecondary } from "./failure-diagnostics.js";
+import { writeDiagnostic } from "./hook-error-diagnostics.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
 import { installedSkillTargets, skillIntakeText } from "./skill-intake.js";
@@ -422,7 +423,7 @@ function observedSessionWorkspace(databasePath: string | null, caller: VerifiedC
     return { workspace: typeof cwd === "string" && cwd ? cwd : null };
   } catch (error) {
     const reason = (error instanceof BoardFormatError ? error.code : null) ?? failureReason(error).reason ?? "UNEXPECTED_FAILURE";
-    process.stderr.write(JSON.stringify({ event: "session-workspace-unread", reason }) + "\n");
+    writeDiagnostic("server", "session-workspace-unread", { reason });
     return { workspace: null, unreadable: reason };
   } finally {
     try { board?.close(); } catch { /* the read result does not depend on close */ }
@@ -994,7 +995,7 @@ export function createMcpServer(
           result = withMode("responseMode", () => {
             const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"), rootAccess);
             if (opened.ok && opened.data && !continuity.bindOpenedRoot(caller, opened.data.rootId)) {
-              process.stderr.write(JSON.stringify({ event: "continuity-root-binding-unavailable" }) + "\n");
+              writeDiagnostic("server", "continuity-root-binding-unavailable", {});
             }
             return opened;
           }, convergenceRootHandle);
@@ -1029,7 +1030,7 @@ export function createMcpServer(
               const { code, message, messageKey, params, details } = started.error;
               const ref = messageKey ? { key: messageKey, params: params ?? {} } as MessageRef : msg("workflow.service.unkeyedFailure", { message });
               try { continuity.recordWorkflowStartFailure(caller.sessionId, new WorkflowContractError(code, ref, details)); }
-              catch (cause) { process.stderr.write(JSON.stringify({ event: "workflow-start-failure-unrecorded", reason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" }) + "\n"); }
+              catch (cause) { writeDiagnostic("server", "workflow-start-failure-unrecorded", { reason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" }); }
             }
             return started;
           });

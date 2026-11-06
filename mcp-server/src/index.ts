@@ -39,7 +39,7 @@ import { hostActorId } from "./host-attestation.js";
 import { createNativeClassificationAdapters, type NativeClassificationAdapterDefinition, type NativeCliBehavior } from "./skill-classification/native-adapters.js";
 import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
 import { failureContext } from "./failure-diagnostics.js";
-import { writeFailureDiagnostic } from "./hook-error-diagnostics.js";
+import { writeDiagnostic, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 
 
 /** Trusted installation code supplies adapters; request JSON and environment names cannot register them. */
@@ -162,6 +162,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   void startMcpServer().catch(error => {
     process.exitCode = 1;
     // Fatal startup stays observable on stderr.
-    writeFailureDiagnostic("[agent-governance-suite] startup-failure " + JSON.stringify({phase: "startup", context: failureContext(error)}) + "\n");
+    writeDiagnostic("server", "startup-failure", {phase: "startup", context: failureContext(error)}, line => writeFailureDiagnostic(line + "\n"));
   });
 }
