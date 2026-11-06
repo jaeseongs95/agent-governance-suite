@@ -2,6 +2,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { clearTimeout, setTimeout } from "node:timers";
 import { TURNS } from "./tasks.mjs";
 import { requireLinux, retireGroup, spawnOwned, stopGroups, stopRecordedGroups } from "./owned-process.mjs";
 

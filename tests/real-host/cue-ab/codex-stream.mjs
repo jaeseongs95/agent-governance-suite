@@ -2,6 +2,7 @@
 import { appendFileSync, closeSync, openSync, readFileSync, writeFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 import path from "node:path";
+import { clearTimeout, setTimeout } from "node:timers";
 import { requireLinux, retireGroup, spawnOwned, stopGroups } from "./owned-process.mjs";
 import { awaitRootPreflight, verifyCodexHooks, verifyCodexSkills, verifyMcpDescriptor } from "./trial-preflight.mjs";
 
