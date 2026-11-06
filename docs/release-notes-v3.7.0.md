@@ -34,11 +34,11 @@
 
 ## 검증
 
-후보 커밋은 `efffea18`(판 번호·릴리스 노트 초안 `4849bdd4` + AGS3-D-0033 수정)이다. 3.6.0(`c6f76414`)부터 이 후보까지 `mcp-server/src`, `mcp-server/dist`의 서버 코드, `hooks`는 판 번호 문자열 말고 바뀌지 않았다.
+후보 커밋은 `1cd5f20b`(판 번호·릴리스 노트 초안 `4849bdd4` + AGS3-D-0033 수정 `efffea18` + AGS3-D-0037 검증 사례 `b134025e`·수정 `1cd5f20b`)이다. 3.6.0(`c6f76414`)부터 이 후보까지 `mcp-server/src`, `mcp-server/dist`의 서버 코드, `hooks`는 판 번호 문자열 말고 바뀌지 않았다.
 
-- CI(run 42157205064): Node 24 / ubuntu-latest, Node 24 / windows-latest 모두 success.
-- Linux 시험 서버 `pnpm test:server`(Node v24.22.1): vitest 시험 파일 288 passed·1 skipped(289), 시험 4199 passed·15 skipped·8 todo(4222). node:test 531/531 pass. runtime ready(스킬 CLI 34개). 종료 코드 0. 'does not read executable script history' 1,044ms.
-- Windows 시험 서버 `pnpm test:server`(Node v24.22.2, 논리 CPU 2개): vitest 시험 파일 287 passed·2 skipped(289), 시험 4186 passed·28 skipped·8 todo(4222). node:test 530 pass·1 skipped(531)·fail 0. runtime ready(스킬 CLI 34개). 종료 코드 0. 'does not read executable script history' 5,612ms(첫 후보 34,631ms).
+- CI(run 42166484117, head `1cd5f20b`): Node 24 / ubuntu-latest, Node 24 / windows-latest 모두 success. 직전 후보 `efffea18`은 run 42157205064 success.
+- Linux 시험 서버 `pnpm test:server`(Node v24.22.1, `1cd5f20b`): vitest 시험 파일 288 passed·1 skipped(289), 시험 4199 passed·15 skipped·8 todo(4222). node:test 546/546 pass. runtime ready(스킬 CLI 34개). 종료 코드 0. 'does not read executable script history' 1,041ms.
+- Windows 시험 서버 `pnpm test:server`(Node v24.22.2, 논리 CPU 2개, `1cd5f20b`, r03): vitest 시험 파일 287 passed·2 skipped(289), 시험 4186 passed·28 skipped·8 todo(4222). node:test 545 pass·1 skipped(546)·fail 0. 설치 준비·빌드·시험·runtime 검사의 종료 코드 모두 0. 직전 후보 `efffea18`의 'does not read executable script history'는 5,612ms(첫 후보 34,631ms).
 - 로컬: `node scripts/sync-release-metadata.mjs` 일치, `node scripts/build-en-packages.mjs --check` fresh, `node scripts/check-skill-context-optimization.mjs` 종료 코드 0.
 
 ### 이번에 고치지 않은 것
