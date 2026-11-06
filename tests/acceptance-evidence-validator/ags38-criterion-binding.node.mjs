@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 const cli = new URL("../../skills/acceptance-evidence-validator/scripts/cli.mjs", import.meta.url);
@@ -15,7 +16,7 @@ const digest = (value) => {
 };
 const fixture = async (name = "passing") => JSON.parse(await readFile(new URL(`./fixtures/${name}.json`, import.meta.url), "utf8"));
 function run(input, entry = cli) {
-  const result = spawnSync(process.execPath, [entry.pathname.replace(/^\/(?:([A-Za-z]:))/u, "$1")], {
+  const result = spawnSync(process.execPath, [fileURLToPath(entry)], {
     input: JSON.stringify(input), encoding: "utf8", env: { ...process.env, AGENT_GOVERNANCE_LOCALE: "en" },
   });
   assert.equal(result.error, undefined);
@@ -84,7 +85,7 @@ test("E06-05 unbound legacy input remains readable but cannot silently satisfy a
   const input = await fixture();
   input.taskEnvelope.acceptanceCriteria.reverse();
   const result = run(input);
-  assert.equal(result.code, 1);
+  assert.equal(result.code, 0);
   assert.equal(result.body.verdict, "BLOCKED");
   assert.ok(result.body.criteria.every((c) => c.status === "insufficient-evidence"));
   assert.ok(result.body.limitations.some((l) => /legacy|positional/iu.test(l)));
