@@ -15,10 +15,10 @@ metadata:
 
 ## 실행
 1. 현재 코드와 테스트 설정에서 실제 공개 경계와 검증 가능한 요구를 식별한다. 기존 `cs-engineering` 보고서가 있으면 rule/obligation ID를 참조하고 재정의하지 않는다.
-2. [test-design](../orchestrator/references/engineering-practices/test-design.md)을 읽고 `engineering-test-plan`을 만든다. 요구·case·oracle·테스트 수준·제외 범위를 연결한다. 기존 승인이 있는 요구에 대해 형식적인 추가 승인을 반복하지 않는다.
+2. [test-design](../orchestrator/references/engineering-practices/test-design.md)을 읽고 `engineering-test-plan`으로 요구·case·oracle·테스트 수준·제외 범위를 연결한다. 계획을 작성·저장하고 `check-plan`을 확인한 뒤 테스트를 구현·실행한다. 기존 승인이 있는 요구에 대해 형식적인 추가 승인을 반복하지 않는다.
 3. 허용된 범위에서 해당 runner로 테스트를 작성한다. runner 추가·외부 서비스 호출·비용 발생은 기존 권한 경계를 따른다. 제품 구현은 `ponytail` 책임을 유지한다.
 4. 결함 탐지 능력을 검증할 때 [test-proof](../orchestrator/references/engineering-practices/test-proof.md)를 읽는다. 원본 작업 트리가 아닌 격리 사본에서 같은 테스트로 red/green 또는 mutation을 실행한다. 사용자의 코드를 TDD 형식에 맞추기 위해 삭제하거나 reset하지 않는다.
-5. 아래 CLI로 계획과 receipt 참조·후보·테스트 동일성을 검사한다. 미실행·실행기 오류·시간초과·범위 공백은 통과로 바꾸지 않는다.
+5. 실행 뒤에는 아래 CLI로 receipt 참조·후보·테스트 동일성을 검사한다. 사후에 만든 계획을 선작성 근거로 보고하지 않는다. 미실행·실행기 오류·시간초과·범위 공백은 통과로 바꾸지 않는다.
 6. 계획·코드·원시 근거·미확인 범위를 `acceptance-evidence-validator`에 전달한다. 로컬 consistency 검사를 독립 감사나 전체 정확성 보장으로 표현하지 않는다.
 
 ## 실패를 통과로 바꾸지 않는 보정

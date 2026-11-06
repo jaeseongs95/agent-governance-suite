@@ -127,7 +127,7 @@
     },
     {
       "path": "skills/orchestrator/references/engineering-practices/cli.md",
-      "digest": "sha256:c23134f4ebce972f891e7b7bf93f9ac24a5c340e856e3f1192e58fb33aff3b2b"
+      "digest": "sha256:3d3199bd429e074903e6b99385c5c82677d0c6a4a5ffce696f745000db393b65"
     },
     {
       "path": "skills/orchestrator/references/engineering-practices/code-review.md",
@@ -171,7 +171,7 @@
     },
     {
       "path": "skills/test-engineering/SKILL.md",
-      "digest": "sha256:75e60228fe7307be776ed4925ea18a830f0e59d99a2d6a22715252731b37a3cc"
+      "digest": "sha256:5dd09730e500965b8f64ef3cfde867b2231934dddbe0a454aa11c431a1723bd6"
     },
     {
       "path": "skills/test-engineering/VERSION",
@@ -187,7 +187,7 @@
     },
     {
       "path": "skills/test-engineering/classification.json",
-      "digest": "sha256:3e603b14e5f27eb21506d03b33afab40b4cf1ce6cc070e0936b6690c745e636f"
+      "digest": "sha256:b82827922ae2990887ed35b34e9c26c4668a367e05bc90dc5b5d46e9cecf036a"
     },
     {
       "path": "skills/test-engineering/integration/skill-descriptor.json",
