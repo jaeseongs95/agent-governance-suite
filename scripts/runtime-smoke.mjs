@@ -130,10 +130,14 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
         }
       }
       if (probe.stderrDiagnostic) {
-        const prefix = "[agent-governance-suite] peer-hook-failure ";
-        const line = String(result.stderr ?? "").split(/\r?\n/u).find(value => value.startsWith(prefix));
-        const diagnostic = line ? JSON.parse(line.slice(prefix.length)) : null;
-        if (diagnostic?.phase !== probe.stderrDiagnostic.phase || diagnostic?.reason !== probe.stderrDiagnostic.reason) {
+        const hasDiagnostic = String(result.stderr ?? "").split(/\r?\n/u).some(line => {
+          try {
+            const diagnostic = JSON.parse(line);
+            return diagnostic?.component === "session-message-hook" && diagnostic?.event === "peer-hook-failure"
+              && diagnostic?.phase === probe.stderrDiagnostic.phase && diagnostic?.reason === probe.stderrDiagnostic.reason;
+          } catch { return false; }
+        });
+        if (!hasDiagnostic) {
           throw new Error(`${script} did not emit its invalid-JSON input diagnostic.\n${output}`);
         }
       }

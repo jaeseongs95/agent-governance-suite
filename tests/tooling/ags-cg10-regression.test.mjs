@@ -12,6 +12,10 @@ const bundles = [
   "session-message-cli.mjs",
   "session-message-hook.mjs",
 ];
+const hookDiagnostic = {
+  phase: "input", reason: "INVALID_JSON", reasonBasis: "unverified-observation", context: { type: "syntax-error" },
+  component: "session-message-hook", event: "peer-hook-failure",
+};
 
 async function fixture() {
   const root = await mkdtemp(path.join(tmpdir(), "ags-cg10-"));
@@ -27,7 +31,7 @@ async function fixture() {
     const response = bundle === "session-message-cli.mjs"
       ? 'process.stdout.write(JSON.stringify({ protocolVersion: "1.0.0", ok: false, error: "Unsupported session message operation.", messageKey: "services.sessionMessage.cli.unsupportedOperation", params: {} }) + "\\n"); process.exitCode = 1;'
       : bundle === "session-message-hook.mjs"
-        ? 'console.error("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ phase: "input", reason: "INVALID_JSON", reasonBasis: "unverified-observation", context: { type: "syntax-error" } }));'
+        ? `console.error(${JSON.stringify(JSON.stringify(hookDiagnostic))});`
         : "process.exitCode = 2;";
     const expectedInput = bundle === "session-message-hook.mjs" ? "{\n" : "{}\n";
     await writeFile(path.join(root, "mcp-server/dist", bundle), `
@@ -99,7 +103,7 @@ describe("CG10 messaging clean-room startup regression", () => {
 
   it.each([
     ["empty bundle", ""],
-    ["inactive entry guard", 'if (false) console.error("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ phase: "input", reason: "INVALID_JSON" }));\n'],
+    ["inactive entry guard", `if (false) console.error(${JSON.stringify(JSON.stringify(hookDiagnostic))});\n`],
   ])("rejects a hook with %s despite exit 0 and empty stdout", async (_name, source) => {
     const { root } = await fixture();
     await writeFile(path.join(root, "mcp-server/dist/session-message-hook.mjs"), source, "utf8");
@@ -107,11 +111,26 @@ describe("CG10 messaging clean-room startup regression", () => {
   });
 
   it.each([
-    { phase: "handle", reason: "INVALID_JSON" },
-    { phase: "input", reason: "INVALID_HOOK_INPUT" },
+    { ...hookDiagnostic, component: "other-hook" },
+    { ...hookDiagnostic, event: "other-event" },
+    { ...hookDiagnostic, phase: "handle" },
+    { ...hookDiagnostic, reason: "INVALID_HOOK_INPUT" },
   ])("rejects a different structured hook diagnostic: %j", async diagnostic => {
     const { root } = await fixture();
-    const stderr = `[agent-governance-suite] peer-hook-failure ${JSON.stringify(diagnostic)}\n`;
+    const stderr = `${JSON.stringify(diagnostic)}\n`;
+    await writeFile(path.join(root, "mcp-server/dist/session-message-hook.mjs"),
+      `process.stderr.write(${JSON.stringify(stderr)});\n`, "utf8");
+    await expect(runRuntimeSmokeCheck(root)).rejects.toThrow(/did not emit its invalid-JSON input diagnostic/u);
+  });
+
+  it.each([
+    ["malformed JSON", `${JSON.stringify(hookDiagnostic).slice(0, -1)}\n`],
+    ["legacy prefix", `[agent-governance-suite] peer-hook-failure ${JSON.stringify(hookDiagnostic)}\n`],
+    ["unidentified JSON", `${JSON.stringify({ phase: "input", reason: "INVALID_JSON" })}\n`],
+    ["JSON null", "null\n"],
+    ["JSON array", `${JSON.stringify([hookDiagnostic])}\n`],
+  ])("rejects %s instead of the current producer's JSON record", async (_name, stderr) => {
+    const { root } = await fixture();
     await writeFile(path.join(root, "mcp-server/dist/session-message-hook.mjs"),
       `process.stderr.write(${JSON.stringify(stderr)});\n`, "utf8");
     await expect(runRuntimeSmokeCheck(root)).rejects.toThrow(/did not emit its invalid-JSON input diagnostic/u);
