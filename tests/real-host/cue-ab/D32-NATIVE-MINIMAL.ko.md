@@ -12,7 +12,7 @@
 
 원 same-turn T2는 T1 수정 직후 회귀시험을 작성하는 조건이다. 이번 둘째 턴은 압축 뒤 T4 진단이므로 업무·순서·압축 경계가 모두 다르다. 원 T2의 SKILL 읽기 miss와 NP05 ORDER/SCOPE FAIL을 재판정하거나 성공으로 덮지 않는다. 이 표본은 목적 전환 및 압축 후 재도달만 판별한다.
 
-두 arm은 같은 새 제품 후보 archive다. A에만 기존 phase3-control.mjs의 정확한 세 source 변환을 적용하고, B는 정상이다. A/B 모두 같은 공식 build 명령·Node24·동일 lock의 기존 deps를 사용한다. 공통 intake·스킬 본문·fixture는 A/B 동일 hash를 확인한다. 변환 anchor가 맞지 않거나 세 파일 외 source가 다르면 중단하고 HOLD로 돌린다. 과거 b2 측정·원 실패는 그대로 보존한다.
+두 arm은 같은 새 제품 후보 archive다. A에만 기존 phase3-control.mjs의 정확한 두 source 변환을 적용하고, B는 정상이다. A/B 모두 같은 공식 build 명령·Node24·동일 lock의 기존 deps를 사용한다. 공통 intake·스킬 본문·fixture는 A/B 동일 hash를 확인한다. 변환 anchor가 맞지 않거나 두 파일 외 source가 다르면 중단하고 HOLD로 돌린다. 과거 b2 측정·원 실패는 그대로 보존한다.
 
 고정 실행 요청은 `gpt-6.1-sol` / `high`, approvalPolicy=never, sandbox=danger-full-access, 일회성 `--dangerously-bypass-hook-trust`, AGENT_GOVERNANCE_LOCALE=ko다. 실제 native 적용 metadata는 요청값과 별도로 기록한다. Node bin은 `/home/mcpops/ags-tests/tester-7452-20261028-r01/runtime/node-v24.22.1-linux-x64/bin`이며 install 전과 child 시작 직전 `node --version`의 v24.22.1 및 실제 경로를 확인한다. native MCP child Node 버전은 자기 실제 관측이 없으면 UNKNOWN이다.
 
@@ -20,7 +20,7 @@
 
 | 사례 | 입력·선행조건·절차 | 기대 및 실패/미확인 기준 | 실제 |
 | --- | --- | --- | --- |
-| D32-N01 동일 후보·cue 요인 | 같은 새 SHA의 A/B archive, 기존 helper로 A만 변환, 같은 공식 build. source/공통 intake/스킬/생성물 및 arm별 설치 cache hash 기록 | 정확한 세 source 변환만 허용. intake와 스킬 의미 차이 또는 provenance 불명은 비교 중단 | NOT_RUN |
+| D32-N01 동일 후보·cue 요인 | 같은 새 SHA의 A/B archive, 기존 helper로 A만 변환, 같은 공식 build. source/공통 intake/스킬/생성물 및 arm별 설치 cache hash 기록 | 정확한 두 source 변환만 허용. intake와 스킬 의미 차이 또는 provenance 불명은 비교 중단 | NOT_RUN |
 | D32-N02 공식 설치 결속 | 설치 직전 공개 plugin/marketplace JSON baseline과 own ID/cache 부재 확인. 각 arm을 공식 등록하고 실제 cache의 manifest/hooks/server/registry/SKILL 선택 파일 hash를 원본과 비교 | exact plugin ID/root/cache pin. 다른 AGS 중복·MCP 누락·미연결·toolsError는 준비 실패, 전체 effective 목록 증명은 요구하지 않음 | NOT_RUN |
 | D32-N03 첫 짧은 업무 | T1 원문, 새 fixture. 같은 PID/thread의 첫 user turn 완료 및 실제 읽기·편집/산출물 확인 | 해당 턴에 실제 ponytail SKILL 본문 읽기 성공을 확인. 수정 뒤 applyDiscount(1000,150)=0, (1000,10)=900, 기존 invoice/format 의미 보존. 답변만으로 수정/읽기 성공 처리 금지 | NOT_RUN |
 | D32-N04 명시적 압축 | T1 완료 후 기존 driver의 thread/compact/start. 기존 driver는 이전 알림을 비우고 같은 thread의 contextCompaction item 및 그 turnId의 turn/completed를 기다림 | 같은 threadId, contextCompaction item ID/turnId, completed 상태를 원 event로 결속. request ACK·자동 압축·resume은 명시적 완료 대체 불가. 미지원/timeout이면 실패 보존·둘째 턴 SKIP | NOT_RUN |
@@ -85,4 +85,4 @@ spec SHA256은 `abfb3cc65ba9fac4c120ae2634c1f2181e44daf2c6a80c77065d108d6f832557
 | `owned-process.mjs` | `82b0c752a12876cf1c91349345efec01fd08b495203c17d03ee13da6d3cd3154` |
 | `fixture.mjs` | `47647c8a631b1626168b010b387fa2beef313bab1cfa0d0acac6459ba7367b0d` |
 | `tasks.mjs` | `481587626ebaef49c22a79cb9d3141ae46564f25c46353240279d572439c8301` |
-| `phase3-control.mjs` | `3ab4d2b542fe1ddcf6f80c9d3a639e0aea07450c30e2f8e5f6a18a985b274b82` |
+| `phase3-control.mjs` | `4c8375eda49a398d01d52dcf461353f429177194ad157cec8faafd49a4ddf529` |

@@ -1,5 +1,5 @@
 // Build the full-cue control in an exported source COPY, preserving every other current repair.
-// Root builds both variants from the same candidate after this exact, three-file transformation.
+// Root builds both variants from the same candidate after this exact, two-file transformation; the shared intake change also reaches the Claude adapter.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -11,18 +11,12 @@ if (existsSync(receipt)) throw new Error("Control already transformed; never app
 const edits = [
   ["mcp-server/src/continuity-service.ts", 'msg("hooks.checkpointCue.skills", {})', 'msg("instructions.intake.skills", { targets: installedSkillTargets() })'],
   ["mcp-server/src/intake-hook.ts", 'additionalContext: `${skillIntakePointer(locale)}\\n${skillTargetsContext(locale)}`', 'additionalContext: skillIntakePointer(locale)'],
-  ["claude-overlay/hooks/skill-trigger-hook.mjs", 'additionalContext: `${render(msg("hooks.skillTrigger.invocation", {}), locale)}\\n${skillTargetsContext(locale)}`', 'additionalContext: render(msg("hooks.skillTrigger.invocation", {}), locale)'],
 ];
 const digest = value => createHash("sha256").update(value).digest("hex");
 const replacements = edits.map(([relative, before, after]) => {
   const file = path.join(copy, relative), bytes = readFileSync(file), source = bytes.toString("utf8");
   if (source.split(before).length !== 2) throw new Error(`Expected exactly one current phase3 anchor: ${relative}`);
-  let updated = source.replace(before, after);
-  if (relative.startsWith("claude-overlay/")) {
-    const importLine = '    const { skillTargetsContext } = await import("../mcp-server/dist/intake-hook.mjs");';
-    if (updated.split(importLine).length !== 2) throw new Error("Expected one Claude targets import");
-    updated = updated.replace(importLine + (updated.includes("\r\n") ? "\r\n" : "\n"), "");
-  }
+  const updated = source.replace(before, after);
   return { file, relative, bytes, updated };
 });
 // Validate all anchors before the first write. On an I/O failure, retain the trial copy for inspection.

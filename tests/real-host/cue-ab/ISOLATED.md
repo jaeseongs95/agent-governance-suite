@@ -18,7 +18,7 @@
 
 ## 사례 계획(실행 전 고정)
 
-D32 arm은 과거3.5와현재후보를 비교하지 않는다. `7ff84bc6`의 실제 diff를 확인했으며, 같은 현재 후보를 fresh git-archive A/B 두 사본으로 내보낸다. B는 그대로 두고 A에만 `node phase3-control.mjs /TEST/cue-arm-A`를 실행한다. 이 helper는 Git checkout/worktree 및 중복 적용을 거부하고 세 파일의 current anchor가 각각1회인지 먼저 확인한다. A의 continuity checkpoint는 현재 공통 `instructions.intake.skills`와 현재 목록을 매 메시지 보낸다. A의 intake는 pointer만, Claude trigger는 invocation만 보낸다. B는 현재의 start목록+short-message다. 공통 접수 정책·모델·나머지 수리를 같게 두고 전달 위치와 반복 cue 크기만 변한다. locales나 catalog를 과거판 전체로 되돌리지 않는다. helper receipt의 before/after hash와 실제3파일 diff를 확인한 뒤 두 사본 모두 같은 도구로 bundle 및 Claude 생성물을 빌드한다. helper 자체는 아직 미실행이며 root의 TEST source-copy 준비·build 대상이다. anchor가 다르면 중단하고 현재 후보 기준으로 검토한다.
+D32 arm은 과거3.5와현재후보를 비교하지 않는다. `7ff84bc6`의 실제 diff를 확인했으며, 같은 현재 후보를 fresh git-archive A/B 두 사본으로 내보낸다. B는 그대로 두고 A에만 `node phase3-control.mjs /TEST/cue-arm-A`를 실행한다. 이 helper는 Git checkout/worktree 및 중복 적용을 거부하고 두 파일의 current anchor가 각각1회인지 먼저 확인한다. A의 continuity checkpoint는 현재 공통 `instructions.intake.skills`와 현재 목록을 매 메시지 보낸다. A의 공용 intake는 pointer만, 이를 재사용하는 Claude trigger는 invocation과 pointer를 보낸다. 포인터는 양 arm 모두 보존한다. B는 현재의 start목록+short-message다. 공통 접수 정책·모델·나머지 수리를 같게 두고 전달 위치와 반복 cue 크기만 변한다. locales나 catalog를 과거판 전체로 되돌리지 않는다. helper receipt의 before/after hash와 실제2파일 diff를 확인한 뒤 두 사본 모두 같은 도구로 bundle 및 Claude 생성물을 빌드한다. helper 자체는 아직 미실행이며 root의 TEST source-copy 준비·build 대상이다. anchor가 다르면 중단하고 현재 후보 기준으로 검토한다.
 
 공통 사전조건: arm별 새 run과 동일 host/model/effort/OS/locale/tool set, 후보 전체 SHA·bundle hash 고정. code/noncode는 구조가 같은 짝으로 만들고 정답 스킬명·정답 조치를 prompt에 넣지 않는다. 각 행의 경계·오류 짝은 별도 run이며 같은 대화의 턴을 독립 표본으로 세지 않는다. 현재 각 행 actual=NOT_RUN.
 
