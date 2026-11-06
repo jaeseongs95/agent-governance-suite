@@ -10,6 +10,7 @@ const listing = z.object({installed: z.array(z.object({pluginId: z.string(), nam
   version: segment, installed: z.boolean(), enabled: z.boolean(), source: z.unknown()}).passthrough()).max(1000)}).passthrough();
 const marketplaces = z.object({marketplaces: z.array(z.object({name: segment, root: z.string().min(1)}).passthrough()).max(1000)}).passthrough();
 const localSource = z.object({source: z.literal("local"), path: z.string().min(1)}).passthrough();
+const localMarketplaceSource = z.object({sourceType: z.literal("local"), source: z.string().min(1)}).passthrough();
 const npmManifest = z.object({name: z.literal("@openai/codex"), version: z.literal("0.166.0"),
   bin: z.object({codex: z.literal("bin/codex.js")})}).passthrough();
 
@@ -60,27 +61,36 @@ export function createCodexInspectionCommand(command: (file: string, args: strin
 
 /** Codex 0.166 local-marketplace protocol. The CLI list alone has no installation path. */
 export async function observeCodexInstalledPlugin(root: string, command: (file: string, args: string[]) => Promise<string>) {
-  const inspect = createCodexInspectionCommand(command);
-  if ((await inspect(["--version"])).trim() !== "codex-cli 0.166.0") return null;
   const bytes = await readFile(path.join(root, ".codex-plugin/plugin.json"));
   if (bytes.length > 64 * 1024) return null;
   const installedManifest = manifest.parse(JSON.parse(bytes.toString("utf8")));
-  const plugins = listing.parse(JSON.parse(await inspect(["plugin", "list", "--json"])));
+  // Official add's installedPath and the actual running root must identify one exact cache entry.
+  const codexHome = process.env.CODEX_HOME ?? path.join(homedir(), ".codex");
+  if (!path.isAbsolute(codexHome)) return null;
+  const cacheRoot = await realpath(path.join(codexHome, "plugins/cache"));
+  const parts = path.relative(cacheRoot, root).split(path.sep);
+  if (parts.length !== 3 || !parts.every(value => segment.safeParse(value).success)
+    || parts[1] !== installedManifest.name || parts[2] !== installedManifest.version
+    || await realpath(path.join(cacheRoot, ...parts)) !== root) return null;
+  const marketplaceName = parts[0]!;
+  const inspect = createCodexInspectionCommand(command);
+  if ((await inspect(["--version"])).trim() !== "codex-cli 0.166.0") return null;
+  const market = marketplaces.parse(JSON.parse(await inspect(["plugin", "marketplace", "list", "--json"])));
+  const matchingMarkets = market.marketplaces.filter(item => item.name === marketplaceName);
+  if (matchingMarkets.length !== 1 || !path.isAbsolute(matchingMarkets[0]!.root)) return null;
+  const marketRoot = await realpath(matchingMarkets[0]!.root);
+  // This supported local installation never needs the global remote marketplace catalog.
+  const plugins = listing.parse(JSON.parse(await inspect(["plugin", "list", "--marketplace", marketplaceName, "--json"])));
   const matches = plugins.installed.filter(entry => entry.name === installedManifest.name);
   if (matches.length !== 1) return null;
   const entry = matches[0]!;
-  if (!entry.installed || entry.version !== installedManifest.version || entry.pluginId !== `${entry.name}@${entry.marketplaceName}`) return null;
+  if (!entry.installed || entry.version !== installedManifest.version || entry.marketplaceName !== marketplaceName
+    || entry.pluginId !== `${entry.name}@${entry.marketplaceName}`) return null;
   const source = localSource.safeParse(entry.source);
-  if (!source.success || !path.isAbsolute(source.data.path)) return null;
-  const market = marketplaces.parse(JSON.parse(await inspect(["plugin", "marketplace", "list", "--json"])));
-  const matchingMarkets = market.marketplaces.filter(item => item.name === entry.marketplaceName);
-  if (matchingMarkets.length !== 1 || !path.isAbsolute(matchingMarkets[0]!.root)
-    || await realpath(source.data.path) !== await realpath(matchingMarkets[0]!.root)) return null;
-  // Official add's installedPath and the running package root must identify the same cache entry.
-  // A marketplace/source tree with matching metadata is never an installed runtime.
-  const codexHome = process.env.CODEX_HOME ?? path.join(homedir(), ".codex");
-  if (!path.isAbsolute(codexHome)) return null;
-  const expectedRoot = path.join(codexHome, "plugins/cache", entry.marketplaceName, entry.name, entry.version);
-  if (await realpath(expectedRoot) !== root) return null;
+  const provenance = localMarketplaceSource.safeParse(entry.marketplaceSource);
+  if (!source.success || !path.isAbsolute(source.data.path) || !provenance.success || !path.isAbsolute(provenance.data.source)
+    || await realpath(provenance.data.source) !== marketRoot) return null;
+  const relativeSource = path.relative(marketRoot, await realpath(source.data.path));
+  if (path.isAbsolute(relativeSource) || relativeSource === ".." || relativeSource.startsWith(`..${path.sep}`)) return null;
   return {enabled: entry.enabled, entry: {plugin: entry, marketplace: matchingMarkets[0]}};
 }
