@@ -2,20 +2,59 @@
 
 [한국어](https://github.com/jaeseongs95/agent-governance-suite/blob/main/README.md) | English
 
-Agent Governance Suite (AGS) is a local plugin for Claude Code, Codex, and Antigravity (`agy`). It helps the agent pick the specialist skills a task needs, run multi-step changes as a workflow, and record your corrections and the work still left to do. Sessions on the same computer collaborate through a shared board and PEER messages.
+Agent Governance Suite (AGS) is a local plugin for Claude Code, Codex, and Antigravity (`agy`). It helps an agent use the specialist skills a request needs, carry multi-stage work through its acceptance criteria, and carry forward your corrections and unfinished work. It covers documents, research, decisions, guidance materials, and software work.
 
-[Installation](#installation) · [What changes after installation](#what-changes-after-installation) · [Usage](#usage) · [Skills](#skills) · [What AGS does not guarantee](#what-ags-does-not-guarantee) · [Troubleshooting](#troubleshooting) · [Documentation](#documentation)
+This README **includes changes in the 3.8 work in progress. 3.8 has not been published.** The installation commands below target the current public stable release. Check the release notes for the version you install.
 
-## Components
+[Usage](#usage) · [Installation](#installation) · [What changes after installation](#what-changes-after-installation) · [Work records and collaboration](#work-records-and-collaboration) · [Skills](#skills) · [What AGS does not guarantee](#what-ags-does-not-guarantee) · [Troubleshooting](#troubleshooting) · [Documentation](#documentation)
 
-| Component | What it does |
+## What can I use it for?
+
+| Your goal | How AGS helps |
 | --- | --- |
-| 23 specialist skills | Each owns one kind of judgment: task contracts, risk preflight, acceptance evidence, independent audit, failure diagnosis, code review, security audit, and more. |
-| `orchestrator` | Picks the specialist skills a task needs and connects their order, inputs, and outputs. |
-| Local MCP server | Checks workflow plans, stage results, and completion conditions, and provides the work-record, board, and messaging tools. The host starts it on demand; no port or always-on daemon is needed. |
-| Host hooks | Add guidance, record observations, and deliver messages at session start, on each user message, around tool calls, and at turn end. |
+| Research material and make decisions | Define goals, constraints, and acceptance criteria; examine contested choices; compare claims with evidence |
+| Create documents, guidance, or service procedures | Review the audience's journey and accessibility; design prompts; edit Korean prose while preserving facts |
+| Build or repair software | Choose a small implementation; examine design, tests, code, and security; distinguish causes of repeated failures |
+| Continue across stages or sessions | Track workflow progress, save corrections and remaining work, and collaborate through a session board and PEER messages |
 
-All state is kept in SQLite files on this computer.
+AGS includes 23 specialist skills, `orchestrator` to connect their work, and `session-board` to explain the shared board. A local MCP server provides workflow and record tools. Host hooks add guidance and observations at session, turn, and tool boundaries. The presence of guidance does not establish that the agent followed it or that the result was verified.
+
+## Usage
+
+### Ask as usual
+
+Describe the result, how it should be checked, and what must stay unchanged. You do not need to name a skill or workflow in every request. The agent compares your goal with the skills' applicability and exclusions, and uses workflows for changes that span stages. Questions, explanations, and work that fits one specialist stay within that scope.
+
+```text
+Revise this notice so that a first-time visitor can complete a booking.
+Preserve the booking terms and contact details. Write the verification cases before changing it.
+Separate what you actually checked from what still needs a person's review.
+```
+
+```text
+Implement and verify this feature. First define the change scope and acceptance criteria.
+In the final result, include the checks you actually ran and any unresolved issues.
+```
+
+To name a skill yourself, use `$orchestrator` in Codex or `/agent-governance-suite:orchestrator` in Claude Code. Skill-classification advice (`classify_skills`) works only where classification is configured; the agent makes the final choice.
+
+### What changes after installation
+
+| When | What AGS does |
+| --- | --- |
+| Start, resume, and after compaction | Offers the skill-selection and workflow rules. It lists saved work-record candidates; the agent calls `load_context` to load a body. Workflow summaries help it continue. Guidance output and actual model consumption or compliance are separate evidence. |
+| Every user message | Adds a turn check and the installed skills' targets to prompt reconsideration. The notice also asks the agent to save corrections, decisions, approvals, prohibitions, and remaining work with `checkpoint_context`. |
+| Subagent start | Claude Code and Codex SubagentStart hooks supply skill targets and a reminder to respect the assignment's scope, forbidden areas, and write ownership. agy has no equivalent start hook. |
+| File changes | Compares paths reported by the host with workflow write scopes. Product files without a workflow, and product files outside active workflow scopes, count in a window between workflow starts or turn-end checks; calls reaching the third distinct file are refused. A root waiting for review or a user decision has a separate refusal rule. See the limits below. |
+| Stage results and turn end | Workflow tools check stage results and unresolved items. After product-file edits, unfinished stages trigger guidance to continue. Recorded completion requires all planned stages to pass and no unresolved items; the truth of submitted evidence needs separate verification. |
+
+### Model and reasoning choices for subagents
+
+`model-effort-advisor` helps select a model and reasoning effort **before dispatching an already approved subagent assignment**, using its role, difficulty, risk, verifiability, and quality, speed, and cost preferences. Available preferences are `economy`, `balanced`, and `quality`; `balanced` is the default. It does not decide whether to delegate, agent count, permissions, or required audits. It does not observe the main model or change its UI settings.
+
+The shared selection contract is vendor independent. Bundled catalogs currently have OpenAI/Codex, Anthropic/Claude Code, and Google/Gemini provider adapters, with separate execution-host entries for Claude Code, Codex, Gemini, and Antigravity. **A catalog entry does not prove availability in the current host.** Check the host's actual capabilities and invocation fields first. A Gemini catalog entry is not a declaration of a separate Gemini CLI installation package.
+
+Record the requested choice, the arguments actually dispatched, and the effective settings observed from the host separately. A supported selection does not establish actual application. Leave hidden inherited settings unverified, and hold a dispatch when its mandatory risk floor cannot be established. See [model routing and host application](skills/coordinate-subagents/references/model-routing.md).
 
 ## Installation
 
@@ -74,34 +113,13 @@ agy plugin list
 
 The package already contains the MCP server registration (`mcp_config.json`, server name `ags`, `AGENT_GOVERNANCE_HOST_ATTESTATION=antigravity`) and the hooks (`hooks.json`), so there is nothing else to configure. `GEMINI.md` and `AGENTS.md` in this repository are guidelines for developing AGS itself and are not part of the package.
 
-## What changes after installation
+## Work records and collaboration
 
-AGS does not make decisions for the agent. It adds guidance at fixed points, checks progress through the workflow tools, and refuses a few actions.
+### Continue unfinished work
 
-| When | What changes |
-| --- | --- |
-| Session start | The common intake rules for choosing skills and using workflows reach the model. After a resume or compaction, AGS only lists saved work-record candidates; the body is loaded only when the agent calls `load_context`. If a workflow is in progress, a summary card for it is also shown after compaction. |
-| Every user message | An `[AGS turn check]` notice is added, with the targets of each installed skill. If the message is a correction, a new decision, approval or prohibition, extra work, or a scope change, the notice tells the agent to reconsider its skills and save your words and the remaining work with `checkpoint_context`. It also tells the agent to consider delegating work that can be completed and verified on its own, and what a delegation brief must say. It adds about 3,500 characters per message in English (about 2,600 in Korean). Claude Code and Codex add it on UserPromptSubmit; agy adds it on the first model call of each turn. |
-| Subagent start | An `[AGS subagent start check]` notice and the targets of each installed skill go into the subagent. It tells the subagent to match its assigned work against the targets, call the matching skills, and stay inside its brief's scope, forbidden areas and write ownership. Claude Code and Codex add it through their SubagentStart hook. agy has no subagent-start hook, so its subagents do not get it. |
-| Editing product files | Without a workflow, the edit that touches a third distinct product file in one turn is refused, and the refusal includes a minimal `start_workflow` call. While a workflow runs, files outside its `writeTargets` are refused the same way. |
-| Changing a workflow | When a workflow-changing tool such as `start_workflow`, `record_stage_result`, or `finalize_workflow` succeeds, the response names the next stage and lists the targets of every installed skill. The provider named for a stage is only the contract its result is recorded under; it does not limit which skills the stage may use. |
-| Turn end | If product files were edited and the running workflow still has stages that have not passed, AGS restates that workflow's `runId` and `rootId`, its goal and the remaining stages, and tells the agent to continue. Pending PEER messages may also be delivered at this point. |
-| Session collaboration | Hooks record each session's ID, working directory, and last input time on the board. The agent writes one line about its current work and, when the user gave the session a role, that role in `role`. The common intake rules tell the agent to hand a request outside its role to the session holding that role with a PEER message, and to ask the user when no session can take it or none answers. Neither the board nor a role blocks work or grants authority. |
+The agent saves corrections, decisions, and remaining work, then compares the original record with the current state when it resumes. Work records do not duplicate the workflow stage ledger. A saved summary does not replace checking actual files, environments, and test results. Keep secrets and personal logs out of records.
 
-A workflow is marked complete only when every planned stage has passed and nothing is left unresolved. If an unfinished old workflow root still holds a path and a new workflow fails with `ROOT_CONFLICT`, the error `details` show that root's timestamps, latest run, owning session state, and next step. You can release your own root with `release_convergence_root`; another session's root can be released only when its owner is not online and the user has decided to release it.
-
-## Usage
-
-### Ask as usual
-
-Describe the work and what should be checked. The agent compares the installed skills' descriptions and applicability rules with your request and picks the skills it needs.
-
-```text
-Implement and verify this feature. First define the change scope and acceptance criteria.
-In the final result, include the checks you actually ran and any unresolved issues.
-```
-
-To name a skill yourself, use `$orchestrator` in Codex or `/agent-governance-suite:orchestrator` in Claude Code. Skill-classification advice (`classify_skills`) works only where classification is configured, and the agent always makes the final choice.
+If you assigned a role, the agent records it with its current work on the board. Guidance asks it to hand requests outside its role to the responsible session. A board role is neither access control nor execution approval.
 
 ### Collaborate across sessions
 
@@ -133,6 +151,23 @@ Do not modify files or run tests.
 
 If a message does not arrive, check `get_session_message_status` with the same `messageId`. Do not resend a message with an uncertain outcome under a new ID. The [message lifecycle](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/session-message-lifecycle.md) explains each status.
 
+## State and updates
+
+| Data | Location |
+| --- | --- |
+| Workflow state (`workflows.sqlite3`) and work records (`continuity.sqlite3`) | Claude Code: `${CLAUDE_PLUGIN_DATA}`. Other hosts: `%LOCALAPPDATA%\agent-governance-suite` on Windows, `~/Library/Application Support/agent-governance-suite` on macOS, `$XDG_STATE_HOME/agent-governance-suite` on Linux (default `~/.local/state/agent-governance-suite`) |
+| Board (`session-board.sqlite3`) and messages (`session-messaging/`) | `~/.agent-governance-suite`, shared by all hosts |
+
+Where default paths differ, for example in a sandbox, give every participating host the same absolute `AGENT_GOVERNANCE_SHARED_STATE_DIR`. All path variables are listed in the [operations guide](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/operations.md#상태-저장과-마이그레이션).
+
+Work-record bodies and stage results are stored without encryption in the local databases; the retention periods below do not delete them automatically. Keep secrets, personal data, and raw logs out of work records and stage results. To remove old state, preview candidates with `prepare_state_cleanup`, then pass the token you confirmed to `execute_state_cleanup` (finished workflows after 180 days, inactive work-record bodies after 30 days). A backup is taken before deletion and is never deleted automatically. See [retention and cleanup](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/state-cleanup.md).
+
+When a newer public stable release exists, the MCP server mentions it once in a tool response; `check_for_updates` checks on demand. Nothing is installed automatically. To update, stop the existing AGS MCP and relay processes, install the new version with the steps above, and start a new session. In Codex, trust the hooks again in `/hooks`; for agy, close the app and install the new package. See [update and recovery](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/session-message-lifecycle.md#업데이트와-복구).
+
+### Local processes and message storage
+
+Each AGS messaging process opens the shared SQLite file directly. AGS does not install a separate message-broker server, TCP listener, broker certificate, or broker token. A **relay process can run** to track session liveness and wake it for messages. The relay is tied to the host process and its lease, so this does not mean there are no background processes. Networking by the host or external model services is separate from this messaging-store design.
+
 ## Skills
 
 Versions and provenance of the 23 specialist skills follow the [registry](skills/registry.json) and the [source lock](skills/source-lock.json). Two more skills ship with them: [`orchestrator`](skills/orchestrator/), which connects the flow, and [`session-board`](skills/session-board/), which explains how to use the board. Work records are handled by MCP tools (`checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`) and hooks, not by a skill.
@@ -142,7 +177,7 @@ Versions and provenance of the 23 specialist skills follow the [registry](skills
 | [`instruction-scope-resolver`](skills/instruction-scope-resolver/) | AGS | 1.0.0 | Finds the instruction files that apply to a path and their precedence. |
 | [`workspace-convention-profiler`](skills/workspace-convention-profiler/) | AGS | 1.0.0 | Surveys repository structure, conventions, and verification commands. |
 | [`task-contract`](skills/task-contract/) | AGS | 1.1.0 | Turns goal, scope, acceptance criteria, risk, and authority into a task contract. |
-| [`model-effort-advisor`](skills/model-effort-advisor/) | AGS | 0.2.0 | Selects a model and reasoning effort before subagent dispatch from task requirements and host-supported combinations. |
+| [`model-effort-advisor`](skills/model-effort-advisor/) | AGS | 0.2.0 | Selects a model and reasoning effort for an approved subagent assignment before dispatch, using task requirements and host-supported combinations. |
 | [`coordinate-subagents`](skills/coordinate-subagents/) | AGS | 1.1.0 | Decides whether to delegate and sets ownership, handoff context, and verification duties. |
 | [`ponytail`](skills/ponytail/) | Based on [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail/tree/83b2cbc3bc50df3030c49d1dfe598ccefe850a85), modified by AGS | 4.10.0 | Chooses the smallest complete implementation that meets the requirements. |
 | [`change-scope-guardian`](skills/change-scope-guardian/) | AGS | 1.0.0 | Compares the baseline with current changes to find out-of-scope files. |
@@ -165,42 +200,33 @@ Versions and provenance of the 23 specialist skills follow the [registry](skills
 
 The engineering modules shared by `test-engineering` and `code-review` are described in [engineering-practices integration](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/engineering-practices.ko.md).
 
-## State and updates
-
-| Data | Location |
-| --- | --- |
-| Workflow state (`workflows.sqlite3`) and work records (`continuity.sqlite3`) | Claude Code: `${CLAUDE_PLUGIN_DATA}`. Other hosts: `%LOCALAPPDATA%\agent-governance-suite` on Windows, `~/Library/Application Support/agent-governance-suite` on macOS, `$XDG_STATE_HOME/agent-governance-suite` on Linux (default `~/.local/state/agent-governance-suite`) |
-| Board (`session-board.sqlite3`) and messages (`session-messaging/`) | `~/.agent-governance-suite`, shared by all hosts |
-
-Where default paths differ, for example in a sandbox, give every participating host the same absolute `AGENT_GOVERNANCE_SHARED_STATE_DIR`. All path variables are listed in the [operations guide](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/operations.md#상태-저장과-마이그레이션).
-
-Stored content is plain JSON and never expires on its own. Keep secrets, personal data, and raw logs out of work records and stage results. To remove old state, preview candidates with `prepare_state_cleanup`, then pass the token you confirmed to `execute_state_cleanup` (finished workflows after 180 days, inactive work-record bodies after 30 days). A backup is taken before deletion and is never deleted automatically. See [retention and cleanup](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/state-cleanup.md).
-
-When a newer public stable release exists, the MCP server mentions it once in a tool response; `check_for_updates` checks on demand. Nothing is installed automatically. To update, stop the existing AGS MCP and relay processes, install the new version with the steps above, and start a new session. In Codex, trust the hooks again in `/hooks`; for agy, close the app and install the new package. See [update and recovery](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/session-message-lifecycle.md#업데이트와-복구).
-
 ## What AGS does not guarantee
 
-- **It is not a security boundary against processes running as the same OS user.** Such a process can read and change the state databases or call the MCP server directly. ([architecture](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/architecture.md#세션-메시지-저장소-broker-없음), [security policy](https://github.com/jaeseongs95/agent-governance-suite/blob/main/SECURITY.md))
-- **It does not authenticate submitted evidence or identities.** Evidence `verified` flags, auditor identities, and user-approval references are checked only for format and consistency between stages.
-- **The edit check counts only edit-tool calls.** Files changed by shell commands, files outside version control, and subagent edits are not counted, and the count restarts every turn.
-- **Message delivery state is not a work result.** ACKs and wake attempts do not prove processing or completion, and a Codex session interrupted with Esc cannot be woken until the user resumes it.
-- **The turn check does not force behavior.** Skill text the agent loaded earlier stays in the conversation and AGS cannot remove it. The subagent notice reaches only hosts with a subagent-start hook (Claude Code and Codex), not agy subagents. Delegation rules are stated in the common intake rules and the per-message notice; AGS does not inspect delegation tool calls.
-- **Verification is limited.** The 3.8.0 candidate's hook and board changes are checked by CI tests only, without real-host runs ([3.8.0 release notes draft](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/release-notes-v3.8.0.md#검증)). 3.7.0 does not change the 3.6.0 runtime code, so real-host testing still covers only the 3.6.0 comparison runs on a Linux test server; a full real-host re-measurement and dual-Cloud verification are not claimed complete. The quality evaluation of `korean-prose-editor`'s current editing policy and of the design output of the new `ui-ux-design` is also unfinished. ([3.7.0 release notes](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/release-notes-v3.7.0.md#검증), [3.6.0 release notes](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/release-notes-v3.6.0.md#검증), [roadmap](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/roadmap.md))
+- **It is not a security boundary against processes running as the same OS user.** Such a process can read or change state databases or call the MCP server directly. Checking the format and consistency of evidence, auditor identities, and approval references does not authenticate them. [Architecture](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/architecture.md#세션-메시지-저장소-broker-없음) · [Security policy](https://github.com/jaeseongs95/agent-governance-suite/blob/main/SECURITY.md)
+- **The edit check is not a filesystem-wide write monitor.** It handles supported edit tools, literal shell output redirections, and certain PowerShell writer paths. Observed child edits count in the parent session's window. It cannot discover all writes through arbitrary scripts, aliases, dynamic paths, or control flow. Files outside version control do not count toward the three-file threshold, but are checked against roots waiting for review or a user decision. An AGS infrastructure failure that prevents a check is recorded and reported rather than unconditionally blocking edits.
+- **Guidance, skill calls, and successful tool responses are separate from completed behavior.** Turn checks do not force compliance or remove previously loaded skill text. AGS states delegation rules but does not inspect every delegation call. A model request or catalog is not evidence of effective settings.
+- **Message ACKs and wake attempts are neither work results nor approvals.** Obtain the result and evidence separately. A Codex session interrupted with Esc cannot be woken until the user resumes it.
+
+### How to read verification status
+
+During 3.8 development, actual model pilots ran on Linux TEST through the official Claude Code and Codex paths. They observed real skill use, file changes, and some defect detection, while also finding **missing requirement-level cases before edits and temporary-file work outside the allowed scope**. A successful exit or CI run does not mean all behavior passed. [Claude follow-up result](v380-d36-t4-e071117f-result.ko.md) · [Work-record and consumer results](v380-qb-m23-result.ko.md) · [Multi-turn results](v380-qb-m456-result.ko.md)
+
+Results do not transfer automatically between candidates, hosts, or CLI versions. Hook output, successful MCP responses, complete model input, and actual compliance need separate evidence. These results do not establish full model-input visibility, every admission path, every host/Cloud combination, or actual print and human usability. They also do not verify the advisor's new pre-dispatch path. Evaluation of the Korean editing policy and the quality of UX outputs is not claimed complete. [3.8 work notes](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/release-notes-v3.8.0.md#검증) · [3.7 verification](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/release-notes-v3.7.0.md#검증) · [3.6 verification](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/release-notes-v3.6.0.md#검증) · [Roadmap](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/roadmap.md)
 
 ## Troubleshooting
 
 | Symptom | What to check |
 | --- | --- |
-| Skills or MCP tools are missing | Start a new session after installing, make sure the plugin and MCP are enabled, and make sure the two language packages are not both enabled in the same host. |
-| The MCP server does not start | Check that the host runs Node.js 24.0.0 or later, and read the MCP startup log. |
-| In Codex, guidance, the board, or messages do nothing | Check that you trusted the AGS hooks in `/hooks`. |
-| The agy install fails | Close the Antigravity app and install again. Install the release package, not the whole repository. |
-| An edit is refused with a request to start a workflow | Call `start_workflow` with a goal, stages, acceptance criteria, and `writeTargets`, as in the example in the refusal. |
-| `start_workflow` fails with `ROOT_CONFLICT` | Read the root and next step in `details`. Release your own root with `release_convergence_root`. |
-| An execution-observation error such as `BINDING_REQUIRED` | Look up the host's cause code in the [execution-observation contract](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/host-execution-attestation.md). |
-| Another session is missing from the board | Check that the other session's hooks run and that both hosts use the same shared-state path. |
-| A message gets no response, or only an ACK | Check status with the same `messageId` and the receiving host's wake mode. Ask for the review result in a separate message. |
-| Old behavior remains after an update | Check whether old AGS MCP or relay processes are still running, then reconnect as in the [update procedure](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/session-message-lifecycle.md#업데이트와-복구). |
+| Skills or MCP tools are missing | Start a new session after installation, enable the plugin and MCP, and make sure both language packages are not enabled together. |
+| The MCP server does not start | Check that the host runs Node.js 24.0.0 or later and inspect its MCP startup diagnostics. |
+| Guidance, the board, or messages do nothing in Codex | Review and trust the AGS hooks in `/hooks`. |
+| The agy installation fails | Close the app and install the release package, not the whole repository. |
+| An edit is refused with a workflow request | Use the refusal's `start_workflow` example with a goal, stages, acceptance criteria, and `writeTargets`. Define a separate scope for work outside an existing workflow. |
+| `ROOT_CONFLICT` prevents a start | Read the old root, state, and next step in `details`. Use `release_convergence_root` for your own root. Releasing another session's root requires its owner not to be online and a user decision. |
+| The advisor holds a dispatch for missing support information | Check current host evidence for the model and effort. Do not infer effective settings from a catalog or request. |
+| An execution-observation error such as `BINDING_REQUIRED` | Check the host-specific cause in the [execution-observation contract](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/host-execution-attestation.md). Model advice and execution eligibility are separate. |
+| A peer is missing or sends only an ACK | Check hooks, the shared-state path, and the host's wake mode. Query the same `messageId` and obtain the work result separately. |
+| Old behavior remains after an update | Check that the old AGS MCP and relay have ended, then reconnect in a new session as in the [update procedure](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/session-message-lifecycle.md#업데이트와-복구). |
 
 ## Documentation
 
