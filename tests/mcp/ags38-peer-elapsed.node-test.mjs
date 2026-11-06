@@ -9,6 +9,7 @@ import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { clearTimeout, setTimeout } from "node:timers";
 import { setTimeout as delay } from "node:timers/promises";
+import { pathToFileURL } from "node:url";
 
 // Runtime preservation tests, not a functional RED/GREEN claim for the D0022 CQS refactor.
 // Reuses hook-execution-budget.test.ts's real second-connection BEGIN IMMEDIATE fixture pattern.
@@ -158,7 +159,7 @@ test("PB06: actual shared CLI expires at its original 6500ms budget before claim
   await fixture(t, async ({ database, before, ownedLaunch }) => {
     t.diagnostic(JSON.stringify({ entrySha256: createHash("sha256").update(await readFile(entry)).digest("hex"),
       originalDeadlineMs: DEADLINE_MS, claimReserveMs: 1000, evidence: "real-clock-shared-CLI; not Claude overlay" }));
-    const cli = ownedLaunch(["--import", preload, entry, "--host=codex"]);
+    const cli = ownedLaunch(["--import", pathToFileURL(preload).href, entry, "--host=codex"]);
     const ready = await cli.phase("preload-ready");
     await bounded(delay(Math.max(0, DEADLINE_MS - ready.nowMs + 100)), CHILD_TIMEOUT_MS, "original elapsed budget");
     cli.child.stdin.end(stop);
