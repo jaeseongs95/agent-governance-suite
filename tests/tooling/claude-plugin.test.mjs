@@ -244,8 +244,8 @@ describe("generated Claude plugin", () => {
         const sharedContext = intakeHookOutput(input, "claude-code", locale).hookSpecificOutput.additionalContext;
         expect(context.hookEventName).toBe("SessionStart");
         expect(context.additionalContext).toBe(`${invocation[locale]}\n${sharedContext}`);
-        expect(context.additionalContext).toContain(locale === "ko" ? "보이지 않으면" : "not visible in this conversation");
-        expect(context.additionalContext).toContain(locale === "ko" ? "작업하기 전에" : "before working");
+        expect(context.additionalContext).toContain(locale === "ko" ? "근거와 본문이 함께 유지될 때만" : "retains both evidence of a successful read");
+        expect(context.additionalContext).toContain(locale === "ko" ? "과업 작업 전에" : "before task work");
         expect(context.additionalContext.split(installed)).toHaveLength(2);
         expect(context.additionalContext.split(skillTargetsContext(locale))).toHaveLength(2);
         expect(context.additionalContext).not.toContain(intake);

@@ -45,6 +45,29 @@ describe("shared context-start intake", () => {
     }
   });
 
+  it("uses successful retained reads rather than visibility to decide when to reread", () => {
+    const required = {
+      ko: [
+        "성공적으로 읽은 근거와 본문이 함께 유지될 때만 재읽기를 생략한다",
+        "그렇지 않거나 압축으로 근거나 본문을 잃으면",
+        "과업 작업 전에 그 절을 읽고 따른다",
+        "실패·부분 출력·다른 판본은 성공한 읽기로 세지 않는다",
+      ],
+      en: [
+        "skip rereading only while the current context retains both evidence of a successful read",
+        "and that text",
+        "Otherwise, including after either is lost to compaction",
+        "read that section before task work and follow it",
+        "Failed reads, partial output, or another revision do not count as a successful read",
+      ],
+    };
+    for (const locale of ["ko", "en"] as const) {
+      const pointer = skillIntakePointer(locale);
+      for (const fragment of required[locale]) expect(pointer).toContain(fragment);
+      expect(pointer).not.toContain(locale === "ko" ? "보이지 않으면" : "not visible in this conversation");
+    }
+  });
+
   it.each(["codex", "antigravity", "claude-code"])("the %s adapter gets the pointer and skill targets at every session start and nowhere else", (host) => {
     for (const source of SOURCES) {
       expect(intakeHookOutput({ hook_event_name: "SessionStart", source, session_id: `intake-${host}`, conversationId: `intake-${host}` }, host, "ko"))
