@@ -3,7 +3,23 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+const childRuns = vi.hoisted(() => []);
+vi.mock("node:child_process", async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, spawnSync(command, args, options) {
+    // Observe the real child without changing its argv, stdin, environment or deadline. Only this test captures stderr.
+    const observedOptions = options.stdio[2] === "ignore" ? { ...options, stdio: [options.stdio[0], options.stdio[1], "pipe"] } : options;
+    const started = performance.now();
+    const result = actual.spawnSync(command, args, observedOptions);
+    childRuns.push({ command, args, input: options.input, timeoutMs: options.timeout, elapsedMs: performance.now() - started,
+      status: result.status, signal: result.signal, error: result.error ? { code: result.error.code, message: result.error.message } : null,
+      stdout: result.stdout, stderr: result.stderr });
+    return result;
+  } };
+});
+beforeEach(() => { childRuns.length = 0; });
 
 import { executeAntigravityHookEvent } from "./antigravity-hook-runner.mjs";
 
@@ -74,9 +90,11 @@ describe("agy turn cue (behavior 6)", () => {
     // The built intake hook too: no stand-in, so the context start below is what agy really gets.
     const builtOptions = options(built);
     delete builtOptions.intakeHook;
+    const stageDiagnostics = [], started = performance.now();
     const out = await executeAntigravityHookEvent({ conversationId: SESSION, invocationNum: 0, workspacePaths: [tmpDir] },
-      "PreInvocation", "", { ...builtOptions, continuityHookPath: built });
-    expect(out.injectSteps).toHaveLength(2);
+      "PreInvocation", "", { ...builtOptions, continuityHookPath: built, writeStderr: line => stageDiagnostics.push(line) });
+    const trace = JSON.stringify({ out, elapsedMs: performance.now() - started, childRuns, stageDiagnostics });
+    expect(out.injectSteps, trace).toHaveLength(2);
     expect(Object.keys(out.injectSteps[0])).toEqual(["ephemeralMessage"]);
     const start = out.injectSteps[0].ephemeralMessage;
     const cue = out.injectSteps[1].ephemeralMessage;
