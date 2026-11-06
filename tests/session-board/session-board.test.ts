@@ -142,12 +142,50 @@ describe("U2 shared board reset", () => {
   });
 });
 
+describe("AGS3-D-0030 session role", () => {
+  const who = { host: "codex", sessionId: "role-session" };
+  it("writes the role the session was given, keeps it when a later update omits it, and refuses a malformed role", () => {
+    const board = open();
+    expect(setSummary(board, { ...who, now: at(1) }, "AGS 결함 수정", " AGS 담당 ")).toEqual({ summary: "AGS 결함 수정", summaryAt: at(1), role: "AGS 담당" });
+    expect(setSummary(board, { ...who, now: at(2) }, "다음 결함")).toEqual({ summary: "다음 결함", summaryAt: at(2), role: "AGS 담당" });
+    expect(readEntry(board, who.host, who.sessionId)).toMatchObject({ summary: "다음 결함", role: "AGS 담당" });
+    for (const bad of ["", "   ", "둘\n줄", "a\rb", "x".repeat(121), 42]) {
+      expect(() => setSummary(board, { ...who, now: at(3) }, "바뀌면 안 되는 줄", bad)).toThrow();
+    }
+    expect(readEntry(board, who.host, who.sessionId)).toMatchObject({ summary: "다음 결함", role: "AGS 담당" });
+    // A session that never wrote a role reads as none, not as an empty claim.
+    setSummary(board, { host: "codex", sessionId: "no-role", now: at(4) }, "역할 없음");
+    expect(readEntry(board, "codex", "no-role")).toMatchObject({ role: null });
+  });
+
+  it("adds the role column in place to a board an earlier 3.x wrote, keeping its rows and its format version", () => {
+    const file = boardPath();
+    const earlier = new DatabaseSync(file);
+    earlier.exec(`CREATE TABLE board_sessions (host TEXT NOT NULL, session_id TEXT NOT NULL, cwd TEXT, summary TEXT, summary_at TEXT,
+      last_prompt_at TEXT, seen_at TEXT NOT NULL, PRIMARY KEY (host, session_id)) STRICT; PRAGMA user_version = 1;`);
+    earlier.prepare("INSERT INTO board_sessions (host, session_id, summary, summary_at, seen_at) VALUES ('codex', 'kept', '3.7 line', ?, ?)").run(at(0), at(0));
+    earlier.close();
+    const board = open(file);
+    expect(board.prepare("PRAGMA user_version").get()).toEqual({ user_version: 1 });
+    expect(readEntry(board, "codex", "kept")).toMatchObject({ summary: "3.7 line", role: null });
+    expect(setSummary(board, { host: "codex", sessionId: "kept", now: at(1) }, "3.8 line", "릴리스 담당")).toMatchObject({ role: "릴리스 담당" });
+    board.close();
+    // An earlier AGS names its columns, so it still reads and writes the upgraded board.
+    const older = new DatabaseSync(file);
+    older.prepare(`INSERT INTO board_sessions (host, session_id, summary, summary_at, seen_at) VALUES ('codex', 'kept', ?, ?, ?)
+      ON CONFLICT (host, session_id) DO UPDATE SET summary = excluded.summary, summary_at = excluded.summary_at, seen_at = excluded.seen_at`)
+      .run("older writer", at(2), at(2));
+    older.close();
+    expect(readEntry(open(file), "codex", "kept")).toMatchObject({ summary: "older writer", role: "릴리스 담당" });
+  });
+});
+
 describe("U3/U4 summary and retention rules", () => {
   const who = { host: "claude-code", sessionId: "s1" };
   it("accepts one bounded line and reports staleness only against an observed prompt", () => {
     const board = open();
     for (const bad of ["", "   ", "둘\n줄", "a\rb", "x".repeat(201), 42]) expect(() => setSummary(board, { ...who, now: at(0) }, bad)).toThrow();
-    expect(setSummary(board, { ...who, now: at(1) }, ` ${"x".repeat(200)} `)).toEqual({ summary: "x".repeat(200), summaryAt: at(1) });
+    expect(setSummary(board, { ...who, now: at(1) }, ` ${"x".repeat(200)} `)).toEqual({ summary: "x".repeat(200), summaryAt: at(1), role: null });
     // No prompt observed (e.g. a host without a prompt hook): unknown, never false.
     expect(readEntry(board, who.host, who.sessionId)).toMatchObject({ summaryStale: null, lastPromptAt: null, cwd: null });
     recordInput(board, { ...who, cwd: "/work/a", now: at(2) }, { prompt: true });
@@ -289,7 +327,7 @@ describe("U7/U8 MCP board tools", () => {
     const databasePath = boardPath();
     const board = open(databasePath);
     setSummary(board, { host: "claude-code", sessionId: "gone", now: at(29) }, "끝난 세션의 줄");
-    setSummary(board, { host: "claude-code", sessionId: "worker", now: at(28) }, "릴리스 준비");
+    setSummary(board, { host: "claude-code", sessionId: "worker", now: at(28) }, "릴리스 준비", "릴리스 담당");
     recordInput(board, { host: "claude-code", sessionId: "worker", cwd: null, now: at(29) }, { prompt: true });
     board.close();
 
@@ -305,7 +343,7 @@ describe("U7/U8 MCP board tools", () => {
       host: "claude-code", sessionId: "worker", current: false, presence: "online",
       startedAt: new Date(T - 2000).toISOString(), lastSeenAt: new Date(T - 2000).toISOString(),
       cwd: path.join(repo, "src"), repo: { root: repo, repoId: realpathSync(path.join(repo, ".git")), branch: "main" },
-      summary: "릴리스 준비", summaryAt: at(28), summaryStale: true, lastPromptAt: at(29),
+      summary: "릴리스 준비", summaryAt: at(28), role: "릴리스 담당", summaryStale: true, lastPromptAt: at(29),
       wake: { state: "unsupported", reason: "no-idle-wake" },
     });
   });
@@ -333,7 +371,15 @@ describe("U7/U8 MCP board tools", () => {
     const databasePath = boardPath();
     const { client } = await connect(databasePath, presenceStore());
     const written = await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "현황판 구현" });
-    expect(written).toMatchObject({ ok: true, data: { summary: "현황판 구현", summaryAt: expect.any(String) } });
+    expect(written).toMatchObject({ ok: true, data: { summary: "현황판 구현", summaryAt: expect.any(String), role: null } });
+    // AGS3-D-0030: the session writes the role its user gave it; a later summary keeps it, a malformed role is refused.
+    expect(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "결함 수정", role: "AGS 담당" }))
+      .toMatchObject({ ok: true, data: { summary: "결함 수정", role: "AGS 담당" } });
+    for (const role of ["", "   ", "둘\n줄", "x".repeat(121)]) {
+      expect(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "거절될 줄", role })).toMatchObject({ ok: false });
+    }
+    expect(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "현황판 구현" }))
+      .toMatchObject({ ok: true, data: { summary: "현황판 구현", role: "AGS 담당" } });
     const board = open(databasePath);
     expect(readEntry(board, self.host, self.sessionId)).toMatchObject({ summary: "현황판 구현" });
     // A child acts in its root session's name (session binding 2.1): it writes the root's line, never one of its own.
