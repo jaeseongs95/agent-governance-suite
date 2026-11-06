@@ -25,7 +25,7 @@ const paths = [
   "README.md", "SKILL.md", "classification.json",
   "contracts/mutation-intent.v1.schema.json", "contracts/mutation-preflight-report.v1.schema.json",
   "integration/skill-descriptor.json", "references/entry-details.md",
-  "references/recovery-requirements.md", "scripts/evaluate-preflight.mjs",
+  "references/recovery-requirements.md",
 ].map((path) => `skills/mutation-risk-preflight/${path}`);
 
 test("exact expiry-removal, platform-events and private-preparation successors preserve the historical chain", () => {
@@ -71,7 +71,7 @@ test("current specialist guidance preserves exact preflight predecessors and rej
     const current = readFileSync(new URL(`../../${path}`, import.meta.url));
     const predecessor = execFileSync("git", ["show", `${preBehaviorRevision}:${path}`], { cwd: root });
     const altered = Buffer.concat([current, Buffer.from("\n")]);
-    // Reviewed i18n script bytes stand for their exact predecessor by digest (SCRIPT_I18N_SUCCESSOR); others compare as bytes.
+    // Only context and contract bytes belong to this historical projection.
     assert.equal(pinnedDigest(path, beforeSpecialistBehaviorSuccessor(path, current)),
       createHash("sha256").update(predecessor).digest("hex"), path);
     assert.deepEqual(beforeSpecialistBehaviorSuccessor(path, altered), altered, path);
@@ -84,6 +84,19 @@ test("current specialist guidance preserves exact preflight predecessors and rej
       assert.equal(matcher(path, altered), false, path);
     }
   }
+});
+
+test("executable changes have no context successor projection (D0026)", () => {
+  const path = "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs";
+  const current = readFileSync(new URL(`../../${path}`, import.meta.url));
+  const predecessor = execFileSync("git", ["show", `${preBehaviorRevision}:${path}`], { cwd: root });
+  for (const bytes of [current, predecessor, Buffer.concat([current, Buffer.from("\n// runtime-only change\n")])]) {
+    assert.equal(pinnedDigest(path, bytes), createHash("sha256").update(bytes).digest("hex"));
+    for (const matcher of [matchesPreflightExpiryRemovalSuccessor, matchesPreflightPlatformEventsSuccessor, matchesPreflightPrivatePreparationSuccessor]) {
+      assert.equal(matcher(path, bytes), false);
+    }
+  }
+  // The public checker plus source-lock mutation is exercised in skill-context-optimization.test.mjs.
 });
 
 test("existing additive pins remain valid after the exact successor projection", () => {

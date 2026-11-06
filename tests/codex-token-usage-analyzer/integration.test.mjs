@@ -129,7 +129,7 @@ describe("codex-token-usage-analyzer integration", () => {
   it.each([
     { scenario: "complete", verdict: "PASS", partialReasons: [] },
     { scenario: "corrupt-row", verdict: "PARTIAL", partialReasons: ["손상되거나 객체가 아닌 JSONL 행"] },
-    { scenario: "missing-usage", verdict: "PARTIAL", partialReasons: ["token_usage_record 미관측"] },
+    { scenario: "missing-usage", verdict: "PARTIAL", partialReasons: ["token_count 미관측"] },
   ])("records and finalizes an unmodified no-Markdown $scenario provider result", async ({ scenario, verdict, partialReasons }) => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "suite-token-workflow-"));
     temporaryDirectories.push(directory);

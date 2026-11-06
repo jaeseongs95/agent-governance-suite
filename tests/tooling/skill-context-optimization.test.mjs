@@ -144,6 +144,10 @@ describe("skill context optimization", () => {
   ])("accepts an ordinary code-only edit while source-lock still detects it: %s", async relative => {
     const fs = await import("node:fs");
     const promises = await import("node:fs/promises");
+    const { computeDirectoryChecksum } = await import("../../scripts/lib.mjs");
+    const owner = relative.split("/")[1];
+    const directory = fileURLToPath(new URL(`../../skills/${owner}`, import.meta.url));
+    const originalChecksum = await computeDirectoryChecksum(directory);
     const changed = value => typeof value === "string" ? `${value}\n// D0358: 코드 동작과 문맥을 바꾸지 않는 주석\n` : Buffer.concat([value, Buffer.from("\n// D0358: 코드 동작과 문맥을 바꾸지 않는 주석\n")]);
     const matches = file => String(file).replaceAll("\\", "/").endsWith(`/${relative}`);
     vi.doMock("node:fs", () => ({ ...fs, readFileSync: (file, ...args) => {
@@ -159,9 +163,10 @@ describe("skill context optimization", () => {
       expect(report).toMatchObject({ pass: true, errors: [] });
       expect(checker.readHistoricalSource(relative)).toEqual(changed(fs.readFileSync(new URL(`../../${relative}`, import.meta.url))));
       expect(report).toMatchObject({ scope: "skill-context-only", authorityEffect: "none" });
+      const modifiedChecksum = await (await import("../../scripts/lib.mjs")).computeDirectoryChecksum(directory);
+      expect(modifiedChecksum).not.toBe(originalChecksum);
       const { verifySourceLockOffline } = await import("../../scripts/source-lock.mjs");
-      const owner = relative.split("/")[1];
-      expect((await verifySourceLockOffline()).some(error => error.startsWith(`integrated checksum mismatch for ${owner}:`))).toBe(true);
+      expect((await verifySourceLockOffline()).some(error => error.startsWith(`integrated checksum mismatch for ${owner}:`) && error.endsWith(`actual ${modifiedChecksum}`))).toBe(true);
     } finally {
       vi.doUnmock("node:fs"); vi.doUnmock("node:fs/promises"); vi.resetModules();
     }
