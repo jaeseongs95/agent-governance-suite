@@ -114,7 +114,10 @@ def main(root):
                         pending.extend(int(p) for p in (proc / "task" / str(pid) / "children").read_text().split())
                         args_bytes = (proc / "cmdline").read_bytes().split(b"\0")
                         script = str(target / "mcp-server/dist/server.mjs")
-                        if script.encode() in args_bytes:
+                        server_arg = script.encode() in args_bytes or (
+                            b"mcp-server/dist/server.mjs" in args_bytes and (proc / "cwd").resolve() == target.resolve()
+                        )
+                        if server_arg:
                             birth = (proc / "stat").read_text().rsplit(")", 1)[1].split()[19]
                             observed_servers[pid] = {"pid": pid, "birth": birth, "script": script}
                     except (FileNotFoundError, ProcessLookupError):
