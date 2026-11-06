@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "ui-ux-fixture-01",
+  "mode": "design",
+  "objective": "Design a Korean session list that opens the selected conversation without losing the user's position.",
+  "snapshotRef": "fixture:session-list-design-r1",
+  "surface": "desktop",
+  "targets": ["session-list"],
+  "constraints": ["Preserve the existing design tokens and Korean UI.", "Use the designated test server for execution."],
+  "evidenceRefs": []
+}

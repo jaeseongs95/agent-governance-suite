@@ -434,7 +434,11 @@ it("rebinds all 215 spans from pinned main to valid current UTF-8 evidence and t
     .filter(entry => entry.isDirectory()).map(entry => `skills/${entry.name}/classification.json`).sort();
   const retiredIds: string[] = retire.retiredSkills.map((row: {skillId: string}) => row.skillId);
   for (const skillId of retiredIds) expect(liveDescriptorPaths).not.toContain(`skills/${skillId}/classification.json`);
-  const descriptorPaths = [...liveDescriptorPaths, ...retiredIds.map(skillId => `skills/${skillId}/classification.json`)].sort();
+  // UI/UX was added after this frozen snapshot. Check its live classification in
+  // ui-ux-design-registry-compatibility.test.mjs; keep all 26 historical pins intact.
+  // The current inventory comparison below still includes the new skill.
+  const descriptorPaths = [...liveDescriptorPaths.filter(file => file !== "skills/ui-ux-design/classification.json"),
+    ...retiredIds.map(skillId => `skills/${skillId}/classification.json`)].sort();
   expect(specialist.sourceInventory.skillCount).toBe(26);
   expect(specialist.sourceInventory.referenceCount).toBe(215);
   expect(specialist.sourceInventory.descriptorFiles.map((pin: SourcePin) => pin.path)).toEqual(descriptorPaths);

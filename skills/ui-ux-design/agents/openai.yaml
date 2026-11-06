@@ -1,0 +1,6 @@
+interface:
+  display_name: "UI/UX 설계"
+  short_description: "사용자 흐름과 실제 화면을 설계·개선하고 접근성·상태·성능을 검토"
+  default_prompt: "$ui-ux-design을 사용해 현재 제품의 UI/UX를 설계하거나 개선하고, 사용자 흐름과 실제 검증 범위를 알려줘."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "ui-ux-fixture-01",
+  "snapshotRef": "fixture:session-list-design-r1",
+  "mode": "design",
+  "status": "ANALYZED",
+  "summary": "A synthetic design result, with runtime verification explicitly not performed.",
+  "scope": { "reviewed": ["session-list"], "notReviewed": [] },
+  "deliverables": [
+    {
+      "kind": "design",
+      "target": "session-list",
+      "content": "Show recent sessions first, load older pages on demand, retain nearby rows, and restore the selected session and scroll anchor. Distinguish loading, empty, failed and complete states. Keep keyboard focus on the selected row and preserve draft input when returning from a conversation.",
+      "ref": null
+    }
+  ],
+  "findings": [],
+  "checks": [
+    {
+      "id": "visual-01",
+      "kind": "visual",
+      "scope": "session-list layout in the desktop window",
+      "status": "NOT_RUN",
+      "environment": null,
+      "evidenceRefs": [],
+      "detail": "This contract fixture does not launch or observe a UI."
+    }
+  ],
+  "limitations": ["Synthetic fixture only; no visual, interaction, accessibility or performance verification was performed."],
+  "handoffs": ["Apply the design through the existing authorized implementation flow."]
+}

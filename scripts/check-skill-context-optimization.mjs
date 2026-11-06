@@ -267,6 +267,10 @@ const SPECIALIST_BEHAVIOR_SUCCESSOR = Object.freeze({
   }),
 });
 const SPECIALIST_BEHAVIOR_REFERENCE = "skills/independent-audit-gate/references/specialist-behavior.md";
+// These skills were added after the frozen 26-skill behavior snapshot. Their own
+// source lock and integration tests cover them; do not rewrite the historical pins
+// or exempt arbitrary future directories from this historical inventory check.
+const POST_SNAPSHOT_SPECIALISTS = Object.freeze(["ui-ux-design"]);
 
 /** Read-only source-validation metadata, not a runtime skill selector or approval. */
 export function getSpecialistBehaviorSuccessor() {
@@ -333,6 +337,7 @@ export function checkSpecialistBehaviorSources() {
     }
   }
   const actualEntries = skillDirectoryNames()
+    .filter(name => !POST_SNAPSHOT_SPECIALISTS.includes(name))
     .flatMap(name => {
       const relative = `skills/${name}/SKILL.md`;
       try { readFileSync(join(root, relative)); return [relative]; }
@@ -358,7 +363,8 @@ export function checkSpecialistBehaviorSources() {
     ...projectRetiredChanges(SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision,
       git("diff", "--name-only", SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, "--", "skills").toString("utf8").trim().split(/\r?\n/u)),
     ...git("ls-files", "--others", "--exclude-standard", "--", "skills").toString("utf8").trim().split(/\r?\n/u),
-  ].filter(relative => /^skills\/[^/]+\/.+\.(?:md|ya?ml)$/iu.test(relative) || /^skills\/[^/]+\/classification\.json$/u.test(relative)));
+  ].filter(relative => /^skills\/[^/]+\/.+\.(?:md|ya?ml)$/iu.test(relative) || /^skills\/[^/]+\/classification\.json$/u.test(relative))
+    .filter(relative => !POST_SNAPSHOT_SPECIALISTS.some(id => relative.startsWith(`skills/${id}/`))));
   const projectsToBaseline = relative => guidanceSuccessor(relative) !== undefined
     && readFileSync(join(root, relative)).equals(git("show", `${SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision}:${relative}`));
   for (const relative of contextChanges) {

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/skills/ui-ux-design/contracts/ui-ux-design-request.v1.schema.json",
+  "title": "UiUxDesignRequest.v1",
+  "description": "Optional formal design/review input. This snapshot does not grant mutation or release authority. A new design may have no existing screen or evidence references.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "mode", "objective", "snapshotRef", "surface", "targets", "constraints", "evidenceRefs"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "requestId": { "$ref": "#/$defs/text" },
+    "mode": { "enum": ["design", "review"] },
+    "objective": { "$ref": "#/$defs/text" },
+    "snapshotRef": { "$ref": "#/$defs/text" },
+    "surface": { "enum": ["web", "desktop", "mobile", "cross-platform"] },
+    "targets": { "$ref": "#/$defs/textList", "minItems": 1 },
+    "constraints": { "$ref": "#/$defs/textList" },
+    "evidenceRefs": { "$ref": "#/$defs/textList" }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "textList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } }
+  }
+}

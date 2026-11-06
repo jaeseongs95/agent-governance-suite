@@ -10,7 +10,7 @@ Agent Governance Suite (AGS) is a local plugin for Claude Code, Codex, and Antig
 
 | Component | What it does |
 | --- | --- |
-| 23 specialist skills | Each owns one kind of judgment: task contracts, risk preflight, acceptance evidence, independent audit, failure diagnosis, code review, security audit, and more. |
+| 24 specialist skills | Each owns one kind of judgment: task contracts, risk preflight, acceptance evidence, independent audit, failure diagnosis, code review, security audit, and more. |
 | `orchestrator` | Picks the specialist skills a task needs and connects their order, inputs, and outputs. |
 | Local MCP server | Checks workflow plans, stage results, and completion conditions, and provides the work-record, board, and messaging tools. The host starts it on demand; no port or always-on daemon is needed. |
 | Host hooks | Add guidance, record observations, and deliver messages at session start, on each user message, around tool calls, and at turn end. |
@@ -134,7 +134,7 @@ If a message does not arrive, check `get_session_message_status` with the same `
 
 ## Skills
 
-Versions and provenance of the 23 specialist skills follow the [registry](skills/registry.json) and the [source lock](skills/source-lock.json). Two more skills ship with them: [`orchestrator`](skills/orchestrator/), which connects the flow, and [`session-board`](skills/session-board/), which explains how to use the board. Work records are handled by MCP tools (`checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`) and hooks, not by a skill.
+Versions and provenance of the 24 specialist skills follow the [registry](skills/registry.json) and the [source lock](skills/source-lock.json). Two more skills ship with them: [`orchestrator`](skills/orchestrator/), which connects the flow, and [`session-board`](skills/session-board/), which explains how to use the board. Work records are handled by MCP tools (`checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`) and hooks, not by a skill.
 
 | Skill | Source | Version | What it does |
 | --- | --- | --- | --- |
@@ -155,6 +155,7 @@ Versions and provenance of the 23 specialist skills follow the [registry](skills
 | [`cs-engineering`](skills/cs-engineering/) | AGS | 0.2.0 | Applies CS principles to concurrency, database, messaging, algorithm, and performance problems as invariants and verification duties. |
 | [`solid-design`](skills/solid-design/) | AGS | 0.1.0 | Applies SOLID to real module, contract, and adapter boundaries and proposes the smallest change. |
 | [`prompt-engineering`](skills/prompt-engineering/) | AGS | 0.1.0 | Designs and diagnoses LLM prompts, instructions, and input templates and builds comparison cases. |
+| [`ui-ux-design`](skills/ui-ux-design/) | AGS | 0.1.0 | Designs and reviews user flows, screens and interactions, accessibility, state and error handling, and large-list display on web, desktop, and mobile. |
 | [`test-engineering`](skills/test-engineering/) | AGS | 0.1.0 | Designs test cases at requirement and code boundaries and checks that they catch defects. |
 | [`code-review`](skills/code-review/) | AGS | 0.1.0 | Reviews a fixed diff or PR for real failure paths and separates defects, recommendations, and questions. |
 | [`software-security-auditor`](skills/software-security-auditor/) | AGS | 0.1.0 | Audits attack paths, controls, and coverage gaps in web/API and CLI/MCP code. |

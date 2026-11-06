@@ -10,9 +10,10 @@ const BASELINE_DIGEST = "4b470ad0e10d748d59b359aaa96e1c81653e748e4a272cc3bf96ab1
 const digest = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 // Preserve the original 22-descriptor oracle; only the approved preflight
 // version successor is projected, so every other field still affects its hash.
+// Later additive specialists are excluded explicitly without rewriting that oracle.
 const historicalRegistry = (registry) => ({
   ...registry,
-  skills: registry.skills.filter((entry) => entry.skillId !== "prompt-engineering").map((entry) =>
+  skills: registry.skills.filter((entry) => !["prompt-engineering", "ui-ux-design"].includes(entry.skillId)).map((entry) =>
     entry.skillId === "mutation-risk-preflight" && entry.version === "1.0.3"
       ? { ...entry, version: "1.0.1" } : entry),
 });

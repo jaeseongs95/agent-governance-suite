@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "design-user-interfaces",
+    "review-user-flows",
+    "diagnose-interaction-problems",
+    "improve-ui-accessibility",
+    "plan-ui-implementation"
+  ],
+  "targets": [
+    "web-interface",
+    "desktop-interface",
+    "mobile-interface",
+    "user-flow",
+    "interaction-state",
+    "responsive-layout",
+    "large-list-rendering"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/ui-ux-design/SKILL.md",
+      "startLine": 4,
+      "endLine": 5,
+      "digest": "sha256:09d96ba1143421d60731d8802426c07cf787c4c19d76a532be9d4afa2d374360"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/ui-ux-design/SKILL.md",
+      "startLine": 6,
+      "endLine": 6,
+      "digest": "sha256:09d96ba1143421d60731d8802426c07cf787c4c19d76a532be9d4afa2d374360"
+    }
+  ]
+}

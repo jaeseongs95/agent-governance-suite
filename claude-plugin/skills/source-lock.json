@@ -215,6 +215,15 @@
       "updatePolicy": "internal",
       "integratedChecksum": "sha256:e3e2b4748731ee6abf130f8c6b468ac2327cb6c22dd0627e064559b483a8bda7",
       "checksumScope": "relative paths and normalized text bytes under skills/prompt-engineering"
+    },
+    {
+      "skillId": "ui-ux-design",
+      "path": "skills/ui-ux-design",
+      "version": "0.1.0",
+      "versionSource": "version-file",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:4888b22bbd3557a4383f27e0f32234e62ff4ce4145722fb039bc81c4822b32b2",
+      "checksumScope": "relative paths and normalized text bytes under skills/ui-ux-design"
     }
   ]
 }
