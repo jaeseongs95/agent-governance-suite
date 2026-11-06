@@ -1,7 +1,7 @@
 // Measures the text one plugin tree hands the model through its hooks, outside any host:
 //   node measure-hooks.mjs <claude|codex> <pluginRoot> <outFile>
-// It reads the tree's own hooks.json, runs every command registered for SessionStart (startup, resume, compact) and for
-// UserPromptSubmit (one call per turn of tasks.mjs) with a made-up payload, and counts characters. The state is a
+// It reads the tree's own hooks.json and measures synchronous SessionStart (startup, resume, compact) and
+// UserPromptSubmit commands with made-up payloads. Async registrations remain explicitly unmeasured. The state is a
 // temporary folder. This measures source output, not host wrapping, model input or tokens.
 // Raw stdout/context files beside outFile preserve bytes and allow list/payload comparisons.
 import { spawnSync } from "node:child_process";
@@ -19,7 +19,8 @@ const output = path.resolve(outFile);
 const outputs = `${output}.outputs`;
 if (existsSync(output) || existsSync(outputs)) throw new Error("Measurement output already exists; use a fresh outFile");
 const hooksFile = path.join(root, "hooks", "hooks.json");
-const registered = JSON.parse(readFileSync(hooksFile, "utf8")).hooks;
+const hooksBytes = readFileSync(hooksFile);
+const registered = JSON.parse(hooksBytes.toString("utf8")).hooks;
 mkdirSync(path.dirname(output), { recursive: true });
 mkdirSync(outputs);
 const tmp = mkdtempSync(path.join(tmpdir(), "cue-ab-hooks-"));
@@ -49,11 +50,16 @@ function contextOutput(stdout) {
 /** Every command registered for the event whose matcher accepts `matcherInput`, run once with `payload`. */
 function fire(event, matcherInput, payload) {
   const rows = [];
-  for (const entry of registered[event] ?? []) {
+  for (const [entryIndex, entry] of (registered[event] ?? []).entries()) {
     if (entry.matcher && matcherInput !== undefined && !new RegExp(entry.matcher, "u").test(matcherInput)) continue;
-    for (const hook of entry.hooks ?? []) {
+    for (const [hookIndex, hook] of (entry.hooks ?? []).entries()) {
       if (hook.type && hook.type !== "command") continue;
       const label = String(hook.args?.[0] ?? hook.command).match(/([\w-]+)\.mjs/u)?.[1] ?? String(hook.command);
+      if (hook.async === true) {
+        rows.push({ hook: label, measurement: "NOT_MEASURED_ASYNC", registration: { entryIndex, hookIndex, entry },
+          reason: "Registered async lifetime is outside synchronous source-output measurement; command not executed" });
+        continue;
+      }
       const input = JSON.stringify(payload);
       const started = Date.now();
       const run = host === "claude"
@@ -71,16 +77,18 @@ function fire(event, matcherInput, payload) {
       const contextBytes = context.text == null ? null : Buffer.from(context.text, "utf8");
       const rowFailed = run.status !== 0 || Boolean(run.error) || context.status.startsWith("INVALID_");
       failed ||= rowFailed;
-      rows.push({ hook: label, exit: run.status, signal: run.signal, errorCode: run.error?.code ?? null, failed: rowFailed, ms,
+      rows.push({ hook: label, measurement: "MEASURED_SYNC", exit: run.status, signal: run.signal, errorCode: run.error?.code ?? null, failed: rowFailed, ms,
         stdoutChars: text.length, stdoutCodePoints: [...text].length, stdoutBytes: stdout.length,
         contextChars: context.text?.length ?? 0, contextCodePoints: [...(context.text ?? "")].length, contextBytes: contextBytes?.length ?? 0,
         contextStatus: context.status, stderrChars: stderr.toString("utf8").length, stderrBytes: stderr.length,
         stdout: save("stdout", stdout), stderr: save("stderr", stderr), context: contextBytes == null ? null : save("context.txt", contextBytes) });
     }
   }
-  return { event, supported: rows.length > 0, rows, stdoutChars: rows.reduce((n, row) => n + row.stdoutChars, 0),
-    stdoutBytes: rows.reduce((n, row) => n + row.stdoutBytes, 0), contextChars: rows.reduce((n, row) => n + row.contextChars, 0),
-    contextBytes: rows.reduce((n, row) => n + row.contextBytes, 0) };
+  const measured = rows.filter(row => row.measurement === "MEASURED_SYNC");
+  const notMeasuredAsync = rows.length - measured.length;
+  const sum = field => measured.length === 0 && notMeasuredAsync > 0 ? null : measured.reduce((n, row) => n + row[field], 0);
+  return { event, supported: rows.length > 0, rows, measuredSync: measured.length, notMeasuredAsync,
+    stdoutChars: sum("stdoutChars"), stdoutBytes: sum("stdoutBytes"), contextChars: sum("contextChars"), contextBytes: sum("contextBytes") };
 }
 
 const base = (sessionId, name, extra) => ({
@@ -89,9 +97,9 @@ const base = (sessionId, name, extra) => ({
   ...extra,
 });
 
-const result = { host, pluginRoot: root, hooksFile, locale: env.AGENT_GOVERNANCE_LOCALE ?? null,
+const result = { host, pluginRoot: root, hooksFile, hooksSha256: digest(hooksBytes), locale: env.AGENT_GOVERNANCE_LOCALE ?? null,
   localeScope: "passed AGENT_GOVERNANCE_LOCALE; null means unset/default", characterUnit: "UTF-16 code units (String.length)",
-  measurementScope: "source output with synthetic inputs; no native/model wrapping or tokens", sessionStart: {}, userPromptSubmit: [] };
+  measurementScope: "synchronous source output only; async NOT_MEASURED_ASYNC; no native/model wrapping or tokens", sessionStart: {}, userPromptSubmit: [] };
 try {
   for (const source of ["startup", "resume", "compact"]) {
     result.sessionStart[source] = fire("SessionStart", source, base(randomUUID(), "SessionStart", { source }));
