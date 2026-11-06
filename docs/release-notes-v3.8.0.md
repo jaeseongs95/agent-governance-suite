@@ -111,7 +111,8 @@
 ## 검증
 
 - 로컬 정적 검사(이 PC): `corepack pnpm build`, `node scripts/check-bundle.mjs`, `node scripts/check-skill-context-optimization.mjs`, `node scripts/validate-repository.mjs`, `node scripts/run-python-validations.mjs`, `node scripts/check-source-lock.mjs`, `node scripts/i18n.mjs --check`, `node scripts/sync-release-metadata.mjs`, `node scripts/build-claude-plugin.mjs --check`, `node scripts/build-en-packages.mjs --check`, `eslint .`, `git diff --check`가 모두 종료 0이었다. vitest는 이 PC에서 돌리지 않았다.
-- CI(Linux·Windows, Node 24) 결과는 후보 커밋과 함께 아래에 적는다.
+- CI(Linux·Windows, Node 24): 코드 변경을 모두 담은 0b1aa299에서 run 42153692286이 두 job 모두 success였다. 문서만 바꾼 최종 후보 커밋의 CI는 부모가 후보를 고정할 때 함께 적는다.
+- 수정 전 실패 확인(red): 3.7.0 기준 4849bdd4에 이번 회귀 시험만 얹은 시험 브랜치 `test/v380-red-20261106`(7b75fef0)에서 CI run 42153760723이 두 job 모두 failure였다. 실패한 시험 파일은 아래 네 개의 새 시험·고친 시험 파일뿐이다(4 failed, 156 passed). 이 브랜치에서는 3.7.0의 `setSummary` 타입이 인자 세 개만 받아 tsc가 멈추므로, 시험 쪽에서만 타입 없는 별칭으로 실제 함수를 불렀다.
 - 넣은 회귀 시험:
   - `tests/context-continuity/d0001-subagent-start-cue.test.ts`: Claude Code·Codex 입력 모양의 `SubagentStart`가 안내를 받는지, child로 관측되는지, 상태 DB 없이도 안내가 나가는지, 두 hook 설정에 등록됐는지, Codex 한도가 안내 전체를 담는지를 확인한다.
   - `tests/context-continuity/phase-check.test.ts`: 단계 확인 알림이 최신 run의 `runId`와 `rootId`를 싣는지 확인한다.
