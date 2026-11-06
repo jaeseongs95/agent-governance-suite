@@ -178,17 +178,16 @@ test("AGS38 Windows startup discriminators retain original 10s child deadlines",
     });
   } catch (error) {
     primary = error;
-    throw error;
-  } finally {
-    observation("HR-CLEANUP", "cleanup", "enter", started);
-    try {
-      assert.equal(path.dirname(cleanRoot), path.resolve(tmpdir()));
-      assert.ok(path.basename(cleanRoot).startsWith("ags38-host-runtime-"));
-      await rm(cleanRoot, { recursive: true, force: true });
-      observation("HR-CLEANUP", "cleanup", "complete", started);
-    } catch (error) {
-      if (primary) throw new AggregateError([primary, error], "Startup discriminator and cleanup failed", { cause: primary });
-      throw error;
-    }
   }
+  observation("HR-CLEANUP", "cleanup", "enter", started);
+  try {
+    assert.equal(path.dirname(cleanRoot), path.resolve(tmpdir()));
+    assert.ok(path.basename(cleanRoot).startsWith("ags38-host-runtime-"));
+    await rm(cleanRoot, { recursive: true, force: true });
+    observation("HR-CLEANUP", "cleanup", "complete", started);
+  } catch (error) {
+    if (primary) throw new AggregateError([primary, error], "Startup discriminator and cleanup failed", { cause: error });
+    throw error;
+  }
+  if (primary) throw primary;
 });

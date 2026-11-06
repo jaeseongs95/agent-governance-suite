@@ -8,6 +8,7 @@ const root = path.resolve(import.meta.dirname, "../..");
 
 it("starts the actual model-policy MCP bundle in the installed layout without bundle-relative contracts", async () => {
   const cleanRoot = await mkdtemp(path.join(tmpdir(), "ags-model-policy-bundle-"));
+  let primary;
   try {
     await mkdir(path.join(cleanRoot, "mcp-server/dist"), { recursive: true });
     await Promise.all([
@@ -44,10 +45,17 @@ it("starts the actual model-policy MCP bundle in the installed layout without bu
     expect(replies.find(reply => reply.id === 2)?.result?.tools).toEqual(expect.arrayContaining([
       expect.objectContaining({ name: "plan_workflow" }),
     ]));
-  } finally {
+  } catch (error) {
+    primary = error;
+  }
+  try {
     if (path.dirname(cleanRoot) !== path.resolve(tmpdir()) || !path.basename(cleanRoot).startsWith("ags-model-policy-bundle-")) {
       throw new Error("Unexpected model-policy clean-room cleanup path");
     }
     await rm(cleanRoot, { recursive: true, force: true });
+  } catch (error) {
+    if (primary) throw new AggregateError([primary, error], "Bundle startup and cleanup failed", { cause: error });
+    throw error;
   }
+  if (primary) throw primary;
 }, 30_000);
