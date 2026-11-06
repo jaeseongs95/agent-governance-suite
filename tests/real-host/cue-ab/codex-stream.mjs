@@ -112,9 +112,13 @@ try {
     });
     if (spec.compactAfter) {
       await deadline(async () => {
+        // A prior automatic compaction is not proof that this explicit boundary completed.
+        notifications.length = 0;
         await request("thread/compact/start", { threadId });
-        await notification("item/completed", params => params.threadId === threadId && params.item?.type === "contextCompaction");
-        await notification("turn/completed", params => params.threadId === threadId);
+        const compacted = await notification("item/completed", params => params.threadId === threadId && params.item?.type === "contextCompaction");
+        if (!compacted.turnId) throw new Error("compaction item has no turn id");
+        const done = await notification("turn/completed", params => params.threadId === threadId && params.turn?.id === compacted.turnId);
+        if (done.turn.status !== "completed") throw new Error(`compaction ended ${done.turn.status}`);
       });
     }
     rows.push({ turn: turnNumber, id: spec.id, exit: 0, seconds: (Date.now() - started) / 1000 });
