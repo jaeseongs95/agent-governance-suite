@@ -29,11 +29,11 @@ old/new 각각 서로 다른 자기 TEST 절대경로에 지정한다. HOME과 �
 
 | 사례 | 전제·입력·절차 | 예상 결과·실패 기준 | 실제 |
 | --- | --- | --- | --- |
-| MG01 원경로 | 구형 패키지를 공식 validate/install하고 새 프로젝트에서 구 서버의 `get_skill_inventory {}`를 호출한다. | 설치가 실제 old key를 선언하고 native discovery/자기 tool schema 또는 호출이 old 경로를 증명한다. 단순 파일 생성은 native 재현이 아니다. 미노출·호출 실패는 원오류 보존. | NOT_RUN |
-| MG02 같은 이름 갱신 | MG01 뒤 후보를 `agy plugin install <후보>`로 덮어 설치한다. 새 프로젝트에서 공개 discovery와 `get_skill_inventory {}`를 확인한다. | 등록 old key 0·ags 1, 후보가 광고하는 도구 집합과 native 노출 도구가 일치, 실제 호출 DONE 및 비오류 응답. 옛 캐시 잔류·옛 프로세스 잔류·실제 서버 중복을 별도 기록한다. | NOT_RUN |
-| MG03 공식 재등록 | 원경로가 실패한 경우 official uninstall→validate/install로 대조한다. | 같은 키·도구·실호출 oracle을 만족해야 한다. 새 설치 PASS만으로 MG02를 PASS로 바꾸지 않는다. 실행 중 옛 앱의 hot reload는 새 세션 성공과 구분한다. | NOT_RUN |
-| MG04 실패·복구 | 정상 설치의 공개 파일 hash/등록을 기록하고 잘못된 후보를 공식 validate/install에 전달한다. 정상 후보로 복구한다. | 잘못된 후보가 성공하지 않고, 기존 상태 보존 여부·원오류를 기록한다. 복구 뒤 ags 1·old 0·정상 도구 호출. 복구용 무제한 retry나 프로세스 전체 kill은 없다. | NOT_RUN |
-| MG05 종료 | 각 모델·소유 자손 terminal 확인, 자기 설치만 공식 제거하고 전후 목록 비교. | 최초 plugin 목록과 같고 자기 프로세스 0. 캐시 정리 지원 여부와 최종 자기 cache 자료 위치를 분리한다. 원인 불명 종료는 cleanup PASS가 아니다. | NOT_RUN |
+| MG01 원경로 | 구형 패키지를 공식 validate/install하고 새 프로젝트에서 구 서버의 `get_skill_inventory {}`를 호출한다. | 설치가 실제 old key를 선언하고 native discovery/자기 tool schema 또는 호출이 old 경로를 증명한다. 단순 파일 생성은 native 재현이 아니다. 미노출·호출 실패는 원오류 보존. | 구형 등록·old namespace DONE1·응답 ok/스킬26. CLI cache31개. |
+| MG02 같은 이름 갱신 | MG01 뒤 후보를 `agy plugin install <후보>`로 덮어 설치한다. 새 프로젝트에서 공개 discovery와 `get_skill_inventory {}`를 확인한다. | 등록 old key 0·ags 1, 후보가 광고하는 도구 집합과 native 노출 도구가 일치, 실제 호출 DONE 및 비오류 응답. 옛 캐시 잔류·옛 프로세스 잔류·실제 서버 중복을 별도 기록한다. | 등록 ags1·new namespace DONE1·ok/26·COMPLETE/host, CLI schema32개. old cache31개 잔류. 전체 도구별 호출·App 중복/프로세스1은 미검증. |
+| MG03 공식 재등록 | official uninstall→validate/install로 대조한다. | 같은 키·도구·실호출 oracle을 만족해야 한다. 새 설치 PASS만으로 MG02를 PASS로 바꾸지 않는다. 실행 중 옛 앱의 hot reload는 새 세션 성공과 구분한다. | uninstall/install exit0·new namespace DONE1·ok/26·COMPLETE/host. 종료 후 old/new cache 모두 잔류. |
+| MG04 실패·복구 | 정상 설치의 공개 파일 hash/등록을 기록하고 잘못된 후보를 공식 validate/install에 전달한다. 정상 후보로 복구한다. | 원 예상: 잘못된 후보가 성공하지 않고 기존 상태를 보존한다. 복구 뒤 ags1·정상 도구 호출. | version:false의 install은 exit0로 교체, strict validate는 exit1로 거부. install 자체가 validation을 보장한다는 예상은 틀렸으며 AGS 결함으로 판정하지 않음. 정상 재등록·실호출 복구 확인. |
+| MG05 종료 | 각 모델·소유 자손 terminal 확인, 자기 설치만 공식 제거하고 전후 목록 비교. | 최초 plugin 목록과 같고 자기 프로세스 0. 캐시 정리 지원 여부와 최종 자기 cache 자료 위치를 분리한다. 원인 불명 종료는 cleanup PASS가 아니다. | plugin[]·target부재·own PGID3개 모두0·lockfree. 예상된 자손 server PID를 포착하지 못했으므로 호스트 전체 서버 프로세스0 주장은 하지 않음. |
 
 MG01/02는 설치 패키지·native 호스트 통합 수준이다. mock 목록·manifest identity·fresh
 설치 성공이 캐시와 프로세스 정리 또는 App 화면에서 서버 하나를 증명하지 않는다.
@@ -55,3 +55,24 @@ MG01/02는 설치 패키지·native 호스트 통합 수준이다. mock 목록·
 초기 plugin[]·정확 캐시4경로 부재 operation
 `b094f5ca3976e24fccce1ab8464c8c5b0b2378b967d41f0f`는 각각 exit 0이다.
 이 조회는 설치·모델·migration 실행이 아니다.
+
+## 첫 실행과 수집기 교정
+
+실행 원 operation은 `18854cd2ba968435b71e0a7ee73b02ad1e7e3d095155d2f8`이다.
+launcher exit0와 별개로 원 harness `faf8a7b4`는 exit1을 냈다. install이 invalid
+manifest를 거부할 것이라는 예상과 수집기 결함을 AGS 제품 실패로 합치지 않는다.
+
+초기 수집기는 init의 최상위 conversation_id를 놓치고 MCP DONE의 응답 본문이
+별도 step artifact에 있는 것을 처리하지 못했다. 원 stdout은 hash와 선택 필드만
+남아 완전 재파싱할 수 없다. 이 증거 손실을 보존한다. 새 모델 호출 없이 이번
+시험의 격리 callback board에서 자기 session_id/cwd만 읽고, 해당 UUID의 정확한
+tool output JSON을 회수했다. 본문은 모두 ok true이며 새 namespace 두 응답은
+동일 SHA256 `61c6b679333d934e523c9fde449cb564c74fe99e945bff0306cf910dc066468c`다.
+
+공식 MCP 문서의 실제 CLI 캐시는 `~/.gemini/antigravity-cli/mcp/<serverName>/`다.
+초기에 관측한 `~/.gemini/antigravity/mcp/`는 App/IDE 경로였다. 따라서 초기
+4곳 부재를 전체 cache 부재로 해석하지 않는다. CLI의 두 정확 namespace에서
+이번 시험 중 수정된 schema 31/32개를 확인했으나 최초 CLI cache baseline은
+기록하지 못했다. 기존 자료를 지우거나 최초 상태를 추정하지 않는다.
+
+상세 결과·해시·남은 App 경계는 [결과 문서](antigravity-migration.md)에 기록한다.
