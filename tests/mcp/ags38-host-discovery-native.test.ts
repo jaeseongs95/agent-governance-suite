@@ -8,15 +8,19 @@ import {afterEach, describe, expect, it, vi} from "vitest";
 import {RuntimeSkillClassificationGateway} from "../../mcp-server/src/skill-classification/gateway.js";
 import {InMemoryClassificationBudget, SkillClassificationService} from "../../mcp-server/src/skill-classification/service.js";
 
-const host = vi.hoisted(() => ({home: "", outputs: {} as Record<string, string>, failed: false, calls: [] as string[]}));
+const host = vi.hoisted(() => ({home: "", outputs: {} as Record<string, string>, failed: false, calls: [] as string[],
+  nativeMissing: false, launcher: "", rawCalls: [] as {file: string; args: string[]}[]}));
 vi.mock("node:os", async original => ({...await original<typeof import("node:os")>(), homedir: () => host.home}));
 vi.mock("node:child_process", async original => ({...await original<typeof import("node:child_process")>(),
   execFile: (file: string, args: string[], _options: unknown, callback: (error: Error | null, stdout: string) => void) => {
-    const key = [file, ...args].join(" "); host.calls.push(key);
+    host.rawCalls.push({file, args});
+    if (file === "codex" && host.nativeMissing) {callback(Object.assign(new Error("spawn codex ENOENT"), {code: "ENOENT"}), ""); return;}
+    const key = file === process.execPath && args[0] === host.launcher ? ["codex", ...args.slice(1)].join(" ") : [file, ...args].join(" "); host.calls.push(key);
     callback(host.failed || !(key in host.outputs) ? new Error("PRIVATE_HOST_CAUSE") : null, host.outputs[key] ?? "");
   }}));
 const directories: string[] = [];
 afterEach(async () => {vi.unstubAllEnvs(); host.outputs = {}; host.calls = []; host.failed = false;
+  host.nativeMissing = false; host.launcher = ""; host.rawCalls = [];
   await Promise.all(directories.splice(0).map(directory => rm(directory, {recursive: true, force: true})));});
 
 async function packageTree(root: string, manifest: ".codex-plugin" | ".gemini-plugin") {
@@ -103,6 +107,39 @@ describe("D0013 current native installation and running root binding", () => {
   it("unsupported hosts never run an inventory command", async () => {
     const f = await fixture("codex"); vi.stubEnv("AGENT_GOVERNANCE_HOST_ATTESTATION", "unverified-host");
     unavailable(await gateway(f.root).inventory()); expect(host.calls).toEqual([]);
+  });
+  it.skipIf(process.platform !== "win32")("Windows npm shim ENOENT uses the verified official Node launcher and exact public arguments", async () => {
+    const f = await fixture("codex"); const npm = path.join(f.home, "npm");
+    host.launcher = path.join(npm, "node_modules/@openai/codex/bin/codex.js");
+    await mkdir(path.dirname(host.launcher), {recursive: true});
+    await writeFile(path.join(npm, "codex.cmd"), "@node %~dp0/node_modules/@openai/codex/bin/codex.js %*\n");
+    await writeFile(path.join(npm, "node_modules/@openai/codex/package.json"), JSON.stringify({name: "@openai/codex", version: "0.166.0", bin: {codex: "bin/codex.js"}}));
+    await writeFile(host.launcher, "// Public CLI fixture; no model or auth.\n");
+    vi.stubEnv("PATH", npm); host.nativeMissing = true;
+    expect((await gateway(f.root).inventory()).discovery).toMatchObject({status: "COMPLETE", scope: "host"});
+    expect(host.rawCalls.filter(call => call.file === process.execPath)).toEqual([
+      {file: process.execPath, args: [host.launcher, "--version"]},
+      {file: process.execPath, args: [host.launcher, "plugin", "list", "--json"]},
+      {file: process.execPath, args: [host.launcher, "plugin", "marketplace", "list", "--json"]},
+    ]);
+    expect(host.rawCalls.filter(call => call.file === "codex")).toHaveLength(1);
+  });
+  it.skipIf(process.platform !== "win32").each(["missing", "wrong-package", "wrong-bin", "duplicate"])("Windows shim ENOENT keeps %s official launcher unavailable", async mutation => {
+    const f = await fixture("codex"); const npm = path.join(f.home, "npm");
+    host.launcher = path.join(npm, "node_modules/@openai/codex/bin/codex.js");
+    await mkdir(path.dirname(host.launcher), {recursive: true});
+    await writeFile(path.join(npm, "codex.cmd"), "@node %~dp0/node_modules/@openai/codex/bin/codex.js %*\n");
+    await writeFile(path.join(npm, "node_modules/@openai/codex/package.json"), JSON.stringify({name: mutation === "wrong-package" ? "unverified-package" : "@openai/codex", version: "0.166.0", bin: {codex: mutation === "wrong-bin" ? "other.js" : "bin/codex.js"}}));
+    if (mutation !== "missing") await writeFile(host.launcher, "// Public fixture\n");
+    let commandPath = npm;
+    if (mutation === "duplicate") {
+      const second = path.join(f.home, "npm-other"); await mkdir(path.join(second, "node_modules/@openai/codex/bin"), {recursive: true});
+      await copyFile(path.join(npm, "codex.cmd"), path.join(second, "codex.cmd"));
+      await copyFile(path.join(npm, "node_modules/@openai/codex/package.json"), path.join(second, "node_modules/@openai/codex/package.json"));
+      await copyFile(host.launcher, path.join(second, "node_modules/@openai/codex/bin/codex.js")); commandPath += path.delimiter + second;
+    }
+    vi.stubEnv("PATH", commandPath); host.nativeMissing = true;
+    unavailable(await gateway(f.root).inventory()); expect(host.rawCalls.some(call => call.file === process.execPath)).toBe(false);
   });
   it.skipIf(process.platform === "win32")("TEST Linux public CLI fixture crosses actual execFile boundary without shell or model turn", async () => {
     const f = await fixture("codex"); const fixtureRoot = path.dirname(fileURLToPath(new URL("./fixtures/ags38-host-discovery/cli.mjs", import.meta.url)));
