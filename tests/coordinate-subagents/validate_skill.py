@@ -134,7 +134,7 @@ POLICY_REQUIRED_CLAUSES = {
     "completion.current-evidence": (
         "confirm that each subagent's scoped verification actually passed",
         "verify each requirement against current evidence with checks proportional to its failure impact",
-        "avoid checks that merely repeat the implementation, and reverify only the affected scope when a later change invalidates earlier evidence",
+        "avoid checks that merely repeat the work being checked, and reverify only the affected scope when a later change invalidates earlier evidence",
     ),
     "completion.report-facts": (
         "report the result, material changes, checks actually run, their outcomes, and remaining constraints",

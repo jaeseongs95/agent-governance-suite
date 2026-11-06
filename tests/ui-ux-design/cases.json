@@ -1,5 +1,27 @@
 {
+  "selection": {
+    "note": "AGS3-D-0037. The skill is selected by the medium-neutral description, not by a screen. Each select case names the wording its medium must find in the description applicability span and in the descriptor preconditions; each exclude case names the exclusion span wording that keeps it out. This binds the selection text only; live model selection is a separate evaluation.",
+    "select": [
+      { "id": "shorts-structure", "request": "유튜브 쇼츠 30초 구성이 첫 3초에 시청자를 붙잡고 마지막에 구독으로 이어지는지 점검해줘.", "applicabilityTerms": ["영상"], "descriptorTerms": ["video"] },
+      { "id": "ad-hierarchy", "request": "신문 광고 시안에서 제목·혜택·문의 방법이 한눈에 읽히고 전화로 이어지는지 정보 계층과 행동 유도를 봐줘.", "applicabilityTerms": ["광고", "인쇄"], "descriptorTerms": ["advertising", "print"] },
+      { "id": "store-signage", "request": "매장 입구부터 계산대까지 안내판 위치와 문구를 처음 온 손님 기준으로 설계해줘.", "applicabilityTerms": ["공간", "안내물"], "descriptorTerms": ["physical space", "signage"] },
+      { "id": "paper-form", "request": "종이 신청서 양식을 어르신도 혼자 빠짐없이 작성할 수 있게 고쳐줘.", "applicabilityTerms": ["문서", "양식"], "descriptorTerms": ["document", "form"] },
+      { "id": "product-controls", "request": "전기포트 버튼 배치와 표시등이 처음 쓰는 사람에게 헷갈리지 않는지 점검해줘.", "applicabilityTerms": ["제품"], "descriptorTerms": ["product"] },
+      { "id": "service-process", "request": "민원 접수부터 결과 통보까지 서비스 절차에서 사람들이 막히는 지점을 찾아줘.", "applicabilityTerms": ["서비스 절차"], "descriptorTerms": ["service process"] },
+      { "id": "web-checkout", "request": "웹 결제 화면의 입력 오류와 결제 실패 상태를 설계해줘.", "applicabilityTerms": ["화면"], "descriptorTerms": ["screen"] }
+    ],
+    "exclude": [
+      { "id": "backend-only", "request": "주문 테이블 인덱스와 백엔드 쿼리만 고쳐줘.", "exclusionTerms": ["순수 백엔드"] },
+      { "id": "general-question", "request": "UX가 무슨 뜻이야?", "exclusionTerms": ["일반 질의"] },
+      { "id": "image-only", "request": "쇼츠 썸네일 이미지 한 장만 생성해줘.", "exclusionTerms": ["이미지 생성만"] }
+    ]
+  },
   "normal": [
+    {
+      "id": "ad-audience-check",
+      "request": "이 광고 시안이 20대 고객에게 통하는지 확인해줘.",
+      "expected": "Apply the medium-neutral audience check first: what the intended audience notices first, understands and does next, and whether that matches the goal. Separate the reviewer's judgment from observation of actual audience members, and do not require screen-only checks such as keyboard focus or responsive layout."
+    },
     {
       "id": "new-screen",
       "request": "기존 디자인 토큰을 써서 새 설정 화면을 만들어줘.",

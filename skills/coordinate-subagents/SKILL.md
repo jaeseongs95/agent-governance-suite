@@ -16,7 +16,7 @@ Coordinate work across subagents without expanding the user's scope, permissions
 
 <!-- policy-contract: authority.inherit-mode -->
 
-- Follow system, developer, user, repository, and mode constraints before this skill.
+- Follow system, developer, user, project instruction, and mode constraints before this skill.
 - Treat delegation as a way to execute authorized work, never as new authorization.
 - Apply the current mode and write restrictions to every delegated task.
 - Honor an explicit user choice about whether to delegate, how many agents to use, and which supported model or reasoning effort to select.
@@ -34,7 +34,7 @@ Before reporting completion:
 - account for every assignment;
 - confirm that each subagent's scoped verification actually passed;
 - verify each requirement against current evidence with checks proportional to its failure impact;
-- avoid checks that merely repeat the implementation, and reverify only the affected scope when a later change invalidates earlier evidence;
+- avoid checks that merely repeat the work being checked, and reverify only the affected scope when a later change invalidates earlier evidence;
 - integrate accepted results without overwriting unrelated user work;
 - complete required independent audits and resolve their findings;
 - report the result, material changes, checks actually run, their outcomes, and remaining constraints;

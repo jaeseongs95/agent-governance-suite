@@ -32,7 +32,7 @@
       "expected": "Proceed without an extra PRE or user approval; classify actual failure impact and authority boundaries.",
       "sourceRule": "GOV03-impact",
       "file": "SKILL.md",
-      "required": "CI/CD, 프로젝트 전체 설정, 비프로덕션이라는 이름만으로 고위험으로 분류하지 않는다.",
+      "required": "이름(예: CI/CD, 프로젝트 전체 설정, 비프로덕션)만으로 고위험으로 분류하지 않는다.",
       "regression": "프로덕션 배포, 인프라, CI/CD, 장애 대응 또는 서비스 가용성"
     },
     {

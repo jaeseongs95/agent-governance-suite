@@ -2708,11 +2708,11 @@
             "authorized-change-to-user-interface-flow-or-interaction"
           ],
           "preconditions": [
-            "The request explicitly asks for UI/UX design, diagnosis, improvement, or review, or authorized interface work needs a concrete user-flow, interaction, responsive-layout, or accessibility decision.",
-            "The work concerns an actual web, desktop, or mobile interface or its design. Incidental UI/UX words in logs, backend-only changes, and standalone image or icon generation do not establish applicability.",
+            "The request explicitly asks for UI/UX or user-experience design, diagnosis, improvement, or review, or authorized work needs a concrete decision on user flow, information hierarchy, call to action, interaction, layout, or accessibility, checked first against whether the result works for its intended audience.",
+            "The work concerns something people see, understand, and act on: a screen interface, print or advertising material, video, a physical space or signage, a physical product, a service process, or a document or form. Incidental UI/UX words in logs, backend-only changes, general questions, and standalone image or icon generation do not establish applicability.",
             "Direct use does not require a new workflow. This optional formal provider produces design or review artifacts; source changes follow the existing authorized mutation and implementation flow. Preserve the existing task scope, design system, evidence, and acceptance and audit obligations."
           ],
-          "failureHandling": "Return NEEDS_INPUT only for material missing input while preserving useful completed work. ANALYZED finishes the stated design or review scope; it does not prove UI behavior, accessibility conformance, performance, acceptance, or independent audit. Keep NOT_RUN and unavailable observations distinct from verified results. This stage grants no new implementation or release authority.",
+          "failureHandling": "Return NEEDS_INPUT only for material missing input while preserving useful completed work. ANALYZED finishes the stated design or review scope; it does not prove audience response, UI behavior, accessibility conformance, performance, acceptance, or independent audit. Keep NOT_RUN and unavailable observations distinct from verified results. This stage grants no new implementation or release authority.",
           "gate": {
             "kind": "none",
             "policy": "none",

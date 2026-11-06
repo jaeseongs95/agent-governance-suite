@@ -24,7 +24,7 @@ it("binds parent accountability after frozen r27 without changing prior source-s
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.intake-verify-and-ask-source-successor.json",
     bytes: predecessor.length, digest: hash(predecessor)});
   const current = loadCurrentSourceBindings(rootDirectory);
-  expect(current.manifest).toMatchObject({revision: manifest.revision});
+  expect(current.manifest).toMatchObject({revision: "integrated-field-neutral-source-binding-r29"});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(previous.bindings.map((binding: {path: string}) => binding.path));
   for (const binding of manifest.bindings) {
     expect(binding.previousDigest).toBe(previous.bindings.find((row: {path: string}) => row.path === binding.path).digest);

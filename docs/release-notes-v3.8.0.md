@@ -1,6 +1,6 @@
 # AGS 3.8.0 릴리스 노트(초안)
 
-3.8.0은 서브에이전트·위임·세션 역할·열린 workflow 식별에 관한 결함 다섯 건(AGS3-D-0001, D-0002, D-0003, D-0004, D-0030)과 공통 접수 기준의 결함 여섯 건(D-0031, D-0032, D-0036, D-0039, D-0040, D-0041)을 고친다. D-0031에는 옛 D-0034·D-0035를 합쳤다. 판 번호와 판 메타데이터는 아직 올리지 않았다. 사용자 원문은 「3.7.0 릴리즈되면 결함중 가장 우선순위가 높은거 뽑아서 개선하고 릴리즈해.」「한번에 여러개 개선해도 돼.」「결함부터 때려잡아야 기능 개발을 하던지 할거아냐.」다. D-0030 관련 원문은 「그리고 AGS가 세션 협업을 유도하는지 확인해줄래?」「즉 자신의 역할을 인지하는지. 자신의 일이 아니면 다른 세션에 맡길수있는지 확인. 그래도 안되면 사용자에게 물어보기.」다.
+3.8.0은 서브에이전트·위임·세션 역할·열린 workflow 식별에 관한 결함 다섯 건(AGS3-D-0001, D-0002, D-0003, D-0004, D-0030)과 공통 접수 기준의 결함 여섯 건(D-0031, D-0032, D-0036, D-0039, D-0040, D-0041)을 고친다. D-0031에는 옛 D-0034·D-0035를 합쳤다. 범용 스킬 문구 검사(AGS3-D-0038)와 checkpoint_context의 requestId 설명(AGS3-D-0025)도 고친다. 판 번호와 판 메타데이터는 아직 올리지 않았다. 사용자 원문은 「3.7.0 릴리즈되면 결함중 가장 우선순위가 높은거 뽑아서 개선하고 릴리즈해.」「한번에 여러개 개선해도 돼.」「결함부터 때려잡아야 기능 개발을 하던지 할거아냐.」다. D-0030 관련 원문은 「그리고 AGS가 세션 협업을 유도하는지 확인해줄래?」「즉 자신의 역할을 인지하는지. 자신의 일이 아니면 다른 세션에 맡길수있는지 확인. 그래도 안되면 사용자에게 물어보기.」다.
 
 다섯 건 중 네 건(D-0001, D-0002, D-0003, D-0030)은 원인이 같다. 안내가 메인 에이전트의 사용자 메시지 경계(UserPromptSubmit)와 전문 스킬 본문에만 있었다. 서브에이전트, 스킬을 호출하지 않은 위임, 자기 역할 판단에는 안내가 닿지 않았다.
 
@@ -225,6 +225,66 @@
 - 로컬 정적 검사(이 PC): `node scripts/build-en-packages.mjs --check`, `node scripts/build-claude-plugin.mjs --check`, `node scripts/sync-release-metadata.mjs`, `node scripts/check-skill-context-optimization.mjs`, `node scripts/check-source-lock.mjs`, `node scripts/validate-repository.mjs`, `node --test`(prompt-engineering·solid-design 계약, preflight 호환 100개), `git diff --check`가 모두 종료 0이었다.
 - 실제 모델이 이 규칙을 따르는지는 평가하지 않았다(NOT_RUN). 이 시험은 규칙 문장이 원래 실패 상황의 조건과 행동을 담는지만 확인한다.
 
+## AGS3-D-0038: 범용 스킬·공통 접수 기준 문구에 특정 분야에 묶인 단어가 섞여도 잡는 검사가 없음
+
+사용자 원문은 「그래서 스킬들 봤을때 특정분야에 국한된 단어가 있는지 확인하는것도 결함장부에 넣어줘.」다. 앞서 「그리고 AGS는 코딩특화 플러그인이 절대 절대 절대 아니야. 명심해.」「UI/UX가 꼭 컴퓨터 작업에만 쓰이겠냐? 광고는 그럼?」이라고 했다. AGS는 영상 제작·광고 대행·문서·운영 등 모든 업무에서 에이전트가 일을 제대로 했는지 검증하는 장치다.
+
+### 원인
+
+- 스킬 등록 정보(`skills/registry.json`, `classification.json`)에 스킬이 모든 업무에 쓰이는지(범용), 한 분야 전용인지 나타내는 값이 없었다.
+- 스킬 문구 검사는 길이·결속·digest만 보고 단어가 한 분야에 묶이는지는 보지 않았다. ui-ux-design이 웹·데스크톱·모바일 화면으로만 들어온 것(AGS3-D-0037)이 그 사례다.
+
+### 바뀐 점
+
+- 새 검사 `scripts/check-domain-neutral-wording.mjs`를 `pnpm lint`에 연결했다(CI의 Lint 단계).
+  - 분류표 `SKILL_FIELDS`가 스킬 26개를 모두 범용과 분야 전용으로 나눈다. 분야 전용(11개): `change-scope-guardian`(Git 작업 트리), `code-review`, `codex-token-usage-analyzer`(Codex 세션 로그), `cs-engineering`, `instruction-scope-resolver`(작업 공간의 에이전트 지침 파일), `korean-prose-editor`(한국어 산문), `ponytail`, `software-security-auditor`, `solid-design`, `test-engineering`, `workspace-convention-profiler`. 나머지 15개는 범용이다. `skills/`에 분류되지 않은 스킬이 생기면 검사가 실패한다.
+  - 범용 스킬의 description·`SKILL.md` 본문(원본과 Claude 패키지 사본, Claude overlay description 포함)과 공통 접수 기준 블록에서 소프트웨어·화면 어휘(코드, 소스, 저장소, 커밋, 브랜치, 빌드, 테스트, 구현, 개발, 화면, 웹, 모바일, diff, PR, CI, git, push, API, CLI, UI 등)를 찾는다.
+  - 예시로 쓴 경우는 통과한다: `(예: …)`·「예를 들어」 뒤, 다른 분야 항목과 함께 나열한 괄호 목록이나 `·` 목록, 「화면이면」「## 화면일 때」 같은 분야 분기, 그 분야 전용 스킬을 부르는 문장, 쓰지 않는 곳만 말하는 제외 문장(「에만」「이외」가 있거나 앞 절에 걸린 단어는 제외하지 않는다). 코드 표기, 링크 대상, 스킬 이름, 「UI/UX」, 「종료 코드」, 「화면 캡처」는 단어로 세지 않는다.
+  - 이 브랜치가 고칠 수 없는 공통 접수 기준(`skills/orchestrator/references/intake.md`)의 걸림 10건은 `PENDING`에 문장 조각으로 적어 보고만 한다. 조각이 더 이상 걸리지 않으면 검사가 실패하므로 목록이 낡거나 새 걸림을 삼키지 않는다.
+- 처음 돌렸을 때 91건이 걸렸다. 원본 `SKILL.md` 38건(26줄), Claude overlay description 7건, 생성된 Claude 패키지의 같은 문장 36건, 공통 접수 기준 10건이다. 공통 접수 기준을 뺀 범용 스킬 문구를 분야와 상관없게 고쳤다. 뜻은 그대로 두고 단어를 바꾸거나, 코드 작업을 여러 예 중 하나로 남겼다.
+  - acceptance-evidence-validator: 「구현 대상」→「작업 결과물」, 「구현·테스트 근거」→「결과물·검증 근거」, 「테스트 파일 존재」→「시험·검사 파일의 존재」(overlay description 포함).
+  - blocker-diagnostician: 「실제 코드 경로」→「실제 실행 경로(예: 코드 경로, 작업 절차)」, 「테스트 결과」→「시험 결과」, overlay 「수정 구현」→「수정 실행」.
+  - coordinate-subagents: 「repository」→「project instruction」, 「repeat the implementation」→「repeat the work being checked」.
+  - evaluation-validity-auditor overlay: 「일반 구현 검증」→「일반 작업 결과 검증」.
+  - independent-audit-gate: 「구현자」→「변경을 만든 작업자」·「작업자」, 「diff 크기」→「변경 크기」, 확인 근거 「diff, 테스트」→「변경분, 시험」, 고위험 판단 예외와 승인 조건의 CI·작업 브랜치·기본 브랜치를 `(예: …)`로 바꿨다(「되돌릴 수 있는 작업 사본 저장과 자동 검사 실행(예: 작업 브랜치 commit/push, CI)」, 「공유 정본 반영(예: 기본 브랜치 병합)」).
+  - iteration-frame-auditor: 「구현자」→「작업자」, 「구현 교정」→「작업 결과의 교정」, overlay 「수정 구현」→「수정 실행」.
+  - mutation-risk-preflight: 「기본 브랜치 병합」→「공유 정본 반영(예: 기본 브랜치 병합)」.
+  - prompt-engineering: 「허용된 개발 작업에서」→「허용된 작업에서」, 「구현의 일부·구현 흐름」→「작업의 일부·작업 흐름」, 「없는 API」→「없는 도구·API」, 「검사 CLI」→「검사 스크립트」.
+  - session-board: 「같은 저장소」→「같은 작업 폴더·저장소」, 「(저장소·브랜치)」→「(작업 폴더·저장소·브랜치)」.
+  - task-contract: 「구현」→「실제 작업」·「수행 방식」·「작업 진척」.
+  - ui-ux-design: 「구현 결과」→「구현·제작 결과」, 「작업한 소스」→「작업한 원본·소스」.
+- 공통 접수 기준에서 걸린 곳(고치지 않음, 보고만): `intake.md` 9번 줄 「빌드·시험·작업 브랜치 push·CI」, 10번 줄 「git으로 되돌릴 수 있는 편집, 작업 브랜치 commit·push」, 12번 줄 「사용자 화면 조작」「되돌릴 수 있는 구현 선택」, 13번 줄 「빌드 감시」.
+
+### 검증
+
+- 회귀 시험 `tests/tooling/ags3-d0038-domain-neutral-wording.node-test.mjs`(node:test, CI 범위): 옛 ui-ux-design description(698b0390)은 웹·데스크톱·모바일·화면·개발로 4·5번 줄이 잡히고, 고친 description(1cd5f20b)은 통과한다. 예시·분기·제외 문장은 통과하고, 분야에 묶는 문장과 「에만」 제외·앞 절의 단어는 잡힌다. 모든 스킬이 분류되고 코드 전용 네 스킬이 분야 전용인지, 현재 저장소가 통과하는지, `pnpm lint`가 검사를 부르는지 확인한다.
+- 수정 전 실패(red): 시험만 넣은 6ce31f67에서 CI run 42171748576이 두 job 모두 failure였다. 실패는 새 시험 두 파일뿐이다(vitest 1 failed·162 passed 파일, node:test는 검사 모듈이 없어 `ERR_MODULE_NOT_FOUND`). 검사를 넣고 문구를 고치기 전에는 저장소 통과 시험 하나만 실패했다(이 PC `node --test`, 6/7).
+- 수정 후: 8d96ad93의 CI run 42173221350이 두 job 모두 success였다(vitest 163 파일, node:test 266개 통과).
+- CI가 돌리지 않는 프로세스 경계 시험은 Linux 시험 서버(Node 24.22.1)에서 돌렸다. 9be312e8에서 `source-binding-successor`, `skill-classification/evaluation.test`, `claude-plugin.test.mjs`, `skill-context-optimization.test.mjs`, 새 D-0025 시험이 110/110 통과했다. 처음 돌렸을 때 r27을 반영하지 않은 앞 사슬 시험(manifest revision 기대값)과 entry-details GOV03 문장 고정값이 실패해 고쳤다. `source-binding-successor`의 퇴역(r22) 시험 한 곳은 이번 변경 전 6ce31f67에서도 같은 단언으로 실패했다(18/19). r23 이후 다시 결속된 파일의 결속 해석이 마지막 결속 digest로 가야 하는데 퇴역 digest를 기대했다. 기대값을 마지막 결속 digest로 고쳤다.
+- Windows 시험 서버의 전체 시험은 돌리지 않았다(NOT_RUN).
+
+## AGS3-D-0025: checkpoint_context 설명에 requestId를 저장 내용마다 새로 만들라는 말이 없음
+
+3.6.0 실호스트 A/B 두 차례에서 Claude Code B 4회 중 4회가 같은 requestId를 다른 내용으로 다시 보내 `REQUEST_CONFLICT`를 받았다(서버는 계약대로 거부).
+
+### 원인
+
+- `contracts/checkpoint-context-request.v1.schema.json`은 requestId를 내용별 멱등 키로 쓰지만, 도구 설명(`locales/*/tools.json`)과 입력 스키마 어디에도 「requestId는 내용마다 새로 만든다」는 설명이 없었다.
+
+### 바뀐 점
+
+- 도구 설명에 한 문장을 더했다. 계약(필수 필드 6개와 core 7개)은 바꾸지 않았다.
+  - ko: 「requestId는 저장할 내용마다 새 값을 만들고, 같은 내용을 다시 보낼 때만 같은 값을 쓴다(다른 내용에 재사용하면 REQUEST_CONFLICT).」
+  - en: "Make a new requestId for each save with different content; reuse it only when retrying the same content (reuse with different content returns REQUEST_CONFLICT)."
+- ko 번역 lock을 새 원문 digest로 고치고(`i18n.mjs --accept ko`), 번들(`runtime/i18n.mjs`, `claude-plugin`·`claude-plugin-en`의 `mcp-server/dist`)을 다시 만들었다.
+
+### 검증
+
+- 회귀 시험 `tests/mcp/ags3-d0025-checkpoint-request-id.test.ts`(CI 범위): MCP `tools/list`의 `checkpoint_context` 설명이 ko·en 모두 이 규칙을 싣고, 입력 스키마의 필수 필드가 그대로인지 확인한다.
+- 로컬 stdio 확인: 커밋된 `claude-plugin/mcp-server/dist/server.mjs`를 띄워 `tools/list`를 읽었다. 고치기 전 ko·en 모두 규칙 없음(종료 1), 고친 뒤 둘 다 있음(종료 0).
+- 수정 전 실패(red): CI run 42171748576에서 이 시험 3개 중 ko·en 설명 2개가 실패했다(필수 필드 시험은 통과). 수정 후 CI run 42173221350에서 3개 모두 통과했다.
+- 실호스트에서 에이전트가 requestId를 내용마다 새로 만드는지는 시험하지 않았다(NOT_RUN).
+
 ## 스킬 출처 결속
 
 공통 접수 기준과 `coordinate-subagents` 참고 자료를 바꾸면서 결속 사슬도 함께 고쳤다(기존 결함 AGS3-D-0026의 절차).
@@ -239,6 +299,9 @@
 - 출처 결속 r27(`fixtures.intake-verify-and-ask-source-successor.json`, D-0031·D-0036·D-0039·D-0040·D-0041): r26 뒤에 orchestrator `classification.json`과 `references/intake.md`를 다시 결속한다. 12·13번 줄만 바뀌고 줄은 움직이지 않는다. 바이트가 바뀐 span은 `orchestrator:applicability[5]`(8~13번 줄) 하나다. `evaluation.ts`의 현재 결속 해석이 r27까지 따라가고, r26 시험은 r27이 다시 결속한 파일을 r27 기준 판(e7990a87)에서 읽는다.
 - 문맥 최적화 검사: 두 파일의 새 바이트를 e7990a87의 바이트에 대응시켰다.
 - 같은 시험 파일의 retirement(r22) 시험이 결속 해석 결과를 그 판의 digest와 비교하고 있었다. 뒤 판(r23)이 `SKILL.md`를 다시 결속한 뒤로는 맞지 않는 비교였다. 이 판정을 최신 digest와 비교하도록 고쳤다. 이 시험은 CI 범위 밖이라 그동안 실행되지 않았다. 이번 수정 전 커밋(e7990a87)에서도 같은 판정이 실패하는 것을 아래 대체 실행으로 확인했다.
+- B 분기의 동결 출처 결속 r27(`fixtures.field-neutral-wording-source-successor.json`, AGS3-D-0038): r26에서 갈라져 범용 스킬 9개(acceptance-evidence-validator, blocker-diagnostician, coordinate-subagents, independent-audit-gate, iteration-frame-auditor, mutation-risk-preflight, prompt-engineering, session-board, task-contract)의 `SKILL.md`·`classification.json`을 다시 결속한다. 줄 안의 단어만 바뀌고 줄은 움직이지 않는다. 문구가 바뀐 span은 13개이고, 같은 줄 앞쪽 문구가 바뀐 span 3개는 같은 글을 가리키도록 바이트 위치만 옮겼다. ui-ux-design은 이 사슬의 고정 목록 밖이라 `classification.json` digest만 고쳤다.
+- 문맥 최적화 검사: 9개 스킬의 두 파일 새 바이트를 6ce31f67(시험만 먼저 넣은 커밋)의 바이트에 대응시켰다.
+- 10개 스킬(위 9개와 ui-ux-design)의 `classification.json` span digest·바이트 위치와, 그중 source lock에 있는 9개(session-board 제외)의 통합 checksum을 새 값으로 바꿨다.
 
 ## 검증
 
@@ -270,3 +333,20 @@
 - D-0032 3단계(메시지마다 알림 줄이기)는 A/B 결과 전까지 발행 후보가 아니다. A/B에서 스킬 선택이 나빠지면 7ff84bc6을 되돌린다.
 - D-0031(옛 D-0034)의 막힌 단계 규칙은 문구만 바꿨다. 턴 종료 hook이 남은 독립 작업을 확인시키는 장치는 더하지 않았다. 문구만으로 부족한지는 실호스트 시험 전에는 알 수 없다. 부족하면 턴 종료(Stop) hook이 이번 턴에 보류한 단계가 있는데 남은 일이 적히지 않았을 때 한 번 되묻는 방안을 검토한다(미구현, 제안).
 - `intake.md:16`의 `[공통 분류 지원 계약](references/skill-classification.md)` 링크는 파일이 `references/`로 옮겨진 뒤 상대 경로가 맞지 않는다(553e0f0e 이후). MCP instructions로 실릴 때는 글만 전달되므로 동작에는 영향이 없지만 링크로는 열리지 않는다. 이번 범위 밖이라 고치지 않았다.
+
+
+## 부모 책임: AGS3-T-0020
+
+사용자 원문 「서브에이전트가 잘못 기록해도 그건 부모 책임이다.」「서브에이전트 관련 쓸데없는 제약 넣지말란소리다.」를 공통 접수 기준의 역할·위임 줄에 반영했다. 자식을 만든 부모가 결과·기록·오류를 직접 확인하고 잘못을 고치며 최종 책임을 진다. 이를 이유로 불필요한 자식 전용 제어 계층을 추가하지 않는다. A의 r28은 이 줄의 `orchestrator:applicability[5]`만 다시 결속하며, `parent-accountability.test.ts`는 이전 r27과 현재 원문·inventory의 span 의미를 대조한다.
+
+- A 최종 후보 `c408367bad2ee9e31493ce1dd751a2a612c0bdd7`: CI run 42179896149의 Linux·Windows Node 24 job이 모두 success였다(이번 통합 전에 gh로 직접 재확인).
+- B 최신 추가 회귀의 red `5f1626e2fe669b2d22fff7ef2b8cbbb98fb41185`: CI run 42178016704의 양 OS job이 failure였다. green `33a7c506a0d4e59f6ee164df380701c91301961a`: CI run 42178717754의 양 OS job이 success였다. 각 실행의 commit과 결론을 gh로 직접 재확인했다. 이 근거는 해당 후보에만 귀속된다.
+- 실제 모델의 부모 책임 이행과 cue 선택 행동은 이번 소스 통합에서 시험하지 않았다(NOT_RUN).
+
+## A/B 소스 결속 통합(r29)
+
+- A의 검증·요청 r27과 부모 책임 r28을 그대로 보존했다. B 원본 r27 fixture도 바꾸지 않고 `frozenSidecar`로 경로·바이트·hash를 고정했다.
+- 새 `fixtures.integrated-field-neutral-source-successor.json` r29는 A r28을 `frozenPredecessor`로 삼고 B의 독립된 18파일 bindings와 88개 span을 그대로 이어 붙인다. B는 orchestrator를 바꾸지 않아 A의 verify/ask·부모 책임 span과 충돌하지 않는다.
+- 현재 결속 loader와 최신 revision 단언은 r29를 가리킨다. 옛 fixture의 hash·span·retirement 및 predecessor mismatch 실패 조건은 유지했다. 양쪽 가지가 바꾼 파일의 과거 span은 각 동결 successor의 base에서 읽는다.
+- B의 매체 중립 UI/UX 문구와 원래 prefetch·cue 변경을 유지했다. 3.7.0 최종 시험 노트는 `36265b7061c1ca57014bc4fb18843fe6d16dadc1`의 바이트를 함께 보존했다.
+- 통합 후보의 로컬 제품 시험과 독립 서버 시험은 이 노트 작성 시점 NOT_RUN이다. 기존 A/B 후보의 CI·서버 근거는 원래 후보에 귀속하며 통합 후보의 통과로 대체하지 않는다.

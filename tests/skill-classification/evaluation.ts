@@ -365,17 +365,34 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, parent.frozenPredecessor.path) !== verifyPath || verifyBytes.length !== parent.frozenPredecessor.bytes || hashBytes(verifyBytes) !== parent.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings];
+  const neutralPath = resolve(repo, "tests/skill-classification/fixtures.field-neutral-wording-source-successor.json");
+  const neutralBytes = readFileSync(neutralPath);
+  if (hashBytes(neutralBytes) !== "sha256:73c25ae3bb66f423f3da6b64c4432aa83f4da1f41e155e2fb9bb37a3cc7713f6") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const neutral = JSON.parse(neutralBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, neutral.frozenPredecessor.path) !== blockedPath || blockedBytes.length !== neutral.frozenPredecessor.bytes || hashBytes(blockedBytes) !== neutral.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const integratedPath = resolve(repo, "tests/skill-classification/fixtures.integrated-field-neutral-source-successor.json");
+  const integratedBytes = readFileSync(integratedPath);
+  if (hashBytes(integratedBytes) !== "sha256:d99c84c83e30c1ff7aac7da3583c262e085d4b9ce3ade9ee2c14ec6dee5df9fb") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const integrated = JSON.parse(integratedBytes.toString("utf8")) as typeof successor & {frozenSidecar: {path: string; bytes: number; digest: string}};
+  if (resolve(repo, integrated.frozenPredecessor.path) !== parentPath || parentBytes.length !== integrated.frozenPredecessor.bytes || hashBytes(parentBytes) !== integrated.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  if (resolve(repo, integrated.frozenSidecar.path) !== neutralPath || neutralBytes.length !== integrated.frozenSidecar.bytes || hashBytes(neutralBytes) !== integrated.frozenSidecar.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_SIDECAR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: parent.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath);
+  const currentManifest = {...manifest, revision: integrated.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(parentBytes),
+    manifest: currentManifest, files, digest: hashBytes(integratedBytes),
     /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
     resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);

@@ -150,13 +150,13 @@ Versions and provenance of the 24 specialist skills follow the [registry](skills
 | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | AGS | 1.0.0 | Reviews contested decisions through independent viewpoints and rebuttals. |
 | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | AGS | 1.0.0 | Audits whether repeated attempts have drifted from the original contract and premises. |
 | [`acceptance-evidence-validator`](skills/acceptance-evidence-validator/) | AGS | 1.0.0 | Checks acceptance criteria against evidence from the actual result. |
-| [`independent-audit-gate`](skills/independent-audit-gate/) | AGS | 1.0.0 | Has an auditor separate from the implementer check high-risk changes and their evidence. |
+| [`independent-audit-gate`](skills/independent-audit-gate/) | AGS | 1.0.0 | Has an auditor separate from whoever made the change check high-risk changes and their evidence. |
 | [`blocker-diagnostician`](skills/blocker-diagnostician/) | AGS | 1.1.0 | Separates observations from hypotheses in repeated failures and picks the next discriminating check. |
 | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | AGS | 0.2.0 | Compares recovery strategies for a diagnosed failure and prepares the handoff. |
 | [`cs-engineering`](skills/cs-engineering/) | AGS | 0.2.0 | Applies CS principles to concurrency, database, messaging, algorithm, and performance problems as invariants and verification duties. |
 | [`solid-design`](skills/solid-design/) | AGS | 0.1.0 | Applies SOLID to real module, contract, and adapter boundaries and proposes the smallest change. |
 | [`prompt-engineering`](skills/prompt-engineering/) | AGS | 0.1.0 | Designs and diagnoses LLM prompts, instructions, and input templates and builds comparison cases. |
-| [`ui-ux-design`](skills/ui-ux-design/) | AGS | 0.1.0 | Designs and reviews user flows, screens and interactions, accessibility, state and error handling, and large-list display on web, desktop, and mobile. |
+| [`ui-ux-design`](skills/ui-ux-design/) | AGS | 0.1.0 | Designs and reviews the user flow, information hierarchy, accessibility, and edge cases of anything people see and use (screens, print and ads, video, spaces and signage, products, service processes, documents and forms), checking first whether it works for the intended audience. |
 | [`test-engineering`](skills/test-engineering/) | AGS | 0.1.0 | Designs test cases at requirement and code boundaries and checks that they catch defects. |
 | [`code-review`](skills/code-review/) | AGS | 0.1.0 | Reviews a fixed diff or PR for real failure paths and separates defects, recommendations, and questions. |
 | [`software-security-auditor`](skills/software-security-auditor/) | AGS | 0.1.0 | Audits attack paths, controls, and coverage gaps in web/API and CLI/MCP code. |

@@ -148,13 +148,13 @@ ACK와 실제 검토 결과를 구분해서 알려 줘. 파일 수정과 테스�
 | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | AGS | 1.0.0 | 갈리는 결정을 독립 관점과 반론으로 검토합니다. |
 | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | AGS | 1.0.0 | 반복 작업에서 원래 계약과 판단 전제가 바뀌었는지 감사합니다. |
 | [`acceptance-evidence-validator`](skills/acceptance-evidence-validator/) | AGS | 1.0.0 | 완료 기준을 실제 결과의 근거와 대조합니다. |
-| [`independent-audit-gate`](skills/independent-audit-gate/) | AGS | 1.0.0 | 구현자와 분리된 감사자가 고위험 변경과 근거를 확인합니다. |
+| [`independent-audit-gate`](skills/independent-audit-gate/) | AGS | 1.0.0 | 변경을 만든 작업자와 분리된 감사자가 고위험 변경과 근거를 확인합니다. |
 | [`blocker-diagnostician`](skills/blocker-diagnostician/) | AGS | 1.1.0 | 반복 실패에서 관측과 가설을 나누고 다음 판별 검사를 고릅니다. |
 | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | AGS | 0.2.0 | 원인이 확정된 실패의 복구 전략을 비교하고 인계 자료를 만듭니다. |
 | [`cs-engineering`](skills/cs-engineering/) | AGS | 0.2.0 | 동시성·DB·메시징·알고리즘·성능 문제에 CS 원리로 불변조건과 검증 의무를 세웁니다. |
 | [`solid-design`](skills/solid-design/) | AGS | 0.1.0 | 실제 모듈·계약·어댑터 경계에 SOLID를 적용해 최소 변경 방향을 제시합니다. |
 | [`prompt-engineering`](skills/prompt-engineering/) | AGS | 0.1.0 | LLM 프롬프트·지침·입력 템플릿을 설계·진단하고 비교 검증 사례를 만듭니다. |
-| [`ui-ux-design`](skills/ui-ux-design/) | AGS | 0.1.0 | 웹·데스크톱·모바일의 사용자 흐름, 화면·상호작용, 접근성, 상태·오류 처리와 대량 목록 표시를 설계·점검합니다. |
+| [`ui-ux-design`](skills/ui-ux-design/) | AGS | 0.1.0 | 화면, 인쇄·광고, 영상, 공간·안내물, 제품, 서비스 절차, 문서·양식처럼 사람이 보고 쓰는 결과물의 사용자 흐름·정보 계층·접근성·예외 상황을 설계·점검하고, 대상 사용자에게 통하는지부터 확인합니다. |
 | [`test-engineering`](skills/test-engineering/) | AGS | 0.1.0 | 요구와 코드 경계에서 시험 사례를 설계하고 결함 탐지 능력을 확인합니다. |
 | [`code-review`](skills/code-review/) | AGS | 0.1.0 | 고정된 diff·PR의 실제 실패 경로를 검토하고 결함·권고·질문을 나눕니다. |
 | [`software-security-auditor`](skills/software-security-auditor/) | AGS | 0.1.0 | 웹·API와 CLI·MCP의 공격 경로, 방어 통제, 검사 공백을 감사합니다. |

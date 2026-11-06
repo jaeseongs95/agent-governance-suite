@@ -126,6 +126,10 @@ describe("specialist behavior source successor", () => {
   it.each(["changed", "unavailable"])("refuses %s predecessor history instead of substituting current bytes", async mode => {
     const relative = "skills/code-review/SKILL.md";
     vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
+      // The checker prefetches history with ls-tree + cat-file --batch; an unlisted path is read by `git show`.
+      if (file === "git" && args.includes("ls-tree")) {
+        return Buffer.from(execFileSync(file, args, options).toString("utf8").split("\0").filter(entry => !entry.endsWith(`\t${relative}`)).join("\0"));
+      }
       if (file === "git" && args.at(-2) === "show" && args.at(-1) === `${base}:${relative}`) {
         if (mode === "unavailable") throw new Error("SYNTHETIC_BEHAVIOR_HISTORY_MISSING");
         return Buffer.concat([original(relative), Buffer.from("\nchanged predecessor\n")]);
