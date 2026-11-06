@@ -1,1 +1,9 @@
-{}
+{
+  "replacements": [
+    {
+      "file": "references/entry-details.md",
+      "find": "Codex·Antigravity는 `tools/call`의 호스트 작성 `_meta`에서 호출자를 확인하고, Claude Code는",
+      "replace": "다른 호스트는 `tools/call`의 호스트 작성 `_meta`에서 호출자를 확인하고, Claude Code는"
+    }
+  ]
+}
