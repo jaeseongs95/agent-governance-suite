@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { analyzeAcceptance, validateReport, sha256 } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
@@ -6,6 +7,7 @@ import { InputError, validateRequest, validateReview } from "../../skills/iterat
 
 const json = async (relative) => JSON.parse(await readFile(new URL(relative, import.meta.url), "utf8"));
 const acceptanceFixture = () => json("../acceptance-evidence-validator/fixtures/not-applicable.json");
+const criterionId = (statement) => `AC-${createHash("sha256").update(statement, "utf8").digest("hex").slice(0, 12)}`;
 
 describe("CG08 iteration and acceptance contract regressions", () => {
   // Messages are asserted in the source locale; the package default locale is ko.
@@ -64,6 +66,26 @@ describe("CG08 iteration and acceptance contract regressions", () => {
     const report = analyzeAcceptance(await acceptanceFixture());
     expect(report.verdict).toBe("PASS");
     expect(report.criteria[1].status).toBe("not-applicable");
+  });
+
+  it("keeps legacy authority evidence BLOCKED without its frozen statement bindings", async () => {
+    const input = await acceptanceFixture();
+    delete input.criterionBindings;
+    const report = analyzeAcceptance(input);
+    expect(report.verdict).toBe("BLOCKED");
+    expect(report.criteria.every((item) => item.status === "insufficient-evidence")).toBe(true);
+    expect(report.limitations.some((item) => item.includes("Legacy positional"))).toBe(true);
+  });
+
+  it("keeps authority NA on its exact original statement when criterion order changes", async () => {
+    const input = await acceptanceFixture();
+    input.taskEnvelope.acceptanceCriteria.reverse();
+    const report = analyzeAcceptance(input);
+    expect(report.verdict).toBe("PASS");
+    expect(report.criteria).toMatchObject([
+      { criterionId: criterionId("프로덕션 배포가 성공한다."), statement: "프로덕션 배포가 성공한다.", status: "not-applicable", evidenceRefs: ["deployment-exclusion"] },
+      { criterionId: criterionId("문서 링크가 유효하다."), statement: "문서 링크가 유효하다.", status: "satisfied", evidenceRefs: ["link-check"] },
+    ]);
   });
 
   it("AGS-D-0143 current verified counterevidence outranks valid authority NA", async () => {

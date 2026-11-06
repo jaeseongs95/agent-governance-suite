@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
@@ -8,6 +9,7 @@ import { fixture, finding } from "./fixture.mjs";
 import { analyzeAcceptance, assertTaskEnvelope } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
 
 const context = { schemaVersion: "1.0.0", model: "fixture-deep", modelClass: "deep", reasoningEffort: "high", source: "runtime", observedAt: new Date().toISOString() };
+const criterionId = (statement) => `AC-${createHash("sha256").update(statement, "utf8").digest("hex").slice(0, 12)}`;
 const task = (capabilities = ["software-security-audit"], artifactTarget = null) => ({ schemaVersion: "1.0.0", taskId: "security-integration", objective: "Produce security evidence", scope: { included: ["fixture"], excluded: [] }, acceptanceCriteria: ["Report uncertainty"], riskLevel: "low", workUnits: [], requiredCapabilities: capabilities, constraints: [], authorization: { allowedActions: ["read"], prohibitedActions: ["deploy"], approvalRequired: [] }, decision: { complexity: "simple", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true },
   ...(artifactTarget ? { artifactContracts: [{ capability: "software-security-audit", produced: [{ artifactId: "security-audit-report", schemaId: "SecurityAuditReport.v1", targetDigest: artifactTarget }] }] } : {}),
 });
@@ -75,11 +77,22 @@ describe("security audit integration", () => {
       verificationCommands: [], knownLimitations: [], criterionOverrides: [] };
     const acceptance = analyzeAcceptance(input);
     expect(acceptance.verdict).toBe("PASS");
-    expect(acceptance.criteria).toMatchObject([{ criterionId: "AC-001", status: "satisfied", evidenceRefs: ["security-report"] }]);
+    expect(acceptance.criteria).toMatchObject([{ criterionId: criterionId("Report uncertainty"), status: "satisfied", evidenceRefs: ["security-report"] }]);
     const malformed = structuredClone(input);
     malformed.taskEnvelope.artifactContracts[0].produced[0].targetDigest = "not-a-digest";
     expect(() => assertTaskEnvelope(malformed.taskEnvelope)).toThrow();
     expect(() => analyzeAcceptance(malformed)).toThrow();
     expect(() => analyzeAcceptance({ ...input, taskEnvelope: { ...taskEnvelope, undeclaredField: true } })).toThrow();
+  });
+  it("keeps legacy security findings unbound when the exact criterion statement table is absent", () => {
+    const { report } = fixture(); report.findings.push(finding());
+    const input = { schemaVersion: "1.0.0", taskEnvelope: task(), target: { kind: "artifact", identifier: "fixture", digest: report.targetDigest },
+      evidence: [{ id: "security-report", kind: "document", locator: "report.json", digest: digest(report), targetDigest: report.targetDigest,
+        verified: true, criterionIds: ["AC-001"], direction: "refutes", observedResult: report.findings[0].impact }],
+      verificationCommands: [], knownLimitations: [], criterionOverrides: [] };
+    const acceptance = analyzeAcceptance(input);
+    expect(acceptance.verdict).toBe("BLOCKED");
+    expect(acceptance.criteria).toMatchObject([{ status: "insufficient-evidence", evidenceRefs: [] }]);
+    expect(acceptance.limitations.some((item) => item.includes("Legacy positional"))).toBe(true);
   });
 });
