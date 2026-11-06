@@ -182,7 +182,7 @@ receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook
 - 끝난 행은 24시간(`WAKE_RESEND_MAX_MS`) 동안, 최대 1000행까지 보관한다. 보관 기간이 지난 뒤 도착한 표식은 미등록 nonce로 인식되지 않고 본문도 인수하지 않는다.
 - 인수한 본문이 없고 행이 모두 끝난 상태면 응답에 `retired: true`가 붙는다. claim lease가 만료된 뒤 늦게 온 표식은 기존 재전달 규칙(lease 만료 → 재인수)처럼 본문을 다시 받을 수 있다. 중복 처리는 receipt·ACK와 수신자의 messageId 기준 중복 제거로 막는다.
 
-delivery profile의 `blocksEmptyWakePrompt`가 켜진 host의 hook은 현재 managed wake가 검증됐는데 인수한 본문이 없거나(`recognized: true`, 빈 messages), 끝난 시도의 marker만 왔을 때(`retired: true`) `UserPromptSubmit`의 `decision: block`으로 그 marker prompt를 모델 요청 전에 막는다. host 화면에 marker가 한 번 보이는 것은 막지 않는다. 현재 내장 어댑터(Claude·Codex·Gemini·Antigravity)는 모두 이 값을 끈다. 따라서 지금은 빈 wake prompt를 막지 않고 기존 fail-open 처리를 따른다. `Stop`의 같은 decision은 continuation을 뜻하므로 이 처리에 쓰지 않는다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
+delivery profile의 `blocksEmptyWakePrompt`가 켜진 host의 hook은 현재 managed wake가 검증됐는데 인수한 본문이 없거나(`recognized: true`, 빈 messages), 끝난 시도의 marker만 왔을 때(`retired: true`) `UserPromptSubmit`의 `decision: block`으로 그 marker prompt를 모델 요청 전에 막는다. host 화면에 marker가 한 번 보이는 것은 막지 않는다. Claude는 검증된 managed/retired empty marker에 이 값을 켜고, Codex·Gemini·Antigravity는 기존 false를 유지한다. 미검증·unknown marker나 보통 사용자 prompt를 이 capability만으로 차단하지 않는다. `Stop`의 같은 decision은 continuation을 뜻하므로 이 처리에 쓰지 않는다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
 
 `wake-status`와 메시지 status의 `wake` diagnostic은 시도의 상태·해제 이유·시각을 보여 주며 본문이나 nonce는 포함하지 않는다. `wake-status`는 대상의 최신 시도다. 메시지 status의 `wake`(3.6.0부터)는 그 메시지가 대기 중일 때(생성부터 ACK까지) 시작된 시도만 보여 주고, 없으면 `null`이다. 시도는 대상에 인수할 본문이 있을 때만 시작되므로 그 시도는 이 메시지를 위해 울렸다. 아직 시작하지 않은(`reserved`) 시도, 메시지보다 먼저 시작했거나 ACK 뒤에 시작한 시도는 보이지 않는다. 3.5.x까지는 메시지와 무관하게 대상의 최신 시도를 보여 줬다.
 

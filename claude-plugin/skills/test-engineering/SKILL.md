@@ -33,7 +33,11 @@ metadata:
 
 ## CLI
 ```sh
+# 요구·case·입력·기대값·판정 조건을 plan.json으로 저장한다.
 node skills/test-engineering/scripts/run.mjs check-plan --root /absolute/artifacts --plan plan.json
+# 통과한 계획에 맞춰 첫 시험을 구현한다.
+# 동일한 시험 bytes·case·입력·기대값·argv·설정으로 before(RED), fixed(GREEN)를 실행한다.
+# 실제 실행된 사례 집합과 assertion 결과를 대조해 proof.json에 기록한다.
 node skills/test-engineering/scripts/run.mjs check-proof --root /absolute/artifacts --plan plan.json --proof proof.json
 ```
 명령 캡처·snapshot·예제는 [공통 CLI](../orchestrator/references/engineering-practices/cli.md)를 읽는다.

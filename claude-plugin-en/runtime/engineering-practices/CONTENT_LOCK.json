@@ -159,7 +159,7 @@
     },
     {
       "path": "skills/test-engineering/SKILL.md",
-      "digest": "sha256:5d7b1285940bf1fb2e9fb2ea1c0b65bc75590f88ae2527cf5ce5ea1eaebf8979"
+      "digest": "sha256:433c9f7c73914b53f1baf7975f5fb9e22d3195c6be1e6c5939f056bf3768edfb"
     },
     {
       "path": "skills/test-engineering/VERSION",
@@ -171,7 +171,7 @@
     },
     {
       "path": "skills/test-engineering/classification.json",
-      "digest": "sha256:b82827922ae2990887ed35b34e9c26c4668a367e05bc90dc5b5d46e9cecf036a"
+      "digest": "sha256:1f0fd5742354b7d23d8656b34618786ff7502e08e4871595c08633df8c477d8c"
     },
     {
       "path": "skills/test-engineering/integration/skill-descriptor.json",
