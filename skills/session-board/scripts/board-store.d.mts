@@ -1,1 +1,1 @@
-export * from "../../../runtime/session-board-store.d.mts";
+export * from "../../../runtime/session-board-store.mjs";
