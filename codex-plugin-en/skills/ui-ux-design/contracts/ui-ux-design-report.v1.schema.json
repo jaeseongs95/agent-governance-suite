@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/skills/ui-ux-design/contracts/ui-ux-design-report.v1.schema.json",
+  "title": "UiUxDesignReport.v1",
+  "description": "A design/review deliverable and scoped observations. ANALYZED completes only the specialist assessment, including an assessment that finds defects. It is not product acceptance, accessibility certification, independent audit, or release approval. Schema validation checks declarations, not evidence truth or cross-document bindings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "snapshotRef", "mode", "status", "summary", "scope", "deliverables", "findings", "checks", "limitations", "handoffs"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "requestId": { "$ref": "#/$defs/text" },
+    "snapshotRef": { "$ref": "#/$defs/text" },
+    "mode": { "enum": ["design", "review"] },
+    "status": { "enum": ["ANALYZED", "NOT_APPLICABLE", "NEEDS_INPUT"] },
+    "summary": { "$ref": "#/$defs/text" },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewed", "notReviewed"],
+      "properties": {
+        "reviewed": { "$ref": "#/$defs/textList" },
+        "notReviewed": { "$ref": "#/$defs/textList" }
+      }
+    },
+    "deliverables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "target", "content", "ref"],
+        "properties": {
+          "kind": { "enum": ["flow", "design", "prototype", "review"] },
+          "target": { "$ref": "#/$defs/text" },
+          "content": { "$ref": "#/$defs/text" },
+          "ref": { "anyOf": [{ "$ref": "#/$defs/text" }, { "type": "null" }] }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "severity", "target", "basis", "evidenceRefs", "observation", "impact", "recommendation"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "severity": { "enum": ["blocking", "major", "minor", "suggestion"] },
+          "target": { "$ref": "#/$defs/text" },
+          "basis": { "enum": ["observed", "inferred", "hypothesis"] },
+          "evidenceRefs": { "$ref": "#/$defs/textList", "minItems": 1 },
+          "observation": { "$ref": "#/$defs/text" },
+          "impact": { "$ref": "#/$defs/text" },
+          "recommendation": { "$ref": "#/$defs/text" }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "scope", "status", "environment", "evidenceRefs", "detail"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "kind": { "enum": ["static", "visual", "interaction", "accessibility", "performance"] },
+          "scope": { "$ref": "#/$defs/text" },
+          "status": { "enum": ["PASSED", "FAILED", "NOT_RUN", "NOT_APPLICABLE"] },
+          "environment": { "anyOf": [{ "$ref": "#/$defs/text" }, { "type": "null" }] },
+          "evidenceRefs": { "$ref": "#/$defs/textList" },
+          "detail": { "$ref": "#/$defs/text" }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "status": { "enum": ["PASSED", "FAILED"] } } },
+            "then": {
+              "properties": {
+                "environment": { "$ref": "#/$defs/text" },
+                "evidenceRefs": { "minItems": 1 }
+              }
+            }
+          },
+          {
+            "if": { "properties": { "status": { "enum": ["NOT_RUN", "NOT_APPLICABLE"] } } },
+            "then": { "properties": { "evidenceRefs": { "maxItems": 0 } } }
+          }
+        ]
+      }
+    },
+    "limitations": { "$ref": "#/$defs/textList" },
+    "handoffs": { "$ref": "#/$defs/textList" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "ANALYZED" } } },
+      "then": {
+        "properties": {
+          "deliverables": { "minItems": 1 },
+          "scope": {
+            "properties": { "reviewed": { "minItems": 1 }, "notReviewed": { "maxItems": 0 } }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "NEEDS_INPUT" } } },
+      "then": { "properties": { "limitations": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "NOT_APPLICABLE" } } },
+      "then": {
+        "properties": {
+          "scope": { "properties": { "reviewed": { "maxItems": 0 } } },
+          "deliverables": { "maxItems": 0 },
+          "findings": { "maxItems": 0 },
+          "checks": { "items": { "properties": { "status": { "const": "NOT_APPLICABLE" } } } }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "checks": { "contains": { "properties": { "status": { "const": "NOT_RUN" } } } }
+        }
+      },
+      "then": { "properties": { "limitations": { "minItems": 1 } } }
+    }
+  ],
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "textList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } }
+  }
+}

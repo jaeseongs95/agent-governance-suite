@@ -2561,6 +2561,82 @@
           }
         }
       ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "ui-ux-design",
+      "version": "0.1.0",
+      "path": "./ui-ux-design",
+      "enabled": true,
+      "priority": 67,
+      "providers": [
+        {
+          "capabilities": [
+            "ui-ux-design"
+          ],
+          "executionClass": "workflow",
+          "phase": "ui-ux-design",
+          "phaseOrder": 40,
+          "requiredInputArtifacts": [
+            "ui-ux-design-request"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "ui-ux-design-request",
+              "sources": [
+                "task:ui-ux-design-request"
+              ],
+              "operation": "require-external"
+            }
+          ],
+          "producedArtifacts": [
+            "ui-ux-design-report"
+          ],
+          "outputSchema": "skills/ui-ux-design/contracts/ui-ux-design-report.v1.schema.json",
+          "resultSchema": "contracts/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/status",
+            "values": {
+              "ANALYZED": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NOT_APPLICABLE": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEEDS_INPUT": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE",
+              "INTEGRITY_FAILED"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-ui-ux-design-diagnosis-or-review",
+            "authorized-change-to-user-interface-flow-or-interaction"
+          ],
+          "preconditions": [
+            "The request explicitly asks for UI/UX design, diagnosis, improvement, or review, or authorized interface work needs a concrete user-flow, interaction, responsive-layout, or accessibility decision.",
+            "The work concerns an actual web, desktop, or mobile interface or its design. Incidental UI/UX words in logs, backend-only changes, and standalone image or icon generation do not establish applicability.",
+            "Direct use does not require a new workflow. This optional formal provider produces design or review artifacts; source changes follow the existing authorized mutation and implementation flow. Preserve the existing task scope, design system, evidence, and acceptance and audit obligations."
+          ],
+          "failureHandling": "Return NEEDS_INPUT only for material missing input while preserving useful completed work. ANALYZED finishes the stated design or review scope; it does not prove UI behavior, accessibility conformance, performance, acceptance, or independent audit. Keep NOT_RUN and unavailable observations distinct from verified results. This stage grants no new implementation or release authority.",
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": null
+          }
+        }
+      ]
     }
   ]
 }

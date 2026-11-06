@@ -199,7 +199,7 @@ Test design and evidence review, fixed-change code review, security audits, inde
 <details>
 <summary>Browse all specialist skills</summary>
 
-The current working tree contains 23 specialist skills, two local infrastructure skills, and one orchestrator.
+The current working tree contains 24 specialist skills, one local infrastructure skill, and one orchestrator.
 
 | Skill | Responsibility |
 | --- | --- |
@@ -224,6 +224,7 @@ The current working tree contains 23 specialist skills, two local infrastructure
 | [`cs-engineering`](skills/cs-engineering/) | Derives CS constraints and verification obligations, then checks candidate/evidence consistency. (v0.2.0) |
 | [`solid-design`](skills/solid-design/) | Assesses concrete module, contract, and adapter boundaries with SOLID and proposes the smallest change that preserves existing obligations. It does not implement changes or grant acceptance, audit, or release approval. (v0.1.0) |
 | [`prompt-engineering`](skills/prompt-engineering/) | Designs, diagnoses, and improves LLM prompts, instructions, and input templates while preserving requirements and defining comparisons. This optional specialist does not own skill selection, authorization, or audit approval. (v0.1.0) |
+| [`ui-ux-design`](skills/ui-ux-design/) | Designs and reviews web, desktop, and mobile user flows, interfaces, interactions, accessibility, state and error handling, and large-list usability, then connects the findings to authorized implementation. Design or review completion is separate from verified UI behavior and audit approval. (v0.1.0) |
 | [`test-engineering`](skills/test-engineering/) | Designs cases at requirement and code boundaries and checks whether red/green or targeted-mutation evidence can detect defects. (v0.1.0) |
 | [`code-review`](skills/code-review/) | Reviews concrete diffs, patches, or PRs for real failure paths and separates findings, recommendations, and questions. (v0.1.0) |
 
