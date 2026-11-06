@@ -51,3 +51,5 @@ RED는 이 사례 그대로 test-only SHA를 TEST에서 실행해 회수한다. 
 | CB-12 | `createCatalogExecutionAdapters`; exact ID/alias·profile 전용키·없는 alias 대상·alias minimum override | 합성 선언metadata로 suite 구성하고 각 raw ID 조회; 이후 원본metadata 변경 | exact/alias만 admission, profile raw/없는 대상 거부, alias minimum 우선, 원본 변경이 컴파일된 suite를 바꾸지 않음 | NOT_RUN |
 
 TEST 명령: `pnpm exec vitest run tests/mcp/ags38-core-boundary-shared.test.ts tests/coordinate-subagents/model-routing.test.mjs tests/mcp/model-policy-regression.test.ts tests/mcp/host-attestation.test.ts tests/mcp/model-capability-contract.test.ts`. 로컬 제품 시험은 실행하지 않는다.
+
+최종 catalog 책임 경계: `runtime/model-catalog-adapter.mjs`는 기존 catalog JSON의 정적 export만 한다. `createCatalogExecutionAdapters`는 선언 ID·alias를 native Map으로 컴파일하고 alias별 effort override와 capability 배열을 snapshot으로 보존한다. 이후 admission은 그 Map 조회만 사용한다. skill의 `model-catalog-adapter.mjs/.d.mts`는 최신 통합기준 `aee5a669`의 원본과 diff 0으로 복원했다. 공유 resolver 구현의 사본은 남기지 않았다. 변경한 `.mjs` 2개 구문 검사와 `git diff --check` exit 0. standalone/core 동작 및 tsc는 TEST 실행 대기(NOT_RUN).
