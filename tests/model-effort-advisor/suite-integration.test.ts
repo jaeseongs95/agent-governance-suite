@@ -19,7 +19,7 @@ const fixture = JSON.parse(readFileSync(casesPath, "utf8")) as {
 };
 const cases = fixture.cases;
 
-describe("model-effort-advisor", () => {
+describe("historical ModelEffortAdvice.v1 compatibility", () => {
   it("keeps representative outputs inside ModelEffortAdvice.v1", () => {
     const validate = new Ajv2020({ allErrors: true, strict: false }).addSchema(modelPolicySchema).compile(schema);
     for (const testCase of cases) {

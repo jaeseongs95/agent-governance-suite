@@ -9,7 +9,7 @@ const fixtureBytes = readFileSync(new URL("./model-effort-support-cases.json", i
 const { cases } = JSON.parse(fixtureBytes);
 const cli = fileURLToPath(new URL("../../skills/model-effort-advisor/scripts/support-guard.mjs", import.meta.url));
 
-describe("model effort provider support boundary", () => {
+describe("historical ModelEffortAdvice.v1 provider support boundary", () => {
   it("uses the frozen same natural-language inputs and oracle", () => {
     expect(createHash("sha256").update(fixtureBytes).digest("hex"))
       .toBe("8b9054c24b56a980126906b008c8da0f75be730f015c3791b6431a9b14098ceb");
@@ -107,7 +107,7 @@ describe("model effort provider support boundary", () => {
   });
 });
 
-describe("model effort notices follow the host locale", () => {
+describe("historical ModelEffortAdvice.v1 notices follow the host locale", () => {
   afterEach(() => vi.unstubAllEnvs());
   const noticeIn = (locale, item) => {
     vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);

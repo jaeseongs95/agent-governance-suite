@@ -2,11 +2,11 @@
   "schemaVersion": "1.0.0",
   "taxonomyRevision": "1.0.0",
   "actions": [
-    "assess-model-effort-fit"
+    "select-subagent-model-effort"
   ],
   "targets": [
-    "observed-current-model",
-    "observed-reasoning-effort"
+    "approved-subagent-assignment",
+    "host-model-capabilities"
   ],
   "constraints": [],
   "dependencies": [],
@@ -15,25 +15,25 @@
       "path": "skills/model-effort-advisor/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
+      "digest": "sha256:f00d76acf5175d783011033825b0b2b5955735ceb74d9e7f2a2a7527b6dd60e7",
       "startByte": 0,
-      "endByte": 211
+      "endByte": 297
     },
     {
       "path": "skills/model-effort-advisor/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
+      "digest": "sha256:f00d76acf5175d783011033825b0b2b5955735ceb74d9e7f2a2a7527b6dd60e7",
       "startByte": 0,
-      "endByte": 96
+      "endByte": 336
     },
     {
       "path": "skills/model-effort-advisor/SKILL.md",
-      "startLine": 15,
-      "endLine": 19,
-      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
+      "startLine": 17,
+      "endLine": 17,
+      "digest": "sha256:f00d76acf5175d783011033825b0b2b5955735ceb74d9e7f2a2a7527b6dd60e7",
       "startByte": 0,
-      "endByte": 378
+      "endByte": 143
     }
   ],
   "exclusions": [
@@ -41,25 +41,17 @@
       "path": "skills/model-effort-advisor/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
-      "startByte": 212,
-      "endByte": 351
+      "digest": "sha256:f00d76acf5175d783011033825b0b2b5955735ceb74d9e7f2a2a7527b6dd60e7",
+      "startByte": 298,
+      "endByte": 419
     },
     {
       "path": "skills/model-effort-advisor/SKILL.md",
-      "startLine": 13,
-      "endLine": 13,
-      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
-      "startByte": 97,
-      "endByte": 263
-    },
-    {
-      "path": "skills/model-effort-advisor/SKILL.md",
-      "startLine": 21,
-      "endLine": 21,
-      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
+      "startLine": 18,
+      "endLine": 19,
+      "digest": "sha256:f00d76acf5175d783011033825b0b2b5955735ceb74d9e7f2a2a7527b6dd60e7",
       "startByte": 0,
-      "endByte": 322
+      "endByte": 424
     }
   ]
 }
