@@ -2,20 +2,28 @@
   "schemaVersion": "1.0.0",
   "taxonomyRevision": "1.0.0",
   "actions": [
-    "design-user-interfaces",
+    "design-user-experiences",
     "review-user-flows",
-    "diagnose-interaction-problems",
-    "improve-ui-accessibility",
+    "diagnose-usability-problems",
+    "improve-accessibility",
+    "verify-audience-fit",
     "plan-ui-implementation"
   ],
   "targets": [
+    "user-flow",
+    "information-hierarchy",
+    "interaction-state",
     "web-interface",
     "desktop-interface",
     "mobile-interface",
-    "user-flow",
-    "interaction-state",
     "responsive-layout",
-    "large-list-rendering"
+    "large-list-rendering",
+    "print-and-advertising",
+    "video",
+    "physical-space-and-signage",
+    "physical-product",
+    "service-process",
+    "document-and-form"
   ],
   "constraints": [],
   "dependencies": [],
@@ -24,7 +32,7 @@
       "path": "skills/ui-ux-design/SKILL.md",
       "startLine": 4,
       "endLine": 5,
-      "digest": "sha256:09d96ba1143421d60731d8802426c07cf787c4c19d76a532be9d4afa2d374360"
+      "digest": "sha256:488d62cfa6973484d97a22be0d98a59f5725795c80b2ecab2e5eb46741eb766c"
     }
   ],
   "exclusions": [
@@ -32,7 +40,7 @@
       "path": "skills/ui-ux-design/SKILL.md",
       "startLine": 6,
       "endLine": 6,
-      "digest": "sha256:09d96ba1143421d60731d8802426c07cf787c4c19d76a532be9d4afa2d374360"
+      "digest": "sha256:488d62cfa6973484d97a22be0d98a59f5725795c80b2ecab2e5eb46741eb766c"
     }
   ]
 }
