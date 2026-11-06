@@ -50,7 +50,7 @@ function prefetchHistory(cache, revision, top) {
     const tab = entry.indexOf("\t");
     const [, type, oid] = entry.slice(0, tab).split(" ");
     const path = entry.slice(tab + 1);
-    if (type !== "blob" || EXECUTABLE_SCRIPT.test(path) || /[\r\n]/u.test(path)) continue;
+    if (type !== "blob" || /[\r\n]/u.test(path)) continue;
     const key = JSON.stringify([ROOT, "show", `${revision}:${path}`]);
     const blob = JSON.stringify([ROOT, "blob", oid]);
     if (cache.has(blob)) cache.set(key, cache.get(blob));
