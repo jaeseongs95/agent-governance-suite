@@ -305,10 +305,11 @@ describe("offline classification through actual MCP Client/Server transport", ()
     expect((await h.client.listTools()).tools.map(x => x.name)).toEqual(expect.arrayContaining(["get_skill_inventory", "classify_skills", "record_skill_selection"]));
     const inventory = await h.call<SkillInventory>("get_skill_inventory", {});
     expect(inventory.error).toBeNull(); expect(inventory.data!.issues).toEqual([]);
-    expect(inventory.data!.skills).toHaveLength(26);
+    expect(inventory.data!.skills).toHaveLength(25);
     expect(inventory.data!.skills.map(x => x.skillId)).toEqual(expect.arrayContaining(["orchestrator", "session-board"]));
     // Continuity is MCP tools and hooks now; the retired skill is not in the inventory.
     expect(inventory.data!.skills.map(x => x.skillId)).not.toContain("context-continuity");
+    expect(inventory.data!.skills.map(x => x.skillId)).not.toContain("codex-token-usage-analyzer");
     expect(h.classify).not.toHaveBeenCalled();
   });
   it("preserves original negation, provenance, null and known-empty at the real service boundary", async () => {
@@ -321,8 +322,10 @@ describe("offline classification through actual MCP Client/Server transport", ()
     expect(transmitted.originalPrompt).toBe(request.originalPrompt);
     expect(transmitted.confirmedContext).toEqual(request.confirmedContext);
     expect(transmitted.contextSources).toEqual(request.contextSources);
-    expect(transmitted.skills).toHaveLength(26);
-    expect(advice.data!.result.response.judgments).toHaveLength(26);
+    expect(transmitted.skills).toHaveLength(25);
+    expect(advice.data!.result.response.judgments).toHaveLength(25);
+    expect(advice.data!.result.response.judgments.map(item => item.skillId)).toEqual(transmitted.skills.map(skill => skill.skillId));
+    expect(transmitted.skills.map(skill => skill.skillId)).not.toContain("codex-token-usage-analyzer");
     expect(advice.data!.result.response.judgments.find(x => x.skillId === "code-review")!.judgment).toBe("needed");
   });
   it("requires an exact-call host observation and never trusts a caller selection receipt", async () => {
@@ -455,7 +458,7 @@ describe("offline classification through actual MCP Client/Server transport", ()
   it("exposes configured discovery failure instead of claiming complete healthy host inventory", async () => {
     const h = await harness(); h.readRuntime.mockRejectedValue(new Error("synthetic config parse failure SECRET_SENTINEL"));
     const result = await h.call<SkillInventory>("get_skill_inventory", {});
-    expect(result.data!.skills).toHaveLength(26);
+    expect(result.data!.skills).toHaveLength(25);
     expect(result.data!.issues).toContainEqual({ skillId: null, code: "CONFIGURED_DISCOVERY_UNAVAILABLE", field: "classificationConfig" });
     expect(JSON.stringify(result)).not.toContain("SECRET_SENTINEL"); expect(h.classify).not.toHaveBeenCalled();
   });

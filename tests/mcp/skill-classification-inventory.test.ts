@@ -34,13 +34,40 @@ describe("classification inventory source authority (SS26/SS37)", () => {
     const directories = (await readdir("skills", { withFileTypes: true })).filter((item) => item.isDirectory());
     expect(inventory.issues).toEqual([]);
     expect(inventory.skills).toHaveLength(directories.length);
+    expect(inventory.skills.map(skill => skill.skillId)).toEqual(directories.map(item => item.name).sort());
+    const registry = JSON.parse(await readFile("skills/registry.json", "utf8")) as { skills: { skillId: string }[] };
+    expect(registry.skills).toHaveLength(23);
+    expect(inventory.skills).toHaveLength(25);
+    const registeredIds = new Set(registry.skills.map(skill => skill.skillId));
+    expect(inventory.skills.filter(skill => !registeredIds.has(skill.skillId)).map(skill => skill.skillId)).toEqual(["orchestrator", "session-board"]);
     expect(inventory.skills.map((skill) => skill.skillId)).toEqual(expect.arrayContaining(["orchestrator", "session-board"]));
     expect(inventory.skills.map((skill) => skill.skillId)).not.toContain("context-continuity");
+    expect(inventory.skills.map(skill => skill.skillId)).not.toContain("codex-token-usage-analyzer");
     const prose = inventory.skills.find((skill) => skill.skillId === "korean-prose-editor")!;
     expect(prose.phases.map((item) => item.phase)).toEqual(["korean-prose-selection", "korean-prose-editing", "korean-prose-verification", "korean-prose-finalization"]);
     expect(prose.phases[3]?.inputBindings?.find((binding) => binding.targetArtifact === "edit-verification-report")?.sources).toEqual(["provider:korean-prose-verification.edit-verification-report"]);
     expect(prose.phases[3]?.gate?.policy).toBe("conditional");
     expect((await loadSkillInventory({ root: process.cwd() })).inventoryDigest).toBe(inventory.inventoryDigest);
+  });
+  it("exposes the current advisor as pre-dispatch selection with source-bound assignment requirements", async () => {
+    const inventory = await loadSkillInventory({ root: process.cwd() });
+    expect(inventory.issues).toEqual([]);
+    const advisor = inventory.skills.find(skill => skill.skillId === "model-effort-advisor")!;
+    expect(advisor).toMatchObject({
+      version: "0.2.0", actions: ["select-subagent-model-effort"],
+      targets: ["approved-subagent-assignment", "host-model-capabilities"],
+      capabilities: ["subagent-model-selection"],
+      phases: [{ capability: "subagent-model-selection", phase: "subagent-model-selection", phaseOrder: 25,
+        requiredInputArtifacts: ["subagent-assignment", "host-model-capabilities"],
+        producedArtifacts: ["subagent-model-advice"], gate: { kind: "none", policy: "none", validator: null } }],
+    });
+    expect(advisor.phases.flatMap(phase => phase.inputBindings?.map(binding => binding.targetArtifact) ?? []))
+      .not.toContain("current-model-selection");
+    expect(advisor.sourceMap).toEqual(expect.arrayContaining([
+      expect.objectContaining({ field: "description", path: "skills/model-effort-advisor/SKILL.md" }),
+      expect.objectContaining({ field: "phases", path: "skills/registry.json" }),
+      expect.objectContaining({ field: "actions", path: "skills/model-effort-advisor/classification.json" }),
+    ]));
   });
   it("discovers a neutral new ID, re-reads roles and honors actual host membership", async () => {
     const root = await fixture(); await addSkill(root);
@@ -142,10 +169,10 @@ describe("classification inventory source authority (SS26/SS37)", () => {
 });
 
 describe("signed source evidence and selection context regression", () => {
-  it("keeps all 26 skills while separating applicable evidence from exclusions", async () => {
+  it("keeps all 25 current skills while separating applicable evidence from exclusions", async () => {
     const inventory = await loadSkillInventory({ root: process.cwd() });
     expect(inventory.issues).toEqual([]);
-    expect(inventory.skills).toHaveLength(26);
+    expect(inventory.skills).toHaveLength(25);
     for (const skill of inventory.skills) {
       expect(skill.applicability, skill.skillId).not.toEqual(skill.exclusions);
       expect(skill.applicability.filter(text => skill.exclusions.includes(text)), skill.skillId).toEqual([]);
@@ -175,7 +202,8 @@ describe("signed source evidence and selection context regression", () => {
     const projected = projectClassificationRequest(request);
     const wire = jevNoulWireAdapter.encode(request, { modelId: "synthetic-local-only" } as ProviderProfile) as { state: { originalPrompt: string }; questions: Record<string, { instructions: { skill: unknown } }> };
     expect(wire.state.originalPrompt).toBe(originalPrompt);
-    expect(Object.keys(wire.questions)).toHaveLength(26);
+    expect(Object.keys(wire.questions)).toHaveLength(25);
+    expect(Object.keys(wire.questions)).toEqual(request.skills.map(skill => skill.skillId));
     for (const skill of [inventory.skills.find(s => s.skillId === skillId), request.skills.find(s => s.skillId === skillId), projected.payload.skills.find(s => s.skillId === skillId), wire.questions[skillId]!.instructions.skill]) expect(JSON.stringify(skill)).toContain(needle);
   });
 

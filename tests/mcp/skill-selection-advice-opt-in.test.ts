@@ -90,14 +90,18 @@ describe("direct Choice opt-in necessity contract", () => {
     expect(Object.keys(second.questions)).toEqual(reversed.skills.map(skill => skill.skillId));
     for (const skill of projectClassificationRequest(reversed).payload.skills) expect(second.questions[skill.skillId]!.instructions.skill).toEqual(skill);
   });
-  it("preserves all 26 real descriptors and 41 phases without a skill-name or count branch", async () => {
+  it("preserves all 25 current descriptors and 40 phases without a skill-name or count branch", async () => {
     const inventory = await loadSkillInventory({root: fileURLToPath(new URL("../../", import.meta.url))});
-    expect(inventory.issues).toEqual([]); expect(inventory.skills).toHaveLength(26);
-    expect(inventory.skills.reduce((n, skill) => n + skill.phases.length, 0)).toBe(41);
+    expect(inventory.issues).toEqual([]); expect(inventory.skills).toHaveLength(25);
+    expect(inventory.skills.reduce((n, skill) => n + skill.phases.length, 0)).toBe(40);
     const request = createClassificationRequest({requestId: "real-inventory", operationId: "full-wire", originalPrompt: "검토", inventory, classificationCriteriaRef: "fixture"});
     const wire = jevSkillSelectionChoiceWireAdapter.encode(request, configuration) as {questions: Record<string, {instructions: {skill: unknown}}>};
     expect(Object.keys(wire.questions)).toEqual(inventory.skills.map(skill => skill.skillId));
-    for (const skill of projectClassificationRequest(request).payload.skills) expect(wire.questions[skill.skillId]!.instructions.skill).toEqual(skill);
+    for (const skill of request.skills) {
+      const expected = structuredClone(skill);
+      Reflect.deleteProperty(expected, "sourceRefs"); Reflect.deleteProperty(expected, "sourceMap");
+      expect(wire.questions[skill.skillId]!.instructions.skill).toEqual(expected);
+    }
   });
   it.each(["missing-id", "extra-id", "type", "label", "model", "confidence-nan", "confidence-infinity", "confidence-negative", "confidence-over", "confidence-type",
     "distribution-missing", "distribution-extra", "distribution-nan", "distribution-negative", "distribution-over", "distribution-sum", "distribution-type",
