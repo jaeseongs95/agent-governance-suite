@@ -58,7 +58,7 @@ describe("bundled skill registry", () => {
       "recovery-strategy-selection",
       "workspace-convention-profiling",
       "mutation-risk-preflight",
-      "model-effort-fit-assessment",
+      "subagent-model-selection",
       "iteration-frame-audit",
       "evaluation-validity-audit",
     ]));

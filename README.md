@@ -10,7 +10,7 @@ Agent Governance Suite(AGS)는 Claude Code, Codex, Antigravity(`agy`)에 설치�
 
 | 구성 | 하는 일 |
 | --- | --- |
-| 전문 스킬 24개 | 작업 계약, 위험 점검, 완료 근거 검증, 독립 감사, 실패 진단, 코드 리뷰, 보안 감사 같은 판단을 하나씩 맡습니다. |
+| 전문 스킬 23개 | 작업 계약, 위험 점검, 완료 근거 검증, 독립 감사, 실패 진단, 코드 리뷰, 보안 감사 같은 판단을 하나씩 맡습니다. |
 | `orchestrator` | 필요한 전문 스킬을 고르고 실행 순서와 입출력을 연결합니다. |
 | 로컬 MCP 서버 | workflow의 계획·단계 결과·완료 조건을 검사하고, 작업 기록·현황판·메시지 도구를 제공합니다. 별도 포트나 상주 데몬 없이 호스트가 필요할 때 실행합니다. |
 | 호스트 hook | 세션 시작, 사용자 메시지, 도구 호출, 턴 종료 시점에 안내를 넣고 관측을 기록하며 메시지를 전달합니다. |
@@ -133,14 +133,14 @@ ACK와 실제 검토 결과를 구분해서 알려 줘. 파일 수정과 테스�
 
 ## 스킬
 
-전문 스킬 24개의 버전과 출처는 [registry](skills/registry.json)와 [source lock](skills/source-lock.json)을 따릅니다. 이 밖에 흐름을 연결하는 [`orchestrator`](skills/orchestrator/)와 현황판 사용법을 담은 [`session-board`](skills/session-board/)가 있습니다. 작업 기록은 스킬이 아니라 MCP 도구(`checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`)와 hook이 맡습니다.
+전문 스킬 23개의 버전과 출처는 [registry](skills/registry.json)와 [source lock](skills/source-lock.json)을 따릅니다. 이 밖에 흐름을 연결하는 [`orchestrator`](skills/orchestrator/)와 현황판 사용법을 담은 [`session-board`](skills/session-board/)가 있습니다. 작업 기록은 스킬이 아니라 MCP 도구(`checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`)와 hook이 맡습니다.
 
 | 스킬 | 출처 | 버전 | 하는 일 |
 | --- | --- | --- | --- |
 | [`instruction-scope-resolver`](skills/instruction-scope-resolver/) | AGS | 1.0.0 | 경로에 적용되는 지침 파일과 우선순위를 확인합니다. |
 | [`workspace-convention-profiler`](skills/workspace-convention-profiler/) | AGS | 1.0.0 | 저장소 구조, 관례, 검증 명령을 조사합니다. |
 | [`task-contract`](skills/task-contract/) | AGS | 1.1.0 | 목표, 범위, 완료 기준, 위험, 권한을 작업 계약으로 정리합니다. |
-| [`model-effort-advisor`](skills/model-effort-advisor/) | AGS | 0.1.0 | 관측된 모델·추론 수준이 작업의 난도와 위험에 맞는지 봅니다. |
+| [`model-effort-advisor`](skills/model-effort-advisor/) | AGS | 0.2.0 | 서브에이전트 호출 전에 작업 요구와 호스트의 가용 조합으로 모델·추론 수준을 선택합니다. |
 | [`coordinate-subagents`](skills/coordinate-subagents/) | AGS | 1.1.0 | 위임할지 판단하고 담당 범위, 전달할 맥락, 검증 책임을 정합니다. |
 | [`ponytail`](skills/ponytail/) | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail/tree/83b2cbc3bc50df3030c49d1dfe598ccefe850a85) 기반, AGS 수정 | 4.10.0 | 요구를 만족하는 가장 작은 완전한 구현을 고릅니다. |
 | [`change-scope-guardian`](skills/change-scope-guardian/) | AGS | 1.0.0 | 기준 상태와 현재 변경을 비교해 범위 밖 파일을 찾습니다. |
@@ -160,7 +160,6 @@ ACK와 실제 검토 결과를 구분해서 알려 줘. 파일 수정과 테스�
 | [`software-security-auditor`](skills/software-security-auditor/) | AGS | 0.1.0 | 웹·API와 CLI·MCP의 공격 경로, 방어 통제, 검사 공백을 감사합니다. |
 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | AGS | 1.0.0 | 평가의 입력·판정·집계가 공정하고 재현 가능한지 감사합니다. |
 | [`korean-prose-editor`](skills/korean-prose-editor/) | AGS | 0.1.0 | 사실·숫자·링크·코드를 보존하며 한국어 산문을 편집하고 검증합니다. |
-| [`codex-token-usage-analyzer`](skills/codex-token-usage-analyzer/) | AGS | 0.1.0 | 로컬 Codex 로그에서 작업·프로젝트별 토큰 사용량을 집계합니다. Claude Code 패키지에는 없습니다. |
 
 `test-engineering`과 `code-review`가 함께 쓰는 엔지니어링 모듈은 [엔지니어링 실무 통합](docs/engineering-practices.ko.md)에 정리했습니다.
 

@@ -7,7 +7,7 @@
       "version": "1.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:1d66a6e4123e21fb228023b9764888f77a6f505d19d11bf08abff21cafe29e3f",
+      "integratedChecksum": "sha256:4b6f54d4173ed9d13ffee059486a4f5b0e403679badacd37259380b1b285601b",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {
@@ -94,10 +94,10 @@
     {
       "skillId": "model-effort-advisor",
       "path": "skills/model-effort-advisor",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:68114065b904b763e61cd6557b4a7bd123795c47f5736d9b0cb7034ed378c7aa",
+      "integratedChecksum": "sha256:c815b2c77a78e939b93d6e03585614fae8222b30a872200a7b669b43db4c1f20",
       "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor"
     },
     {
@@ -135,15 +135,6 @@
       "updatePolicy": "internal",
       "integratedChecksum": "sha256:85f26ccc696aa960b09d78de927f0c947f853b216f0a19d999b146fb59f4e96e",
       "checksumScope": "relative paths and normalized text bytes under skills/evaluation-validity-auditor"
-    },
-    {
-      "skillId": "codex-token-usage-analyzer",
-      "path": "skills/codex-token-usage-analyzer",
-      "version": "0.1.0",
-      "versionSource": "skill-metadata",
-      "updatePolicy": "internal",
-      "integratedChecksum": "sha256:19a383c7252e7548bbcf5d17fdf876e4c51e39646eccd6701e8db942f7b9fc90",
-      "checksumScope": "relative paths and normalized text bytes under skills/codex-token-usage-analyzer"
     },
     {
       "skillId": "ponytail",
