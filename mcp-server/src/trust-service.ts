@@ -5,7 +5,7 @@ import {
   type CollaborationDecisionValidationV1,
   type ValidateCollaborationDecisionRequestV1,
 } from "../../contracts/types.js";
-import { validateCollaborationDecision as validateStructure } from "../../skills/orchestrator/scripts/collaboration-decision.mjs";
+import { validateCollaborationDecision as validateStructure } from "../../runtime/collaboration-decision.mjs";
 import { TrustStore } from "./trust-store.js";
 import type { VerifiedCaller } from "./caller-identity.js";
 

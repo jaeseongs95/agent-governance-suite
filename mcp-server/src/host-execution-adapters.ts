@@ -1,13 +1,12 @@
 import type { ModelClassV1, ReasoningEffortV1 } from "../../contracts/types.js";
-import defaultModelRoutingPresets from "../../skills/coordinate-subagents/references/model-routing-presets.json" with { type: "json" };
 import type {
   HostExecutionAdapter,
   ModelCapabilityJudgmentV1,
   ResolvedModelCapabilityV1,
 } from "./host-attestation.js";
 
-import { resolveCatalogModel, type CatalogMatchingStrategyV1 } from "../../skills/coordinate-subagents/scripts/model-catalog-adapter.mjs";
-export type { CatalogMatchingStrategyV1 } from "../../skills/coordinate-subagents/scripts/model-catalog-adapter.mjs";
+import { defaultModelRoutingPresets, resolveCatalogModel, type CatalogMatchingStrategyV1 } from "../../runtime/model-catalog-adapter.mjs";
+export type { CatalogMatchingStrategyV1 } from "../../runtime/model-catalog-adapter.mjs";
 
 export interface CatalogModelEntryV1 {
   readonly model_class: ModelClassV1;

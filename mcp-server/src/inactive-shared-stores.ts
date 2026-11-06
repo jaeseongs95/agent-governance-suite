@@ -1,5 +1,5 @@
 import { InactiveSharedConnection, resolveInactiveSharedDatabasePath, retainCleanupFailure, type SharedModuleContext, type SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
-import { openBoard } from "../../skills/session-board/scripts/board-store.mjs";
+import { openBoard } from "../../runtime/session-board-store.mjs";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { SqliteContinuityStore } from "./continuity-store.js";
 import { SessionMessageStore } from "./session-message-store.js";
