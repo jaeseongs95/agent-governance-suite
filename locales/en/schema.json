@@ -6,5 +6,6 @@
   "schema.stageResultV1.defs.evidence.properties.verified.description": "Caller declaration only. Gate decisions use the server-owned artifactChecks.",
   "schema.stageResultV1.defs.evidence.properties.digest.description": "sha256 of the file at locator, so the server can check a local file.",
   "schema.convergenceReviewV1.properties.reviewerActorId.description": "Declared by the recording root. AGS does not observe reviewer identity, independence or context.",
-  "schema.convergenceReviewV1.properties.observedReviewer.description": "Server-owned. The observed caller that recorded this review and the independence AGS could check; callers must not send it."
+  "schema.convergenceReviewV1.properties.observedReviewer.description": "Server-owned. The observed caller that recorded this review and the independence AGS could check; callers must not send it.",
+  "schema.updateSessionStatusRequestV1.properties.role.description": "This session's role as the user's request or instructions set it, in one line (for example the component or kind of work it owns). Write only a role the user gave; it grants no authority. Omit it to keep the role already written."
 }

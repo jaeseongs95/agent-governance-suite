@@ -185,6 +185,7 @@
   "schema.stageResultV1.properties.artifactChecks.description": "257b3239cb108907f6a1a959733bfb75589ec76840e4174e30996abb47be482f",
   "schema.stageResultV1.properties.outputFile.description": "dc1a29ce14876771056b23af875a255f6331fe97d595d2d2ac75b68ec389a0e5",
   "schema.stageResultV1.properties.recordedBy.description": "7f531b2a29c921d1641f0775aee31c7c82113ef21397c39ec4c811bd9787e64d",
+  "schema.updateSessionStatusRequestV1.properties.role.description": "d22f4757064abf8a6e2d07602624a7c9a1df29f5b22e3bce883609b555d7b398",
   "server.call.callerIngressMissing": "0dd0d8b2aadd1b50c2afb3a13f7db70e322e6c5c5e2999a37858873903d0aecf",
   "server.call.reservedCallerField": "1ad868fc5c0afb65f36fe18cf1f798eb5a6fd2d0e45091313b911a8f1cb07216",
   "server.call.responseModeInvalid": "4aa372990e396bee8ee5ad60ce4bbf3fb4d4550eb0843e7e8c2507850085abca",

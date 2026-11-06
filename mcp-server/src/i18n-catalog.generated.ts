@@ -554,6 +554,7 @@ export interface MessageParams {
   "schema.stageResultV1.defs.evidence.properties.digest.description": Record<string, never>;
   "schema.convergenceReviewV1.properties.reviewerActorId.description": Record<string, never>;
   "schema.convergenceReviewV1.properties.observedReviewer.description": Record<string, never>;
+  "schema.updateSessionStatusRequestV1.properties.role.description": Record<string, never>;
   "instructions.intake.frame": { "intake": NestedMessage | number | string; };
   "instructions.intake.pointer": { "path": NestedMessage | number | string; };
   "instructions.sessionMessage.guide": Record<string, never>;
