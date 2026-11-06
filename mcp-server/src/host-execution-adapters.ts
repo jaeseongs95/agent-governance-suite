@@ -5,7 +5,7 @@ import type {
   ResolvedModelCapabilityV1,
 } from "./host-attestation.js";
 
-import { defaultModelRoutingPresets, resolveCatalogModel, type CatalogMatchingStrategyV1 } from "../../runtime/model-catalog-adapter.mjs";
+import { defaultModelRoutingPresets, type CatalogMatchingStrategyV1 } from "../../runtime/model-catalog-adapter.mjs";
 export type { CatalogMatchingStrategyV1 } from "../../runtime/model-catalog-adapter.mjs";
 
 export interface CatalogModelEntryV1 {
@@ -16,6 +16,7 @@ export interface CatalogModelEntryV1 {
 
 export interface ProviderModelCatalogV1 {
   readonly matching: CatalogMatchingStrategyV1;
+  readonly profile_only_keys?: readonly string[];
   readonly models: Readonly<Record<string, CatalogModelEntryV1>>;
   readonly aliases?: Readonly<Record<string, string>>;
 }
@@ -48,49 +49,14 @@ export interface ExecutionAdapterSuiteV1 {
 
 interface BoundProviderCatalogV1 {
   readonly providerId: string;
-  readonly entry: ModelRoutingProviderPresetV1;
+  readonly admissions: ReadonlyMap<string, Pick<ResolvedModelCapabilityV1,
+    "resolvedModel" | "modelClass" | "minimumReasoningEffort" | "supportedEfforts">>;
 }
 
 const HOST_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u;
 
 function isValidHostName(value: unknown): value is string {
   return typeof value === "string" && HOST_NAME_PATTERN.test(value);
-}
-
-function resolveFromProviderCatalog(
-  providerId: string,
-  host: string,
-  policyRevision: string,
-  providerEntry: ModelRoutingProviderPresetV1 | undefined,
-  rawModel: string,
-  provenance: string = "adapter-policy",
-): ResolvedModelCapabilityV1 | null {
-  if (typeof rawModel !== "string" || rawModel.length === 0 || !providerEntry?.catalog) return null;
-  const catalog = providerEntry.catalog;
-  const models = catalog.models ?? {};
-  const minimumEfforts = providerEntry.minimum_efforts ?? {};
-
-  const canonicalKey = resolveCatalogModel(catalog, rawModel);
-  if (!canonicalKey) return null;
-  const entry = models[canonicalKey]!;
-  const minimumReasoningEffort = minimumEfforts[rawModel]
-    ?? minimumEfforts[canonicalKey]
-    ?? entry.minimum_effort
-    ?? null;
-  const supportedEfforts = entry.supported_efforts ?? [];
-
-  return {
-    provider: providerId,
-    host,
-    rawModel,
-    resolvedModel: canonicalKey,
-    modelClass: entry.model_class,
-    minimumReasoningEffort,
-    supportedEfforts,
-    aliasUsed: rawModel !== canonicalKey,
-    policyRevision,
-    provenance,
-  };
 }
 
 function judgeFromProviderCatalogs(
@@ -113,9 +79,10 @@ function judgeFromProviderCatalogs(
     };
   }
   const matches: ResolvedModelCapabilityV1[] = [];
-  for (const { providerId, entry } of bindings) {
-    const resolved = resolveFromProviderCatalog(providerId, host, policyRevision, entry, rawModel, provenance);
-    if (resolved) matches.push(resolved);
+  for (const { providerId, admissions } of bindings) {
+    const declared = admissions.get(rawModel);
+    if (declared) matches.push({...declared, provider: providerId, host, rawModel,
+      aliasUsed: rawModel !== declared.resolvedModel, policyRevision, provenance});
   }
   if (matches.length === 1) {
     return { status: "resolved", ...matches[0]! };
@@ -186,11 +153,11 @@ function bindProviderToHost(
   hostBindings: Map<string, BoundProviderCatalogV1[]>,
   host: string,
   providerId: string,
-  entry: ModelRoutingProviderPresetV1,
+  admissions: BoundProviderCatalogV1["admissions"],
 ): void {
   const list = hostBindings.get(host) ?? [];
   if (!list.some((item) => item.providerId === providerId)) {
-    list.push({ providerId, entry });
+    list.push({ providerId, admissions });
     hostBindings.set(host, list);
   }
 }
@@ -215,6 +182,29 @@ export function createCatalogExecutionAdapters(
     : "1.0.0";
   const hostBindings = new Map<string, BoundProviderCatalogV1[]>();
   const referencedProviders = new Set<string>();
+  // Compile declaration metadata once for host admission. The independent CLI resolver also handles profile
+  // recommendations; core admission instead owns a closed table of actually declared raw IDs and aliases.
+  const providerAdmissions = new Map<string, BoundProviderCatalogV1["admissions"]>();
+  for (const [providerId, provider] of Object.entries(presets.providers)) {
+    if (!provider || typeof provider !== "object" || Array.isArray(provider)) throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
+    const admissions = new Map<string, Pick<ResolvedModelCapabilityV1,
+      "resolvedModel" | "modelClass" | "minimumReasoningEffort" | "supportedEfforts">>();
+    const catalog = provider.catalog;
+    if (catalog && ["exact-only", "claude-family-or-exact", "gemini-family-or-exact"].includes(catalog.matching)) {
+      const models = new Map(Object.entries(catalog.models ?? {}));
+      const rawIds = new Map([...models.keys()].map(id => [id, id]));
+      for (const [alias, target] of Object.entries(catalog.aliases ?? {})) rawIds.set(alias, target);
+      const profileOnly = new Set(catalog.profile_only_keys ?? []);
+      for (const [raw, canonical] of rawIds) {
+        const model = models.get(canonical);
+        if (!model || profileOnly.has(raw)) continue;
+        admissions.set(raw, Object.freeze({resolvedModel: canonical, modelClass: model.model_class,
+          minimumReasoningEffort: provider.minimum_efforts?.[raw] ?? provider.minimum_efforts?.[canonical] ?? model.minimum_effort ?? null,
+          supportedEfforts: Object.freeze([...(model.supported_efforts ?? [])])}));
+      }
+    }
+    providerAdmissions.set(providerId, admissions);
+  }
 
   if (presets.hosts) {
     for (const [host, hostConfig] of Object.entries(presets.hosts)) {
@@ -231,7 +221,7 @@ export function createCatalogExecutionAdapters(
         }
         const entry = presets.providers[providerId];
         if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
-        bindProviderToHost(hostBindings, host, providerId, entry);
+        bindProviderToHost(hostBindings, host, providerId, providerAdmissions.get(providerId)!);
         referencedProviders.add(providerId);
       }
     }
@@ -256,7 +246,7 @@ export function createCatalogExecutionAdapters(
       throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
     }
     for (const host of declaredHosts) {
-      bindProviderToHost(hostBindings, host, providerId, entry);
+      bindProviderToHost(hostBindings, host, providerId, providerAdmissions.get(providerId)!);
     }
   }
 
@@ -291,21 +281,9 @@ export const geminiExecutionAdapter: HostExecutionAdapter = defaultSuite.adapter
 export const antigravityExecutionAdapter: HostExecutionAdapter = defaultSuite.adapters.get("antigravity")!;
 
 export function modelClassForClaudeModel(model: string): ModelClassV1 | null {
-  return resolveFromProviderCatalog(
-    "anthropic-claude-code",
-    "claude-code",
-    defaultSuite.policyRevision,
-    defaultPresets.providers["anthropic-claude-code"],
-    model,
-  )?.modelClass ?? null;
+  return claudeCodeExecutionAdapter.modelClassForModel(model);
 }
 
 export function modelClassForGeminiModel(model: string): ModelClassV1 | null {
-  return resolveFromProviderCatalog(
-    "google-gemini",
-    "gemini",
-    defaultSuite.policyRevision,
-    defaultPresets.providers["google-gemini"],
-    model,
-  )?.modelClass ?? null;
+  return geminiExecutionAdapter.modelClassForModel(model);
 }
