@@ -9,7 +9,7 @@ import {RuntimeSkillClassificationGateway} from "../../mcp-server/src/skill-clas
 import {InMemoryClassificationBudget, SkillClassificationService} from "../../mcp-server/src/skill-classification/service.js";
 
 const host = vi.hoisted(() => ({output: "[]", error: false}));
-vi.mock("node:child_process", () => ({execFile: (_file: string, _args: string[], _options: unknown, callback: (error: Error | null, stdout: string) => void) => {
+vi.mock("node:child_process", async importOriginal => ({...await importOriginal<typeof import("node:child_process")>(), execFile: (_file: string, _args: string[], _options: unknown, callback: (error: Error | null, stdout: string) => void) => {
   callback(host.error ? new Error("PRIVATE_HOST_CAUSE") : null, host.output);
 }}));
 const roots: string[] = [];
