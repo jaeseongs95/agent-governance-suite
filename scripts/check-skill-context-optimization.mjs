@@ -48,6 +48,8 @@ function git(...args) {
 // - 3.8.0 intake verify and ask (AGS3-D-0031, D-0036, D-0039, D-0040, D-0041): verification cases fixed before the work and
 //   run at the user's real entry point, specific requests to the user, follow-up repairs inside an approved goal, and a
 //   peer's blocker inside this session's role handled in that turn (intake lines 12 and 13).
+// - 3.8.0 parent accountability (AGS3-T-0020): the role/delegation line keeps child results, records and mistakes with
+//   their creating parent, requires direct checking/correction, and adds no unnecessary child-only control layer.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
@@ -136,6 +138,13 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
     hashes: Object.freeze({
       "skills/orchestrator/classification.json": ["478364b9bbd1cfd3b0c9102e4949d302abcca1b061a998321a40d37908be0c4d", "62b52946ac5b7a07b98d66de34efac60b0e80d331deb00d8abc70aef71718463"],
       "skills/orchestrator/references/intake.md": ["0f9be58edcaa80ad7bd6a51ff7f49b39026bfa88e8955abf5d400ef11b4c6d80", "862109098be9ae581ab6fe7f99c57060862818bc966ae5d3a62fd0d1ed288410"],
+    }),
+  }),
+  Object.freeze({
+    revision: "2133f629fa74400a961465178905be8d001a52f2",
+    hashes: Object.freeze({
+      "skills/orchestrator/classification.json": ["62b52946ac5b7a07b98d66de34efac60b0e80d331deb00d8abc70aef71718463", "779ab8157b1fc358739858c122d39186f7828f9912ec89dc0c0f34435187b294"],
+      "skills/orchestrator/references/intake.md": ["862109098be9ae581ab6fe7f99c57060862818bc966ae5d3a62fd0d1ed288410", "8f0860a4efbd975887727b4e284d550af2f9ceb412f7f0a178cdb5f11967bff9"],
     }),
   }),
 ]);

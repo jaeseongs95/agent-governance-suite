@@ -160,6 +160,7 @@ describe("signed source evidence and selection context regression", () => {
   });
 
   it.each([
+    ["orchestrator", "하위 결과·기록·잘못은 생성한 부모 책임"],
     ["software-security-auditor", "감사자는 새 재현 코드를 작성·실행하지 않고"],
     ["independent-audit-gate", "감사자는 기존 검증을 직접 실행할 수 있다"],
     ["session-board", "공유 checkout 수정 전에"],

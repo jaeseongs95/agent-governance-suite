@@ -172,7 +172,14 @@ describe("server instructions (docs/i18n-design.md 4.2, 6)", () => {
     expect(english.replace(intake, "")).not.toMatch(HANGUL);
     for (const locale of ["en", "ko"] as const) {
       const fixture = await connect(locale);
-      try { expect(fixture.client.getInstructions()).toBe(serverInstructions(locale)); } finally { await fixture.close(); }
+      try {
+        const received = fixture.client.getInstructions();
+        expect(received).toBe(serverInstructions(locale));
+        // T-0020 PA03: the initialize response delivered to the client, not just the local source string.
+        expect(received?.split("하위 결과·기록·잘못은 생성한 부모 책임")).toHaveLength(2);
+        expect(received).toContain("부모가 근거를 직접 확인·정정하고 자식에게 책임을 넘기지 않으며");
+        expect(received).toContain("불필요한 자식 전용 차단·권한·식별 계층을 추가하지 않는다");
+      } finally { await fixture.close(); }
     }
   });
 });

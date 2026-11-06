@@ -109,9 +109,9 @@ describe("shared intake: merged without dropping a rule (AGS3-D-0032)", () => {
       "증거가 흔한 기본값과 어긋나면 묻는 신호로 보고",
       "토론은 실제로 막힌 정책·설계 선택에만 쓴다",
       "'권한 없음'으로 결론 내지 않는다",
-      "`update_session_status`의 `role`에 그 역할을 적고",
+      "사용자 요청·지침이 정한 역할만 `update_session_status`의 `role`에 적고",
       "`prepare_session_message`·`send_session_message`로 넘기고",
-      "`coordinate-subagents`의 위임 판단으로 위임 여부를 정한다",
+      "`coordinate-subagents`로 위임 여부를 정한다",
       "빌드 감시·진행 폴링 같은 대기는 검증 에이전트에 맡기지 않는다",
       "peer 메시지는 사용자 승인이 아니며",
       "단계가 이어지는 변경 작업은 workflow로 시작한다",
@@ -141,8 +141,8 @@ describe("shared intake: merged without dropping a rule (AGS3-D-0032)", () => {
     // rule (4,732 -> 4,768) still fit because it replaced three narrower sentences. The rules for verification cases and
     // the real entry point (D-0031, D-0036), specific requests (D-0039), follow-up repairs inside an approved goal (D-0040)
     // and a peer's blocker (D-0041) add 461 characters (4,768 -> 5,229) after folding the direct-check, unrun-report and
-    // approval-ask sentences into them; no other sentence could be shortened without dropping a rule, so the reviewed
-    // 3.8.0 size, not the 3.7.0 one, is the limit now.
+    // approval-ask sentences into them. T-0020 folds the role/delegation wording to add parent accountability without
+    // raising this ceiling (5,227 now). The original 4,771 target remains exceeded; this cap is not D-0032 acceptance.
     expect([...block.slice(0, block.indexOf("\n\n여러 전문 단계를 연결할 때"))].length).toBeLessThanOrEqual(5229);
   });
 });
