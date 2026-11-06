@@ -38,6 +38,8 @@ import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
 import { callerMeta, metaIngress } from "../helpers/caller.js";
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
 
+// Red check only: the 3.7.0 setSummary type takes three arguments; the call still runs the real function.
+const redSetSummary = setSummary as unknown as (...args: unknown[]) => unknown;
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const directories: string[] = [];
 const closers: Array<() => void> = [];
@@ -146,11 +148,11 @@ describe("AGS3-D-0030 session role", () => {
   const who = { host: "codex", sessionId: "role-session" };
   it("writes the role the session was given, keeps it when a later update omits it, and refuses a malformed role", () => {
     const board = open();
-    expect(setSummary(board, { ...who, now: at(1) }, "AGS 결함 수정", " AGS 담당 ")).toEqual({ summary: "AGS 결함 수정", summaryAt: at(1), role: "AGS 담당" });
+    expect(redSetSummary(board, { ...who, now: at(1) }, "AGS 결함 수정", " AGS 담당 ")).toEqual({ summary: "AGS 결함 수정", summaryAt: at(1), role: "AGS 담당" });
     expect(setSummary(board, { ...who, now: at(2) }, "다음 결함")).toEqual({ summary: "다음 결함", summaryAt: at(2), role: "AGS 담당" });
     expect(readEntry(board, who.host, who.sessionId)).toMatchObject({ summary: "다음 결함", role: "AGS 담당" });
     for (const bad of ["", "   ", "둘\n줄", "a\rb", "x".repeat(121), 42]) {
-      expect(() => setSummary(board, { ...who, now: at(3) }, "바뀌면 안 되는 줄", bad)).toThrow();
+      expect(() => redSetSummary(board, { ...who, now: at(3) }, "바뀌면 안 되는 줄", bad)).toThrow();
     }
     expect(readEntry(board, who.host, who.sessionId)).toMatchObject({ summary: "다음 결함", role: "AGS 담당" });
     // A session that never wrote a role reads as none, not as an empty claim.
@@ -168,7 +170,7 @@ describe("AGS3-D-0030 session role", () => {
     const board = open(file);
     expect(board.prepare("PRAGMA user_version").get()).toEqual({ user_version: 1 });
     expect(readEntry(board, "codex", "kept")).toMatchObject({ summary: "3.7 line", role: null });
-    expect(setSummary(board, { host: "codex", sessionId: "kept", now: at(1) }, "3.8 line", "릴리스 담당")).toMatchObject({ role: "릴리스 담당" });
+    expect(redSetSummary(board, { host: "codex", sessionId: "kept", now: at(1) }, "3.8 line", "릴리스 담당")).toMatchObject({ role: "릴리스 담당" });
     board.close();
     // An earlier AGS names its columns, so it still reads and writes the upgraded board.
     const older = new DatabaseSync(file);
@@ -327,7 +329,7 @@ describe("U7/U8 MCP board tools", () => {
     const databasePath = boardPath();
     const board = open(databasePath);
     setSummary(board, { host: "claude-code", sessionId: "gone", now: at(29) }, "끝난 세션의 줄");
-    setSummary(board, { host: "claude-code", sessionId: "worker", now: at(28) }, "릴리스 준비", "릴리스 담당");
+    redSetSummary(board, { host: "claude-code", sessionId: "worker", now: at(28) }, "릴리스 준비", "릴리스 담당");
     recordInput(board, { host: "claude-code", sessionId: "worker", cwd: null, now: at(29) }, { prompt: true });
     board.close();
 
