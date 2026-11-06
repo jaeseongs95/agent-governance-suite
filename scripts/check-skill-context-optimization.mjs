@@ -226,6 +226,13 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/task-contract/classification.json": ["3a707ca184ba512bd016f5e5fcc10f033e28e51dec122889b98e9ccadaba1dda", "cabfe58da82a63612b826fd9637ca20418b0d061b8c978218309733baeaa1aac"],
     }),
   }),
+  Object.freeze({
+    revision: "4339cd0bc37a1cacc6151865a949697aaf4ec4f9",
+    hashes: Object.freeze({
+      "skills/orchestrator/classification.json": ["779ab8157b1fc358739858c122d39186f7828f9912ec89dc0c0f34435187b294", "f5d7143c822ca8bdea4afe5761a762c1844501645ba1db81d11c9423d8575983"],
+      "skills/orchestrator/references/intake.md": ["8f0860a4efbd975887727b4e284d550af2f9ceb412f7f0a178cdb5f11967bff9", "1f43c151e74e25aeea37df534b048d2ca51b159a3c83e47ef07c9152256a9e49"],
+    }),
+  }),
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
 // Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes, or

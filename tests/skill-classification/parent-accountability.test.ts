@@ -23,14 +23,17 @@ it("binds parent accountability after frozen r27 without changing prior source-s
     labelChanges: [], priceAndBudgetChanges: [], modelBehavior: "NOT_RUN"});
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.intake-verify-and-ask-source-successor.json",
     bytes: predecessor.length, digest: hash(predecessor)});
+  const domain = JSON.parse(read("tests/skill-classification/fixtures.intake-domain-neutral-source-successor.json").toString("utf8"));
   const current = loadCurrentSourceBindings(rootDirectory);
-  expect(current.manifest).toMatchObject({revision: "integrated-field-neutral-source-binding-r29"});
+  expect(current.manifest).toMatchObject({revision: "intake-domain-neutral-source-binding-r30"});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(previous.bindings.map((binding: {path: string}) => binding.path));
   for (const binding of manifest.bindings) {
     expect(binding.previousDigest).toBe(previous.bindings.find((row: {path: string}) => row.path === binding.path).digest);
+    const latest = domain.bindings.find((row: {path: string}) => row.path === binding.path);
+    expect(latest.previousDigest).toBe(binding.digest);
     const actual = read(binding.path);
-    expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    expect([actual.length, hash(actual)]).toEqual([latest.bytes, latest.digest]);
+    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest.digest);
   }
   const descriptor = JSON.parse(read("skills/orchestrator/classification.json").toString("utf8"));
   const inventory = await loadSkillInventory({root: rootDirectory});
@@ -45,7 +48,8 @@ it("binds parent accountability after frozen r27 without changing prior source-s
     expect(hash(source)).toBe(reference.digest);
     const selected = Buffer.from(source.toString("utf8").split(/\r?\n/u).slice(reference.startLine - 1, reference.endLine).join("\n"))
       .subarray(reference.startByte ?? 0, reference.endByte);
-    expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
+    const live = domain.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === span.group && row.index === span.index);
+    expect([selected.length, hash(selected)]).toEqual([live.bytes, live.digest]);
     expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     expect([span.path, span.startLine, span.endLine, span.startByte]).toEqual([prior.path, prior.startLine, prior.endLine, prior.startByte]);
     if (span.digest !== prior.digest) changed.push(`orchestrator:${span.group}[${span.index}]`);

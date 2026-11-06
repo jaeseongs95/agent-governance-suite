@@ -25,7 +25,7 @@ describe("shared intake: role and delegation", () => {
 
   it("reviews delegation for independent units instead of defaulting to direct work, with the brief rules", () => {
     expect(intake).toContain("독립 완료·검증 단위는 직접 수행을 기본값으로 두지 말고 `coordinate-subagents`로 위임 여부를 정한다");
-    expect(intake).toContain("위임문에는 목표·범위·금지 구역·쓰기 소유·스킬·완료/검증 기준을 적고, 빌드 감시·진행 폴링 같은 대기는 검증 에이전트에 맡기지 않는다");
+    expect(intake).toContain("위임문에는 목표·범위·금지 구역·쓰기 소유·스킬·완료/검증 기준을 적고, 진행 상태 확인·주기적 조회 같은 대기는 검증 에이전트에 맡기지 않는다");
   });
 
   it("no longer keeps work local by default in the delegation references", () => {

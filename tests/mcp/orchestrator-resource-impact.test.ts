@@ -7,7 +7,7 @@ const shared = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import
 // 3.8.0 (AGS3-D-0032): the intake block lives in its own reference, so the orchestrator skill does not load it twice.
 const sharedIntake = readFileSync(new URL("../../skills/orchestrator/references/intake.md", import.meta.url), "utf8");
 const intake = sharedIntake.match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1] ?? "";
-const impactLine = intake.split("\n").find((line) => line.startsWith("- 대형 빌드·시험")) ?? "";
+const impactLine = intake.split("\n").find((line) => line.startsWith("- 대규모 준비·검증")) ?? "";
 const resumeLine = intake.split("\n").find((line) => line.includes("자원 문제로 정한 실행 위치")) ?? "";
 const gateLine = intake.split("\n").find((line) => line.startsWith("- 무거운 단계")) ?? "";
 const selectionLine = intake.split("\n").find((line) => line.startsWith("요청의 목적")) ?? "";
@@ -79,7 +79,7 @@ describe("orchestrator resource-impact prompt propagation", () => {
     expect(impactLine).toContain("미확인 값은 추측하지 않는다");
     expect(impactLine).toContain("추가 승인이나 PRE로 만들지 않는다");
     expect(impactLine).toContain("작은 읽기·편집마다 계측·보고·새 점검 도구를 만들지 않으며");
-    expect(impactLine).toContain("이 점검을 이미 허용된 빌드·시험·작업 브랜치 push·CI의 추가 승인이나 PRE로 만들지 않는다");
+    expect(impactLine).toContain("이 점검을 이미 허용된 준비·검증·작업본 저장·자동 검사의 추가 승인이나 PRE로 만들지 않는다");
     expect(intake.indexOf(impactLine)).toBeLessThan(intake.indexOf(gateLine));
     expect(selectionLine).toContain("선택한 전문 스킬은 해당 전문 판단·행동을 시작하기 전에 호스트가 제공하는 방식으로 실제 호출하고 지침을 적용");
     // 3.8.0 (AGS3-D-0032): re-selection on a changed goal, scope or risk sits with the selection rules, and every new
@@ -92,10 +92,10 @@ describe("orchestrator resource-impact prompt propagation", () => {
     expect(resumeLine).toContain("현재 환경과 대조해 지적된 행동을 반복하지 않");
     expect(resumeLine).toContain("인계된 교정·제약 근거를 영향받는 실행 전에 대조");
     expect(intake).toContain("현재 도구·권한으로 할 수 있는 실행·검증은 끝내고 실제 결과를 보고");
-    expect(intake).toContain("사용자만 할 수 있는 승인·비밀값 입력·사용자 화면 조작은 그 부분과 이유만 요청");
+    expect(intake).toContain("사용자만 할 수 있는 승인·비밀값 입력·사용자 본인의 조작은 그 부분과 이유만 요청");
     expect(gateLine).toContain("mutation-risk-preflight");
     expect(gateLine).toContain("change-scope-guardian");
-    expect(gateLine).toContain("작업 브랜치 commit·push, 시험·CI 실행은 이 단계 없이 바로 한다");
+    expect(gateLine).toContain("되돌릴 수 있는 작업본 저장·공유, 검증·자동 검사 실행은 이 단계 없이 바로 한다");
 
     for (const instructions of [SKILL_INTAKE_SERVER_INSTRUCTIONS, serverInstructions()]) {
       expect(instructions).toContain(intake);

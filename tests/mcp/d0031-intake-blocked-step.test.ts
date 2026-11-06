@@ -31,7 +31,7 @@ describe("shared intake: a blocked step holds only itself and its dependents (AG
     ]) expect(blockedStep).toContain(fragment);
     expect(blockedStep).not.toMatch(/\b(?:Codex|Claude|Gemini|GPT-[0-9]|SSH)/u);
     // It follows the user-only sentence, which keeps its request and split-the-work rules.
-    const userOnly = source.indexOf("사용자만 할 수 있는 승인·비밀값 입력·사용자 화면 조작은 그 부분과 이유만 요청하고");
+    const userOnly = source.indexOf("사용자만 할 수 있는 승인·비밀값 입력·사용자 본인의 조작은 그 부분과 이유만 요청하고");
     expect(userOnly).toBeGreaterThan(-1);
     expect(source.indexOf(blockedStep)).toBeGreaterThan(userOnly);
     expect(source.slice(userOnly, source.indexOf(blockedStep))).toContain("「사용자가 할 일」과 「에이전트가 이어서 할 일」을 나눠 적는다");

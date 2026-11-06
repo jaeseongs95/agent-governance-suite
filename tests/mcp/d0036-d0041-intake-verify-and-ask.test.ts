@@ -29,7 +29,7 @@ const vendors = /\b(?:Codex|Claude|Gemini|GPT-[0-9]|Cloudflare|SSH)/u;
 const casesFirst = sentence("시작 전에 확인할 사례");
 const realEntryPoint = sentence("사용자가 실제로 쓰는 진입점");
 const reportUnrun = sentence("실행하지 않은 범위는 미검증으로");
-const userOnly = sentence("사용자만 할 수 있는 승인·비밀값 입력·사용자 화면 조작은");
+const userOnly = sentence("사용자만 할 수 있는 승인·비밀값 입력·사용자 본인의 조작은");
 const specificRequest = sentence("앞 문맥 없이 바로 할 수 있게");
 const askApproval = sentence("우회하지 말고 영향까지 담아");
 const noAsk = sentence("증거가 흔한 기본값과 어긋나면");
@@ -92,7 +92,7 @@ describe("shared intake: follow-up repairs inside an approved goal (AGS3-D-0040)
   it("does not ask again for a follow-up fix or repair the approved goal needs, even when the action differs", () => {
     expect(noAsk).toContain("이미 승인된 목표를 이루는 데 필요한 후속 수정·복구(행동이 달라도)는 묻지 않고 진행한다");
     // What it already did not ask about stays.
-    expect(noAsk).toContain("되돌릴 수 있는 구현 선택·관례로 정해지는 값·이미 답한 사항");
+    expect(noAsk).toContain("되돌릴 수 있는 수행 방식의 선택·관례로 정해지는 값·이미 답한 사항");
   });
 
   it("still asks for a new high-risk action outside the approval, and the pre-execution check stays", () => {

@@ -225,30 +225,6 @@ export function intakeLines(markdown) {
 
 export const INTAKE_FILE = "skills/orchestrator/references/intake.md";
 
-/**
- * Findings in a file this check's change may not edit: the intake block, which
- * the intake work owns (fix/v380-defects-20261106). They are reported, not
- * failed. Each entry names the file (its Claude package copy follows), the word
- * and a phrase of the sentence. An entry that matches no finding fails, so the
- * list cannot go stale or absorb a new finding.
- */
-export const PENDING = Object.freeze([
-  { file: INTAKE_FILE, term: "브랜치", phrase: "이미 허용된 빌드·시험·작업 브랜치 push·CI의 추가 승인" },
-  { file: INTAKE_FILE, term: "push", phrase: "이미 허용된 빌드·시험·작업 브랜치 push·CI의 추가 승인" },
-  { file: INTAKE_FILE, term: "CI", phrase: "이미 허용된 빌드·시험·작업 브랜치 push·CI의 추가 승인" },
-  { file: INTAKE_FILE, term: "Git", phrase: "백업이나 git으로 되돌릴 수 있는 편집, 작업 브랜치 commit·push" },
-  { file: INTAKE_FILE, term: "브랜치", phrase: "백업이나 git으로 되돌릴 수 있는 편집, 작업 브랜치 commit·push" },
-  { file: INTAKE_FILE, term: "commit", phrase: "백업이나 git으로 되돌릴 수 있는 편집, 작업 브랜치 commit·push" },
-  { file: INTAKE_FILE, term: "push", phrase: "백업이나 git으로 되돌릴 수 있는 편집, 작업 브랜치 commit·push" },
-  { file: INTAKE_FILE, term: "화면", phrase: "비밀값 입력·사용자 화면 조작" },
-  { file: INTAKE_FILE, term: "구현", phrase: "되돌릴 수 있는 구현 선택·관례로 정해지는 값" },
-  { file: INTAKE_FILE, term: "빌드", phrase: "빌드 감시·진행 폴링 같은 대기" },
-]);
-
-const pendingEntry = (finding) => PENDING.find((entry) =>
-  (finding.file === entry.file || finding.file === `claude-plugin/${entry.file}`)
-  && finding.term === entry.term && finding.text.includes(entry.phrase));
-
 export function checkRepository(root = ROOT) {
   const problems = [];
   const ids = readdirSync(path.join(root, "skills"), { withFileTypes: true })
@@ -257,7 +233,7 @@ export function checkRepository(root = ROOT) {
   for (const id of ids) if (!(id in SKILL_FIELDS)) problems.push(`${id}: not classified as general or field-specific in SKILL_FIELDS`);
   for (const id of Object.keys(SKILL_FIELDS)) if (!ids.includes(id)) problems.push(`${id}: classified but has no skills/${id}/SKILL.md`);
   const general = ids.filter((id) => SKILL_FIELDS[id] === null);
-  const all = [];
+  const findings = [];
   for (const id of general) {
     for (const file of [`skills/${id}/SKILL.md`, `claude-plugin/skills/${id}/SKILL.md`]) {
       let text;
@@ -266,33 +242,22 @@ export function checkRepository(root = ROOT) {
         if (error.code === "ENOENT" && file.startsWith("claude-plugin/")) continue;
         throw error;
       }
-      for (const finding of findFieldWording(text, { lines: skillLines(text) })) all.push({ file, ...finding });
+      for (const finding of findFieldWording(text, { lines: skillLines(text) })) findings.push({ file, ...finding });
     }
   }
   const intake = readFileSync(path.join(root, INTAKE_FILE), "utf8");
-  for (const finding of findFieldWording(intake, { lines: intakeLines(intake) })) all.push({ file: INTAKE_FILE, ...finding });
-  const findings = [];
-  const pending = [];
-  const used = new Set();
-  for (const finding of all) {
-    const entry = pendingEntry(finding);
-    if (entry) { used.add(entry); pending.push(finding); } else findings.push(finding);
-  }
-  for (const entry of PENDING) {
-    if (!used.has(entry)) problems.push(`${entry.file}: pending entry "${entry.term}" / "${entry.phrase}" matches no finding`);
-  }
-  return { general, findings, pending, problems };
+  for (const finding of findFieldWording(intake, { lines: intakeLines(intake) })) findings.push({ file: INTAKE_FILE, ...finding });
+  return { general, findings, problems };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  const { general, findings, pending, problems } = checkRepository();
-  for (const { file, line, term, text } of pending) console.log(`pending ${file}:${line}: "${term}": ${text}`);
+  const { general, findings, problems } = checkRepository();
   for (const problem of problems) console.error(problem);
   for (const { file, line, term, text } of findings) console.error(`${file}:${line}: field-limited word "${term}": ${text}`);
   if (problems.length || findings.length) {
     console.error(`domain-neutral wording: ${findings.length} finding(s), ${problems.length} problem(s) in ${general.length} general skills and the intake block`);
     process.exitCode = 1;
   } else {
-    console.log(`domain-neutral wording: ${general.length} general skills and the intake block pass (${pending.length} pending in files owned elsewhere)`);
+    console.log(`domain-neutral wording: ${general.length} general skills and the intake block pass`);
   }
 }

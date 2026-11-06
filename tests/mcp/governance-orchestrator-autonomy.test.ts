@@ -133,7 +133,7 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     expect(integration).toContain("그 작업과 필요한 검증까지 계속 수행");
     expect(integration).toContain("실행 가능한 후속 확인을 사용자에게 넘기지 않는다");
     expect(userOnlyBoundary).toBeDefined();
-    expect(userOnlyBoundary).toContain("승인·비밀값 입력·사용자 화면 조작");
+    expect(userOnlyBoundary).toContain("승인·비밀값 입력·사용자 본인의 조작");
     expect(userOnlyBoundary).toContain("사용자 몫·");
     expect(userOnlyBoundary).toContain("남은 독립 작업을 계속하며");
     expect(integration).toContain("[공통 접수·선택 기준](intake.md#공통-접수선택-기준)");

@@ -614,6 +614,8 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
       expect(text).toContain("행동 이름이 아니라 실제 위험으로");
       expect(text).toContain("가장 짧은 경로로 직접 한다");
       expect(text).toContain("맡긴 역할 범위의 일은 그 근거로");
+      expect(text).toContain("진행하고 '권한 없음'으로 결론 내지 않는다");
+      expect(text).toContain("비밀값·권한 확대·고위험 변경의 별도 승인은 유지한다");
     }
     for (const text of readBoth("skills/orchestrator/references/entry-details.md")) {
       expect(text).toContain("MCP 계획에 실제 상태 변경에 필요한 stage가 없으면 그 stage를 넣은 새 계획으로 진행하고, 승인이 없으면 대상·영향·실행할 명령을 담아 사용자에게 바로 묻는다. 요청받은 변경을 남은 작업으로 돌려 놓은 채 완료로 보고하지 않는다.");

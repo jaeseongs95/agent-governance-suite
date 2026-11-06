@@ -37,11 +37,14 @@ const neutralBytes = readFileSync(new URL("./fixtures.field-neutral-wording-sour
 const neutral = JSON.parse(neutralBytes.toString("utf8"));
 const integratedBytes = readFileSync(new URL("./fixtures.integrated-field-neutral-source-successor.json", import.meta.url));
 const integrated = JSON.parse(integratedBytes.toString("utf8"));
+const domainBytes = readFileSync(new URL("./fixtures.intake-domain-neutral-source-successor.json", import.meta.url));
+const domain = JSON.parse(domainBytes.toString("utf8"));
+const domainChanged = (skillId: string, group: string, index: number) => domain.spanPreservation.changedSpans.includes(`${skillId}:${group}[${index}]`);
 /** A null digest retires the path: the source no longer exists. */
 type LaterBinding = {path: string; previousDigest: string; digest: string | null};
 /** For each file a successor after specialist behavior rebound: the first rebinding's base and predecessor, the last one's digest. */
 const reboundAfterSpecialist = new Map<string, {sourceBaseRevision: string; previousDigest: string; digest: string | null}>();
-for (const later of [multi, overwrite, premise, retire, role, purpose, move, blocked, verify, parent, integrated]) {
+for (const later of [multi, overwrite, premise, retire, role, purpose, move, blocked, verify, parent, integrated, domain]) {
   for (const binding of later.bindings as LaterBinding[]) {
     const first = reboundAfterSpecialist.get(binding.path);
     reboundAfterSpecialist.set(binding.path, first ? {...first, digest: binding.digest}
@@ -200,7 +203,7 @@ it("chains the exact orchestrator multi-workflow source after specialist behavio
     expect(actual.length).toBe(binding.bytes);
     expect(hash(actual)).toBe(binding.digest);
     expect(hash(specialistSource(binding.path))).toBe(binding.previousDigest);
-    const latest = latestDigest(binding.path, binding.digest, [premise, retire, role, purpose, move, blocked, verify, parent, integrated]);
+    const latest = latestDigest(binding.path, binding.digest, [premise, retire, role, purpose, move, blocked, verify, parent, integrated, domain]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -231,7 +234,7 @@ it("chains the exact orchestrator multi-workflow source after specialist behavio
     // A span a later successor widened is checked against the current inventory in that successor's test.
     if (!premise.spanPreservation.changedSpans.includes(`${span.group}[${span.index}]`) && !retireChanged("orchestrator", span.group, span.index)
       && !roleChanged("orchestrator", span.group, span.index) && !purposeChanged("orchestrator", span.group, span.index)
-      && !moveChanged("orchestrator", span.group, span.index)) {
+      && !moveChanged("orchestrator", span.group, span.index) && !domainChanged("orchestrator", span.group, span.index)) {
       expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     }
     const previous = Buffer.from(previousLines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.previousStartByte, span.previousEndByte);
@@ -317,7 +320,7 @@ it("chains the exact orchestrator intake premise source after the overwrite sour
     // The predecessor is the multi-workflow successor's exact bytes, read at this successor's base.
     expect(multi.bindings.find((row: LaterBinding) => row.path === binding.path).digest).toBe(binding.previousDigest);
     expect(hash(multiSource(binding.path))).toBe(binding.previousDigest);
-    const latest = latestDigest(binding.path, binding.digest, [retire, role, purpose, move, blocked, verify, parent, integrated]);
+    const latest = latestDigest(binding.path, binding.digest, [retire, role, purpose, move, blocked, verify, parent, integrated, domain]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -358,7 +361,7 @@ it("chains the exact orchestrator intake premise source after the overwrite sour
     // A span the retirement successor widened is checked against the current inventory in that successor's test.
     if (!retireChanged("orchestrator", span.group, span.index) && !roleChanged("orchestrator", span.group, span.index)
       && !purposeChanged("orchestrator", span.group, span.index)
-      && !moveChanged("orchestrator", span.group, span.index)) {
+      && !moveChanged("orchestrator", span.group, span.index) && !domainChanged("orchestrator", span.group, span.index)) {
       expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     }
     const previousSelected = Buffer.from(previousLines.slice(span.previousStartLine - 1, span.previousEndLine).join("\n")).subarray(span.previousStartByte, span.previousEndByte);
@@ -388,7 +391,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
   expect(retire.labelChanges).toEqual([]);
   expect(retire.priceAndBudgetChanges).toEqual([]);
   expect(retire.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: integrated.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: domain.revision});
   const retiredPaths = ["skills/context-continuity/SKILL.md", "skills/context-continuity/classification.json", "skills/context-continuity/references/entry-details.md"];
   const tools = ["checkpoint_context", "inspect_context", "load_context", "suppress_context_restore", "purge_direct_context"];
   expect(retire.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json",
@@ -407,7 +410,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
     base(binding.path);
     // A later successor that rebinds the path moves the current digest on (the role successor rebinds SKILL.md).
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest))
-      .toBe(binding.digest === null ? null : latestDigest(binding.path, binding.digest, [role, purpose, move, blocked, verify, parent, integrated]));
+      .toBe(binding.digest === null ? null : latestDigest(binding.path, binding.digest, [role, purpose, move, blocked, verify, parent, integrated, domain]));
     if (binding.digest === null) {
       expect(retiredPaths).toContain(binding.path);
       expect(binding.bytes).toBe(0);
@@ -415,7 +418,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
     } else {
       const actual = retireSource(binding.path);
       expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-      const latest = latestDigest(binding.path, binding.digest, [role, purpose, move, blocked, verify, parent, integrated]);
+      const latest = latestDigest(binding.path, binding.digest, [role, purpose, move, blocked, verify, parent, integrated, domain]);
       if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
       else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     }
@@ -461,7 +464,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
     // A span a later successor changed is checked against the current inventory in that successor's test.
     if (!roleChanged(span.skillId, span.group, span.index) && !purposeChanged(span.skillId, span.group, span.index)
-      && !moveChanged(span.skillId, span.group, span.index) && !neutralChanged(span.skillId, span.group, span.index)) expect(skills.get(span.skillId)![span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+      && !moveChanged(span.skillId, span.group, span.index) && !neutralChanged(span.skillId, span.group, span.index) && !domainChanged(span.skillId, span.group, span.index)) expect(skills.get(span.skillId)![span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     const previousSelected = selectedSource(sourceAt(retire.sourceBaseRevision, previous.path, previous.digest), previous);
     const widened = (changedLines.get(span.path) ?? []).filter(index => index >= span.startLine - 1 && index <= span.endLine - 1);
     expect(retireChanged(span.skillId, span.group, span.index)).toBe(widened.length > 0);
@@ -490,7 +493,7 @@ it("chains the role and delegation intake source after the retirement source, ch
   expect(role.labelChanges).toEqual([]);
   expect(role.priceAndBudgetChanges).toEqual([]);
   expect(role.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: integrated.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: domain.revision});
   expect(role.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json",
     "skills/coordinate-subagents/classification.json", "skills/coordinate-subagents/references/entry-details.md"]);
   const base = (relativePath: string) => sourceAt(role.sourceBaseRevision, relativePath,
@@ -501,7 +504,7 @@ it("chains the role and delegation intake source after the retirement source, ch
     base(binding.path);
     const actual = roleSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [purpose, move, blocked, verify, parent, integrated]);
+    const latest = latestDigest(binding.path, binding.digest, [purpose, move, blocked, verify, parent, integrated, domain]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -545,7 +548,7 @@ it("chains the role and delegation intake source after the retirement source, ch
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
     // A span the intake purpose-check successor changed is checked against the current inventory in that successor's test.
     if (!purposeChanged(span.skillId, span.group, span.index) && !moveChanged(span.skillId, span.group, span.index)
-      && !neutralChanged(span.skillId, span.group, span.index)) expect(skills.get(span.skillId)![span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+      && !neutralChanged(span.skillId, span.group, span.index) && !domainChanged(span.skillId, span.group, span.index)) expect(skills.get(span.skillId)![span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     const previousSelected = selectedSource(sourceAt(role.sourceBaseRevision, previous.path, previous.digest), previous);
     const index = changedLines.get(span.path);
     const widened = index !== undefined && index >= span.startLine - 1 && index <= span.endLine - 1;
@@ -574,7 +577,7 @@ it("chains the intake purpose-check source after the role source, rewording only
   expect(purpose.labelChanges).toEqual([]);
   expect(purpose.priceAndBudgetChanges).toEqual([]);
   expect(purpose.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: integrated.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: domain.revision});
   expect(purpose.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]);
   const base = (relativePath: string) => sourceAt(purpose.sourceBaseRevision, relativePath,
     purpose.bindings.find((binding: LaterBinding) => binding.path === relativePath).previousDigest);
@@ -584,7 +587,7 @@ it("chains the intake purpose-check source after the role source, rewording only
     base(binding.path);
     const actual = purposeSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [move, blocked, verify, parent, integrated]);
+    const latest = latestDigest(binding.path, binding.digest, [move, blocked, verify, parent, integrated, domain]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -624,7 +627,7 @@ it("chains the intake purpose-check source after the role source, rewording only
     const selected = selectedSource(purposeSource(current.path), current);
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
     // A span the intake move successor changed is checked against the current inventory in that successor's test.
-    if (!moveChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    if (!moveChanged(span.skillId, span.group, span.index) && !domainChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     const previousSelected = selectedSource(sourceAt(purpose.sourceBaseRevision, previous.path, previous.digest), previous);
     const reworded = !selected.equals(previousSelected);
     expect(purposeChanged(span.skillId, span.group, span.index)).toBe(reworded);
@@ -649,7 +652,7 @@ it("chains the intake move after the purpose-check source, moving the intake blo
   expect(move.labelChanges).toEqual([]);
   expect(move.priceAndBudgetChanges).toEqual([]);
   expect(move.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: integrated.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: domain.revision});
   expect(move.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]);
   const base = (relativePath: string) => sourceAt(move.sourceBaseRevision, relativePath,
     move.bindings.find((binding: LaterBinding) => binding.path === relativePath).previousDigest);
@@ -658,7 +661,7 @@ it("chains the intake move after the purpose-check source, moving the intake blo
     base(binding.path);
     const actual = moveSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [blocked, verify, parent, integrated]);
+    const latest = latestDigest(binding.path, binding.digest, [blocked, verify, parent, integrated, domain]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -691,7 +694,7 @@ it("chains the intake move after the purpose-check source, moving the intake blo
     const selected = selectedSource(moveSource(current.path), current);
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
     // A span the intake blocked-step successor changed is checked against the current inventory in that successor's test.
-    if (!blockedChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    if (!blockedChanged(span.skillId, span.group, span.index) && !domainChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     const previousSelected = selectedSource(sourceAt(move.sourceBaseRevision, previous.path, previous.digest), previous);
     const inBlock = previous.startLine - 1 >= start && previous.endLine - 1 <= end;
     expect(moveChanged(span.skillId, span.group, span.index)).toBe(inBlock || !selected.equals(previousSelected) || previousPath !== span.path);
@@ -730,7 +733,7 @@ it("chains the intake blocked-step rule after the intake move, rewording only in
   expect(blocked.labelChanges).toEqual([]);
   expect(blocked.priceAndBudgetChanges).toEqual([]);
   expect(blocked.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: integrated.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: domain.revision});
   const intake = "skills/orchestrator/references/intake.md", descriptor = "skills/orchestrator/classification.json";
   expect(blocked.bindings.map((binding: LaterBinding) => binding.path)).toEqual([descriptor, intake]);
   const base = (relativePath: string) => sourceAt(blocked.sourceBaseRevision, relativePath,
@@ -746,7 +749,7 @@ it("chains the intake blocked-step rule after the intake move, rewording only in
     base(binding.path);
     const actual = blockedSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [verify, parent, integrated]);
+    const latest = latestDigest(binding.path, binding.digest, [verify, parent, integrated, domain]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -775,7 +778,7 @@ it("chains the intake blocked-step rule after the intake move, rewording only in
     const selected = selectedSource(blockedSource(current.path), current);
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
     // A span the intake verify-and-ask successor changed is checked against the current inventory in that successor's test.
-    if (!verifyChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    if (!verifyChanged(span.skillId, span.group, span.index) && !domainChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     const previousSelected = selectedSource(sourceAt(blocked.sourceBaseRevision, previous.path, previous.digest), previous);
     const reworded = !selected.equals(previousSelected);
     expect(blockedChanged(span.skillId, span.group, span.index)).toBe(reworded);
@@ -801,7 +804,7 @@ it("chains the intake verify-and-ask rules after the blocked-step rule, rewordin
   expect(verify.labelChanges).toEqual([]);
   expect(verify.priceAndBudgetChanges).toEqual([]);
   expect(verify.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: integrated.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: domain.revision});
   const intake = "skills/orchestrator/references/intake.md", descriptor = "skills/orchestrator/classification.json";
   expect(verify.bindings.map((binding: LaterBinding) => binding.path)).toEqual([descriptor, intake]);
   const base = (relativePath: string) => sourceAt(verify.sourceBaseRevision, relativePath,
@@ -813,7 +816,7 @@ it("chains the intake verify-and-ask rules after the blocked-step rule, rewordin
     base(binding.path);
     const actual = verifySource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [parent]);
+    const latest = latestDigest(binding.path, binding.digest, [parent, domain]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
   }
@@ -840,7 +843,7 @@ it("chains the intake verify-and-ask rules after the blocked-step rule, rewordin
     expect([previous.path, previous.startLine, previous.endLine, previous.startByte ?? 0, previous.endByte]).toEqual([span.path, span.previousStartLine, span.previousEndLine, span.previousStartByte, span.previousEndByte]);
     const selected = selectedSource(verifySource(current.path), current);
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
-    if (!parentChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    if (!parentChanged(span.skillId, span.group, span.index) && !domainChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     const previousSelected = selectedSource(sourceAt(verify.sourceBaseRevision, previous.path, previous.digest), previous);
     const reworded = !selected.equals(previousSelected);
     expect(verifyChanged(span.skillId, span.group, span.index)).toBe(reworded);
@@ -864,7 +867,7 @@ it("chains the field-neutral wording source after the intake blocked-step rule, 
   expect(neutral.labelChanges).toEqual([]);
   expect(neutral.priceAndBudgetChanges).toEqual([]);
   expect(neutral.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: integrated.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: domain.revision});
   const skillIds = ["acceptance-evidence-validator", "blocker-diagnostician", "coordinate-subagents", "independent-audit-gate",
     "iteration-frame-auditor", "mutation-risk-preflight", "prompt-engineering", "session-board", "task-contract"];
   expect(neutral.bindings.map((binding: LaterBinding) => binding.path))
@@ -1117,7 +1120,7 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: "integrated-field-neutral-source-binding-r29"});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: "intake-domain-neutral-source-binding-r30"});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const historical = mainSource(source.path);
@@ -1330,6 +1333,46 @@ it("serializes both frozen r27 branches after parent accountability without rewr
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
   }
-  expect(currentSourceBinding.manifest).toMatchObject({revision: integrated.revision});
-  expect(currentSourceBinding.digest).toBe(hash(integratedBytes));
+  expect(currentSourceBinding.manifest).toMatchObject({revision: domain.revision});
+  expect(currentSourceBinding.digest).toBe(hash(domainBytes));
+});
+
+it("binds field-neutral intake and authority wording after frozen r29 (AGS3-D-0038/0044)", async () => {
+  expect(hash(domainBytes)).toBe("sha256:13ccf86f29b547cc17491df7d4edeb8c464b153cf8be45f22de5bc02b8639aad");
+  expect(domain).toMatchObject({revision: "intake-domain-neutral-source-binding-r30",
+    sourceBaseRevision: "4339cd0bc37a1cacc6151865a949697aaf4ec4f9", fixtureFileRewritten: false, labelChanges: [], priceAndBudgetChanges: [], modelBehavior: "NOT_RUN"});
+  expect(domain.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.integrated-field-neutral-source-successor.json",
+    bytes: integratedBytes.length, digest: hash(integratedBytes)});
+  expect(domain.bindings.map((binding: LaterBinding) => binding.path)).toEqual(parent.bindings.map((binding: LaterBinding) => binding.path));
+  for (const binding of domain.bindings as (LaterBinding & {bytes: number})[]) {
+    expect(binding.previousDigest).toBe(parent.bindings.find((row: LaterBinding) => row.path === binding.path).digest);
+    sourceAt(domain.sourceBaseRevision, binding.path, binding.previousDigest);
+    const actual = readFileSync(path.join(root, binding.path));
+    expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const inventory = await loadSkillInventory({root});
+  expect(inventory.issues).toEqual([]);
+  const orchestrator = inventory.skills.find(skill => skill.skillId === "orchestrator")!;
+  const descriptor = "skills/orchestrator/classification.json";
+  const previous = JSON.parse(sourceAt(domain.sourceBaseRevision, descriptor, domain.bindings[0].previousDigest).toString("utf8"));
+  const current = JSON.parse(readFileSync(path.join(root, descriptor), "utf8"));
+  expect(domain.spanPreservation.spans).toHaveLength(18);
+  for (const span of domain.spanPreservation.spans) {
+    const before = previous[span.group][span.index], after = current[span.group][span.index];
+    expect([after.path, after.startLine, after.endLine, after.startByte ?? 0, after.endByte]).toEqual([span.path, span.startLine, span.endLine, span.startByte, span.endByte]);
+    expect([before.path, before.startLine, before.endLine, before.startByte ?? 0, before.endByte]).toEqual([span.path, span.previousStartLine, span.previousEndLine, span.previousStartByte, span.previousEndByte]);
+    expect([span.startLine, span.endLine]).toEqual([span.previousStartLine, span.previousEndLine]);
+    const selected = selectedSource(readFileSync(path.join(root, after.path)), after);
+    const prior = selectedSource(sourceAt(domain.sourceBaseRevision, before.path, before.digest), before);
+    const frozen = parent.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === span.group && row.index === span.index);
+    expect([prior.length, hash(prior)]).toEqual([frozen.bytes, frozen.digest]);
+    expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
+    expect(domainChanged(span.skillId, span.group, span.index)).toBe(!selected.equals(prior));
+    expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+  }
+  expect(domain.spanPreservation.changedSpans).toEqual(["orchestrator:applicability[5]", "orchestrator:applicability[6]"]);
+  expect(currentSourceBinding.manifest).toMatchObject({revision: domain.revision});
+  expect(currentSourceBinding.digest).toBe(hash(domainBytes));
 });
