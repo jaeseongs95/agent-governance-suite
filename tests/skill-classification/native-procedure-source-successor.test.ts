@@ -14,11 +14,12 @@ const bytes = readFileSync(path.join(root, file));
 const manifest = JSON.parse(bytes.toString("utf8"));
 const cli = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.test-engineering-cli-source-successor.json"), "utf8"));
 const intakeLength = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-length-source-successor.json"), "utf8"));
+const writtenCases = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-written-cases-source-successor.json"), "utf8"));
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], { cwd: root });
 /** r32 assertions read r32 bytes at the first later binding ancestor, never current successor bytes. */
 function nativeProcedureSource(file: string): Buffer {
-  const later = [cli, intakeLength].find(manifest => manifest.bindings.some((row: {path: string}) => row.path === file));
+  const later = [cli, intakeLength, writtenCases].find(manifest => manifest.bindings.some((row: {path: string}) => row.path === file));
   if (!later) return readFileSync(path.join(root, file));
   const binding = later.bindings.find((row: {path: string}) => row.path === file);
   const source = execFileSync("git", ["show", `${later.sourceBaseRevision}:${file}`], {cwd: root});
@@ -45,12 +46,12 @@ it("NP04 appends exactly four current sources without rewriting frozen r31 or ch
     "skills/test-engineering/classification.json", "skills/test-engineering/SKILL.md",
   ]);
   const current = loadCurrentSourceBindings(root);
-  expect(current.manifest).toMatchObject({ revision: intakeLength.revision });
+  expect(current.manifest).toMatchObject({ revision: writtenCases.revision });
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = nativeProcedureSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const later = [...cli.bindings, ...intakeLength.bindings].find((row: {path: string}) => row.path === binding.path);
+    const later = [...writtenCases.bindings, ...intakeLength.bindings, ...cli.bindings].find((row: {path: string}) => row.path === binding.path);
     const latest = later?.digest ?? binding.digest;
     expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (later) expect(current.resolveDigest(binding.path, binding.digest)).toBe(latest);
@@ -72,7 +73,7 @@ it("NP04 appends exactly four current sources without rewriting frozen r31 or ch
         const old = before[group][index] as Span;
         const prior = selected(previous(old.path), old);
         const actual = selected(nativeProcedureSource(span.path), span);
-        const rebound = intakeLength.spanPreservation.spans.find((row: {skillId: string; group: string; index: number}) => row.skillId === skillId && row.group === group && row.index === index);
+        const rebound = [...writtenCases.spanPreservation.spans, ...intakeLength.spanPreservation.spans].find((row: {skillId: string; group: string; index: number}) => row.skillId === skillId && row.group === group && row.index === index);
         const live = rebound ? selected(readFileSync(path.join(root, rebound.current.path)), rebound.current) : actual;
         expect(inventory.skills.find(skill => skill.skillId === skillId)![group]).toContain(live.toString("utf8").trim());
         if (!prior.equals(actual)) changed.push(`${skillId}:${group}[${index}]`);
