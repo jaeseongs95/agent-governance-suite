@@ -107,8 +107,20 @@ function changedBetween(from, to, path) {
 //   peer's blocker inside this session's role handled in that turn (intake lines 12 and 13).
 // - 3.8.0 parent accountability (AGS3-T-0020): the role/delegation line keeps child results, records and mistakes with
 //   their creating parent, requires direct checking/correction, and adds no unnecessary child-only control layer.
+// - 3.8.0 D0006/D0020/D0029: statement-bound criteria, frame-target binding and observed board callers.
+//   Only these five reviewed documentation deltas project onto the unchanged a2811393 context.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
+  Object.freeze({
+    revision: "a281139387af096e696f8d50cc089ad09e9291fc",
+    hashes: Object.freeze({
+      "skills/acceptance-evidence-validator/README.md": ["278bb4e1190abfab15d2206eddd0dc8699ed0437ed619be8f1545568f07f371a", "4f49e5d001f337b03560a4d9fb2e4005be95f2fdf98f848aa71f9d2a92bb4674"],
+      "skills/acceptance-evidence-validator/references/entry-details.md": ["2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991", "34b8087c91fbd8b253e8753b62c5216c8a75d65dd40f0952b0929c87456d1a81"],
+      "skills/acceptance-evidence-validator/references/evidence-protocol.md": ["f34164f4fec2dd2ee896a26dd8fbe5bbb9a07ed63a24a9c9593d35ee8ba40031", "85105dae431ae773e6f845c1b206b5f8098a7a08402db3d7ad1842d03b5fe094"],
+      "skills/iteration-frame-auditor/references/review-protocol.md": ["c65692186d03c13973cd56bed09ce5f7f263038acc0de1b1720cb3499e1906a7", "ff51d095ccb9a2ce3484c818986f03a37d5e6dd73d6c8af94f288cf751047658"],
+      "skills/session-board/references/entry-details.md": ["b89b50e2bacf86ca9268505d244336d5cbb212a7894ce629125201f512b8efce", "4c0571608a124e96da1b27510a8c42775b3c84396c46abb11a915f57f103a196"],
+    }),
+  }),
   Object.freeze({
     revision: "92f22e25d21eddff22c2400dabc0699d73700927",
     hashes: Object.freeze({
@@ -879,19 +891,26 @@ export function matchesPonytailPolicySuccessor(path, bytes) {
 
 // 문서·계약 바이트만 문맥 검사에 남긴다. 실행 무결성은 source-lock 책임이다.
 const CONTEXT_CONTRACT_PINS = Object.freeze({
-  revision: "3.0.0-source-integration-r16-repairs",
+  revision: "3.8.0-d0006-model-policy-contract-integration",
   authorityEffect: "none",
   hashes: Object.freeze({
+  "contracts/model-policy.v1.schema.json": "90344943d41d95924b28b59969e9b87871354aea5966d8334ab13c146f2cb502",
+  "skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json": "c4a0f4080ed2d1605ec0d362d2abaf8c585d06d3a8e5d262aacd264be122686e",
+  "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json": "9054b1bbfc5c431ad61b1daddb44ace792c647328146feb8bb6d1087c4f16000",
   "skills/acceptance-evidence-validator/scripts/core.d.mts": "5ad79b91fd34d6d4f07321b1011e2b48b5311a89296d10c360ed108ed92f45cf",
-  "skills/coordinate-subagents/references/model-routing-presets.json": "a2274bb2baa138d7a2135c9470c44385455c128a7d720d3b4e7e89ad9a660acd",
+  "skills/coordinate-subagents/references/model-routing-policy.schema.json": "90344943d41d95924b28b59969e9b87871354aea5966d8334ab13c146f2cb502",
+  "skills/coordinate-subagents/references/model-routing-presets.json": "b2cb3297f7aa0b2c3fa8a52e042aab3110824af4abd6dbe58867dfe6100f300a",
   "skills/coordinate-subagents/references/model-routing.md": "49b0e564b80a52475670e850c8272f0c348626ef5d32e4746fd484a262023fe5",
-  "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts": "936efbf8e7bbcef4f0c452ec4e4fe876c6f9ecb53a82df3d7d60de63bd684026",
+  "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts": "bf38ea3f72b0b74eb76a79ca8e481ca0de4fb2e57399b6c57c596f95b8f83a15",
+  "skills/coordinate-subagents/scripts/model-routing-policy.d.mts": "e8faf41ef2ff2889a29a2f27b9a8ed55c9579f83eef0093744a4f11cbd5c483e",
   "skills/coordinate-subagents/scripts/model-routing.d.mts": "4afbbfc1167ee637d1aab74bbfe4ec55241931d33fa55442b94dcea8d8e93fbe",
   "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json": "9423c10246f09738712ac0bf5b5f9134795fa8a9f03bfb4d2a2f2af96af3618f",
   "skills/instruction-scope-resolver/references/gemini-instructions.md": "fb03a623c11627f8fed8cfad07d6c492fcd4a710dd73b25963840f8524b18a56",
   "skills/iteration-frame-auditor/integration/skill-descriptor.json": "44b5fa664b83708b62f664606910558e09837f3bb84a232fdfe8b5e82e4fb1f1",
   "skills/korean-prose-editor/contracts/protected-manifest.schema.json": "cb518ab89e3a6b2ad422f5015f58843291505cf6a7360a4983a18b974cec25c7",
   "skills/korean-prose-editor/contracts/receipt.schema.json": "2ad9e132c19e58c9fcdc2a15fce4715c840766ebce638722f11ee47173a688f4",
+  "skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json": "0c5c3f0edff94d0e416ebf71e4ea40b5d07138019caf4cf82752557e35b068d8",
+  "skills/model-effort-advisor/scripts/support-guard.d.mts": "2a8d8e290fd57d4beb384727b355d7338bc651eed1323f75d11926d5750d7512",
   "skills/mutation-risk-preflight/references/recovery-requirements.md": "41c5284d8dd1c5c9f1f7c6d8e090f8a2af36677fbb0bc8b21e18cbcf2d1754ed",
 }),
 });
