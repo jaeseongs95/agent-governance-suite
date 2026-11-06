@@ -578,10 +578,10 @@ describe("in-process messaging and vendor-neutral adapter", () => {
     await writeFile(file, "secret malformed configuration");
     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).transport).toBe("codex-queue");
     expect(hostDeliveryProfile("claude-code", environment, diagnose).transport).toBe("claude-inbox");
-    // The empty/retired wake prompt block is a host capability: Codex and Claude stay fail-open so the turn is not cancelled.
+    // Claude blocks only verified empty markers; Codex keeps its existing fail-open capability.
     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).blocksEmptyWakePrompt).toBe(false);
     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" }, diagnose).blocksEmptyWakePrompt).toBe(false);
-    expect(hostDeliveryProfile("claude-code", environment, diagnose).blocksEmptyWakePrompt).toBe(false);
+    expect(hostDeliveryProfile("claude-code", environment, diagnose).blocksEmptyWakePrompt).toBe(true);
     expect(diagnose).not.toHaveBeenCalled();
     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "true" }, diagnose).transport).toBe("codex-deferred");
     expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-environment");
@@ -955,7 +955,7 @@ describe("in-process messaging and vendor-neutral adapter", () => {
         return child.stdout ? JSON.parse(child.stdout) as Record<string, unknown> : {};
       };
       const output = await invoke();
-      if (["submitted", "unknown", "duplicate", "late"].includes(scenario)) {
+      if (["submitted", "unknown", "duplicate", "late", "claude"].includes(scenario)) {
         // A verified marker that brings no body stops the empty model turn, also when repeated or from an ended birth.
         expect(output).toMatchObject({ decision: "block" });
         if (scenario === "duplicate") expect(await invoke()).toMatchObject({ decision: "block" });
@@ -1015,7 +1015,7 @@ describe("in-process messaging and vendor-neutral adapter", () => {
         expect(child.status, child.stderr).toBe(0);
         output = child.stdout ? JSON.parse(child.stdout) as Record<string, unknown> : {};
       }
-      if (host === syntheticRootHost) expect(output).toMatchObject({ decision: "block" });
+      if (host === syntheticRootHost || host === "claude-code") expect(output).toMatchObject({ decision: "block" });
       else expect(output).toEqual({});
       const verification = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
       try {

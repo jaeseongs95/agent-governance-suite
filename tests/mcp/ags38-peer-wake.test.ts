@@ -17,7 +17,7 @@ vi.mock("../../mcp-server/src/trust-store.js", () => ({ TrustStore: class {
 } }));
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
-import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
+import { adaptHostInput, hostDeliveryProfile } from "../../mcp-server/src/host-input-adapter.js";
 
 const nonce = "abcdefghijklmnopqrstuvwxyz";
 const target = { host: "claude-code", sessionId: "peer-wake-target" };
@@ -58,6 +58,9 @@ it("PW03: real store distinguishes invalid observation, unavailable reader, bad 
   const directory = mkdtempSync(path.join(tmpdir(), "ags38-peer-wake-"));
   const store = new SessionMessageStore(path.join(directory, "messages.sqlite3"));
   try {
+    store.send({ sender: { host: "claude-code", sessionId: "sender" }, target,
+      messageId: "unclaimed-body", body: "must stay pending" }, 1000);
+    const before = store.database.prepare("SELECT * FROM messages").all();
     const observation = adaptHostInput(input, "claude-code").observation;
     const good = { verifyObservation: () => true };
     const bad = { verifyObservation: () => false };
@@ -69,5 +72,55 @@ it("PW03: real store distinguishes invalid observation, unavailable reader, bad 
       recognized: false, messages: [], rejectionReason: "WAKE_RECEIPT_REJECTED" });
     expect(store.claimHostWake(target, observation, "receipt", good, 1000)).toMatchObject({
       recognized: false, messages: [], rejectionReason: "WAKE_NONCE_UNKNOWN" });
+    expect(store.database.prepare("SELECT * FROM messages").all()).toEqual(before);
   } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
 });
+
+it("PE01: the builtin Claude adapter enables the existing verified-empty guard", () => {
+  expect(hostDeliveryProfile("claude-code", {}).blocksEmptyWakePrompt).toBe(true);
+});
+
+it("PE02: a verified managed empty Claude wake blocks before a model request", async () => {
+  f.request.mockResolvedValue({ recognized: true, managed: true, messages: [] });
+  expect(await handleSessionMessageHook(input, "claude-code")).toMatchObject({ decision: "block", reason: expect.any(String) });
+  expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["claim-host-wake"]);
+  expect(f.record).not.toHaveBeenCalled();
+});
+
+it("PE03: a verified retired empty Claude wake blocks without claiming a newer body", async () => {
+  f.request.mockResolvedValue({ recognized: false, managed: false, retired: true, messages: [],
+    rejectionReason: "WAKE_GENERATION_NOT_CURRENT" });
+  expect(await handleSessionMessageHook(input, "claude-code")).toMatchObject({ decision: "block", reason: expect.any(String) });
+  expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["claim-host-wake"]);
+  expect(f.record).not.toHaveBeenCalled();
+  expect(vi.mocked(console.error).mock.calls.map(([line]) => String(line)).join("\n")).toContain("WAKE_GENERATION_NOT_CURRENT");
+});
+
+it("PE04: an empty claim without a managed binding cannot block Claude input", async () => {
+  f.request.mockResolvedValue({ recognized: true, managed: false, messages: [] });
+  expect(await handleSessionMessageHook(input, "claude-code")).toEqual({});
+  expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["claim-host-wake"]);
+  expect(f.record).not.toHaveBeenCalled();
+});
+
+it.each(["WAKE_OBSERVATION_INVALID", "WAKE_READER_UNAVAILABLE", "WAKE_RECEIPT_REJECTED", "WAKE_NONCE_UNKNOWN", "WAKE_GENERATION_NOT_CURRENT"])(
+  "PE05: %s remains diagnostic-only with no fallback body claim or block", async (rejectionReason) => {
+    f.request.mockImplementation(async (operation) => operation === "claim-host-wake"
+      ? { recognized: false, managed: false, messages: [], rejectionReason } : {});
+    expect(await handleSessionMessageHook(input, "claude-code")).toEqual({});
+    expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["claim-host-wake", "observe-native-input"]);
+    expect(f.record).not.toHaveBeenCalled();
+    const diagnostic = vi.mocked(console.error).mock.calls.map(([line]) => String(line)).join("\n");
+    expect(diagnostic).toContain(rejectionReason);
+    expect(diagnostic).not.toContain(nonce);
+    expect(diagnostic).not.toContain(target.sessionId);
+  });
+
+it.each(["ordinary user request", `${input.prompt}\nordinary user request`])(
+  "PE08: ordinary or mixed user text stays outside the empty-wake guard (%s)", async (prompt) => {
+    f.request.mockResolvedValue({});
+    expect(await handleSessionMessageHook({ ...input, prompt }, "claude-code")).toEqual({});
+    expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["observe-native-input"]);
+    expect(f.wake).not.toHaveBeenCalled();
+    expect(f.record).not.toHaveBeenCalled();
+  });
