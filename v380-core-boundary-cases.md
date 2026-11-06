@@ -40,3 +40,14 @@ RED는 이 사례 그대로 test-only SHA를 TEST에서 실행해 회수한다. 
 실행은 TEST/CI에서 `pnpm exec vitest run tests/mcp/ags38-core-boundary-shared.test.ts`. 기존 acceptance 내용ID/authority, 협업결정, 모델정책, board, unified-state 회귀도 TEST에서 실행한다. root 소유 index.ts/server.ts의 board import 2개는 정확 diff를 전달해 통합한다.
 
 후속 구현의 정적 확인: 공용 acceptance·catalog·collaboration·board 본문 4개가 기준의 동일 구현과 일치함을 import 경로·소유 설명 변경만 정규화해 비교했다(exit 0). acceptance의 `sourceEvidenceById` 원근거 authority digest와 최신 catalog의 `profile_only_keys` 거부를 그대로 보존했다. `node --check` 11개 및 `git diff --check` exit 0. core의 skill 실행파일 import 검색 잔존은 root 소유 index.ts/server.ts의 board import 2개이며 정확 변경을 전달했다. 제품 시험은 TEST 담당 실행 대기(NOT_RUN). 후속 test file SHA256은 `585d710dbec46f1bee41a9b25cd78cba863809061207cbe7a276f4ced0e0a8f5`다.
+
+## Catalog 단독 CLI 호환 수리
+
+`ed951bb8`의 catalog runtime facade가 runtime 없이 skill 폴더만 복사하는 기존 CLI 계약을 깨뜨리는 것을 소스에서 확인했다. 승인된 호환안은 독립 CLI resolver를 원래 skill 위치에 보존하고, core의 `createCatalogExecutionAdapters`가 같은 선언 metadata를 admission용 native Map으로 한 번 컴파일하는 것이다. runtime의 catalog adapter는 JSON metadata만 공급한다. CLI의 profile 추천 함수와 core의 실관측 ID admission은 서로 다른 실제 책임이며 함수 구현 사본을 만들지 않는다.
+
+| 사례 | 공개경계·입력·전제 | 절차 | 기대·판정 | 실제 결과 |
+|---|---|---|---|---|
+| CB-11 | skill 폴더만 복사; 공통 runtime·node_modules 없음 | 복사한 `scripts/model-routing.mjs`를 인자 없이 실행. 기존 coordinate 회귀의 resolve/record도 함께 실행 | 기존 bare usage key 출력, 실제 resolve/record 회귀 통과 | NOT_RUN |
+| CB-12 | `createCatalogExecutionAdapters`; exact ID/alias·profile 전용키·없는 alias 대상·alias minimum override | 합성 선언metadata로 suite 구성하고 각 raw ID 조회; 이후 원본metadata 변경 | exact/alias만 admission, profile raw/없는 대상 거부, alias minimum 우선, 원본 변경이 컴파일된 suite를 바꾸지 않음 | NOT_RUN |
+
+TEST 명령: `pnpm exec vitest run tests/mcp/ags38-core-boundary-shared.test.ts tests/coordinate-subagents/model-routing.test.mjs tests/mcp/model-policy-regression.test.ts tests/mcp/host-attestation.test.ts tests/mcp/model-capability-contract.test.ts`. 로컬 제품 시험은 실행하지 않는다.
