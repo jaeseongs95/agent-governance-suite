@@ -72,11 +72,10 @@ jobs:
       # speed; the Linux and Windows test servers run everything, including
       # the installed-runtime smoke (pnpm test:server). See
       # docs/ci-and-test-servers.md.
-      - name: Test (CI scope)
+      # Probe branch only: run the server-scope D-0033 tests on the CI runners.
+      - name: Test (D-0033 probe)
         shell: bash
-        env:
-          AGS_TEST_SCOPE: ci
-        run: node scripts/run-tests.mjs
+        run: node node_modules/vitest/vitest.mjs run tests/tooling/skill-context-optimization.test.mjs tests/tooling/specialist-behavior-source.test.mjs --reporter=verbose
       - name: Validate plugin and skills
         shell: bash
         env:
