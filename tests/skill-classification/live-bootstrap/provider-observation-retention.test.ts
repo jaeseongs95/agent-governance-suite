@@ -7,7 +7,7 @@ import {describe, expect, it} from "vitest";
 import * as api from "./bootstrap.mjs";
 import {checkProviderObservationRetention} from "./provider-observation-retention.mjs";
 import {loadCurrentSourceBindings} from "../evaluation.js";
-import {readyMock, mockEnv} from "./prepared-fixture.mjs";
+import {readyMock} from "./prepared-fixture.mjs";
 import {bindProviderRetentionSources, PROVIDER_RETENTION_PURPOSE} from "./provider-retention-sources.mjs";
 
 const repo = path.resolve(import.meta.dirname, "../../..");
