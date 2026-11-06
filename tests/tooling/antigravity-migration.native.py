@@ -14,6 +14,7 @@ import sys
 import tarfile
 import threading
 import time
+from uuid import UUID
 
 AGY = "/home/mcpops/.local/bin/agy"
 NAME = "agent-governance-suite"
@@ -32,6 +33,60 @@ PROMPT = (
 )
 
 
+def parse_stream(stdout, brain_root):
+    """Public AGY stream fields; MCP payload may live in an own step artifact.
+
+    Verified D13 shape: init.conversation_id is top-level, and the tool step
+    carries conversation_id/step_index. A DONE event alone is not success.
+    """
+    events = []
+    errors = 0
+    for line in stdout.splitlines():
+        try:
+            e = json.loads(line)
+        except (ValueError, TypeError):
+            errors += 1
+            continue
+        if e.get("event") == "init":
+            events.append({"event": "init", "conversation_id": e.get("conversation_id")})
+        if e.get("event") != "step_update":
+            continue
+        step = e.get("step_update", {})
+        if step.get("step_type") != "tool":
+            continue
+        info = step.get("tool_info", {})
+        params = info.get("parameters", {})
+        selected = {"tool_name": step.get("tool_name"), "state": step.get("state"),
+                    "conversation_id": step.get("conversation_id"), "step_index": step.get("step_index")}
+        if params.get("ToolName") == "get_skill_inventory":
+            selected.update({"ServerName": params.get("ServerName"), "ToolName": params.get("ToolName"),
+                             "output": info.get("output"), "error": info.get("error")})
+            if selected["state"] == "DONE":
+                try:
+                    sid, index = selected["conversation_id"], selected["step_index"]
+                    if not isinstance(sid, str) or str(UUID(sid)) != sid or not isinstance(index, int) or isinstance(index, bool) or index < 0:
+                        raise ValueError("Invalid own conversation/step identity")
+                    p = brain_root / sid / ".system_generated/steps" / str(index) / "output.txt"
+                    if p.is_symlink() or not p.resolve().is_relative_to(brain_root.resolve() / sid):
+                        raise ValueError("Unexpected result artifact path")
+                    raw = p.read_bytes()
+                    payload = json.loads(raw)
+                    if not isinstance(payload, dict):
+                        raise ValueError("Not an inventory response object")
+                    data = payload.get("data")
+                    if not isinstance(data, dict) or not isinstance(data.get("skills"), list):
+                        raise ValueError("Not an inventory response")
+                    selected["response"] = {"path": str(p), "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest(),
+                                            "ok": payload.get("ok"), "skillCount": len(data["skills"]), "discovery": data.get("discovery")}
+                except (OSError, ValueError, TypeError) as error:
+                    selected["outputRecoveryError"] = type(error).__name__ + ": " + str(error)
+        events.append(selected)
+    terminal = [e for e in events if e.get("ToolName") == "get_skill_inventory" and e.get("state") in ("DONE", "ERROR")]
+    return {"events": events, "parseErrors": errors,
+            "oneInventoryDone": len(terminal) == 1 and terminal[0].get("state") == "DONE",
+            "oneInventoryOk": len(terminal) == 1 and terminal[0].get("response", {}).get("ok") is True}
+
+
 def main(root):
     root = root.resolve(strict=True)
     if not str(root).startswith("/home/mcpops/ags-tests/"):
@@ -39,7 +94,9 @@ def main(root):
     run = root / "execution"
     run.mkdir(exist_ok=False)
     target = Path.home() / ".gemini/config/plugins" / NAME
-    cache_root = Path.home() / ".gemini/antigravity/mcp"
+    # Official MCP docs distinguish CLI from App/IDE. This CLI test cannot
+    # claim the App cache or a running App's server view was verified.
+    cache_root = Path.home() / ".gemini/antigravity-cli/mcp"
     cache_names = [NAME + "_" + NAME, NAME + "_ags", NAME, "ags"]
     result = {"oldSha": OLD, "newSha": NEW, "modelInvocations": 0, "cases": {}, "stateIsolation": "PUBLIC_ENV_SEPARATE_OLD_NEW"}
     owned_install = False
@@ -125,6 +182,7 @@ def main(root):
 
         observer = threading.Thread(target=observe_children, daemon=True)
         observer.start()
+        stdout = b""
         try:
             stdout, stderr = child.communicate(timeout=150)
         except subprocess.TimeoutExpired:
@@ -136,6 +194,9 @@ def main(root):
                 os.killpg(child.pid, signal.SIGKILL)
                 stdout, stderr = child.communicate(timeout=2)
         finally:
+            # Preserve the exact own input before cleanup/field interpretation.
+            # Even a later collector failure cannot erase the native stream.
+            (run / (label + ".stdout.jsonl")).write_bytes(stdout)
             done.set()
             observer.join(timeout=1)
             # Exact group started by this test; no process-name/global kill.
@@ -161,36 +222,12 @@ def main(root):
                 row["remainingAfterGroupCleanup"] = (Path("/proc") / str(row["pid"]) / "stat").read_text().rsplit(")", 1)[1].split()[19] == row["birth"]
             except FileNotFoundError:
                 row["remainingAfterGroupCleanup"] = False
-        events = []
-        parse_errors = 0
-        for line in stdout.splitlines():
-            try:
-                e = json.loads(line)
-            except (ValueError, TypeError):
-                parse_errors += 1
-                continue
-            if e.get("event") == "init":
-                events.append({"event": "init", "conversation_id": e.get("init", {}).get("conversation_id")})
-            if e.get("event") == "step_update":
-                step = e.get("step_update", {})
-                if step.get("step_type") == "tool":
-                    info = step.get("tool_info", {})
-                    params = info.get("parameters", {})
-                    # Preserve only this test's public inventory call. Other tool
-                    # names/states are recorded without their input/output bodies.
-                    selected = {"tool_name": step.get("tool_name"), "state": step.get("state"), "id": step.get("id")}
-                    if params.get("ToolName") == "get_skill_inventory":
-                        selected["ServerName"] = params.get("ServerName")
-                        selected["ToolName"] = params.get("ToolName")
-                        selected["output"] = info.get("output")
-                        selected["error"] = info.get("error")
-                    events.append(selected)
-        terminal = [e for e in events if e.get("ToolName") == "get_skill_inventory" and e.get("state") in ("DONE", "ERROR")]
+        parsed = parse_stream(stdout, Path.home() / ".gemini/antigravity-cli/brain")
         data = {"pid": child.pid, "exit": child.returncode, "timedOut": timed_out, "seconds": round(time.monotonic() - started, 3),
                 "groupRemaining": group_remaining, "escapedDescendants": "NOT_OBSERVED", "stdoutSha256": hashlib.sha256(stdout).hexdigest(),
-                "stderrSha256": hashlib.sha256(stderr).hexdigest(), "parseErrors": parse_errors, "events": events,
+                "stderrSha256": hashlib.sha256(stderr).hexdigest(), **parsed,
                 "observedOwnedServers": list(observed_servers.values()), "wholeAcceptance": "REQUIRES_TOOL_OUTPUT_AND_CACHE_REVIEW",
-                "oneInventoryDone": len(terminal) == 1 and terminal[0].get("state") == "DONE"}
+                }
         write(label + ".native.json", data)
         cache(label)
         if group_remaining or timed_out or any(s["remainingAfterGroupCleanup"] for s in observed_servers.values()):
@@ -253,9 +290,10 @@ def main(root):
                 result["finalCache"] = cache("after")
             write("result.json", result)
     print(json.dumps({"result": str(run / "result.json"), "failure": result.get("failure"), "models": result["modelInvocations"], "pluginRestored": result.get("pluginRestored")}, ensure_ascii=False))
-    transport_failure = any(not c.get("native", {}).get("oneInventoryDone", False) for k, c in result["cases"].items() if k != "invalid")
-    invalid_accepted = result["cases"].get("invalid", {}).get("exit") == 0
-    return 1 if result.get("failure") or not result.get("pluginRestored") or transport_failure or invalid_accepted else 0
+    transport_failure = any(not c.get("native", {}).get("oneInventoryOk", False) for k, c in result["cases"].items() if k != "invalid")
+    # install accepting a schema-invalid manifest is a vendor observation, not
+    # an AGS migration oracle. Keep its exact exit/result in cases.invalid.
+    return 1 if result.get("failure") or not result.get("pluginRestored") or transport_failure else 0
 
 
 if __name__ == "__main__":
