@@ -63,4 +63,3 @@ for (const locale of ["ko", "en"]) {
     }
   });
 }
-

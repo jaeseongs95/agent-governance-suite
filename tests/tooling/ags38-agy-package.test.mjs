@@ -15,4 +15,3 @@ describe("AGS3-D-0028 Antigravity package identity", () => {
     expect(manifest.version).toBe(release.version);
   });
 });
-

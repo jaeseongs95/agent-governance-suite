@@ -38,4 +38,3 @@
 - D-0029 문서는 서버가 host-observed caller로 행 식별자를 정하고, Codex/AGY는 host-written MCP _meta, Claude는 tool-use ID에 결속된 hook admission을 사용한다고 바로잡았다. 예약 인자 _sessionBinding의 실제 결과는 INVALID_INPUT(reasonCode RESERVED_CALLER_FIELD)다.
 - 문서 새 바이트 SHA256은 4c0571608a124e96da1b27510a8c42775b3c84396c46abb11a915f57f103a196. 기존 scripts/check-skill-context-optimization.mjs의 동결 source successor 갱신은 해당 파일 소유 root/D-0026 담당에게 요청했다. 이 branch는 배정 밖 고정값이나 생성물을 바꾸지 않는다.
 - 문서의 기존 인코딩(UTF-8, BOM 없음)·LF 줄바꿈을 유지했다. git diff --check 종료0. 제품/회귀시험은 로컬에서 실행하지 않았다.
-
