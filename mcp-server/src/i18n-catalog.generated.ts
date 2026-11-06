@@ -64,11 +64,13 @@ export interface MessageParams {
   "hooks.editGate.writeTargetPlaceholder": Record<string, never>;
   "hooks.phaseCheck.continue": Record<string, never>;
   "hooks.phaseCheck.goal": { "goal": NestedMessage | number | string; };
-  "hooks.phaseCheck.pending": { "stages": NestedMessage | number | string; };
+  "hooks.phaseCheck.pending": { "runId": NestedMessage | number | string; "rootId": NestedMessage | number | string; "stages": NestedMessage | number | string; };
   "hooks.phaseCheck.startFailed": { "codes": NestedMessage | number | string; };
   "hooks.phaseCheck.unavailable": { "codes": NestedMessage | number | string; };
   "hooks.phaseCheck.waiting": Record<string, never>;
   "hooks.skillTrigger.invocation": Record<string, never>;
+  "hooks.subagentCue.scope": Record<string, never>;
+  "hooks.subagentCue.skills": { "targets": NestedMessage | number | string; };
   "server.call.reservedCallerField": Record<string, never>;
   "server.call.callerIngressMissing": Record<string, never>;
   "server.call.responseModeInvalid": { "field": NestedMessage | number | string; };

@@ -19,7 +19,9 @@ const stores = new Set<SqliteContinuityStore>();
 const directories: string[] = [];
 const session = "phase-check-session";
 const at = "2026-11-02T03:00:00.000Z";
-const CUE_HEAD = "[AGS 단계 확인] 진행 중인 workflow에 아직 passed가 아닌 단계가 있다: ";
+const CUE_HEAD = "[AGS 단계 확인] 진행 중인 workflow(runId run-latest, rootId phase-root)에 아직 passed가 아닌 단계가 있다: ";
+// AGS3-D-0004: the cue names the run and root IDs, so a session that lost them can still check, finish or abort them.
+const CUE_IDS = " 이 workflow의 상태는 이 runId로 get_workflow_status를, rootId로 get_convergence_status를 호출해 확인한다.";
 // Codex and agy continue the turn with the cue as its only instruction: it names the workflow's goal and says to keep
 // working toward it, so the continued turn does not end after recording stages or after the last request (3.1.1).
 const CUE_GOAL = "workflow 목표: Phase check fixture.";
@@ -41,7 +43,7 @@ function createService(workflow: WorkflowStore | null = null, databasePath = ":m
 }
 
 function cue(missing: string): string {
-  return `${CUE_HEAD}${missing}.\n${CUE_GOAL}\n${CUE_TAIL}`;
+  return `${CUE_HEAD}${missing}.${CUE_IDS}\n${CUE_GOAL}\n${CUE_TAIL}`;
 }
 
 function workflowRoot(state: ConvergenceRootV1["state"] = "open"): ConvergenceRootV1 {
@@ -142,6 +144,17 @@ describe("phase check service", () => {
     expect(renderHookText(service.phaseCheckForSession(session), "ko")).toBe(cue("stage-01-design, stage-03-testing"));
   });
 
+  it("names the latest run's runId and its rootId so the session can find its open workflow (AGS3-D-0004)", () => {
+    const service = boundWorkflow(["stage-01-testing"], []);
+    service.recordEditForSession(session);
+    const [pending] = renderHookText(service.phaseCheckForSession(session), "ko")!.split("\n");
+    expect(pending).toContain("runId run-latest");
+    expect(pending).toContain("rootId phase-root");
+    expect(pending).not.toContain("run-old");
+    expect(pending).toContain("get_workflow_status");
+    expect(pending).toContain("get_convergence_status");
+  });
+
   it("returns null and records a successful check when every stage passed or the root finished", () => {
     for (const service of [boundWorkflow(["stage-01-testing"], ["stage-01-testing"]), boundWorkflow(["stage-01-testing"], [], "completed")]) {
       service.recordEditForSession(session);
@@ -196,7 +209,7 @@ describe("phase check hook", () => {
     const service = boundWorkflow(["stage-01-testing"], []);
     expect(handleContinuityHook(pre("apply_patch"), service, "codex", en)).toEqual({});
     expect(handleContinuityHook(stop, service, "codex", en)).toEqual({ decision: "block", reason: [
-      "[AGS stage check] The running workflow has stages that are not passed yet: stage-01-testing.",
+      "[AGS stage check] The running workflow (runId run-latest, rootId phase-root) has stages that are not passed yet: stage-01-testing. Check this workflow's state by calling get_workflow_status with this runId or get_convergence_status with this rootId.",
       "Workflow goal: Phase check fixture.",
       "If this goal is not met yet, do not stop; continue the remaining work. Even when the request just received is done, continue while the goal remains. Record a stage result only after actually finishing that stage's work and verification, and do not stop at recording.",
       "If you cannot proceed without the user's answer or approval, write in one line what you are waiting for and stop. Remove unneeded stages by revising the plan.",

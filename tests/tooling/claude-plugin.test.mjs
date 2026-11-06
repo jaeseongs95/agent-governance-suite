@@ -246,7 +246,7 @@ describe("generated Claude plugin", () => {
   it("registers one fail-closed governance entry for every AGS tool and preserves the advisory adapters", async () => {
     const claudeHooks = await readJson(pluginRoot, "hooks", "hooks.json");
     // Parity with the Codex hook events is reported as drift, so a new Codex event never fails this test.
-    expect(Object.keys(claudeHooks.hooks).sort()).toEqual(["PostCompact", "PostModelSwitch", "PostToolUse", "PreCompact", "PreToolUse", "SessionEnd", "SessionStart", "Stop", "UserPromptSubmit"]);
+    expect(Object.keys(claudeHooks.hooks).sort()).toEqual(["PostCompact", "PostModelSwitch", "PostToolUse", "PreCompact", "PreToolUse", "SessionEnd", "SessionStart", "Stop", "SubagentStart", "UserPromptSubmit"]);
     const allowedScripts = [
       "${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs",

@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { types } from "node:util";
 
-import { ContinuityService, minimalWorkflowStartExample, renderHookText, workflowFailureCode } from "./continuity-service.js";
+import { ContinuityService, minimalWorkflowStartExample, renderHookText, subagentStartCue, workflowFailureCode } from "./continuity-service.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
 import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { failureReason } from "./failure-diagnostics.js";
@@ -190,6 +190,15 @@ function gateEdit(observation: InputObservation, service: ContinuityService, hos
   return refusal ? deniedEdit(render(refusal, locale)) : {};
 }
 
+/** A subagent's start: the host adds this context before the subagent's first prompt. It reads no continuity state. */
+function isSubagentStart(input: NormalizedContinuityInput): boolean {
+  return input.observation.kind === "subagent-start" && input.lifecycle === "none" && input.action === undefined;
+}
+
+function subagentStartOutput(input: NormalizedContinuityInput, locale: SupportedLocale): Record<string, unknown> {
+  return sessionOutput(input.outputEventName, renderHookText(subagentStartCue(), locale));
+}
+
 function isEditBoundary(observation: InputObservation): boolean {
   return observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && observation.editTargets !== undefined;
 }
@@ -197,6 +206,8 @@ function isEditBoundary(observation: InputObservation): boolean {
 function handleNormalizedContinuityHook(input: NormalizedContinuityInput, service: ContinuityService, host: string,
   environment: NodeJS.ProcessEnv, locale: SupportedLocale): Record<string, unknown> {
   const { observation, action, outputEventName, readLineage, readForkOrigin, readForkHostParent } = input;
+  // Every host adapter that observes a subagent start maps it here; the cue does not depend on the host or the session.
+  if (isSubagentStart(input)) return subagentStartOutput(input, locale);
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
   // A subagent's edit counts in its parent session's window (the host names the parent in session_id). Nothing else
@@ -288,6 +299,12 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
   try {
     const input = JSON.parse(raw) as HookInput;
     const normalized = normalizedContinuityInput(adaptHostInput(input, host));
+    if (isSubagentStart(normalized)) {
+      // No store is opened: the subagent cue reads no state, so a storage failure cannot take it away.
+      phase = "handle";
+      result = JSON.stringify(subagentStartOutput(normalized, resolveHostLocale({ environment }).locale));
+      return result;
+    }
     phase = "storage";
     const workflowDatabasePath = resolveWorkflowDatabasePath(environment);
     const continuityDatabasePath = resolveContinuityDatabasePath(environment);

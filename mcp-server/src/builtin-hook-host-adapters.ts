@@ -77,6 +77,8 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
     kind = "tool-boundary";
     boundaryPhase = "after";
   } else if (event === "Stop") kind = "turn-end";
+  // Claude Code and Codex 0.166 name the hook that adds context to a new subagent SubagentStart; it carries agent_id.
+  else if (event === "SubagentStart") kind = "subagent-start";
   if (event === "PreCompact") continuityAction = { kind: "pre-compact" };
   else if (event === "PostCompact") {
     const turnId = input.turn_id, error = input.error;
@@ -117,7 +119,11 @@ function adaptInferredRootHookInput(input: Record<string, unknown>, host: string
   const adapted = adaptBuiltinHookInput(input, host, actor);
   if (adapted.lifecycle === "none" && adapted.observation.kind === "unknown" && adapted.continuityAction === undefined) return adapted;
   if (!adapted.observation.sessionId.trim()) actor.reasonCode = `${prefix}_NATIVE_SESSION_ID_INVALID`;
-  else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: `${prefix}_ROOT_INFERRED_CHILD_GATE_DEFERRED` });
+  else if (adapted.observation.kind === "subagent-start") {
+    // A subagent start is a child by definition (it names the parent session): never inferred as the root.
+    if (typeof input.agent_id === "string" && input.agent_id.trim()) Object.assign(actor, { role: "child", basis: "observed", reasonCode: `${prefix}_NATIVE_CHILD_AGENT_ID` });
+    else actor.reasonCode = `${prefix}_NATIVE_SUBAGENT_START_AGENT_ID_INVALID`;
+  } else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: `${prefix}_ROOT_INFERRED_CHILD_GATE_DEFERRED` });
   return adapted;
 }
 
@@ -205,7 +211,8 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
   } else if (Object.hasOwn(input, "agent_id")) {
     if (typeof input.agent_id !== "string" || !input.agent_id.trim()) actor.reasonCode = "CLAUDE_NATIVE_AGENT_ID_INVALID";
     else Object.assign(actor, { role: "child", basis: "observed", reasonCode: "CLAUDE_NATIVE_CHILD_AGENT_ID" });
-  } else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT" });
+  } else if (adapted.observation.kind === "subagent-start") actor.reasonCode = "CLAUDE_NATIVE_SUBAGENT_START_AGENT_ID_INVALID";
+  else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT" });
   const transcriptPath = text(input.transcript_path);
   const sessionId = adapted.observation.sessionId;
   // The fork fact comes only from the host's SessionStart source. The parent is the one the host process was started

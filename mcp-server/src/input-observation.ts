@@ -2,7 +2,8 @@ import { types as utilTypes } from "node:util";
 
 export type ActorRole = "root" | "child" | "indeterminate";
 export type ObservationBasis = "observed" | "inferred" | "unavailable";
-export type InputObservationKind = "user-input" | "peer-wake" | "tool-boundary" | "turn-end" | "unknown";
+/** `subagent-start`: the host started a subagent and lets a hook add context before its first prompt. */
+export type InputObservationKind = "user-input" | "peer-wake" | "tool-boundary" | "turn-end" | "subagent-start" | "unknown";
 
 export interface ActorObservation {
   role: ActorRole;

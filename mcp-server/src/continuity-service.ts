@@ -107,7 +107,7 @@ export function minimalWorkflowStartExample(locale: SupportedLocale): string {
 const RUN_TERMINAL_STATES = new Set(["passed", "failed", "blocked"]);
 
 /** A bound root whose latest run is not terminal, with that run. */
-interface ActiveRoot { rootId: string; snapshot: ConvergenceSnapshot; receipt: WorkflowReceiptV1 }
+interface ActiveRoot { rootId: string; runId: string; snapshot: ConvergenceSnapshot; receipt: WorkflowReceiptV1 }
 type WorkflowActivity = ActiveRoot[] | { unavailable: string };
 const GATED_ROOT_STATES = new Set(["needs-review", "needs-user"]);
 
@@ -126,6 +126,18 @@ export type HookText = readonly MessageRef[];
 /** The text a hook shows, or null when there is nothing to show. */
 export function renderHookText(text: HookText | null, locale: SupportedLocale): string | null {
   return text ? text.map(line => render(line, locale)).join("\n") : null;
+}
+
+/**
+ * Context for a subagent the host just started (AGS3-D-0001). The per-message cue reaches only the main agent at its
+ * user prompts, so a subagent gets the same skill targets here, with the scope its brief sets. No session state is
+ * read or written: the subagent's own context is all this changes.
+ */
+export function subagentStartCue(): HookText {
+  return [
+    msg("hooks.subagentCue.skills", { targets: installedSkillTargets() }),
+    msg("hooks.subagentCue.scope", {}),
+  ];
 }
 
 export interface WorkflowContinuityCardV1 {
@@ -998,7 +1010,7 @@ export class ContinuityService implements ContinuityGateway {
         if (!snapshot || snapshot.root.state === "completed" || snapshot.root.state === "abandoned") return [];
         const runId = snapshot.workflowRunIds.at(-1);
         const receipt = runId ? workflowStore.getRun(runId) : null;
-        return receipt && !RUN_TERMINAL_STATES.has(receipt.state) ? [{ rootId, snapshot, receipt }] : [];
+        return runId && receipt && !RUN_TERMINAL_STATES.has(receipt.state) ? [{ rootId, runId, snapshot, receipt }] : [];
       });
     } catch (cause) {
       return { unavailable: workflowFailureCode(cause) };
@@ -1034,19 +1046,22 @@ export class ContinuityService implements ContinuityGateway {
       // It names each workflow's goal: told only "the user's remaining work", Codex took its last request (one file of
       // two) as the whole task and stopped (3.2.0 candidate real-host run).
       for (const item of pending) {
-        lines.push(msg("hooks.phaseCheck.pending", { stages: item.stages.join(", ") }), msg("hooks.phaseCheck.goal", { goal: item.goal }));
+        // The IDs let the session find its own workflow again: get_workflow_status needs the runId and
+        // get_convergence_status the rootId, and no other notice names them (AGS3-D-0004).
+        lines.push(msg("hooks.phaseCheck.pending", { stages: item.stages.join(", "), runId: item.runId, rootId: item.rootId }),
+          msg("hooks.phaseCheck.goal", { goal: item.goal }));
       }
       lines.push(msg("hooks.phaseCheck.continue", {}), msg("hooks.phaseCheck.waiting", {}));
     }
     return quiet || lines.length === 0 ? null : lines;
   }
 
-  private pendingStages({ snapshot, receipt }: ActiveRoot): { stages: string[]; goal: string } {
+  private pendingStages({ rootId, runId, snapshot, receipt }: ActiveRoot): { stages: string[]; goal: string; runId: string; rootId: string } {
     // Same pass test as the finalize gate (workflow-service finalize).
     const stages = receipt.plan.stages
       .filter(stage => receipt.stageResults.find(result => result.stageId === stage.stageId)?.state !== "passed")
       .map(stage => stage.stageId);
-    return { stages, goal: boundedText(snapshot.root.taskEnvelope.objective.replace(/\s+/gu, " ").trim(), 300) };
+    return { stages, goal: boundedText(snapshot.root.taskEnvelope.objective.replace(/\s+/gu, " ").trim(), 300), runId, rootId };
   }
 
   formatCandidate(candidate: ContinuityCandidateV1): HookText | null {

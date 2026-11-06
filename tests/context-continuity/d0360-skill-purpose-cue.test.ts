@@ -73,10 +73,10 @@ describe("per-message skill purpose cue", () => {
     const ko = cue();
     expect(ko).toContain("앞서 호출한 스킬의 지침은 그때의 판단·행동에만 적용된다.");
     expect(ko).toContain("이번 목적에 맞지 않는 이전 스킬 지침은 적용하지 않는다.");
-    expect(ko).toContain("서브에이전트에 맡길 때는 고른 스킬을 지시문에 적는다.");
+    expect(ko).toContain("독립적으로 완료·검증할 수 있는 일이 있으면 직접 하기 전에 서브에이전트 위임을 검토한다. 맡길 때는 지시문에 목표·범위·금지 구역·쓰기 소유, 고른 스킬과 완료·검증 기준을 적고, 빌드 감시·진행 폴링 같은 대기는 맡기지 않는다.");
     const en = cue({ AGENT_GOVERNANCE_LOCALE: "en" });
     expect(en).toContain("A skill called earlier applies only to the judgment or action it was called for");
-    expect(en).toContain("When delegating to a subagent, name the chosen skills in its brief.");
+    expect(en).toContain("When some work can be completed and verified on its own, consider delegating it to a subagent before doing it yourself. When delegating, write the goal, scope, forbidden areas, write ownership, the chosen skills and the completion and verification criteria in the brief, and do not hand off waiting such as watching a build or polling progress.");
   });
 
   it("derives the list from the installed directories: sorted, skipping directories without classification", () => {

@@ -61,7 +61,7 @@
             "command": "node \"$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs\"",
             "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\continuity-hook.mjs\"",
             "timeout": 10,
-            "additionalContextLimit": 1800
+            "additionalContextLimit": 8192
           }
         ]
       },
@@ -83,6 +83,19 @@
             "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-board-hook.mjs\"",
             "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-board-hook.mjs\"",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs\"",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\continuity-hook.mjs\"",
+            "timeout": 10,
+            "additionalContextLimit": 8192
           }
         ]
       }
