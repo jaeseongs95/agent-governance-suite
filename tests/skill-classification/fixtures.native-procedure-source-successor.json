@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "native-procedure-source-binding-r32",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "7652c71037c07c4744b9d8f37f0a327d454d8c53",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.ags38-contract-docs-source-successor.json",
+    "bytes": 2107,
+    "digest": "sha256:0dd7fdf3baa5b12a9cd6d533145acfe8b2b9770453188a327c8b6f2aa5918499"
+  },
+  "sourceChangeRefs": [
+    {
+      "defectIds": [
+        "AGS3-D-0031",
+        "AGS3-D-0032",
+        "AGS3-D-0036",
+        "AGS3-D-0038"
+      ],
+      "observation": "Claude native pilot T2 late plan and T4 read-only checkpoint remain failed; instruction contracts only."
+    }
+  ],
+  "bindings": [
+    {
+      "path": "skills/orchestrator/classification.json",
+      "previousDigest": "sha256:f5d7143c822ca8bdea4afe5761a762c1844501645ba1db81d11c9423d8575983",
+      "digest": "sha256:16c5f554f7e727507ad7b60a9a13da5919bebb3f67039ea2b82d02d9f7ab47c7",
+      "bytes": 4814
+    },
+    {
+      "path": "skills/orchestrator/references/intake.md",
+      "previousDigest": "sha256:1f43c151e74e25aeea37df534b048d2ca51b159a3c83e47ef07c9152256a9e49",
+      "digest": "sha256:97e76065910f25aceaa895c7d24e70da7d3f30a8b32679870932ed22a9958c0c",
+      "bytes": 11839
+    },
+    {
+      "path": "skills/test-engineering/classification.json",
+      "previousDigest": "sha256:3e603b14e5f27eb21506d03b33afab40b4cf1ce6cc070e0936b6690c745e636f",
+      "digest": "sha256:b82827922ae2990887ed35b34e9c26c4668a367e05bc90dc5b5d46e9cecf036a",
+      "bytes": 1746
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "previousDigest": "sha256:75e60228fe7307be776ed4925ea18a830f0e59d99a2d6a22715252731b37a3cc",
+      "digest": "sha256:5dd09730e500965b8f64ef3cfde867b2231934dddbe0a454aa11c431a1723bd6",
+      "bytes": 4509
+    }
+  ],
+  "spanPreservation": {
+    "changedSpans": [
+      "orchestrator:applicability[4]"
+    ],
+    "spans": [
+      {
+        "skillId": "orchestrator",
+        "group": "applicability",
+        "index": 4,
+        "path": "skills/orchestrator/references/intake.md",
+        "startLine": 4,
+        "endLine": 6,
+        "startByte": 907,
+        "endByte": 2755,
+        "bytes": 1848,
+        "digest": "sha256:f939f6a0f805e967241c4687dfaa64bfbda7665e3d944bdab9437ce73dcf0cca",
+        "previous": {
+          "path": "skills/orchestrator/references/intake.md",
+          "startLine": 4,
+          "endLine": 6,
+          "digest": "sha256:1f43c151e74e25aeea37df534b048d2ca51b159a3c83e47ef07c9152256a9e49",
+          "startByte": 907,
+          "endByte": 2709,
+          "selectedBytes": 1802,
+          "selectedDigest": "sha256:ddd5360a6e5724d55418656756f832c0b7e23aa5c8e8e9d41c6ab40a3c9ebe44"
+        },
+        "current": {
+          "path": "skills/orchestrator/references/intake.md",
+          "startLine": 4,
+          "endLine": 6,
+          "digest": "sha256:97e76065910f25aceaa895c7d24e70da7d3f30a8b32679870932ed22a9958c0c",
+          "startByte": 907,
+          "endByte": 2755,
+          "selectedBytes": 1848,
+          "selectedDigest": "sha256:f939f6a0f805e967241c4687dfaa64bfbda7665e3d944bdab9437ce73dcf0cca"
+        }
+      }
+    ],
+    "comparedSpans": 24
+  },
+  "fixtureFileRewritten": false,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN"
+}

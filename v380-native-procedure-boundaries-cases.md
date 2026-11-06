@@ -16,3 +16,9 @@
 | NP05 | 별도 TEST native T2/T4 재실행, root가 정한 동일 조건 | 실제 도구 순서와 상태 쓰기 유무를 관찰 | 계획이 RED/GREEN보다 앞서며 읽기 전용 진단에서 checkpoint 호출 0. 원 pilot FAIL은 덮지 않음 | NOT_RUN |
 
 NP01~04는 전달문·계약 검사이며 실제 모델 행동 성공을 뜻하지 않는다. NP05는 root와 조율한 TEST에서만 실행한다. 로컬 제품 시험은 금지된다. 원자료 읽기 조회 `9a24c89a55a6b7bbcad9f8c055492bc3f66081f36d7c13d7` 및 좁은 사건 추출 `e9107acd2b39c73b3256a6dae8133c5697f79400e9b926a1`은 exit0/cleanupComplete:true로 끝났다.
+
+Windows TEST RED: test-only `d07db8b658944dd5008a8f60349107ad88c53b4e`, Node `v24.22.2`, 기존 SRC와 동일 lockfile의 의존성을 격리 worktree에 junction으로 연결했다. `AGS_TEST_SCOPE`는 unset, 제품의 기본값은 `all`이다. 명령은 `node C:/ags-330-test/repo/node_modules/vitest/vitest.mjs run tests/mcp/ags38-native-procedure-boundaries.test.ts --maxWorkers=1`; 실제 native exit1, 8.92초였다. NP01 ko/en 2개, NP02 ko/en 2개, NP03 1개가 각각 해당 지시문 부재의 AssertionError로 실패했다. 수집 ID `4de2f2680df63587434400b901bf3e6bdd1c080130dacd42`, cleanupComplete:true. 실행기 오류가 아니며 이 5개 실패를 보존한다. 원 TEST 파일 SHA256은 `95f4333f375d8b8677e5448d40920850c0f8e2eba8fb926accaf9155cc59e12b`다.
+
+후보 정적 대조(제품 시험 아님): 공통 intake는 조건절만 추가해 5,224자로 기존 5,229자 cap을 유지했다. 두 descriptor의 selected span 24개 중 `orchestrator:applicability[4]`만 조건절이 바뀌고 나머지는 동일하다. r32 manifest는 3,373 bytes, `sha256:4009ff57230ff7587bb4e4053b36f26328b7119708fe40dec301a0d6544e1d08`로, 원 r31의 exact 부모 hash와 현재 4개 원문을 결속한다. 60개 source binding과 content lock 49파일의 실제 bytes 불일치는 각각 0개이며, 기존 frozen manifest 변경도 0개다. locales ko/en에서는 checkpoint_context 설명 외 key 변경 0개다. 역사 context checker에는 기존 successor 배열의 새 exact 원본→현재 hash만 추가했다.
+
+해당 TypeScript·역사 checker의 실제 ESLint, `node --check`, `git diff --check`는 exit0이다. GREEN은 root의 공식 i18n catalog·bundle 생성 후 같은 TEST 파일로 실행한다. source locale 수정만으로 아직 생성하지 않은 `tools/list` 출력을 GREEN으로 보지 않는다. 실제 native 행동 NP05는 NOT_RUN으로 유지한다.

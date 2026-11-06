@@ -260,6 +260,16 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/orchestrator/references/intake.md": ["8f0860a4efbd975887727b4e284d550af2f9ceb412f7f0a178cdb5f11967bff9", "1f43c151e74e25aeea37df534b048d2ca51b159a3c83e47ef07c9152256a9e49"],
     }),
   }),
+  Object.freeze({
+    revision: "7652c71037c07c4744b9d8f37f0a327d454d8c53",
+    hashes: Object.freeze({
+      "skills/orchestrator/classification.json": ["f5d7143c822ca8bdea4afe5761a762c1844501645ba1db81d11c9423d8575983", "16c5f554f7e727507ad7b60a9a13da5919bebb3f67039ea2b82d02d9f7ab47c7"],
+      "skills/orchestrator/references/intake.md": ["1f43c151e74e25aeea37df534b048d2ca51b159a3c83e47ef07c9152256a9e49", "97e76065910f25aceaa895c7d24e70da7d3f30a8b32679870932ed22a9958c0c"],
+      "skills/test-engineering/classification.json": ["3e603b14e5f27eb21506d03b33afab40b4cf1ce6cc070e0936b6690c745e636f", "b82827922ae2990887ed35b34e9c26c4668a367e05bc90dc5b5d46e9cecf036a"],
+      "skills/test-engineering/SKILL.md": ["75e60228fe7307be776ed4925ea18a830f0e59d99a2d6a22715252731b37a3cc", "5dd09730e500965b8f64ef3cfde867b2231934dddbe0a454aa11c431a1723bd6"],
+      "skills/orchestrator/references/engineering-practices/cli.md": ["c23134f4ebce972f891e7b7bf93f9ac24a5c340e856e3f1192e58fb33aff3b2b", "3d3199bd429e074903e6b99385c5c82677d0c6a4a5ffce696f745000db393b65"],
+    }),
+  }),
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
 // Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes, or

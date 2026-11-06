@@ -7,14 +7,18 @@
 ```sh
 node runtime/engineering-practices/cli.mjs self-check
 node runtime/engineering-practices/cli.mjs catalog --module test-design
+node runtime/engineering-practices/cli.mjs check-plan --root /absolute/work --plan plan.json
 node runtime/engineering-practices/cli.mjs snapshot --root /absolute/work --files files.json
 node runtime/engineering-practices/cli.mjs run --root /absolute/work --snapshot snapshot.json --timeout-ms 30000 -- node --test tests/example.test.mjs
-node runtime/engineering-practices/cli.mjs check-plan --root /absolute/work --plan plan.json
 node runtime/engineering-practices/cli.mjs check-proof --root /absolute/work --plan plan.json --proof proof.json
 node runtime/engineering-practices/cli.mjs check-review --root /absolute/work --request request.json --report review.json
 node runtime/engineering-practices/cli.mjs check-stage-bundle --root /absolute/work --input stage-bundle.json --bundle-digest sha256:<raw-manifest-hash> --task-digest sha256:<signed-task-digest> --capability test-sensitivity-review
 node runtime/engineering-practices/cli.mjs provider-result --root /absolute/work --capability test-sensitivity-review --result test-result.json --locator test-result.json
 ```
+
+테스트 구현·실행 전에 계획을 작성·저장하고 `check-plan`을 확인한다. 위 명령 목록은 이미 허용된 작업에 필요한 명령만 선택하는 안내이며 모든 명령을 실행하라는 절차가 아니다.
+
+`--root`는 절대경로이고 파일 참조는 그 root 아래 상대경로다. 예를 들어 `/absolute/work/.ev/plan.json`은 `--root /absolute/work --plan .ev/plan.json`으로 지정한다. `--files`·`--snapshot`·`--proof`·`--request`·`--report`·`--input`·`--result`에도 같은 기준을 적용한다. 파일 참조의 절대경로·상위경로·Windows 예약경로·symlink는 거부한다.
 
 files.json은 `["src/module.mjs", "tests/module.test.mjs"]`와 같은 명시적 상대 경로 배열이다. 자동 전체 Git diff 수집기는 아니다. base/head에 포함하지 않은 파일이나 외부 의존성·생성물·환경은 별도 조사로 범위에 넣는다. 모든 관련 선언 파일을 포함하되 민감한 credential 파일은 넣지 않는다.
 
@@ -64,4 +68,4 @@ run은 `spawnSync`, `shell:false`, 명시적인 argv, 기본 30초/최대 300초
 
 receipt는 서명 없는 로컬 기록이다. 로그에 assertion 문자열이 있다는 사실만으로 의도한 결함이 그 assertion을 발생시켰다고 증명하지 않는다. 에이전트/검토자는 원시 실패 내용과 실제 테스트 경로를 읽어 원인을 대조해야 한다. 종료 코드 0은 호출한 프로세스의 성공이지 테스트 개수·의미·외부 통합 성공의 증명이 아니다. 파일에 없던 환경 입력과 명령 실행 파일 자체의 진본성도 별도 확인 사항이다.
 
-파일당 snapshot 최대 8MiB, 총 64MiB, 최대 1000파일이다. JSON/receipt에도 별도 크기 제한이 있다. 절대경로·상위경로·Windows 예약경로·symlink는 거부한다. 읽는 동안 파일 자체 변화는 탐지하지만, 공격적인 동시 프로세스의 상위 디렉터리 교체·hardlink로부터 격리하는 sandbox는 아니다. artifact root는 신뢰할 수 있는 private directory로 관리한다.
+파일당 snapshot 최대 8MiB, 총 64MiB, 최대 1000파일이다. JSON/receipt에도 별도 크기 제한이 있다. 읽는 동안 파일 자체 변화는 탐지하지만, 공격적인 동시 프로세스의 상위 디렉터리 교체·hardlink로부터 격리하는 sandbox는 아니다. artifact root는 신뢰할 수 있는 private directory로 관리한다.
