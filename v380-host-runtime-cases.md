@@ -27,7 +27,7 @@
 | HR14 / D0014 | Node24+, node_modules 없는 contracts/runtime/skills 및 bundled continuity-hook, 격리 state, SessionStart startup | 10s 부모 deadline으로 직접 실행하고 경계/CPU/close 기록 | exit0, stdout 비어 있음, 10s 이내. 실패 시 마지막 시작/완료 경계로 H14a-d 분리. 원인 미재현은 UNKNOWN 유지 | NOT_RUN |
 | HR16 / D0016 | root 및 Claude 실제 profile-workspace CLI, 기존 python fixture, 한글 `리¢😀` taskObjective, 격리 state | 첫 한글 바이트 중간에서 split, 자식 소비 marker 대기, EOF 전 stdout 없음 확인, 나머지+EOF 전송; 10s deadline | PASS JSON, taskObjective 보존, signal null, exit0. marker/EOF/Git/close 기록으로 H16a-c 분리 | NOT_RUN |
 | HR27 / D0027 | 설치물과 같은 clean-room server, initialize/initialized/tools/list 줄 입력 | 기존 acceptance-bundle-startup 30s 전체 제한과 10s child 제한 유지; 단계와 ID 기록. 새 fixture에서도 child와 복사/정리 각각 기록 | initialize id1, tools/list id2 및 plan_workflow 도구, exit0. 30s 전체 초과는 실패 유지 | NOT_RUN |
-| HR-SYNTAX | 소유 새 `.mjs` | `node --check tests/runtime/ags38-host-runtime-startup.node-test.mjs` | exit0. 제품 동작 검증 아님 | NOT_RUN |
+| HR-SYNTAX | 소유 새 `.mjs` | `node --check tests/runtime/ags38-host-runtime-startup.node-test.mjs` | exit0. 제품 동작 검증 아님 | PASS exit0, `34a778f7f936dfe808d7f2bf308eb9b21332eacf` 소스. `git diff --check`도 exit0 |
 
 기존 runner: `scripts/run-tests.mjs`가 `.node-test.mjs`를 Node native runner로 수집하며 프로세스 시험은 서버 범위다. 새 runner/의존성 없이 이 경계를 사용한다.
 
@@ -44,3 +44,7 @@
 ## 현재 판정
 
 DiagnosisReport.v1 의미 판정: NEXT_TEST. 세 과거 episode의 환경 digest/원시 실패 출력은 아직 전달되지 않아 원인을 확정하지 않았다. source에서 확인된 동기 stdin·SQLite·Git 경계는 지연 가능 경계이며 과거 실패의 인과 증명은 아니다. 제품 수리는 없음.
+
+확인한 경계: `continuity-hook.ts`의 main은 `readFileSync(0)` → `runContinuityHook` → 동기 두 SQLite store 초기화·handle·close다. `profile-workspace.mjs`의 gitInfo는 timeout 없는 `spawnSync` 네 번을 사용한다. MCP `index.ts`는 store·validator·classification 초기화 뒤 `StdioServerTransport`에 연결한다. 이 사실만으로 과거 timeout 원인으로 판정하지 않는다.
+
+저장소 `docs/ci-and-test-servers.md`는 Windows CI의 runtime smoke가 10.3s/14.6s/30.8s 이상으로 변동했고 프로세스 시험을 TEST 서버로 옮겼음을 기록한다. 이 과거 문서의 환경 설명도 세 원실패의 인과 증명이 아니며 현재 허용된 TEST에서 실측한다.
