@@ -97,7 +97,7 @@ try {
     send({ method: "initialized", params: {} });
     const account = await request("account/read", {});
     if (!account?.account) throw new Error("AUTH_UNAVAILABLE: native CLI reported no existing login; no credential copying or login fallback");
-    const started = await request("thread/start", { cwd: repoDir, model, approvalPolicy: "never", sandbox: "workspace-write" });
+    const started = await request("thread/start", { cwd: repoDir, model, approvalPolicy: "never", sandbox: "danger-full-access" });
     threadId = started.thread?.id;
     if (!threadId) throw new Error("thread/start returned no thread id");
     writeFileSync(path.join(runDir, "session.json"), JSON.stringify({ hostPid: child.pid, threadId, transport: "native-app-server", requestedModel: model, requestedEffort: effort }));
