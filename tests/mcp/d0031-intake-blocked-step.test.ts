@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { serverInstructions } from "../../mcp-server/src/server.js";
 import { skillIntakeText } from "../../mcp-server/src/skill-intake.js";
 
-// AGS3-D-0034: when one step was blocked from outside (a tool refusal, a denied permission, waiting for another session
+// AGS3-D-0031 (formerly AGS3-D-0034, merged into D-0031): when one step was blocked from outside (a tool refusal, a denied permission, waiting for another session
 // or owner to fix something), a session stopped all of its assigned work instead of holding only that step. The shared
 // intake said to keep independent work going only in three narrow cases (a missing constraint, a user-only action, a
 // refused skill classification). One rule now covers every blocked step and those three sentences merge into it.
@@ -17,7 +17,7 @@ const source = block(readFileSync(new URL("skills/orchestrator/references/intake
 const blockedStep = source.match(/한 단계가 [^.]+\./u)?.[0] ?? "";
 const count = (text: string, fragment: string) => text.split(fragment).length - 1;
 
-describe("shared intake: a blocked step holds only itself and its dependents (AGS3-D-0034)", () => {
+describe("shared intake: a blocked step holds only itself and its dependents (AGS3-D-0031, formerly D-0034)", () => {
   it("names the outside causes, holds only the blocked and dependent steps, reports the wait and keeps the rest going", () => {
     expect(blockedStep).not.toBe("");
     for (const fragment of [

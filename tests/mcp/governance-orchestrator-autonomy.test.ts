@@ -95,7 +95,7 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     const intake = instructions("references/intake.md");
     const classification = instructions("references/skill-classification.md");
     expect(intake).toContain("도구 노출만으로 지원 설정을 추정하지 않");
-    // 3.8.0 (AGS3-D-0034): a refused call is a blocked step under the shared blocked-step rule.
+    // 3.8.0 (AGS3-D-0031, formerly D-0034): a refused call is a blocked step under the shared blocked-step rule.
     expect(intake).toContain("미확정·거부 때는 계약의 실패 처리를 따른다");
     expect(intake).toContain("도구 실패·권한 거절");
     expect(intake).toContain("막혀도 그 단계와 의존 단계만 보류하고");
@@ -124,7 +124,7 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     const text = instructions("references/entry-details.md");
     const integration = text.split("## 결과 통합\n")[1]!.split("## MCP 도구 사용 계약")[0]!;
     const intake = instructions("references/intake.md").split("<!-- skill-intake:start -->")[1]!.split("<!-- skill-intake:end -->")[0]!;
-    // 3.8.0 (AGS3-D-0034): the user-only sentence and the blocked-step sentence after it, which keeps independent work going.
+    // 3.8.0 (AGS3-D-0031, formerly D-0034): the user-only sentence and the blocked-step sentence after it, which keeps independent work going.
     const userOnlyBoundary = intake.match(/사용자만 할 수 있는[^.]+\.[^.]+\./u)?.[0];
     expect(integration).toContain("해당 단계의 결과이며 사용자 요청 전체의 완료와 구분한다");
     expect(integration).toContain("분석·계획만 요청받았다면 후속 변경을 실행하지 않는다");

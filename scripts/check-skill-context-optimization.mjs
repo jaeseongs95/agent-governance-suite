@@ -43,7 +43,7 @@ function git(...args) {
 //   the line that checks whether a target's purpose was already met before closing, deleting, reverting or replacing it.
 // - 3.8.0 intake move (AGS3-D-0032): the intake block moves unchanged from SKILL.md to references/intake.md (a reviewed
 //   addition below), SKILL.md keeps a one-line pointer, and entry-details.md links the moved section.
-// - 3.8.0 intake blocked step (AGS3-D-0034): one rule holds only a blocked step and the steps that depend on it, says
+// - 3.8.0 intake blocked step (AGS3-D-0031, formerly D-0034): one rule holds only a blocked step and the steps that depend on it, says
 //   what is blocked and who is waited on, and keeps the rest of the work going; the three narrower sentences merge into it.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
