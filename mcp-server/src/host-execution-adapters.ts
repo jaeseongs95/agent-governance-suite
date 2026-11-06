@@ -281,9 +281,11 @@ export const geminiExecutionAdapter: HostExecutionAdapter = defaultSuite.adapter
 export const antigravityExecutionAdapter: HostExecutionAdapter = defaultSuite.adapters.get("antigravity")!;
 
 export function modelClassForClaudeModel(model: string): ModelClassV1 | null {
-  return claudeCodeExecutionAdapter.modelClassForModel(model);
+  const capability = claudeCodeExecutionAdapter.resolveModel?.(model);
+  return capability?.provider === "anthropic-claude-code" ? capability.modelClass : null;
 }
 
 export function modelClassForGeminiModel(model: string): ModelClassV1 | null {
-  return geminiExecutionAdapter.modelClassForModel(model);
+  const capability = geminiExecutionAdapter.resolveModel?.(model);
+  return capability?.provider === "google-gemini" ? capability.modelClass : null;
 }
