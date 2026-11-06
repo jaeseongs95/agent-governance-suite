@@ -108,6 +108,11 @@ describe("generated Claude plugin", () => {
     expect(claudeOverlay.mcpServers["agent-governance-suite"].env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("claude-code");
   });
 
+  // D32 packaging cases (source 8e06a470, TEST operation 0d195ef2b908770b87521615f14e96e85ef4079aa0c882ad):
+  // 1. Current selection clauses appear once in shared/generated intake, never in the adapted SKILL body.
+  // 2. The exact r34 historical anchor Map is evidence, while every other tracked byte remains under no-copy scanning.
+  // Any absent/duplicated current clause, changed historical fixture or copy outside that Map must fail.
+  // Actions/TEST: pnpm exec vitest run tests/tooling/claude-plugin.test.mjs; local product result: NOT_RUN.
   it("keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation", async () => {
     const orchestrator = (base, ...segments) => readFile(path.join(base, "skills", "orchestrator", ...segments), "utf8");
     const adaptation = await readJson(root, "claude-overlay", "adaptations", "orchestrator.json");
@@ -148,7 +153,8 @@ describe("generated Claude plugin", () => {
     // Each common selection sentence reaches Claude exactly once, in the intake reference (3.8.0, AGS3-D-0032).
     const sharedIntake = await orchestrator(root, "references", "intake.md");
     const generatedIntake = await orchestrator(pluginRoot, "references", "intake.md");
-    for (const sentence of ["키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다.", "필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.", "이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다."]) {
+    // 2913050c shortened the common wording; assert the current clauses, not its historical predecessor.
+    for (const sentence of ["키워드·파일 종류·`complex`만으로 고르지 않는다.", "사용자 지정 스킬을 우선해 대체하지 않되 승인·검증·독립성 gate 생략 권한으로 보지 않는다.", "선택·이름 언급·호출 시작 응답·문서 읽기는 실행이 아니다."]) {
       expect(sharedIntake.split(sentence)).toHaveLength(2);
       expect(generatedIntake.split(sentence)).toHaveLength(2);
       expect(generated).not.toContain(sentence);
@@ -192,7 +198,15 @@ describe("generated Claude plugin", () => {
     const files = listed.stdout.split("\0").filter((file) => file && !allowed.has(file));
     expect(files.length).toBeGreaterThan(500);
     for (const file of files) {
-      const text = await readFile(path.join(root, file), "utf8");
+      let text = await readFile(path.join(root, file), "utf8");
+      if (file === "tests/skill-classification/intake-length-source-successor.test.ts") {
+        // Its r34 assertions read hash-bound historical sources at the r35 ancestor.
+        // Exempt only that exact anchor Map, not the rest of this file or other tests.
+        expect(createHash("sha256").update(text).digest("hex"), file).toBe("dcef5ce8744555632bc342628921c58b31ab86b48201ec5612762c1a6abce1ee");
+        const historicalAnchors = text.match(/  const anchors = new Map\(\[\n[\s\S]*?\n  \]\);/u);
+        expect(historicalAnchors, file).not.toBeNull();
+        text = text.replace(historicalAnchors[0], "");
+      }
       for (const sentence of sentences) expect(text.includes(sentence), `${file}: ${sentence}`).toBe(false);
     }
   });
