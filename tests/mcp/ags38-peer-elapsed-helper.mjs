@@ -50,7 +50,7 @@ if (mode === "setup") {
   observe("request-ready", { deadlineMs: deadline });
   try {
     if (mode === "hook") {
-      const outcome = await runSessionMessageHookOutcome("codex", JSON.stringify({ hook_event_name: "Stop", session_id: target.sessionId, agent_id: "" }), undefined, {
+      const outcome = await runSessionMessageHookOutcome("codex", JSON.stringify({ hook_event_name: "Stop", session_id: target.sessionId }), undefined, {
         executionBudget: HOOK_COMMAND_BUDGET,
         onClaimState: event => { if (event.phase === "request-attempted") { attempts += 1; observe("operation-attempt", { attempts }); } },
       });
