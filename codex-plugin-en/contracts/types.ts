@@ -1,4 +1,6 @@
 import { ROOT_LOCALE, render, type MessageRef } from "../mcp-server/src/i18n.js";
+import { MODEL_CLASS, REASONING_EFFORT } from "../runtime/model-policy.mjs";
+export { MODEL_CLASS, REASONING_EFFORT };
 
 /** Public v1 values. Do not add ad-hoc states or error codes at call sites. */
 export const CONTRACT_VERSION = "1.0.0" as const;
@@ -59,10 +61,8 @@ export type BindingOperation = (typeof BINDING_OPERATION)[number];
 export const GATE_KIND = ["none", "precondition", "completion"] as const;
 export type GateKind = (typeof GATE_KIND)[number];
 
-export const MODEL_CLASS = ["lightweight", "general", "deep", "frontier"] as const;
 export type ModelClassV1 = (typeof MODEL_CLASS)[number];
 
-export const REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"] as const;
 export type ReasoningEffortV1 = (typeof REASONING_EFFORT)[number];
 
 export interface ExecutionContextV1 {

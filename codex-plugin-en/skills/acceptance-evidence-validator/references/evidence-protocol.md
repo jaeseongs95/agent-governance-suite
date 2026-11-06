@@ -6,6 +6,16 @@
 
 ## 기준별 판정
 
+각 기준의 ID는 `AC-`와 기준 문장 원문 UTF-8 SHA-256 앞 12 hex를 결합한다. 배열 위치, trim, 공백·Unicode 정규화는 사용하지 않는다. 보고서 `criteria`의 `criterionId`와 `statement`가 ID↔문장 표다. 배열 정렬은 ID를 바꾸지 않으며 문장 변경은 새 ID와 새 근거를 요구한다. 중복 문장 또는 ID 충돌은 입력 오류다.
+
+### v1 positional 자료 이관
+
+기존 schemaVersion `1.0.0`의 plain 문자열 기준과 `AC-001` 형태 입력은 계속 읽는다. 다만 위치 ID만 있는 근거·명령·override는 어느 원문을 검증했는지 알 수 없으므로 자동으로 현재 배열에 붙이지 않는다. 이런 자료가 있으면 한계를 남기고 전체 기준을 `insufficient-evidence`로 유지한다. 현재 대상의 내용 ID 반증이 있으면 `unsatisfied`가 우선한다. CLI 종료 코드 계약은 유지되며 `verdict`를 확인해야 한다.
+
+동결된 원래 요청/보고서에서 ID와 정확한 기준 원문을 가져와 optional `criterionBindings: [{"criterionId":"AC-001","statement":"원문 전체"}]`를 제공하면 이전 근거를 내용 ID로 정규화한다. 표를 현재 배열 순서로 새로 만들어 과거 근거에 붙이지 않는다. 없는 문장, 중복 ID·문장과 충돌은 입력 오류다. 원래 authority evidence digest는 이관 전 evidence의 ID 목록과 원값으로 검증한다. 보고서와 evidence index에는 내용 ID를 기록하며, 기존 위치 ID 보고서는 같은 동결 요청·이관표로 재생성해야 한다. request digest는 이관표도 포함하므로 새 요청 산출물로 동결한다. 새 형식의 보고서와 이전 요청의 digest를 섞지 않는다.
+
+이 변경은 직접 CLI, `analyzeAcceptance`, `validateReport`, `validateReportAgainstRequest`를 사용하는 MCP acceptance gate 및 보고서/근거 소비자에 적용된다. TaskEnvelope의 문자열 배열과 공용 TaskEnvelope schema는 바꾸지 않는다. `[AC-001]` 문장 접두도 전체 원문의 일부이며 접두 숫자를 문장 정체성으로 신뢰하지 않는다.
+
 - `satisfied`: 현재 대상에 맞고 직접 확인된 evidence가 기준을 지지하며 반증이 없다.
 - `unsatisfied`: 현재 대상에 맞는 테스트 실패, 관측 결과 또는 구현 상태가 기준과 양립할 수 없다.
 - `insufficient-evidence`: 필요한 검사를 하지 않았거나 locator를 열 수 없거나 evidence가 다른 대상을 가리킨다.

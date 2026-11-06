@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolveCatalogModel } from "./model-catalog-adapter.mjs";
+import { MODEL_CLASS as classes, REASONING_EFFORT as efforts, HIGH_RISK_MINIMUM } from "./model-routing-policy.mjs";
 
 // Messages come from the AGS runtime when this skill sits beside it (repository, plugin or zip layout). A skill folder
 // copied alone has no catalog, so it prints the message key and its parameters. An existing but broken runtime is not
@@ -13,8 +14,6 @@ function hostText(key, params = {}) {
 }
 
 const presets = JSON.parse(readFileSync(new URL("../references/model-routing-presets.json", import.meta.url), "utf8"));
-const classes = Object.freeze(["lightweight", "general", "deep", "frontier"]);
-const efforts = Object.freeze(["low", "medium", "high", "xhigh", "max", "ultra"]);
 const defaultRoles = Object.freeze(["discovery", "general-implementation", "complex-reasoning", "independent-audit"]);
 
 // The message is a catalog key rendered only on failure.
@@ -44,8 +43,9 @@ function assertImmutablePolicyOrder(currentPresets) {
   if (currentPresets.effort_order !== undefined) {
     check(
       Array.isArray(currentPresets.effort_order)
-        && currentPresets.effort_order.length === efforts.length
-        && currentPresets.effort_order.every((item, index) => item === efforts[index]),
+        && currentPresets.effort_order.length > 0
+        && currentPresets.effort_order.every((item, index, order) => efforts.includes(item)
+          && (index === 0 || efforts.indexOf(order[index - 1]) < efforts.indexOf(item))),
       "skillTools.modelRouting.effortOrderImmutable",
     );
   }
@@ -83,9 +83,9 @@ function resolveSupportedSetting(setting, options, currentPresets = presets) {
   if (minimum && efforts.indexOf(setting.effort) < efforts.indexOf(minimum)) return null;
   if (
     options.highRisk && (
-      classes.indexOf(capability.modelClass) < classes.indexOf("general")
-      || (catalogEntry && classes.indexOf(catalogEntry.model_class) < classes.indexOf("general"))
-      || efforts.indexOf(setting.effort) < efforts.indexOf("high")
+      classes.indexOf(capability.modelClass) < classes.indexOf(HIGH_RISK_MINIMUM.modelClass)
+      || (catalogEntry && classes.indexOf(catalogEntry.model_class) < classes.indexOf(HIGH_RISK_MINIMUM.modelClass))
+      || efforts.indexOf(setting.effort) < efforts.indexOf(HIGH_RISK_MINIMUM.reasoningEffort)
     )
   ) {
     return null;
@@ -129,11 +129,11 @@ export function resolveModelSelection(options, customPresets = presets) {
   const profile = options.profile ?? currentPresets.default_profile ?? presets.default_profile;
   let recommendation = provider?.profiles?.[profile]?.[options.role];
   if (recommendation && options.highRisk) {
-    if (classes.indexOf(recommendation.model_class) < classes.indexOf("general")) {
+    if (classes.indexOf(recommendation.model_class) < classes.indexOf(HIGH_RISK_MINIMUM.modelClass)) {
       recommendation = provider.profiles[profile]["general-implementation"];
     }
-    if (efforts.indexOf(recommendation.effort) < efforts.indexOf("high")) {
-      recommendation = { ...recommendation, effort: "high" };
+    if (efforts.indexOf(recommendation.effort) < efforts.indexOf(HIGH_RISK_MINIMUM.reasoningEffort)) {
+      recommendation = { ...recommendation, effort: HIGH_RISK_MINIMUM.reasoningEffort };
     }
   }
   const baseline = recommendation ?? options.inherited;

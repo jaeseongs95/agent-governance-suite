@@ -16,7 +16,9 @@ node scripts/cli.mjs --input tests/fixtures/passing.json
 node scripts/cli.mjs < tests/fixtures/passing.json
 ```
 
-출력은 `AcceptanceEvidenceReport.v1` JSON입니다. 각 수용 기준은 `AC-001`부터 순서대로 ID를 받고, 현재 `target.digest`와 일치하는 검증된 evidence만 판정에 사용됩니다. verification command에는 고유 ID와 영향을 받는 기준 ID를 함께 기록하며, stale 결과와 0이 아닌 종료 코드를 각각 증거 부족과 반증으로 반영합니다.
+출력은 `AcceptanceEvidenceReport.v1` JSON입니다. 각 수용 기준의 ID는 `AC-`와 원문 UTF-8 SHA-256 앞 12 hex입니다. 현재 `target.digest`와 일치하는 검증된 evidence만 판정에 사용됩니다. verification command에는 고유 ID와 영향을 받는 기준 ID를 함께 기록하며, stale 결과와 0이 아닌 종료 코드를 각각 증거 부족과 반증으로 반영합니다.
+
+기존 v1 위치 ID(`AC-001`) 입력도 읽지만, 문장 결속 없는 근거를 현재 배열에 자동으로 붙이지 않고 `BLOCKED`로 남깁니다. 동결된 원보고서의 정확한 ID↔문장 표를 optional `criterionBindings`로 옮기면 기존 근거를 내용 ID로 이관할 수 있습니다. 보고서도 재생성하고 새 요청 artifact digest를 동결해야 합니다. [이관 규칙](references/evidence-protocol.md)을 따릅니다.
 
 `not-applicable`은 임의 문자열로 선언할 수 없습니다. 현재 대상에서 검증된 authority evidence가 해당 기준과 `TaskEnvelope`의 실제 제외 범위 또는 금지 행동을 함께 가리켜야 합니다. authority evidence digest는 locator의 값뿐 아니라 evidence ID, 기준 ID, 대상 digest, 방향과 관측 결과도 함께 고정합니다.
 

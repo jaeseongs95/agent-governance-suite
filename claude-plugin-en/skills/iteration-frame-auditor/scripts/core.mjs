@@ -49,6 +49,18 @@ function unique(values, label) {
   if (new Set(values).size !== values.length) throw new InputError(hostText("skillTools.iterationFrame.duplicates", { label }));
 }
 
+function requireTargetLocations(side, label) {
+  // Locators are opaque references, including URIs: do not apply host path normalization.
+  const actual = side.frame.targetArtifacts.map((item) => item.locator);
+  unique(actual, `${label}.frame.targetArtifacts[].locator`);
+  const expected = new Set(side.contract.targetLocations);
+  if (actual.length !== expected.size || actual.some((locator) => !expected.has(locator))) {
+    throw new InputError(hostText("skillTools.iterationFrame.digestMismatch", { label: `${label}.contract.targetLocations / frame.targetArtifacts[].locator` }), {
+      code: "TARGET_LOCATIONS_MISMATCH", side: label, expected: [...expected], actual
+    });
+  }
+}
+
 export function validateRequest(request) {
   if (!request || typeof request !== "object" || Array.isArray(request)) throw new InputError(hostText("skillTools.iterationFrame.requestNotObject"));
   if (!validateRequestSchema(request)) {
@@ -63,6 +75,8 @@ export function validateRequest(request) {
   requireDigest(request.proposal.frameDigest, request.proposal.frame, "proposal.frameDigest");
   requireDigest(request.proposal.controlDigest, request.proposal.frame.controlArtifacts, "proposal.controlDigest");
   requireDigest(request.proposal.targetDigest, request.proposal.frame.targetArtifacts, "proposal.targetDigest");
+  requireTargetLocations(request.root, "root");
+  requireTargetLocations(request.proposal, "proposal");
 
   const evidenceIds = request.evidenceInventory.map((item) => item.evidenceRef);
   unique(evidenceIds, "evidenceInventory.evidenceRef");

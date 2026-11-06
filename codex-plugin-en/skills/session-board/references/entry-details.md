@@ -10,11 +10,11 @@
 
 - 현황판은 모든 호스트가 함께 쓰며 각 행의 `host`로 구분한다. 다른 호스트의 줄도 같은 방식으로 읽는다.
 - 같은 OS 사용자로 실행되는 로컬 프로세스는 현황판 파일을 읽을 수 있으므로, 한 줄에 비밀이나 개인정보를 적지 않는다.
-- 행은 훅만 쓰며 세션 ID와 작업 디렉터리도 훅이 넣는다. 훅만 `_sessionBinding`을 채우며 호출자는 이 값을 제공하지 않는다. 훅이 돌지 않은 호출로는 행이 기록되지 않으며, 결속이 없으면 `update_session_status`는 `BINDING_REQUIRED`다.
+- 행의 `host`·세션 ID는 서버가 호스트에서 관측한 호출자로 정한다. Codex·Antigravity는 `tools/call`의 호스트 작성 `_meta`에서 호출자를 확인하고, Claude Code는 `_meta`의 tool-use ID로 PreToolUse 훅이 기록한 호출 관측을 회수한다. 호출자를 관측할 수 없으면 `update_session_status`는 `BINDING_REQUIRED`다. 호출자가 세션 ID나 결속을 인자로 만들어 넣는 방식은 쓰지 않는다.
 - 현황판을 쓸 수 없으면 작업을 멈추지 않고 그 사실만 알린다.
-- 한 줄 요약은 훅이 만든 결속으로 `update_session_status`가 기록하고, 사용자 입력 시각과 작업 디렉터리는 입력 훅이 기록한다. 호출자가 직접 넣은 `_sessionBinding`은 거절된다. 현황판에 쓰지 못하면 `update_session_status`가 `MCP_UNAVAILABLE`을 돌려준다.
+- 한 줄 요약과 선택한 `role`은 관측된 호출자에 대해 `update_session_status`가 기록하고, 사용자 입력 시각과 작업 디렉터리는 입력 훅이 기록한다. `_sessionBinding`은 현재 호출 인자가 아니며, 넣으면 `INVALID_INPUT`(`reasonCode: "RESERVED_CALLER_FIELD"`)으로 거절된다. 현황판에 쓰지 못하면 `update_session_status`가 `MCP_UNAVAILABLE`을 돌려준다.
 
-결속 오류를 고치려고 `_sessionBinding`, 다른 세션의 ID·경로 또는 현황판 DB 행을 직접 만들지 않는다. 정상 훅 경로와 현재 세션의 관측 상태를 확인하고, 사용할 수 없으면 갱신 실패를 그대로 남긴다.
+결속 오류를 고치려고 `_sessionBinding`, 다른 세션의 ID·경로 또는 현황판 DB 행을 직접 만들지 않는다. 현재 호스트의 MCP `_meta` 전달과 필요한 훅의 호출 관측 경로를 확인하고, 사용할 수 없으면 갱신 실패를 그대로 남긴다.
 
 ## peer 메시지 전달
 

@@ -156,10 +156,20 @@
       "description": "Local JSON file holding output.output when it is too large for tool arguments. output.output must then be null; the server reads the file, checks the digest and validates it like inline output.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["locator", "digest"],
+      "required": [
+        "locator",
+        "digest"
+      ],
       "properties": {
-        "locator": { "type": "string", "minLength": 2, "maxLength": 4096 },
-        "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+        "locator": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 4096
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
       }
     }
   },
@@ -364,14 +374,13 @@
           ]
         },
         "reasoningEffort": {
-          "enum": [
-            "low",
-            "medium",
-            "high",
-            "xhigh",
-            "max",
-            "ultra",
-            null
+          "anyOf": [
+            {
+              "$ref": "https://skill-suite.local/contracts/model-policy.v1.schema.json#/$defs/reasoningEffort"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "policyNotes": {

@@ -154,7 +154,12 @@
           ]
         },
         "requiredAuditPhase": {
-          "enum": ["pre-execution", "post-execution", "pre-deploy", "post-deploy"]
+          "enum": [
+            "pre-execution",
+            "post-execution",
+            "pre-deploy",
+            "post-deploy"
+          ]
         },
         "satisfiedCapabilities": {
           "type": "array",
@@ -596,14 +601,13 @@
           ]
         },
         "reasoningEffort": {
-          "enum": [
-            "low",
-            "medium",
-            "high",
-            "xhigh",
-            "max",
-            "ultra",
-            null
+          "anyOf": [
+            {
+              "$ref": "https://skill-suite.local/contracts/model-policy.v1.schema.json#/$defs/reasoningEffort"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "policyNotes": {
@@ -702,14 +706,13 @@
             "string",
             "null"
           ],
-          "enum": [
-            "low",
-            "medium",
-            "high",
-            "xhigh",
-            "max",
-            "ultra",
-            null
+          "anyOf": [
+            {
+              "$ref": "https://skill-suite.local/contracts/model-policy.v1.schema.json#/$defs/reasoningEffort"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "observationRequired": {
@@ -759,14 +762,13 @@
                 ]
               },
               "minimumReasoningEffort": {
-                "enum": [
-                  "low",
-                  "medium",
-                  "high",
-                  "xhigh",
-                  "max",
-                  "ultra",
-                  null
+                "anyOf": [
+                  {
+                    "$ref": "https://skill-suite.local/contracts/model-policy.v1.schema.json#/$defs/reasoningEffort"
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
               },
               "observationRequired": {

@@ -8,6 +8,8 @@
 
 ## Comparison vocabulary
 
+요청을 수용하기 전에 root와 proposal 각각 `contract.targetLocations`와 `frame.targetArtifacts[].locator`의 집합이 정확히 같아야 한다. 다른 artifact ID로 같은 target locator를 중복한 경우도 입력 오류다. 배열 순서는 무관하다. locator는 파일 경로·URI를 포함하는 opaque 문자열로 비교하며 대소문자, slash, 공백, Unicode를 임의 정규화하지 않는다. 표현을 바꿀 필요가 있으면 계약과 frame 양쪽에 명시하고 digest를 함께 갱신한다. digest가 내부적으로 맞더라도 대상 집합이 다르면 `InputError`로 거부한다.
+
 - Contract impact
   - `unchanged`: canonical contract가 동일하다.
   - `semantics-changing`: 목표, 범위, 수용 기준, 제약, 권한, workspace 또는 대상 위치 중 하나라도 달라졌다.
