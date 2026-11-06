@@ -24,6 +24,7 @@ import { SessionMessageStore } from "../../mcp-server/src/session-message-store.
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService, type MinimalWorkflowStartV1 } from "../../mcp-server/src/workflow-service.js";
 import { codexCallMeta } from "../helpers/caller.js";
+import { fixtureRootApprovalAccess, storedRootApprovalRefs } from "../helpers/root-approval.js";
 
 // 3.6.0: a root another session left open (its session ended days ago) kept the whole workspace blocked. ROOT_CONFLICT
 // now names the root's times, latest run and owner presence; release_convergence_root lets the owner, or another
@@ -83,7 +84,17 @@ async function harness() {
   const root = (rootId: string): ConvergenceRootV1 => store.getConvergenceSnapshot(rootId)!.root;
   const release = (rootId: string, sessionId: string, extra: Record<string, unknown> = {}) => call<Record<string, unknown>>("release_convergence_root", {
     rootId, expectedRevision: root(rootId).revision, reason: "The work moved elsewhere.", ...extra }, sessionId);
-  return { service, store, continuity, call, start, root, release, born, ended };
+  const approveRelease = (rootId: string, sessionId: string) => {
+    const request = { rootId, expectedRevision: root(rootId).revision, reason: "The work moved elsewhere.", userApprovalRefs: [] };
+    const access = { ...fixtureRootApprovalAccess(hostActorId("codex", sessionId)),
+      ownsRoot: (id: string) => continuity.ownsRoot(sessionId, id),
+      ownedByOtherSession: (id: string) => continuity.rootOwnedElsewhere(sessionId, id) && !continuity.ownsRoot(sessionId, id),
+      ownerPresence: (id: string) => ({ state: presence.presence({ host: "codex", sessionId: OWNER }).state,
+        self: false, ownerBound: continuity.rootBound(id), sessions: [], unavailable: null, observedAt: new Date().toISOString() }),
+    };
+    return { userApprovalRefs: storedRootApprovalRefs(service, "release-root", request, access) };
+  };
+  return { service, store, continuity, call, start, root, release, born, ended, approveRelease };
 }
 
 const releaseAction = (details: Details) => details.nextActions.find(item => item.tool === "release_convergence_root");
@@ -169,7 +180,7 @@ describe("release_convergence_root", () => {
   });
 
   it("lets another session release it only while no owner session is online, read at the call, and only with the user's decision", async () => {
-    const { start, release, root, born, ended } = await harness();
+    const { start, release, root, born, ended, approveRelease } = await harness();
     const first = await start(["alpha"], OWNER);
     const rootId = first.data!.rootId;
     const approval = { userApprovalRefs: ["user-message: release the stale alpha root"] };
@@ -186,23 +197,29 @@ describe("release_convergence_root", () => {
     expect((await release(rootId, OTHER, approval)).error?.details).toMatchObject({ reason: "OWNER_SESSION_ONLINE" });
     ended(OWNER);
 
-    expect((await release(rootId, OTHER)).error).toMatchObject({ code: "INVALID_INPUT", details: { reason: "USER_APPROVAL_REQUIRED" } });
+    expect((await release(rootId, OTHER, approval)).error).toMatchObject({ code: "BINDING_INVALID",
+      details: { reason: "USER_APPROVAL_REFERENCE_UNBOUND" } });
+    expect((await release(rootId, OTHER)).error).toMatchObject({ code: "MCP_UNAVAILABLE",
+      details: { reason: "USER_APPROVAL_PRODUCER_UNSUPPORTED" } });
     expect((await release(rootId, OTHER, { ...approval, expectedRevision: root(rootId).revision + 1 })).error?.code).toBe("STALE_REVISION");
     expect(root(rootId).state).toBe("open");
 
-    const released = await release(rootId, OTHER, approval);
+    const storedApproval = approveRelease(rootId, OTHER);
+    const released = await release(rootId, OTHER, storedApproval);
     expect(released.error).toBeNull();
     expect(root(rootId).release).toMatchObject({ releasedByOwner: false, releasedBy: hostActorId("codex", OTHER), ownerPresence: "ended",
-      ownerActors: [hostActorId("codex", OWNER)], userApprovalRefs: approval.userApprovalRefs, closedRunId: first.data!.runId });
+      ownerActors: [hostActorId("codex", OWNER)], userApprovalRefs: storedApproval.userApprovalRefs, closedRunId: first.data!.runId });
     expect(typeof root(rootId).release!.presenceObservedAt).toBe("string");
     expect((await start(["alpha"], OTHER)).error).toBeNull();
   });
 
   it("releases a root whose owner presence is no longer kept (unknown) only with the user's decision", async () => {
-    const { start, release, root } = await harness();
+    const { start, release, root, approveRelease } = await harness();
     const first = await start(["beta"], OWNER);
-    expect((await release(first.data!.rootId, OTHER)).error?.details).toMatchObject({ reason: "USER_APPROVAL_REQUIRED", ownerPresence: { state: "unknown" } });
-    const released = await release(first.data!.rootId, OTHER, { userApprovalRefs: ["user-decision-1"] });
+    expect((await release(first.data!.rootId, OTHER)).error).toMatchObject({ code: "MCP_UNAVAILABLE",
+      details: { reason: "USER_APPROVAL_PRODUCER_UNSUPPORTED" } });
+    expect(root(first.data!.rootId).state).toBe("open");
+    const released = await release(first.data!.rootId, OTHER, approveRelease(first.data!.rootId, OTHER));
     expect(released.error).toBeNull();
     expect(root(first.data!.rootId).release).toMatchObject({ releasedByOwner: false, ownerPresence: "unknown", ownerActors: [] });
   });

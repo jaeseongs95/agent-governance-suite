@@ -21,6 +21,7 @@ import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { childCaller, rootCaller } from "../helpers/caller.js";
+import { fixtureRootApprovalAccess, storedRootApprovalRefs } from "../helpers/root-approval.js";
 
 // Regression cases for docs/ags30-gates-design.md §6. Each case failed on 4b2dc571.
 const repository = fileURLToPath(new URL("../../", import.meta.url));
@@ -137,8 +138,10 @@ function frame(): ConvergenceFrameV1 {
 }
 
 function openRoot(h: Harness, parentRootId: string | null = null): string {
-  const opened = h.service.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId, taskEnvelope: h.task, frame: frame(),
-    userApprovalRefs: parentRootId ? ["approval:replace-root"] : [] });
+  const request = { schemaVersion: "1.0.0", parentRootId, taskEnvelope: h.task, frame: frame(), userApprovalRefs: [] as string[] };
+  const access = fixtureRootApprovalAccess("fixture:ags30-gates");
+  if (parentRootId) request.userApprovalRefs = storedRootApprovalRefs(h.service, "replace-root", request, access);
+  const opened = h.service.openConvergenceRoot(request, parentRootId ? access : null);
   expect(opened.error).toBeNull();
   return opened.data!.rootId;
 }

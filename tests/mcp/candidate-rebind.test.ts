@@ -21,7 +21,7 @@ import type {
 import { codexMetaIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
-import { HostAttestationProvider } from "../../mcp-server/src/host-attestation.js";
+import { HostAttestationProvider, hostActorId } from "../../mcp-server/src/host-attestation.js";
 import { codexExecutionAdapter } from "../../mcp-server/src/host-execution-adapters.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
@@ -31,6 +31,7 @@ import { createMcpServer } from "../../mcp-server/src/server.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService, type MinimalWorkflowStartV1 } from "../../mcp-server/src/workflow-service.js";
 import { codexCallMeta } from "../helpers/caller.js";
+import { fixtureRootApprovalAccess, storedRootApprovalRefs } from "../helpers/root-approval.js";
 
 // A run's contract never changes. When the final candidate changes, the caller binds the new candidate's
 // artifactContracts by replacing the root (open_convergence_root with parentRootId and the user's approval).
@@ -74,7 +75,11 @@ async function harness() {
     return result.data!;
   };
   const status = (rootId: string) => ok<ConvergenceStatusV1>("get_convergence_status", { rootId, detail: "full" });
-  return { call, ok, status };
+  const approveReplacement = (request: unknown) => storedRootApprovalRefs(service, "replace-root", request,
+    { ...fixtureRootApprovalAccess(hostActorId("codex", SESSION)),
+      ownsRoot: rootId => continuity.ownsRoot(SESSION, rootId),
+      ownedByOtherSession: rootId => continuity.rootOwnedElsewhere(SESSION, rootId) && !continuity.ownsRoot(SESSION, rootId) });
+  return { call, ok, status, approveReplacement };
 }
 
 function contracts(candidate: `sha256:${string}`): NonNullable<TaskEnvelopeV1["artifactContracts"]> {
@@ -176,9 +181,9 @@ async function claimNewCandidate(h: Harness, root: ConvergenceRootV1, taskEnvelo
 /** Replaces the gated root with one bound to the new candidate, runs it and records the new candidate as passed. */
 async function replaceAndPass(h: Harness, parent: ConvergenceRootV1, taskEnvelope: TaskEnvelopeV1, taskFrame: ConvergenceFrameV1,
   plan: WorkflowPlanV1): Promise<void> {
-  const replacement = await h.ok<ConvergenceRootV1>("open_convergence_root", {
-    schemaVersion: "1.0.0", parentRootId: parent.rootId, taskEnvelope, frame: taskFrame, userApprovalRefs: ["user-approval:candidate-b"],
-  });
+  const request = { schemaVersion: "1.0.0", parentRootId: parent.rootId, taskEnvelope, frame: taskFrame, userApprovalRefs: [] as string[] };
+  request.userApprovalRefs = h.approveReplacement(request);
+  const replacement = await h.ok<ConvergenceRootV1>("open_convergence_root", request);
   expect(replacement).toMatchObject({ state: "open", currentEpoch: 1, parentRootId: parent.rootId });
   expect((await h.status(parent.rootId)).root.state).toBe("abandoned");
 

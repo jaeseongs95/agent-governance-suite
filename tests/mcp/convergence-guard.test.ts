@@ -29,6 +29,9 @@ import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 
 import { cleanupIfClaimWorkersFinished, concurrentClaims } from "../helpers/concurrent-claim-process.js";
 import { fixtureLocator } from "../helpers/fixture-locator.js";
+import { fixtureRootApprovalAccess, storedRootApprovalRefs } from "../helpers/root-approval.js";
+
+const approvalAccess = fixtureRootApprovalAccess("fixture:convergence-guard");
 
 const temporaryDirectories: string[] = [];
 const sqliteStores = new Set<SqliteWorkflowStore>();
@@ -1370,16 +1373,18 @@ describe("local MCP convergence guard", () => {
       taskEnvelope: root.taskEnvelope,
       frame: root.frame,
       userApprovalRefs: [],
-    });
-    expect(withoutApproval.error?.code).toBe("INVALID_INPUT");
+    }, approvalAccess);
+    expect(withoutApproval.error).toMatchObject({ code: "BINDING_INVALID", details: { reason: "USER_APPROVAL_REQUIRED" } });
 
-    const approved = service.openConvergenceRoot({
+    const approvedRequest = {
       schemaVersion: "1.0.0",
       parentRootId: root.rootId,
       taskEnvelope: root.taskEnvelope,
       frame: root.frame,
-      userApprovalRefs: [`user-approval:${name}`],
-    });
+      userApprovalRefs: [] as string[],
+    };
+    approvedRequest.userApprovalRefs = storedRootApprovalRefs(service, "replace-root", approvedRequest, approvalAccess);
+    const approved = service.openConvergenceRoot(approvedRequest, approvalAccess);
     expect(approved.error).toBeNull();
     expect(approved.data).toMatchObject({ state: "open", currentEpoch: 1, parentRootId: root.rootId });
     expect(status(service, root.rootId).root.state).toBe("abandoned");
@@ -1418,16 +1423,18 @@ describe("local MCP convergence guard", () => {
       taskEnvelope: task({ taskId: "guarded-task-after-stop" }),
       frame: frame(),
       userApprovalRefs: [],
-    });
-    expect(withoutApproval.error?.code).toBe("INVALID_INPUT");
+    }, approvalAccess);
+    expect(withoutApproval.error).toMatchObject({ code: "BINDING_INVALID", details: { reason: "USER_APPROVAL_REQUIRED" } });
 
-    const approved = service.openConvergenceRoot({
+    const approvedRequest = {
       schemaVersion: "1.0.0",
       parentRootId: root.rootId,
       taskEnvelope: task({ taskId: "guarded-task-after-stop" }),
       frame: frame(),
-      userApprovalRefs: ["user-approval:recontract-after-stop"],
-    });
+      userApprovalRefs: [] as string[],
+    };
+    approvedRequest.userApprovalRefs = storedRootApprovalRefs(service, "replace-root", approvedRequest, approvalAccess);
+    const approved = service.openConvergenceRoot(approvedRequest, approvalAccess);
     expect(approved.error).toBeNull();
     expect(approved.data).toMatchObject({ state: "open", currentEpoch: 1, parentRootId: root.rootId });
     expect(status(service, approved.data!.rootId).attemptsUsedInEpoch).toBe(0);
@@ -1525,13 +1532,15 @@ function tryOpen(
   convergenceFrame: ConvergenceFrameV1,
   parentRootId: string | null = null,
 ): ReturnType<WorkflowService["openConvergenceRoot"]> {
-  return service.openConvergenceRoot({
+  const request = {
     schemaVersion: "1.0.0",
     parentRootId,
     taskEnvelope: envelope,
     frame: convergenceFrame,
-    userApprovalRefs: parentRootId ? ["user-approval:replacement"] : [],
-  });
+    userApprovalRefs: [] as string[],
+  };
+  if (parentRootId) request.userApprovalRefs = storedRootApprovalRefs(service, "replace-root", request, approvalAccess);
+  return service.openConvergenceRoot(request, parentRootId ? approvalAccess : null);
 }
 
 function gateRoot(service: WorkflowService, root: ConvergenceRootV1): void {
