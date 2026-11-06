@@ -17,7 +17,6 @@
 - MCP 서버는 schema profile과 관계없이 세션 `instructions`로 `skills/orchestrator/references/intake.md`의 공통 접수 기준(`skill-intake` marker 사이 원문)을 내보낸다. orchestrator `SKILL.md`는 그 파일을 가리키는 한 줄만 두어, 스킬을 호출할 때 같은 기준이 두 번 실리지 않는다(3.8.0). 환경 변수가 없는 Codex 서버도 같은 `instructions`를 내보낸다. Claude의 SessionStart 훅은 이 정책을 다시 주입하지 않고 호스트 호출 형식만 덧붙인다. 서버는 이 원문을 소스에 복사하지 않고 시작할 때 읽으며, 읽지 못하면 시작하지 않는다. 접수 기준의 내용은 이 문서에 옮겨 적지 않고 원문을 따른다.
 - `adaptations/orchestrator.json`은 생성된 orchestrator `SKILL.md`에서 공통 접수 안내 줄 뒤, navigation 앞에 "Claude Code에서의 호출과 관측" 절을 넣는다. 이 절은 Skill 도구와 `/agent-governance-suite:<skill-name>` 호출 방식, 독립 감사 서브에이전트 유형, SessionStart 훅의 역할과 실행 관측만 정하며 공통 선택 기준은 바꾸지 않는다.
 - workflow·continuity SQLite 상태는 `${CLAUDE_PLUGIN_DATA}`에 저장한다. 모든 호스트가 함께 쓰는 세션 현황판과 TLS 세션 메시지 broker만 사용자 상태 디렉터리에 둔다.
-- `codex-token-usage-analyzer`는 Codex 세션 로그 전용이라 포함하지 않는다.
 
 ## 공개 도구 스키마
 

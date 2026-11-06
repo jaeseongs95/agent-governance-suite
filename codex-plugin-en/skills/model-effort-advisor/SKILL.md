@@ -1,28 +1,28 @@
 ---
 name: model-effort-advisor
-description: 관측 가능한 현재 모델과 추론 수준이 받은 요청의 난도·위험·비용 요구에 비해 과한지, 적절한지, 부족한지 평가하고 유의미한 불일치만 안내한다. 실제 설정을 관측할 수 없는 일반 작업, 하위 에이전트 라우팅이나 모델 자동 변경에는 사용하지 않는다.
+description: 승인된 서브에이전트 작업을 호출하기 전에 역할·난도·위험·품질과 비용 선호·검증 가능성을 판단하고, 호스트가 제공한 가용 조합에서 모델과 추론 수준을 선택한다. 현재 메인 모델 관측을 전제로 하지 않는다. 위임 여부·에이전트 수·권한·감사 결정이나 현재 메인 UI 설정 상담에는 사용하지 않는다.
 license: MIT
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Model Effort Advisor
 
 이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
 
-요청을 시작할 때 현재 모델·추론 수준과 필요한 작업 강도를 비교한다. 평가는 작업을 막는 gate가 아니라 사용자가 호스트에서 관측한 현재 모델·추론 선택을 조정할지 판단하게 돕는 짧은 안내다.
+이미 위임하기로 한 작업의 모델·추론 선택 기준을 호출 전에 정리하라. 작업의 역할·난도·실패 영향과 검증 가능성을 판단하고, 사용자 선호와 현재 호스트의 지원 근거를 기존 라우터에 전달하라. 현재 메인 모델을 볼 수 있는지와 관계없이 적용한다.
 
-## 적용 조건
+## 적용 조건과 경계
 
-- 사용자가 현재 모델이나 추론 수준이 요청에 적절한지 묻는다.
-- 호스트가 현재 task의 모델과 추론 수준을 신뢰할 수 있는 runtime metadata로 제공한다.
-- 사용자가 현재 선택을 텍스트나 이번 요청의 화면 캡처로 명시했고, 품질·대기 시간·비용에 유의미한 차이가 예상된다.
-
-현재 선택을 관측할 수 없는 일반 작업에서는 이 스킬 때문에 사용자에게 설정을 묻거나 작업을 중단하지 않는다. 하위 에이전트의 모델 라우팅은 `coordinate-subagents`가 맡고, API 모델 마이그레이션이나 프롬프트 튜닝은 이 스킬의 범위가 아니다.
+- 승인된 서브에이전트 assignment의 모델·추론 조합을 선택하거나 실제 제약 변경으로 재선택할 때 사용하라.
+- 위임 여부·에이전트 수·배치·문맥·권한·독립 감사는 `coordinate-subagents`와 기존 담당에 맡겨라. 이 스킬의 조언은 위임을 시작하거나 승인하지 않는다.
+- 현재 메인 모델 적정성 상담, 현재 메인 설정 변경, 모델 마이그레이션이나 프롬프트 개선을 이 스킬의 새 기능으로 처리하지 마라. 현재 메인 선택을 사용자에게 묻지 마라.
 
 <!-- optimization-navigation:start condition="the skill is activated for the request" reference="references/entry-details.md" do-not-load-otherwise="true" -->
 - If the skill is activated for the request, read [entry details](references/entry-details.md) before producing any result or taking any action; otherwise do not read it.
 <!-- optimization-navigation:end -->
 ## 출력
 
-구조화 결과는 [ModelEffortAdvice.v1](contracts/model-effort-advice.v1.schema.json)을 따른다. 근거에는 요청에서 실제로 확인한 신호만 넣고, `userNotice`는 위 안내 조건을 만족할 때만 작성한다.
+호출 전 입력은 [SubagentModelRequest.v1](contracts/subagent-model-request.v1.schema.json), 조언은 [SubagentModelAdvice.v1](contracts/subagent-model-advice.v1.schema.json)을 사용하라. [advisor 실행기](scripts/advise.mjs)는 기존 라우터를 그대로 호출하며 모델 목록·등급·선택 엔진을 별도로 만들지 않는다. 직접 호출에서 정식 workflow를 새로 요구하지 않는다.
+
+`READY`는 제공된 지원 근거로 조합이 선택됐다는 뜻이고, `INHERIT_UNVERIFIED`는 저위험 상속의 유효 설정이 미관측이라는 뜻이다. `BLOCKED`면 해당 호출을 보류하고 정확한 지원·하한 제약을 기존 담당에게 넘겨라. 세 상태 모두 `authorityEffect: none`이며 실행 승인·실제 적용·독립 감사 완료를 뜻하지 않는다.

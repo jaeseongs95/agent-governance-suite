@@ -8,6 +8,8 @@ Explicit user choices, higher-priority instructions, repository rules, current h
 
 ## Keep presets separate from delegation
 
+The shared `model-effort-advisor` skill applies pre-dispatch task criteria to an already approved assignment and passes them to this resolver. It does not observe or change the main agent's UI selection. This document, its adapter data, and the shared model policy remain the only routing engine/catalog/floor sources; delegation, allocation, permissions, context, and required audits remain with `coordinate-subagents`.
+
 <!-- policy-contract: routing.preset-does-not-delegate -->
 <!-- policy-contract: routing.user-override-precedence -->
 

@@ -1186,45 +1186,36 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "model-effort-advisor",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "./model-effort-advisor",
       "enabled": true,
       "priority": 50,
       "providers": [
         {
           "capabilities": [
-            "model-effort-fit-assessment"
+            "subagent-model-selection"
           ],
           "executionClass": "bootstrap",
-          "phase": "model-effort-assessment",
+          "phase": "subagent-model-selection",
           "phaseOrder": 25,
           "requiredInputArtifacts": [
-            "task-request"
+            "subagent-assignment",
+            "host-model-capabilities"
           ],
           "inputBindings": [
             {
-              "targetArtifact": "task-request",
+              "targetArtifact": "subagent-assignment",
               "sources": [
-                "task:request"
+                "task:subagent-assignment"
               ],
               "operation": "require-external"
-            },
-            {
-              "targetArtifact": "current-model-selection",
-              "sources": [
-                "host:current-model-selection",
-                "task:user-evidence"
-              ],
-              "operation": "collect",
-              "optional": true
             },
             {
               "targetArtifact": "host-model-capabilities",
               "sources": [
                 "host:supported-models-reasoning"
               ],
-              "operation": "collect",
-              "optional": true
+              "operation": "require-external"
             },
             {
               "targetArtifact": "model-effort-preference",
@@ -1236,26 +1227,22 @@
             }
           ],
           "producedArtifacts": [
-            "model-effort-advice"
+            "subagent-model-advice"
           ],
-          "outputSchema": "skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json",
+          "outputSchema": "skills/model-effort-advisor/contracts/subagent-model-advice.v1.schema.json",
           "resultSchema": "contracts/provider-result.v1.schema.json",
           "stateMapping": {
-            "selector": "/output/verdict",
+            "selector": "/output/status",
             "values": {
-              "OVER_PROVISIONED": {
+              "READY": {
                 "state": "passed",
                 "errorRequired": false
               },
-              "ADEQUATE": {
+              "INHERIT_UNVERIFIED": {
                 "state": "passed",
                 "errorRequired": false
               },
-              "UNDER_PROVISIONED": {
-                "state": "passed",
-                "errorRequired": false
-              },
-              "UNOBSERVABLE": {
+              "BLOCKED": {
                 "state": "passed",
                 "errorRequired": false
               }
@@ -1267,15 +1254,14 @@
             ]
           },
           "selectionCriteria": [
-            "explicit-model-or-reasoning-fit-request",
-            "current-task-model-and-reasoning-observed",
-            "material-quality-latency-or-cost-mismatch"
+            "approved-subagent-assignment-before-dispatch",
+            "model-and-reasoning-selection-for-the-assignment"
           ],
           "preconditions": [
-            "The original user request is available.",
-            "A mismatch verdict requires an observed current model and reasoning effort from the host, user, or current screenshot."
+            "An approved subagent assignment and its task requirements are available.",
+            "Current host capability evidence is supplied; effective main-session settings are not required."
           ],
-          "failureHandling": "Return UNOBSERVABLE without interrupting the task when the current selection is unavailable; never invent or change the setting.",
+          "failureHandling": "Preserve unsupported or unknown combinations as dispatch limits. Advice completion does not authorize delegation or prove applied settings; keep unrelated work moving.",
           "gate": {
             "kind": "none",
             "policy": "none",

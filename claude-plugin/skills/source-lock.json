@@ -7,7 +7,7 @@
       "version": "1.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:1d66a6e4123e21fb228023b9764888f77a6f505d19d11bf08abff21cafe29e3f",
+      "integratedChecksum": "sha256:4b6f54d4173ed9d13ffee059486a4f5b0e403679badacd37259380b1b285601b",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {
@@ -94,10 +94,10 @@
     {
       "skillId": "model-effort-advisor",
       "path": "skills/model-effort-advisor",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:68114065b904b763e61cd6557b4a7bd123795c47f5736d9b0cb7034ed378c7aa",
+      "integratedChecksum": "sha256:910027532c4fd25ad8b99f928c4145350793133897985847b70361142698b348",
       "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor"
     },
     {

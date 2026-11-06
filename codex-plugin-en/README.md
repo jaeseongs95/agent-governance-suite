@@ -10,7 +10,7 @@ Agent Governance Suite (AGS) is a local plugin for Claude Code, Codex, and Antig
 
 | Component | What it does |
 | --- | --- |
-| 24 specialist skills | Each owns one kind of judgment: task contracts, risk preflight, acceptance evidence, independent audit, failure diagnosis, code review, security audit, and more. |
+| 23 specialist skills | Each owns one kind of judgment: task contracts, risk preflight, acceptance evidence, independent audit, failure diagnosis, code review, security audit, and more. |
 | `orchestrator` | Picks the specialist skills a task needs and connects their order, inputs, and outputs. |
 | Local MCP server | Checks workflow plans, stage results, and completion conditions, and provides the work-record, board, and messaging tools. The host starts it on demand; no port or always-on daemon is needed. |
 | Host hooks | Add guidance, record observations, and deliver messages at session start, on each user message, around tool calls, and at turn end. |
@@ -135,14 +135,14 @@ If a message does not arrive, check `get_session_message_status` with the same `
 
 ## Skills
 
-Versions and provenance of the 24 specialist skills follow the [registry](skills/registry.json) and the [source lock](skills/source-lock.json). Two more skills ship with them: [`orchestrator`](skills/orchestrator/), which connects the flow, and [`session-board`](skills/session-board/), which explains how to use the board. Work records are handled by MCP tools (`checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`) and hooks, not by a skill.
+Versions and provenance of the 23 specialist skills follow the [registry](skills/registry.json) and the [source lock](skills/source-lock.json). Two more skills ship with them: [`orchestrator`](skills/orchestrator/), which connects the flow, and [`session-board`](skills/session-board/), which explains how to use the board. Work records are handled by MCP tools (`checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`) and hooks, not by a skill.
 
 | Skill | Source | Version | What it does |
 | --- | --- | --- | --- |
 | [`instruction-scope-resolver`](skills/instruction-scope-resolver/) | AGS | 1.0.0 | Finds the instruction files that apply to a path and their precedence. |
 | [`workspace-convention-profiler`](skills/workspace-convention-profiler/) | AGS | 1.0.0 | Surveys repository structure, conventions, and verification commands. |
 | [`task-contract`](skills/task-contract/) | AGS | 1.1.0 | Turns goal, scope, acceptance criteria, risk, and authority into a task contract. |
-| [`model-effort-advisor`](skills/model-effort-advisor/) | AGS | 0.1.0 | Checks whether the observed model and reasoning effort fit the task's difficulty and risk. |
+| [`model-effort-advisor`](skills/model-effort-advisor/) | AGS | 0.2.0 | Selects a model and reasoning effort before subagent dispatch from task requirements and host-supported combinations. |
 | [`coordinate-subagents`](skills/coordinate-subagents/) | AGS | 1.1.0 | Decides whether to delegate and sets ownership, handoff context, and verification duties. |
 | [`ponytail`](skills/ponytail/) | Based on [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail/tree/83b2cbc3bc50df3030c49d1dfe598ccefe850a85), modified by AGS | 4.10.0 | Chooses the smallest complete implementation that meets the requirements. |
 | [`change-scope-guardian`](skills/change-scope-guardian/) | AGS | 1.0.0 | Compares the baseline with current changes to find out-of-scope files. |
@@ -162,7 +162,6 @@ Versions and provenance of the 24 specialist skills follow the [registry](skills
 | [`software-security-auditor`](skills/software-security-auditor/) | AGS | 0.1.0 | Audits attack paths, controls, and coverage gaps in web/API and CLI/MCP code. |
 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | AGS | 1.0.0 | Audits whether an evaluation's inputs, judging, and aggregation are fair and reproducible. |
 | [`korean-prose-editor`](skills/korean-prose-editor/) | AGS | 0.1.0 | Edits and verifies Korean prose while preserving facts, numbers, links, and code. |
-| [`codex-token-usage-analyzer`](skills/codex-token-usage-analyzer/) | AGS | 0.1.0 | Totals token usage per task and project from local Codex logs; not included in the Claude Code package. |
 
 The engineering modules shared by `test-engineering` and `code-review` are described in [engineering-practices integration](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/engineering-practices.ko.md).
 

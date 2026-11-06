@@ -12,6 +12,8 @@ metadata:
 
 Coordinate work across subagents without expanding the user's scope, permissions, or requested side effects.
 
+Keep delegation, agent count, batching, context, permissions, and independent-audit decisions here. For an approved assignment, `model-effort-advisor` supplies the pre-dispatch role/difficulty/risk/preference/verification judgment and reuses this skill's resolver; its advice never authorizes dispatch or attests effective settings.
+
 ## Apply instruction priority
 
 <!-- policy-contract: authority.inherit-mode -->

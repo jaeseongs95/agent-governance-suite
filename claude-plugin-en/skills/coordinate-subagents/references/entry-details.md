@@ -99,4 +99,6 @@ Resolve each audit finding by fixing it, disproving it with evidence, or recordi
 
 ## Select models only when useful
 
+For an approved assignment, use `model-effort-advisor` for pre-dispatch selection criteria when available. Supply the actual role, difficulty, risk, verification limits, preference, and current host capabilities; parent-model observation is not a prerequisite. Keep the delegation decision, worker count, context, permission, and audit ownership here. Reuse the same resolver and application recorder rather than maintaining a second selection engine. Advice status, including `READY`, never proves dispatch permission or effective application.
+
 Read [the provider-neutral model-routing presets and host adapters](model-routing.md) before choosing an explicit model or reasoning override. Use its [packaged resolver](../scripts/model-routing.mjs) before dispatch and its application record after dispatch; record requested settings, actual arguments, caller-visible observation, and fallback separately. First inspect the current host's supported combinations. User or host settings override the bundled profile; unsupported profile entries never block delegation when an inherited supported configuration can do the work.
