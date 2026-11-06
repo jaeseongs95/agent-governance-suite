@@ -71,17 +71,25 @@ describe("agy turn cue (behavior 6)", () => {
 
   it("the built continuity hook gives the AGS turn check naming checkpoint_context and skill re-selection, not the context-continuity skill", async () => {
     const built = fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
+    // The built intake hook too: no stand-in, so the context start below is what agy really gets.
+    const builtOptions = options(built);
+    delete builtOptions.intakeHook;
     const out = await executeAntigravityHookEvent({ conversationId: SESSION, invocationNum: 0, workspacePaths: [tmpDir] },
-      "PreInvocation", "", { ...options(built), continuityHookPath: built });
+      "PreInvocation", "", { ...builtOptions, continuityHookPath: built });
     expect(out.injectSteps).toHaveLength(2);
-    expect(out.injectSteps[0]).toEqual({ ephemeralMessage: INTAKE });
+    expect(Object.keys(out.injectSteps[0])).toEqual(["ephemeralMessage"]);
+    const start = out.injectSteps[0].ephemeralMessage;
     const cue = out.injectSteps[1].ephemeralMessage;
     expect(Object.keys(out.injectSteps[1])).toEqual(["ephemeralMessage"]);
     expect(cue).toContain("[AGS 턴 확인]");
     expect(cue).toContain("checkpoint_context");
     expect(cue).toContain("스킬 선택을 다시 판단");
     expect(cue).not.toContain("context-continuity");
-    // The built hook finds the installed skills next to mcp-server/dist and lists their purposes.
-    expect(cue).toContain("- cs-engineering: concurrency, database, messaging, algorithms, resource-lifetime, performance");
+    // AGS3-D-0032 candidate: the built intake hook finds the installed skills next to mcp-server/dist and lists their
+    // purposes at the context start (for agy, each turn's first model call); the turn cue points at that list.
+    expect(start).toMatch(/references[\\/]intake\.md/u);
+    expect(start).toContain("- cs-engineering: concurrency, database, messaging, algorithms, resource-lifetime, performance");
+    expect(cue).toContain("맥락 시작에 받은 AGS 스킬별 대상 목록과 대조하고");
+    expect(cue).not.toContain("- cs-engineering:");
   });
 });
