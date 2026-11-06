@@ -171,7 +171,8 @@ describe("D0008 workflow database persistence and competing connections", () => 
     const f = fixture();
     const producer = { getClientCapabilities: () => ({ elicitation: { form: {} } }), elicitInput: async () => {
       const before = f.current();
-      expect(f.store.updateConvergenceRoot({ ...before, revision: before.revision + 1 }, before.revision)).toBe(true);
+      const independent = f.open();
+      expect(independent.store.updateConvergenceRoot({ ...before, revision: before.revision + 1 }, before.revision)).toBe(true);
       return { action: "accept", content: { confirm: true, rootId: "forged-root", actorId: "forged-actor", action: "replace-root" } };
     } } as unknown as Pick<Server, "getClientCapabilities" | "elicitInput">;
     const operation = createRootApprovalHandler(producer, f.service);
