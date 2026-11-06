@@ -48,3 +48,17 @@ DiagnosisReport.v1 의미 판정: NEXT_TEST. 세 과거 episode의 환경 digest
 확인한 경계: `continuity-hook.ts`의 main은 `readFileSync(0)` → `runContinuityHook` → 동기 두 SQLite store 초기화·handle·close다. `profile-workspace.mjs`의 gitInfo는 timeout 없는 `spawnSync` 네 번을 사용한다. MCP `index.ts`는 store·validator·classification 초기화 뒤 `StdioServerTransport`에 연결한다. 이 사실만으로 과거 timeout 원인으로 판정하지 않는다.
 
 저장소 `docs/ci-and-test-servers.md`는 Windows CI의 runtime smoke가 10.3s/14.6s/30.8s 이상으로 변동했고 프로세스 시험을 TEST 서버로 옮겼음을 기록한다. 이 과거 문서의 환경 설명도 세 원실패의 인과 증명이 아니며 현재 허용된 TEST에서 실측한다.
+
+## Windows TEST 첫 판별 결과와 HR16 범위 회귀 계획
+
+원자료 직접 조회: operation `1fac0eca5588c4a15248c70c4c7fd28991442c2ee303baa3`, output cursor 0/16384/32768, eof 35971 bytes, page SHA256 `2d3e142dbf32d99e24cd8cb92044bb68fda18f78e1beeb14c883427b77a7a79c`. remote `C:/ags-330-test/v380-host-01a14016/probe.log`, 소스 `34a778f7f936dfe808d7f2bf308eb9b21332eacf`, Node `24.22.2`.
+
+- 실제 제품시험은 `PROBE_EXIT=1`: Node 집계 tests5/pass3/fail2(상위 집계 포함). 원자료를 읽은 wrapper exit0는 제품시험 통과가 아니다.
+- HR14: 466ms, exit0, fd0 읽기61→62ms, SQLite 처리·close 후 beforeExit/exit297ms. D0014 원실패 미재현이며 원인 UNKNOWN 유지.
+- HR16 source ASCII 첫 자식: 10023ms SIGTERM, stdout0. stdin enter264/first-consumed272/eof274ms. Git 호출339→492,492→643,643→783ms, 네 번째783ms enter 뒤 완료 없이 종료. 소스의 네 번째 명령은 `git -C <workspaceRoot> status --porcelain=v1 --untracked-files=all`이며 workspaceRoot는 저장소 하위 python fixture다. 요청 workspace 밖 전체 checkout 조사를 하는 경계에서 정체가 직접 관측됐다. stdin EOF 대기 가설은 이 실행에서 반박됐다.
+- HR16 Claude ASCII 후속 자식: 5368ms, 네 번째 Git719→5198ms. 그 다음 split UTF8:1096ms, 네 번째 Git689→925ms. 실행 순서에 따른 차이는 실측이며 OS cache/백신 등 내부 원인은 확정하지 않는다. 후속 성공으로 첫 실패를 덮지 않는다.
+- HR27:1457ms exit0 및 initialize/tools-list 정상, copy2655ms, cleanup153ms. D0027 원실패 미재현이며 원인 UNKNOWN 유지.
+
+HR16-SCOPE 사전 사례: 격리 Git 저장소 안 nested workspace를 프로파일한다. 외부 tracked 파일 수정 및 외부 untracked 파일 추가 후 nested dirtyState와 fingerprint는 clean 기준과 같아야 한다. 같은 repository root를 요청하면 dirty여야 한다. nested 내부 tracked 파일 수정 후에는 dirty 및 fingerprint 변경을 감지해야 한다. 전후 Git status는 같아야 한다(읽기 전용). 입력·절차는 새 `tests/tooling/ags38-host-runtime-git-scope.node-test.mjs`, 실행은 TEST의 `node --test tests/tooling/ags38-host-runtime-git-scope.node-test.mjs`. 수정 전 RED와 수정 후 GREEN은 원래 파일을 되돌리지 않고 별도 핀으로 실행한다. 현재 NOT_RUN.
+
+수리 불변조건: gitInfo의 소비자는 workspace의 vcsType/currentRef/dirtyState와 profileFingerprint의 currentRef/currentRevision/status뿐이다. branch·revision 조회는 유지하고 status만 요청 workspace의 `-- .` pathspec으로 제한한다. 요청 내부 변경 감지와 저장소 root 요청의 전체 상태 감지는 유지해야 한다. 원래10s 자식 제한은 유지한다.
