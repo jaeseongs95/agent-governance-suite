@@ -25,7 +25,7 @@ node skills/test-engineering/scripts/run.mjs check-proof --root /absolute/artifa
 
 | 사례·요구 | 공개 경계·입력·전제 | 절차 | 기대 결과·판정 | 실제 |
 | --- | --- | --- | --- | --- |
-| D36-B01 의미 보존 | 현재 SKILL 원문과 선택B 후보 | CLI fence 밖 원문과 기존 명령 두 개를 기준 commit과 비교 | 규범·2항·경고·CLI 인자 동일, 예시 주석 네 줄만 추가 | NOT_RUN |
+| D36-B01 의미 보존 | 현재 SKILL 원문과 선택B 후보 | CLI fence 밖 원문과 기존 명령 두 개를 기준 commit과 비교 | 규범·2항·경고·CLI 인자 동일, 예시 주석 네 줄만 추가 | 정적 대조 PASS; 행동 효과 NOT_RUN |
 | D36-B02 평가 입력 보존 | 원 NP05 spec SHA256 `c69c10a9c12b594953c9abf32e40a90e2e2adbcc05bedca730c3d5654d47edc8` | 새 spec의 단일 turn과 원 첫 turn을 깊은 비교, files 전체를 비교 | T2 id/prompt/compactAfter와 12개 파일 경로·내용 동일, 새 절차·스킬명·정답 힌트 0, T4 turn 없음 | 정적 대조 PASS; 모델 NOT_RUN |
 | D36-B03 환경 사전 차단 | root의 공식 후속 bundle exact SHA, 새 runDir, Node 절대경로, CLI2.1.316 | 모델 child 생성 전 source HEAD/spec hash·fresh RUN·Node 절대 실행파일/정확 버전·PATH 선택·CLI 버전을 확인 | 실패 시 모델 시작 0. launcher/runner Node 확인과 실제 시험/MCP child Node 관측을 별도 기록 | NOT_RUN |
 | D36-B04 실제 선작성 | 새 Claude 세션에서 원 T2 prompt 한 번, opus/high | 실제 skill 제공→최초 plan 저장 성공→그 plan의 check-plan 성공→첫 시험 Write/Edit를 native 순번·tool ID로 결속 | plan/check-plan이 첫 시험 구현보다 앞섬. mtime·최종 파일 존재·사후 보완은 대체 근거가 아님 | NOT_RUN |
@@ -67,3 +67,7 @@ Node 경로는 root의 깨끗한 기존 `codex-native-a254-run.sh`에 있는 abs
 원 실패 근거는 기존 `v380-native-procedure-boundaries-cases.md`의 NP05 실제 회수와 조회 `44085953b24048e87e0416a6f940c1e9a5bcc43f0dd5f6ca`·`2459e2381d4d1767928309917deaed59419ac34c970c4fb3`·`b9bc2e03096fdd0183370e4a139b3c5188352a0a1405d30a`에 그대로 결속한다. 이번에는 원 stream을 다시 열거나 모델을 호출하지 않는다.
 
 준비 단계 정적 대조: 원 NP05 spec의 실제 bytes SHA256을 먼저 확인하고, 새 단일 turn 전체와 원 첫 turn을 `deepEqual`, 12개 `files` 경로·내용 전체를 `deepEqual`로 대조했다. 새 spec SHA256은 `fe78f061c9197606472232522a6880b3d247cf31f2f744716e701f3da22d8987`이다. timeout·peer 비활성·후속 bundle 환경 pin 방식도 확인했고 `git diff --check`는 exit0이었다. 이 단계까지 제품 문구·fixture source 실행·모델 실행은 모두 없었다.
+
+준비 사례/spec은 `37ae84da`로 먼저 커밋·즉시 push한 다음 ponytail 구현으로 위 CLI 주석 네 줄만 적용했다. 네 줄이 각각 정확히 한 번 추가됐는지 확인하고 제거한 결과를 기준 commit의 원문 Buffer와 비교해 완전히 일치함을 확인했다. 후보 코드 블록도 이 문서의 사전 후보와 일치한다. 따라서 규범·2항·경고 목록·기존 명령 두 개 및 인자는 그대로다. 단일 turn·fixture 동일성도 다시 확인했으며 `git diff --check`는 exit0이었다. 새 validator/wrapper/권한 계층·제품 로컬시험·원격 제품시험·모델 실행은 추가하지 않았다.
+
+source SKILL의 이전 SHA256은 `5dd09730e500965b8f64ef3cfde867b2231934dddbe0a454aa11c431a1723bd6`, 후보는 `2541f44e4683adec7ca7037e088943bc01da17e6f6cca844be22a992d64a076b`다. source-lock·현재 source-binding의 전체 source hash·Claude/en 생성본 등 이 변경을 소비하는 결속 갱신은 root에게 전달했다. 이 작업에서 pin이나 생성본을 직접 수정하지 않았으므로 공식 refresh/build와 후속 exact bundle 소비·Node24/CLI 환경 확인은 아직 남는다. 정적 준비 통과를 실제 이행 PASS로 바꾸지 않는다.
