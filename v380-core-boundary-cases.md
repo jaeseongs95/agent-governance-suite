@@ -25,3 +25,16 @@ RED는 이 사례 그대로 test-only SHA를 TEST에서 실행해 회수한다. 
 - acceptance core/schema는 별도 작성자의 수정 SHA를 기다린다. provider의 acceptance script import와 다른 core-skill imports는 root 통합의 잔존 범위다.
 - 이 작업 사본의 `node --check runtime/provider-security-semantics.mjs`, `node --check skills/software-security-auditor/scripts/core.mjs`, `git diff --check`: exit 0. 제품 시험·tsc·bundle/clean-room·실호스트: NOT_RUN. branch Actions 조회: 0개(`gh run list --branch codex/ags38-core-boundary --limit 4`).
 - 최종 test file SHA256: `d97974835b00c359df4b3a795c12d88e782b024a65a9eb7e228c9dcaeccfce28`. RED 후보는 baseline + `d42ae935` + test mock 정정 `cef5e9c9`, GREEN 후보는 `cef5e9c9`다.
+
+## D0007 후속 공유 구현 사례
+
+후속 기준은 root 통합 `c4121acb`를 포함한 `aee5a669`다. 기존 acceptance 내용 ID·권한 digest 수정과 최신 카탈로그 정책을 보존한다. 구현은 runtime 한 곳, 기존 skill 실행파일은 재수출 facade다. 기존 JSON schema·카탈로그는 공개 선언 계약 데이터로 유지하며 runtime adapter만 그 경로를 해석한다. JSON·구현 복사본이나 registry를 추가하지 않는다.
+
+| 사례 | 요구·공개 진입점 | 입력·전제 | 절차 | 기대·통과 기준 | 실제 결과 |
+|---|---|---|---|---|---|
+| CB-07 | D0007 provider·host execution·trust·inactive stores·board hook의 모듈 공개경계 | 모든 skill scripts import가 실패하는 배포 환경; JSON metadata는 존재 | esbuild의 module resolution에서 skill 실행파일만 거부하고 각 core 공개 진입점을 번들 | 모든 core bundle 성공; runtime이 skill 구현을 재수출해 숨기면 이 검사도 실패 | NOT_RUN |
+| CB-08 | 기존 catalog skill export | 선언 exact ID/alias·미등록 ID·profile 전용키 | 기존 `resolveCatalogModel` 호출 | exact/alias만 승인, 이름 추측 거부, profile 전용키 기본 거부 | NOT_RUN |
+| CB-09 | 기존 collaboration skill export | 1.2 결정·사용자 금지·독립감사 필요 | 기존 structural diagnostic 호출 | 사용자 금지와 독립감사 의무 유지, 잘못된 route 거부 | NOT_RUN |
+| CB-10 | 기존 board skill export | 메모리 SQLite; 현재입력·summary·role | 기존 공개 함수로 기록 후 summary만 갱신·재조회 | role 보존, summary 최신값, 별도 db handle 종료 | NOT_RUN |
+
+실행은 TEST/CI에서 `pnpm exec vitest run tests/mcp/ags38-core-boundary-shared.test.ts`. 기존 acceptance 내용ID/authority, 협업결정, 모델정책, board, unified-state 회귀도 TEST에서 실행한다. root 소유 index.ts/server.ts의 board import 2개는 정확 diff를 전달해 통합한다.
