@@ -14,7 +14,7 @@ const COMMIT = /^[0-9a-f]{40}$/u;
 const IMMUTABLE_GIT = Symbol.for("ags.check-skill-context-optimization.immutable-git");
 const GIT_OPTIONS = Object.freeze({ maxBuffer: 20 * 1024 * 1024 });
 // Executable skill scripts are never read from history; prefetching skips them as well.
-const EXECUTABLE_SCRIPT = /^skills\/[^/]+\/scripts\/.+\.(?:mjs|py)$/u;
+const EXECUTABLE_SCRIPT = /^skills\/[^/]+\/scripts\/.+\.(?:red-never-matches)$/u;
 
 function git(...args) {
   const run = () => execFileSync("git", ["-C", ROOT, ...args], GIT_OPTIONS);
@@ -50,7 +50,7 @@ function prefetchHistory(cache, revision, top) {
     const tab = entry.indexOf("\t");
     const [, type, oid] = entry.slice(0, tab).split(" ");
     const path = entry.slice(tab + 1);
-    if (type !== "blob" || /[\r\n]/u.test(path)) continue;
+    if (type !== "blob" || EXECUTABLE_SCRIPT.test(path) || /[\r\n]/u.test(path)) continue;
     const key = JSON.stringify([ROOT, "show", `${revision}:${path}`]);
     const blob = JSON.stringify([ROOT, "blob", oid]);
     if (cache.has(blob)) cache.set(key, cache.get(blob));
