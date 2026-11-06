@@ -5,6 +5,9 @@ import path from "node:path";
 import {pathToFileURL, fileURLToPath} from "node:url";
 import type {ClassificationObservation} from "../evaluation.js";
 import type {ProviderConfiguration, ProviderEvaluationConfigurationV1, SkillClassificationRequestV1} from "../../../mcp-server/src/skill-classification/types.js";
+import {bindProviderRetentionSources, PROVIDER_RETENTION_PURPOSE} from "./provider-retention-sources.mjs";
+
+export type PreparationPurpose = typeof PROVIDER_RETENTION_PURPOSE;
 
 type Reference = {path: string; digest: string};
 interface LegacyBootstrapConfig {
@@ -146,6 +149,7 @@ function assertCurrentAuthority(config: PreparedBootstrapConfig, canonicalRoot?:
 }
 
 type RepoPrepareCacheEntry = {
+  sourcePurpose: PreparationPurpose | undefined;
   api: Awaited<ReturnType<typeof loadModules>>;
   corpus: any;
   cases: {caseId: string; originalPrompt: string; oracle: unknown}[];
@@ -163,7 +167,7 @@ type RepoPrepareCacheEntry = {
 };
 const repoPrepareCache = new Map<string, RepoPrepareCacheEntry>();
 const fileDigestOrNull = async (file: string): Promise<string | null> => {
-  try { return hash(await readFile(file)); } catch { return null; }
+  try { return hash(await readFile(file)); } catch (error) {if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error;}
 };
 const listSkillDirsKey = async (repoRoot: string): Promise<string> => {
   try {
@@ -176,7 +180,7 @@ const listSkillDirsKey = async (repoRoot: string): Promise<string> => {
 };
 const fastDigestRequest = (repoRoot: string, prepared: Awaited<ReturnType<typeof prepare>>, value: unknown): string => {
   const cached = repoPrepareCache.get(path.resolve(repoRoot));
-  if (cached && value && typeof value === "object" && "skills" in (value as Record<string, unknown>)) {
+  if (cached && cached.sourcePurpose === prepared.sourcePurpose && value && typeof value === "object" && "skills" in (value as Record<string, unknown>)) {
     return hash(canonicalizeValue(value, cached.skillsRef, cached.skillsJson, cached.skillsCanonical));
   }
   return prepared.api.request.digestClassificationValue(value);
@@ -185,6 +189,7 @@ const encodeWireFast = (repoRoot: string, prepared: Awaited<ReturnType<typeof pr
   const cached = repoPrepareCache.get(path.resolve(repoRoot));
   const {requestDigest: currentRequestDigest, ...requestBody} = request;
   const canReuse = cached
+    && cached.sourcePurpose === prepared.sourcePurpose
     && prepared.api.providers.jevNoulWireAdapter.encode === cached.api.defaultEncode
     && request.schemaVersion === "1.0.0"
     && typeof profile.modelId === "string"
@@ -224,12 +229,13 @@ const encodeWireFast = (repoRoot: string, prepared: Awaited<ReturnType<typeof pr
   return {wireJson, wireDigest: hash(wireJson), utf8Bytes: Buffer.byteLength(wireJson)};
 };
 
-export async function prepare(config: BootstrapConfig) {
+export async function prepare(config: BootstrapConfig, sourcePurpose?: PreparationPurpose) {
+  requireCondition(sourcePurpose === undefined || sourcePurpose === PROVIDER_RETENTION_PURPOSE, "INVALID_PREPARATION_PURPOSE");
   requireCondition(["1.0.0", "2.0.0", "3.0.0"].includes(config.schemaVersion) && /^[a-z0-9][a-z0-9-]{0,63}$/.test(config.runId), "INVALID_RUN_ID");
   requireCondition(validConfigKeys(config) && sameKeys(config.evidence, [...references]), "UNKNOWN_CONFIG_FIELD");
   const resolvedRepo = path.resolve(config.repo);
   const existing = repoPrepareCache.get(resolvedRepo);
-  if (existing) {
+  if (existing && existing.sourcePurpose === sourcePurpose) {
     const watchedEntries = [...existing.watchedFiles.entries()];
     const [currentDirsKey, ...currentDigests] = await Promise.all([
       listSkillDirsKey(resolvedRepo),
@@ -255,18 +261,22 @@ export async function prepare(config: BootstrapConfig) {
         return {caseId, request: {...body, requestDigest}};
       });
       const sourceBindings = config.schemaVersion === "3.0.0" ? existing.sourceBindings30.map(ref => ({...ref})) : [];
-      return {api: existing.api, corpus: existing.corpus, cases: existing.cases, inventory: existing.inventory, requests, fixtureFileDigest: existing.fixtureFileDigest, sourceBindings};
+      return {api: existing.api, corpus: existing.corpus, cases: existing.cases, inventory: existing.inventory, requests, fixtureFileDigest: existing.fixtureFileDigest, sourceBindings, sourcePurpose};
     }
   }
   const api = await modules(resolvedRepo);
   const fixtureBytes = await readFile(path.join(config.repo, "tests/skill-classification/fixtures.json"));
   const corpus = JSON.parse(fixtureBytes.toString("utf8"));
   requireCondition(api.evaluation.oracleDigest(corpus) === corpus.oracleDigest, "FROZEN_ORACLE_DIGEST_MISMATCH");
-  const currentSourceBinding = api.evaluation.loadCurrentSourceBindings(resolvedRepo);
+  const legacySourceBinding = api.evaluation.loadCurrentSourceBindings(resolvedRepo);
+  const currentSourceBinding = sourcePurpose === PROVIDER_RETENTION_PURPOSE
+    ? bindProviderRetentionSources(legacySourceBinding, corpus.sourceSkills) : legacySourceBinding;
   // A retired source binds to null: it must be absent, and its absence reads as a null digest.
   for (const source of corpus.sourceSkills) requireCondition(await fileDigestOrNull(path.join(config.repo, source.path)) === currentSourceBinding.resolveDigest(source.path, source.digest), "ORACLE_SOURCE_MISMATCH");
   for (const source of currentSourceBinding.manifest.bindings) requireCondition(await fileDigestOrNull(path.join(config.repo, source.path)) === source.digest, "ORACLE_SOURCE_MISMATCH");
-  const cases = corpus.cases.filter((row: {publicSynthetic: boolean; originalPrompt: unknown}) => row.publicSynthetic === true && typeof row.originalPrompt === "string" && row.originalPrompt.length > 0);
+  const publicCases = corpus.cases.filter((row: {publicSynthetic: boolean; originalPrompt: unknown}) => row.publicSynthetic === true && typeof row.originalPrompt === "string" && row.originalPrompt.length > 0);
+  // Keep the frozen corpus intact. Current-purpose transport fixtures do not score its old skill-selection gold.
+  const cases = sourcePurpose === PROVIDER_RETENTION_PURPOSE ? publicCases.map((row: object) => ({...row, oracle: null})) : publicCases;
   requireCondition(cases.length === 21 && new Set(cases.map((row: {caseId: string}) => row.caseId)).size === 21, "PUBLIC_FIXTURE_SET_MISMATCH");
   const inventory = await api.inventory.loadSkillInventory({root: resolvedRepo});
   requireCondition(inventory.issues.length === 0, "INVENTORY_INCOMPLETE");
@@ -327,11 +337,11 @@ export async function prepare(config: BootstrapConfig) {
   const skillsCanonical = firstSkillsCanonical || canonicalizeValue(skillsRef);
   for (const item of requests) item.request.skills = skillsRef;
   repoPrepareCache.set(resolvedRepo, {
-    api, corpus, cases, inventory, fixtureFileDigest: hash(fixtureBytes), sourceBindings30, watchedFiles, skillDirsKey,
+    api, corpus, cases, inventory, fixtureFileDigest: hash(fixtureBytes), sourceBindings30, watchedFiles, skillDirsKey, sourcePurpose,
     templateRequests: requests.map(({caseId, request}: {caseId: string; request: SkillClassificationRequestV1}) => ({caseId, request: {...request}})),
     skillsRef, skillsJson, skillsCanonical, wireCache: new Map(),
   });
-  return {api, corpus, cases, inventory, requests, fixtureFileDigest: hash(fixtureBytes), sourceBindings};
+  return {api, corpus, cases, inventory, requests, fixtureFileDigest: hash(fixtureBytes), sourceBindings, sourcePurpose};
 }
 
 /** No endpoint/credential environment lookup and no transport call in this function. */
@@ -546,7 +556,8 @@ function providerObservation(bytes: Uint8Array, partial: boolean, credential: st
 }
 
 /** Qualification experiment only. Production profile validation/service are never changed. */
-export async function run(config: BootstrapConfig, options: {fetcher?: typeof fetch; env?: NodeJS.ProcessEnv; executionKind?: "offline-mock" | "provider-live"; now?: () => number} = {}) {
+export async function run(config: BootstrapConfig, options: {fetcher?: typeof fetch; env?: NodeJS.ProcessEnv; executionKind?: "offline-mock" | "provider-live"; now?: () => number; sourcePurpose?: PreparationPurpose} = {}) {
+  requireCondition(options.sourcePurpose === undefined || (options.executionKind === "offline-mock" && typeof options.fetcher === "function"), "RETENTION_PURPOSE_REQUIRES_OFFLINE_MOCK");
   const sourceConfig = config, configDigest = hash(JSON.stringify(config));
   config = structuredClone(config);
   // Clock injection is a test-only function argument; the CLI always uses Date.now.
@@ -559,7 +570,7 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
     return observedTime; // A backward wallclock sample cannot revive an expiry already observed in this run.
   };
   const fetcher = options.fetcher ?? fetch;
-  const prepared = await prepare(config);
+  const prepared = await prepare(config, options.sourcePurpose);
   const requestBindings = new Map<SkillClassificationRequestV1, string>(prepared.requests.map(({request}: {request: SkillClassificationRequestV1}) =>
     [request, fastDigestRequest(config.repo, prepared, request)]));
   const checked = await preflight(config, prepared, now());
@@ -846,6 +857,7 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
     }
     const raw = prepared.api.evaluation.aggregate(prepared.cases.filter((row: {oracle: unknown}) => row.oracle !== null), observations.filter((row: any) => prepared.cases.find((item: any) => item.caseId === row.caseId)?.oracle !== null), "jevRaw", prepared.inventory.skills.map((skill: {skillId: string}) => skill.skillId));
     const report = {...checked, status: "RAW_EVALUATION_RECORDED" as const, executionKind: options.executionKind ?? "provider-live", raw,
+      ...(prepared.sourcePurpose === PROVIDER_RETENTION_PURPOSE ? {evaluationPurpose: prepared.sourcePurpose, modelQualityStatus: "NOT_RUN" as const} : {}),
       observationRevision: prepared.api.evaluation.OBSERVATION_REVISION, scorerRevision: prepared.api.evaluation.OBSERVATION_REVISION, observations,
       transportAttempts: transportInvocations, requestsReserved: ledger.entries.length, ledger, fixtureFileDigest: prepared.fixtureFileDigest,
       stopReason,

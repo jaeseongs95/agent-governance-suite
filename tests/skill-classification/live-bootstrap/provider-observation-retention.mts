@@ -3,6 +3,7 @@ import {readFile, writeFile} from "node:fs/promises";
 import path from "node:path";
 import {setImmediate as nextTurn} from "node:timers/promises";
 import {bindMockAuthorityAndEvidence, mockEnv, mockResponse, readyMock, readyMockFromBinding, type FixtureBinding} from "./prepared-fixture.mjs";
+import {PROVIDER_RETENTION_PURPOSE} from "./provider-retention-sources.mjs";
 
 type Api = typeof import("./bootstrap.mts");
 type Body = {model: string; answers: Record<string, {type: string; noul: unknown}>; usage: {input_tokens: number; output_tokens: number}};
@@ -39,7 +40,7 @@ export async function checkProviderObservationRetention(api: Api, repo: string, 
   for (const spec of cases) {
     observe(spec.id, "fixture", "begin");
     const output = path.join(root, "retention-" + spec.id);
-    const options = {requests: 1, ...(spec.id === "timeout-safe-chunk" ? {timeoutMs: 30000} : {})};
+    const options = {requests: 1, sourcePurpose: PROVIDER_RETENTION_PURPOSE, ...(spec.id === "timeout-safe-chunk" ? {timeoutMs: 30000} : {})};
     let config: Awaited<ReturnType<typeof readyMockFromBinding>>;
     if (fixtureBinding === null) {
       const first = await readyMock(api, repo, output, "retention-" + spec.id, options);
@@ -141,7 +142,7 @@ export async function checkProviderObservationRetention(api: Api, repo: string, 
     };
     observe(spec.id, "run", "begin");
     const result = await (async () => {
-      try {return await api.run(config, {env: {...mockEnv}, fetcher, executionKind: "offline-mock"});}
+      try {return await api.run(config, {env: {...mockEnv}, fetcher, executionKind: "offline-mock", sourcePurpose: PROVIDER_RETENTION_PURPOSE});}
       finally {
         if (spec.id === "timeout-safe-chunk") {
           globalThis.setTimeout = nativeSetTimeout;
@@ -149,7 +150,8 @@ export async function checkProviderObservationRetention(api: Api, repo: string, 
         }
       }
     })() as unknown as {
-      status: string; transportAttempts: number; stopReason: string | null; qualificationStatus: string; productionProfileWritten: boolean};
+      status: string; transportAttempts: number; stopReason: string | null; qualificationStatus: string; productionProfileWritten: boolean;
+      evaluationPurpose: string; modelQualityStatus: string; raw: {denominator: number}};
     observe(spec.id, "run", "complete");
     observe(spec.id, "verify", "begin");
     assert.equal(result.status, "RAW_EVALUATION_RECORDED", spec.id);
@@ -158,6 +160,9 @@ export async function checkProviderObservationRetention(api: Api, repo: string, 
     assert.equal(result.transportAttempts, 1, spec.id);
     assert.equal(result.qualificationStatus, "NOT_RUN", spec.id);
     assert.equal(result.productionProfileWritten, false, spec.id);
+    assert.equal(result.evaluationPurpose, PROVIDER_RETENTION_PURPOSE, spec.id);
+    assert.equal(result.modelQualityStatus, "NOT_RUN", spec.id);
+    assert.equal(result.raw.denominator, 0, spec.id);
     const stored = await readFile(path.join(output, firstCaseId! + ".raw.json"), "utf8");
     const raw = JSON.parse(stored) as Raw;
     if (spec.error !== undefined) assert.equal(raw.errorCode, spec.error, spec.id);

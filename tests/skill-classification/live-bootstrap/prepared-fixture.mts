@@ -4,7 +4,7 @@ import {mkdir, readFile, writeFile} from "node:fs/promises";
 import {realpathSync} from "node:fs";
 import path from "node:path";
 import {pathToFileURL} from "node:url";
-import type {PreparedBootstrapConfig} from "./bootstrap.mts";
+import type {PreparationPurpose, PreparedBootstrapConfig} from "./bootstrap.mts";
 import type {SkillClassificationRequestV1} from "../../../mcp-server/src/skill-classification/types.js";
 
 type Api = typeof import("./bootstrap.mts");
@@ -43,7 +43,7 @@ export async function bindMockAuthorityAndEvidence(api: Api, config: PreparedBoo
   await writeFile(path.join(config.outputDirectory, "authority.json"), authority);
   config.currentAuthority.reference = {path: "authority.json", digest: hash(authority)};
 }
-type FixtureOptions = {requests?: number; timeoutMs?: number; preparedAt?: string; issuerExpiry?: IssuerExpiry};
+type FixtureOptions = {requests?: number; timeoutMs?: number; preparedAt?: string; issuerExpiry?: IssuerExpiry; sourcePurpose?: PreparationPurpose};
 export type FixtureBinding = Readonly<Pick<SkillClassificationRequestV1, "inventoryDigest" | "taxonomyRevision">>;
 type CreateProfile = Awaited<ReturnType<Api["prepare"]>>["api"]["evaluationConfig"]["createProviderEvaluationConfiguration"];
 
@@ -76,7 +76,7 @@ function mockProfile(config: PreparedBootstrapConfig, binding: FixtureBinding, p
 export async function readyMock(api: Api, repo: string, outputDirectory: string, runId: string, options: FixtureOptions = {}) {
   await mkdir(outputDirectory, {recursive: true});
   const {config, preparedAt} = mockConfig(repo, outputDirectory, runId, options);
-  const prepared = await api.prepare(config);
+  const prepared = await api.prepare(config, options.sourcePurpose);
   config.profile = mockProfile(config, prepared.inventory, preparedAt, prepared.api.evaluationConfig.createProviderEvaluationConfiguration);
   await bindMockAuthorityAndEvidence(api, config, options.issuerExpiry);
   return {config, prepared};
