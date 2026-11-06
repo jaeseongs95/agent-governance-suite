@@ -71,7 +71,7 @@ it("D32 IL02-04 appends exact r34 bindings after frozen r33 and reselects only t
     ["applicability[8]", "조언은 AGENT가 원문과 스킬 적용·제외 조건에 대조해 채택·교정·기각하고 최종 선택한다."],
     ["exclusions[2]", "키워드·파일 종류·`complex`만으로 고르지 않는다."], ["exclusions[3]", "승인·검증·독립성 gate 생략 권한으로 보지 않는다."],
     ["exclusions[4]", "읽기 전용 요청에는 실제 변경을 하지 않는다."], ["exclusions[5]", "선택·이름 언급·호출 시작 응답·문서 읽기는 실행이 아니다."],
-    ["exclusions[6]", "실패 영향 분류나 생략 이유를 출력하지 않는다."], ["exclusions[7]", "미가용·미검증을 성공으로 보지 않는다."],
+    ["exclusions[6]", "실패 영향 분류·생략 이유를 출력하지 않는다."], ["exclusions[7]", "미가용·미검증을 성공으로 보지 않는다."],
   ]);
   const inventory = await loadSkillInventory({root}); expect(inventory.issues).toEqual([]);
   const skill = inventory.skills.find(row => row.skillId === "orchestrator")!;
