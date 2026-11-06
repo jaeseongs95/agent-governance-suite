@@ -15,3 +15,13 @@
 | CB-06 | 같은 진입점, freshness | 같은 관측 내용으로 연속 조회·실제 enablement 변경 | inventory 재조회 | 동일 의미의 revision 안정, 활성 변경은 inventory digest 변경 | NOT_RUN |
 
 RED는 이 사례 그대로 test-only SHA를 TEST에서 실행해 회수한다. import 오류 자체가 원결함인 CB-01 외에는 runner/import 부재를 유효 RED로 세지 않는다. GREEN은 같은 테스트 파일 digest·명령으로 fix SHA를 실행한다. fixture가 대체한 host CLI 실행은 실호스트 통과 근거가 아니다.
+
+## 현재 구현·관측 한계
+
+- security 검증 공용 정본은 `runtime/provider-security-semantics.mjs`이며 기존 skill core는 이를 재수출한다. 원 구현 byte를 옮겼고 별도 정책 복사본은 만들지 않았다.
+- Claude 기본 observer는 실제 `claude plugin list --json` 결과의 설치·활성 상태와 현재 실행 설치 root의 realpath·manifest version을 대조한다. `sourceRef`는 해당 설치 scope만 가리키며 전체 호스트의 외부 스킬 발견을 주장하지 않는다.
+- CLI JSON 형식 근거: [Claude 공식 CLI 문서](https://code.claude.com/docs/en/plugins/cli-reference). 제품 버전별 실제 CLI 동작은 TEST 실관측이 남아 있다.
+- [Codex 공식 CLI 소스](https://github.com/openai/codex/blob/main/codex-rs/cli/src/plugin_cmd.rs)의 설치목록에는 현재 설치 경로 결속 필드가 없다. Codex·agy는 실제 설치 경로/지원 상태의 신뢰 관측이 확보될 때까지 기본 observer가 UNAVAILABLE를 유지한다. D0013 전체 수용 완료가 아니다.
+- acceptance core/schema는 별도 작성자의 수정 SHA를 기다린다. provider의 acceptance script import와 다른 core-skill imports는 root 통합의 잔존 범위다.
+- 이 작업 사본의 `node --check runtime/provider-security-semantics.mjs`, `node --check skills/software-security-auditor/scripts/core.mjs`, `git diff --check`: exit 0. 제품 시험·tsc·bundle/clean-room·실호스트: NOT_RUN. branch Actions 조회: 0개(`gh run list --branch codex/ags38-core-boundary --limit 4`).
+- 최종 test file SHA256: `d97974835b00c359df4b3a795c12d88e782b024a65a9eb7e228c9dcaeccfce28`. RED 후보는 baseline + `d42ae935` + test mock 정정 `cef5e9c9`, GREEN 후보는 `cef5e9c9`다.
