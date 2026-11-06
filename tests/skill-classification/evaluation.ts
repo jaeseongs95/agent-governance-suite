@@ -351,17 +351,24 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, blocked.frozenPredecessor.path) !== movePath || moveBytes.length !== blocked.frozenPredecessor.bytes || hashBytes(moveBytes) !== blocked.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings];
+  const neutralPath = resolve(repo, "tests/skill-classification/fixtures.field-neutral-wording-source-successor.json");
+  const neutralBytes = readFileSync(neutralPath);
+  if (hashBytes(neutralBytes) !== "sha256:73c25ae3bb66f423f3da6b64c4432aa83f4da1f41e155e2fb9bb37a3cc7713f6") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const neutral = JSON.parse(neutralBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, neutral.frozenPredecessor.path) !== blockedPath || blockedBytes.length !== neutral.frozenPredecessor.bytes || hashBytes(blockedBytes) !== neutral.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...neutral.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: blocked.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath);
+  const currentManifest = {...manifest, revision: neutral.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, neutralPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(blockedBytes),
+    manifest: currentManifest, files, digest: hashBytes(neutralBytes),
     /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
     resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);

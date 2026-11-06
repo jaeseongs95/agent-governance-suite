@@ -20,7 +20,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
+      "digest": "sha256:65647ea80f4d7546f76f8691def730b240ca2e8a892aeb69cfd10d855ff1f557",
       "startByte": 0,
       "endByte": 266
     },
@@ -28,7 +28,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
+      "digest": "sha256:65647ea80f4d7546f76f8691def730b240ca2e8a892aeb69cfd10d855ff1f557",
       "startByte": 0,
       "endByte": 152
     },
@@ -36,9 +36,9 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 22,
       "endLine": 31,
-      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
+      "digest": "sha256:65647ea80f4d7546f76f8691def730b240ca2e8a892aeb69cfd10d855ff1f557",
       "startByte": 0,
-      "endByte": 577
+      "endByte": 604
     }
   ],
   "exclusions": [
@@ -46,7 +46,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
+      "digest": "sha256:65647ea80f4d7546f76f8691def730b240ca2e8a892aeb69cfd10d855ff1f557",
       "startByte": 267,
       "endByte": 430
     },
@@ -54,7 +54,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
+      "digest": "sha256:65647ea80f4d7546f76f8691def730b240ca2e8a892aeb69cfd10d855ff1f557",
       "startByte": 153,
       "endByte": 265
     },
@@ -62,7 +62,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 33,
       "endLine": 33,
-      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
+      "digest": "sha256:65647ea80f4d7546f76f8691def730b240ca2e8a892aeb69cfd10d855ff1f557",
       "startByte": 0,
       "endByte": 392
     }

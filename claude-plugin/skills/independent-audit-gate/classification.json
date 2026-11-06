@@ -16,17 +16,17 @@
       "path": "skills/independent-audit-gate/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:601e00c54a44ec31f472c4cc447441c9a8167769f8721d349591b47feeb92aab",
+      "digest": "sha256:8ce58c59628bb7cff11f508e5bfebf7e2d2bf37b7fadea1890f41d7ed370c669",
       "startByte": 0,
-      "endByte": 327
+      "endByte": 344
     },
     {
       "path": "skills/independent-audit-gate/SKILL.md",
       "startLine": 13,
       "endLine": 27,
-      "digest": "sha256:601e00c54a44ec31f472c4cc447441c9a8167769f8721d349591b47feeb92aab",
+      "digest": "sha256:8ce58c59628bb7cff11f508e5bfebf7e2d2bf37b7fadea1890f41d7ed370c669",
       "startByte": 0,
-      "endByte": 1462
+      "endByte": 1461
     },
     {
       "path": "skills/independent-audit-gate/references/entry-details.md",
@@ -58,23 +58,23 @@
       "path": "skills/independent-audit-gate/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:601e00c54a44ec31f472c4cc447441c9a8167769f8721d349591b47feeb92aab",
-      "startByte": 328,
-      "endByte": 440
+      "digest": "sha256:8ce58c59628bb7cff11f508e5bfebf7e2d2bf37b7fadea1890f41d7ed370c669",
+      "startByte": 345,
+      "endByte": 457
     },
     {
       "path": "skills/independent-audit-gate/SKILL.md",
       "startLine": 29,
       "endLine": 29,
-      "digest": "sha256:601e00c54a44ec31f472c4cc447441c9a8167769f8721d349591b47feeb92aab",
+      "digest": "sha256:8ce58c59628bb7cff11f508e5bfebf7e2d2bf37b7fadea1890f41d7ed370c669",
       "startByte": 0,
-      "endByte": 478
+      "endByte": 588
     },
     {
       "path": "skills/independent-audit-gate/SKILL.md",
       "startLine": 31,
       "endLine": 31,
-      "digest": "sha256:601e00c54a44ec31f472c4cc447441c9a8167769f8721d349591b47feeb92aab",
+      "digest": "sha256:8ce58c59628bb7cff11f508e5bfebf7e2d2bf37b7fadea1890f41d7ed370c669",
       "startByte": 0,
       "endByte": 489
     },

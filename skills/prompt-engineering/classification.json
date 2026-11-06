@@ -20,9 +20,9 @@
       "path": "skills/prompt-engineering/SKILL.md",
       "startLine": 4,
       "endLine": 5,
-      "digest": "sha256:9acdb598fcb0e559bf66ebb41e5c132d9f11bd9eb4af0b21085be98ff553a06b",
+      "digest": "sha256:f6f48836e02c7940798a39f458a92d54836d6ce270e6f41db1d509a17970e46e",
       "startByte": 0,
-      "endByte": 369
+      "endByte": 362
     }
   ],
   "exclusions": [
@@ -30,7 +30,7 @@
       "path": "skills/prompt-engineering/SKILL.md",
       "startLine": 6,
       "endLine": 6,
-      "digest": "sha256:9acdb598fcb0e559bf66ebb41e5c132d9f11bd9eb4af0b21085be98ff553a06b",
+      "digest": "sha256:f6f48836e02c7940798a39f458a92d54836d6ce270e6f41db1d509a17970e46e",
       "startByte": 0,
       "endByte": 215
     }

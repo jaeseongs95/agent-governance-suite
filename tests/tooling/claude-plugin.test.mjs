@@ -649,7 +649,7 @@ syncBuiltinESMExports();
       expect(description).not.toContain(phrase);
     }
     // The body limits the skill to per-requirement judgments and multi-criteria contract or high-risk work.
-    expect(description).toContain("요구사항별 구현·테스트 근거 판정");
+    expect(description).toContain("요구사항별 결과물·검증 근거 판정");
     expect(description).toContain("수용 기준이 여럿인 계약 작업이나 고위험 작업");
     expect(description).toContain("작은 단일 작업의 완료 보고");
     expect(shared).toContain("작은 단일 작업은 이 스킬 없이");

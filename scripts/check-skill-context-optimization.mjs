@@ -97,6 +97,8 @@ function changedBetween(from, to, path) {
 //   the line that checks whether a target's purpose was already met before closing, deleting, reverting or replacing it.
 // - 3.8.0 intake move (AGS3-D-0032): the intake block moves unchanged from SKILL.md to references/intake.md (a reviewed
 //   addition below), SKILL.md keeps a one-line pointer, and entry-details.md links the moved section.
+// - 3.8.0 field-neutral wording (AGS3-D-0038): nine general skills drop words that tied them to code work (구현,
+//   테스트, diff, CI, 브랜치, 저장소 ...) or show them as one example; no line moves, spans keep their text bounds.
 // - 3.8.0 intake blocked step (AGS3-D-0031, formerly D-0034): one rule holds only a blocked step and the steps that depend on it, says
 //   what is blocked and who is waited on, and keeps the rest of the work going; the three narrower sentences merge into it.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
@@ -180,6 +182,29 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
     hashes: Object.freeze({
       "skills/orchestrator/classification.json": ["8af0e814b6cdc128de65a392274d718ba14ce3e34061d8c0492164e8d883109e", "478364b9bbd1cfd3b0c9102e4949d302abcca1b061a998321a40d37908be0c4d"],
       "skills/orchestrator/references/intake.md": ["77b5496ce490207317d016d2ca9f6a467dbd85bcfc39df86c561dec8d5a685b1", "0f9be58edcaa80ad7bd6a51ff7f49b39026bfa88e8955abf5d400ef11b4c6d80"],
+    }),
+  }),
+  Object.freeze({
+    revision: "6ce31f6773d9617c321ba28972532578d1329ede",
+    hashes: Object.freeze({
+      "skills/acceptance-evidence-validator/SKILL.md": ["24cee8ff520bcd394af0b3d3aa9d28d8147838191660373b3ce9f3fbd8e8d02f", "a67f069130fa3e03b93287088b035f4c2e7c663083d60e2bc5ec865e3032acb2"],
+      "skills/acceptance-evidence-validator/classification.json": ["99894b6b18ab993c8a9b375961e1f303b77337548358bec3a15058ea79529949", "0f014b4abc19bfb98a78e9b736afd0785b59d97a6f24b8f5b3febced73880a8c"],
+      "skills/blocker-diagnostician/SKILL.md": ["45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f", "16ff661fbbbc380a3fdb711ebef884b44d5d06a891e7066c2e1e290c949d6862"],
+      "skills/blocker-diagnostician/classification.json": ["7cc63979194e79cd4a7889b5e25203cd03144f2290510b866ec38c1eb0efa0fb", "84fefbfb294d72598f48b1c63832f7e3594bcec7caef899b1b0c595ddadabbce"],
+      "skills/coordinate-subagents/SKILL.md": ["2083c3a6ac114a34fea4014d6dda913e78670347cae9685e894fd7a0473aea8f", "9dfea8d94be467700ea4e8dac86a21040b57c1161ff46ddc0cf63cef97e305e7"],
+      "skills/coordinate-subagents/classification.json": ["c474abe1127e6206ed72c94902c24691c0d106ae4395ea7bbcbc92006a84de8a", "bd2fd05d3e93cd4f4b08af021a0fa77ef3787b57550e17f75fbbe3ecdd629957"],
+      "skills/independent-audit-gate/SKILL.md": ["601e00c54a44ec31f472c4cc447441c9a8167769f8721d349591b47feeb92aab", "8ce58c59628bb7cff11f508e5bfebf7e2d2bf37b7fadea1890f41d7ed370c669"],
+      "skills/independent-audit-gate/classification.json": ["2d6752feb9ec2751e166e33b7e3f1b2c6b3c977a4e7332362c60a4306d17bda9", "9e5773f0b7eec9d9d8b4cf3ef5cc3d7eea00a737832c5a82a9d9394f130faeb3"],
+      "skills/iteration-frame-auditor/SKILL.md": ["b7ac836ba1d362d85450a62ffd3470fc21652389caa600b1bafdd52245ce4162", "5557007286bec1081302f175b0047a4a2a8ce1aa2b66779ee93b43c698143f0c"],
+      "skills/iteration-frame-auditor/classification.json": ["253a1f8029ef051f0f3812b416705c26575562a991dae5f07350fbe0dc2f31f1", "2b418a3da47aa4b07170cfb4b357a54a98a4b7747b3c9385b4158bddf948730f"],
+      "skills/mutation-risk-preflight/SKILL.md": ["03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15", "65647ea80f4d7546f76f8691def730b240ca2e8a892aeb69cfd10d855ff1f557"],
+      "skills/mutation-risk-preflight/classification.json": ["984e917b95b59a090bb68e441fc9455b7a432c081997e90598f4d191fab43725", "d4ec110556065740a3469c894f48781ac673a13c46cd46bf8e75fe953f92fdff"],
+      "skills/prompt-engineering/SKILL.md": ["9acdb598fcb0e559bf66ebb41e5c132d9f11bd9eb4af0b21085be98ff553a06b", "f6f48836e02c7940798a39f458a92d54836d6ce270e6f41db1d509a17970e46e"],
+      "skills/prompt-engineering/classification.json": ["5b24ea34f89e9548362f42def75e286048c8b1d90920cafbebf439b76ffc087d", "df16346b0c5ad95902636b88287e8f67d80bdff8da40aeb9ed3a422ac079a589"],
+      "skills/session-board/SKILL.md": ["f244a6238e7d5e65bcf2418e1f70b61a82372f9b045d3f53947181b1d614efb7", "b1c3965810498674df78fe6f7c60290bd83aef03d7f07cc9e4313920524005a4"],
+      "skills/session-board/classification.json": ["3dfe3113ab8908d6b10a67f9e33e1805b7d06a91e58267311371d70509e575f5", "7df8a0d55377d9315899955ccae63d9623113517fdd49e91adb6201d2c25442e"],
+      "skills/task-contract/SKILL.md": ["3978551c31daa62bc88893621ad05fd8f86a5e3e06df2b2b6a4d6d72721bfef2", "92b529e3423386cce32d3b2eb6302c42b6aba344624604d413fc0e90f86ef61b"],
+      "skills/task-contract/classification.json": ["3a707ca184ba512bd016f5e5fcc10f033e28e51dec122889b98e9ccadaba1dda", "cabfe58da82a63612b826fd9637ca20418b0d061b8c978218309733baeaa1aac"],
     }),
   }),
 ]);

@@ -15,7 +15,7 @@
       "path": "skills/blocker-diagnostician/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f",
+      "digest": "sha256:16ff661fbbbc380a3fdb711ebef884b44d5d06a891e7066c2e1e290c949d6862",
       "startByte": 0,
       "endByte": 151
     },
@@ -23,9 +23,9 @@
       "path": "skills/blocker-diagnostician/SKILL.md",
       "startLine": 21,
       "endLine": 24,
-      "digest": "sha256:45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f",
+      "digest": "sha256:16ff661fbbbc380a3fdb711ebef884b44d5d06a891e7066c2e1e290c949d6862",
       "startByte": 0,
-      "endByte": 579
+      "endByte": 576
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
@@ -41,7 +41,7 @@
       "path": "skills/blocker-diagnostician/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f",
+      "digest": "sha256:16ff661fbbbc380a3fdb711ebef884b44d5d06a891e7066c2e1e290c949d6862",
       "startByte": 152,
       "endByte": 276
     },
@@ -49,7 +49,7 @@
       "path": "skills/blocker-diagnostician/SKILL.md",
       "startLine": 25,
       "endLine": 25,
-      "digest": "sha256:45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f",
+      "digest": "sha256:16ff661fbbbc380a3fdb711ebef884b44d5d06a891e7066c2e1e290c949d6862",
       "startByte": 0,
       "endByte": 120
     },
@@ -57,7 +57,7 @@
       "path": "skills/blocker-diagnostician/SKILL.md",
       "startLine": 26,
       "endLine": 26,
-      "digest": "sha256:45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f",
+      "digest": "sha256:16ff661fbbbc380a3fdb711ebef884b44d5d06a891e7066c2e1e290c949d6862",
       "startByte": 0,
       "endByte": 121
     },

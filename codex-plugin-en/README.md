@@ -150,7 +150,7 @@ Versions and provenance of the 24 specialist skills follow the [registry](skills
 | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | AGS | 1.0.0 | Reviews contested decisions through independent viewpoints and rebuttals. |
 | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | AGS | 1.0.0 | Audits whether repeated attempts have drifted from the original contract and premises. |
 | [`acceptance-evidence-validator`](skills/acceptance-evidence-validator/) | AGS | 1.0.0 | Checks acceptance criteria against evidence from the actual result. |
-| [`independent-audit-gate`](skills/independent-audit-gate/) | AGS | 1.0.0 | Has an auditor separate from the implementer check high-risk changes and their evidence. |
+| [`independent-audit-gate`](skills/independent-audit-gate/) | AGS | 1.0.0 | Has an auditor separate from whoever made the change check high-risk changes and their evidence. |
 | [`blocker-diagnostician`](skills/blocker-diagnostician/) | AGS | 1.1.0 | Separates observations from hypotheses in repeated failures and picks the next discriminating check. |
 | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | AGS | 0.2.0 | Compares recovery strategies for a diagnosed failure and prepares the handoff. |
 | [`cs-engineering`](skills/cs-engineering/) | AGS | 0.2.0 | Applies CS principles to concurrency, database, messaging, algorithm, and performance problems as invariants and verification duties. |
