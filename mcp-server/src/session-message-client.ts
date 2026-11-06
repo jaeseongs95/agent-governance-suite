@@ -115,7 +115,8 @@ export function closeSessionMessaging(stateDirectory = resolveSessionMessageStat
 
 /**
  * Promise form of runSessionMessageOperation for existing call sites. deadlineMonotonicMs is a same-process
- * performance.now() deadline: an expired deadline runs nothing, and the remaining time bounds the lock wait.
+ * performance.now() deadline: an expired deadline runs nothing. The lock wait is capped by the remaining time
+ * and an optional caller limit; SQLite's synchronous busy wait is not a hard realtime deadline.
  */
 export async function sessionMessageRequest<T>(
   operation: string,
@@ -125,6 +126,8 @@ export async function sessionMessageRequest<T>(
     totalTimeoutMs?: number;
     prepareStateDirectory?: (directory: string) => Promise<void>;
     deadlineMonotonicMs?: number;
+    /** Optional synchronous writer-lock wait cap; zero lets a hook leave queued work for its next boundary. */
+    busyTimeoutMs?: number;
     /** Kept for call sites; there is no transport and therefore no replay. */
     noOperationReplay?: boolean;
     onOperationWrite?: () => void;
@@ -140,7 +143,7 @@ export async function sessionMessageRequest<T>(
   const remaining = deadline - performance.now();
   if (!(remaining >= 1)) throw expired();
   try { options.onOperationWrite?.(); } catch { /* Observation cannot prevent or replay the operation. */ }
-  return runSessionMessageOperation<T>(operation, payload, stateDirectory, { busyTimeoutMs: remaining });
+  return runSessionMessageOperation<T>(operation, payload, stateDirectory, { busyTimeoutMs: Math.min(remaining, options.busyTimeoutMs ?? Infinity) });
 }
 
 export function wakeMessage(nonce: string): string {

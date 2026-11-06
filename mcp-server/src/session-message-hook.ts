@@ -474,6 +474,9 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     const result = await sessionMessageRequest<T>(operation, payload, undefined, budget ? {
       totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS,
       deadlineMonotonicMs: budget.deadlineMonotonicMs - (claim ? budget.postClaimReserveMs : 0),
+      // A synchronous SQLite busy wait cannot be interrupted at the deadline. Leave queued work for the next
+      // activity boundary instead; BEGIN IMMEDIATE failure writes nothing and does not spend the receipt reserve.
+      busyTimeoutMs: 0,
       ...(claim || operation === "ensure-relay" ? {noOperationReplay:true}:{}),
       ...(claim ? { onOperationWrite: () => {
         if (attempted) return;
