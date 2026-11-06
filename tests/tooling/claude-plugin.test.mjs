@@ -224,22 +224,34 @@ describe("generated Claude plugin", () => {
       await mkdir(path.join(directory, "skills", entry.name), { recursive: true });
       await writeFile(path.join(directory, "skills", entry.name, "classification.json"), await readFile(classification));
     }
-    const { skillTargetsContext } = await import(pathToFileURL(path.join(root, "mcp-server", "dist", "intake-hook.mjs")).href);
+    const { intakeHookOutput, skillTargetsContext } = await import(pathToFileURL(path.join(directory, "mcp-server", "dist", "intake-hook.mjs")).href);
     const hostEnvironment = { ...process.env };
     delete hostEnvironment.AGENT_GOVERNANCE_LOCALE;
     const invoke = (input, env = hostEnvironment) => spawnSync(process.execPath, [hook], { input: JSON.stringify(input), encoding: "utf8", env });
-    const start = invoke({ hook_event_name: "SessionStart", source: "startup" });
-    expect(start.status).toBe(0);
-    expect(start.stderr).toBe("");
-    const context = JSON.parse(start.stdout).hookSpecificOutput;
-    expect(context.hookEventName).toBe("SessionStart");
-    expect(context.additionalContext).toBe(`Claude Code 호출: MCP 서버 instructions의 공통 접수 기준을 따르고, 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.\n${skillTargetsContext("ko")}`);
-    expect(context.additionalContext).not.toContain(intake);
-    expect(context.additionalContext).not.toContain("fixture-source-revision");
-    const english = invoke({ hook_event_name: "SessionStart", source: "startup" }, { ...hostEnvironment, AGENT_GOVERNANCE_LOCALE: "en" });
-    expect(english.status).toBe(0);
-    expect(english.stderr).toBe("");
-    expect(JSON.parse(english.stdout).hookSpecificOutput.additionalContext).toBe(`Claude Code invocation: follow the common intake criteria in the MCP server instructions, and actually invoke each selected installed skill with the Skill tool or the /agent-governance-suite:<skill-name> command.\n${skillTargetsContext("en")}`);
+    const invocation = {
+      ko: "Claude Code 호출: MCP 서버 instructions의 공통 접수 기준을 따르고, 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.",
+      en: "Claude Code invocation: follow the common intake criteria in the MCP server instructions, and actually invoke each selected installed skill with the Skill tool or the /agent-governance-suite:<skill-name> command.",
+    };
+    const installed = path.join(directory, "skills", "orchestrator", "references", "intake.md");
+    // Exercise the deployed launcher, not only the shared helper's Claude adapter.
+    for (const source of ["startup", "fork", "clear", "resume", "compact"]) {
+      for (const locale of ["ko", "en"]) {
+        const input = { hook_event_name: "SessionStart", source };
+        const start = invoke(input, locale === "ko" ? hostEnvironment : { ...hostEnvironment, AGENT_GOVERNANCE_LOCALE: locale });
+        expect(start.status).toBe(0);
+        expect(start.stderr).toBe("");
+        const context = JSON.parse(start.stdout).hookSpecificOutput;
+        const sharedContext = intakeHookOutput(input, "claude-code", locale).hookSpecificOutput.additionalContext;
+        expect(context.hookEventName).toBe("SessionStart");
+        expect(context.additionalContext).toBe(`${invocation[locale]}\n${sharedContext}`);
+        expect(context.additionalContext).toContain(locale === "ko" ? "보이지 않으면" : "not visible in this conversation");
+        expect(context.additionalContext).toContain(locale === "ko" ? "작업하기 전에" : "before working");
+        expect(context.additionalContext.split(installed)).toHaveLength(2);
+        expect(context.additionalContext.split(skillTargetsContext(locale))).toHaveLength(2);
+        expect(context.additionalContext).not.toContain(intake);
+        expect(context.additionalContext).not.toContain("fixture-source-revision");
+      }
+    }
     for (const prompt of ["git rebase랑 merge 차이가 뭐예요? 간단히 설명해 주세요.", "안녕하세요!", "change.diff 파일에 있는 변경 사항을 리뷰해 주세요."]) {
       const result = invoke({ hook_event_name: "UserPromptSubmit", prompt });
       expect(result.status).toBe(0);
