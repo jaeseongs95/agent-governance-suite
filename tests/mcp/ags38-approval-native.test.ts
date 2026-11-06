@@ -29,7 +29,7 @@ const cleanups: Array<() => Promise<void> | void> = [];
 afterEach(async () => { while (cleanups.length) await cleanups.pop()!(); });
 const SESSION = "native-approval-caller";
 
-export function rootInput(workspace: string) {
+function rootInput(workspace: string) {
   const task: TaskEnvelopeV1 = {
     schemaVersion: "1.0.0", taskId: "native-approval-task", objective: "Repair the authorized target.",
     scope: { included: ["target.ts"], excluded: [] }, acceptanceCriteria: ["The target is repaired."], riskLevel: "low",
@@ -59,7 +59,7 @@ async function harness(support = true, result: () => ElicitResult | Promise<Elic
     "default", null, path.join(directory, "board.sqlite3"), new SessionMessageService(messaging), null, null, codexMetaIngress());
   const client = new Client({ name: "native-approval", version: "1" }, { capabilities: support ? { elicitation: { form: {} } } : {} });
   const forms: Array<{ message: string; requestId: string | number }> = [];
-  client.setRequestHandler(ElicitRequestSchema, async (request, extra) => {
+  if (support) client.setRequestHandler(ElicitRequestSchema, async (request, extra) => {
     if ("message" in request.params) forms.push({ message: request.params.message, requestId: extra.requestId });
     return result();
   });
@@ -125,6 +125,13 @@ describe("AGS3-D-0008 native producer through actual MCP default composition", (
     expect((await f.release()).error).toBeNull();
     expect(f.forms).toHaveLength(0);
   });
+  it("AP-N04 unsupported clients refuse only a protected operation without an existing decision", async () => {
+    const f = await harness(false);
+    const before = f.root();
+    expect((await f.release()).error?.details).toMatchObject({ reason: "USER_APPROVAL_PRODUCER_UNSUPPORTED" });
+    expect(f.root()).toEqual(before);
+    expect(f.forms).toHaveLength(0);
+  });
   it("AP-N04 unsupported clients keep initial root creation working", async () => {
     const f = await harness(false);
     expect((await f.release(["anything"])).ok).toBe(false);
@@ -134,8 +141,7 @@ describe("AGS3-D-0008 native producer through actual MCP default composition", (
     expect(f.forms).toHaveLength(0);
   });
   it("AP-N09 rechecks revision after the form response", async () => {
-    let f: Awaited<ReturnType<typeof harness>>;
-    f = await harness(true, () => {
+    const f = await harness(true, () => {
       const root = f.root();
       expect(f.store.updateConvergenceRoot({ ...root, revision: root.revision + 1 }, root.revision)).toBe(true);
       return { action: "accept", content: { confirm: true } };
@@ -143,6 +149,9 @@ describe("AGS3-D-0008 native producer through actual MCP default composition", (
     const result = await f.release();
     expect(result.error?.code).toBe("STALE_REVISION");
     expect(f.root().state).toBe("open");
+    // The accepted decision was committed before the mutation failed. Ref omission reuses it, not another form.
+    expect((await f.call("release_convergence_root", { rootId: f.rootId, expectedRevision: f.root().revision, reason: "Retry accepted operation without refs." })).error).toBeNull();
+    expect(f.forms).toHaveLength(1);
   });
   it("AP-N08 cancels the original request and ignores a late form accept", async () => {
     let answer!: (result: ElicitResult) => void;

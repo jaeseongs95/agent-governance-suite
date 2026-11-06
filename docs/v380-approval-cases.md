@@ -4,7 +4,7 @@
 
 ponytail: 기존 MCP Server의 form, 기존 WorkflowStore/SQLite transaction만 쓴다. SOLID: host transport는 좁은 handler factory, 승인 scope와 상태 검사는 service, 영속성과 writer lock은 기존 store가 맡는다. tool args/peer/checkpoint에서 승인 producer로 가는 API는 광고하지 않는다.
 
-CS 의무: DB-BOUNDARY-001(결정과 실제 변경 원자성), DB-ISOLATION-002/DB-CONSTRAINT-003(두 연결·중복 발급·CAS), DB-MIGRATION-004(v6 보존·재열기), CONC-CANCEL-004(취소 후 늦은 accept 변경 0)를 채택한다. 원시 host UI/사용자 귀속과 별도 DB의 presence 갱신까지 SQLite writer lock으로 보장하지 않는다.
+CS 의무: DB-BOUNDARY-001(parent 포기와 새 root 삽입의 원자성, 확인된 결정 저장과 실행 변경은 별도 commit), DB-ISOLATION-002/DB-CONSTRAINT-003(두 연결·중복 발급·CAS), DB-MIGRATION-004(v5 정규화·v6 보존·재열기), CONC-CANCEL-004(취소 후 늦은 accept 발급/변경 0)를 채택한다. root 변경 실패가 이미 확인된 결정을 소비하거나 없애지 않게 한다. 원시 host UI/사용자 귀속과 별도 DB의 presence 갱신까지 SQLite writer lock으로 보장하지 않는다.
 
 실행 전 계획. 모든 사례 실제 결과는 **NOT_RUN**이며 root가 원격 TEST/CI에서 회수한다. 오라클은 공개 MCP 도구 반환과 실제 저장 root/run/승인 레코드이다. `InMemoryTransport`는 실제 SDK request/response·capability·cancel을 유지하되 실호스트 UI를 대체하므로 그 경계는 미검증이다.
 
@@ -29,3 +29,7 @@ CS 의무: DB-BOUNDARY-001(결정과 실제 변경 원자성), DB-ISOLATION-002/
 기존 정상 API 시험의 임의 승인 문자열을 새 형식으로 일괄 치환하지 않는다. baseline RED는 helper import 실패가 아니라 공개 API가 unbound ref를 허용하는 assertion이어야 한다. 신규 native producer/SQLite 사례는 고정된 신뢰 경계를 추가 검증하며 mock 결과를 실제 host PASS로 올리지 않는다.
 
 원격 명령: `node node_modules/vitest/vitest.mjs run tests/mcp/ags38-approval-native.test.ts tests/mcp/ags38-approval-store.test.ts`. baseline RED는 동일 test-only 핀에서 `ags38-approval-native`의 `AP-N01`을 실행한다. 제품 실행은 이 Windows PC에서 하지 않는다. 통합 후 server/index 연결과 배포 번들은 root 소유이며 최종 fresh 독립 보안 감사가 남는다.
+
+추가 migration 경계: 기존 inactive native shared composition의 workflow module을 version7/table allowlist로 맞추고 `PREVIOUS.workflow=6`을 보존한다. populated v6 header/table 형태를 실제 fixture로 복원한 뒤 현재 owner로 열어 기존 sequence·다른 module task 보존과 재열기를 확인한다. standalone workflow v5→6 정규화는 원 분기를 유지하고 v5/v6 각각 v7로 이전하는 사례를 둔다. `shared-connection.test.ts`와 `inactive-factory.test.ts`의 현재 schema 기대값만 실제 새 계약(version7/table33)으로 바꾸고 데이터 보존 오라클을 추가한다.
+
+고정 신뢰 한계: native form의 capability는 client 신고이고 응답 전달은 host 운영 계약이다. 합성 Client accept를 사람 클릭·실사용 승인자 인증으로 보고하지 않는다. 승인 DB/producer 코드에 같은 OS 권한으로 임의 쓰는 악성 로컬 실행을 이 application 경계가 방어한다고 주장하지 않는다. 외부 continuity/presence DB와 workflow DB는 분산 원자적이지 않으며 현재 기존 read-at-mutation 의미를 보존한다. 사용자 정책에 없던 host-only/root-only/추가 자식 제한은 넣지 않았다.
