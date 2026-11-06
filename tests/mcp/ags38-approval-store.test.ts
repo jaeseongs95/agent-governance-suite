@@ -64,6 +64,32 @@ function fixture() {
 }
 
 describe("D0008 workflow database persistence and competing connections", () => {
+  it("AP-N11 keeps numeric and string MCP request IDs distinct within one producer connection", async () => {
+    const f = fixture();
+    const producer = { getClientCapabilities: () => ({ elicitation: { form: {} } }), elicitInput: async () => ({ action: "accept", content: { confirm: true } }) }
+      as unknown as Pick<Server, "getClientCapabilities" | "elicitInput">;
+    const operation = createRootApprovalHandler(producer, f.service);
+    expect((await operation("release-root", f.request("release-root"), f.access, { requestId: 7, signal: new AbortController().signal })).error).toBeNull();
+    const opened = f.service.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: { ...f.root.taskEnvelope, taskId: "string-id-root" },
+      frame: f.root.frame, userApprovalRefs: [] });
+    expect(opened.error).toBeNull();
+    const root = opened.data!;
+    expect((await operation("release-root", { rootId: root.rootId, expectedRevision: root.revision, reason: "Approved second root.", userApprovalRefs: [] },
+      f.access, { requestId: "7", signal: new AbortController().signal })).error).toBeNull();
+    expect(f.store.getConvergenceSnapshot(root.rootId)!.root.state).toBe("abandoned");
+  });
+  it("AP-S05 commits identity backfill on ROOT_CONFLICT while preserving root JSON and revision", () => {
+    const f = fixture();
+    const before = f.current();
+    const database = new DatabaseSync(f.databasePath);
+    database.exec("DELETE FROM convergence_root_identities;");
+    const blocked = f.service.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null,
+      taskEnvelope: { ...f.root.taskEnvelope, taskId: "conflicting-request" }, frame: f.root.frame, userApprovalRefs: [] });
+    expect(blocked.error?.code).toBe("ROOT_CONFLICT");
+    expect(database.prepare("SELECT root_id FROM convergence_root_identities ORDER BY root_id").all()).toEqual([{ root_id: f.root.rootId }]);
+    expect(f.current()).toEqual(before);
+    database.close();
+  });
   for (const priorVersion of [5, 6]) it(`AP-S01 migrates a populated v${priorVersion} database and reopens without losing existing data`, () => {
     const f = fixture();
     f.store.getOrCreateSecret("migration-fixture", () => "fixture-value");
