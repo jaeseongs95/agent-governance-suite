@@ -3,7 +3,7 @@ import path from "node:path";
 import { type PlannedStageV1, type Sha256Digest, type StageResultV1, WorkflowContractError } from "../../contracts/types.js";
 import { msg, type MessageRef } from "./i18n.js";
 import { validateReportAgainstRequest } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
-import { validateSemantics as validateSecurityAudit } from "../../skills/software-security-auditor/scripts/core.mjs";
+import { validateSemantics as validateSecurityAudit } from "../../runtime/provider-security-semantics.mjs";
 import { convergenceDigest } from "./convergence-logic.js";
 import { loadStageOutputFile } from "./stage-output-file.js";
 

@@ -5,6 +5,7 @@ import path from "node:path";
 import { z } from "zod";
 import type { ExecutionContextV1 } from "../../../contracts/types.js";
 import { loadHostObservedInventory, type ObservedHostInventory } from "./host-discovery-adapter.js";
+import { createInstalledHostSkillObserver } from "./installed-host-observer.js";
 import { createClassificationRequest, digestClassificationValue } from "./request.js";
 import { SkillClassificationService, MAX_CLASSIFICATION_TIMEOUT_MS } from "./service.js";
 import { decisionSchema, validateDecision, validateIndependentDecision } from "./validation.js";
@@ -65,6 +66,7 @@ export interface SkillClassificationGateway {
 export class RuntimeSkillClassificationGateway implements SkillClassificationGateway {
   private readonly operations = new Map<string, StoredOperation>();
   private readonly pendingOperations = new Map<string, PendingOperation>();
+  private readonly observeInstalledHostSkills: () => Promise<unknown>;
   constructor(private readonly options: {
     root: string;
     service: SkillClassificationService;
@@ -75,12 +77,15 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     observeHostSkills?: () => Promise<unknown>;
     maximumOperations?: number;
     now?: () => Date;
-  }) {}
+  }) {
+    this.observeInstalledHostSkills = createInstalledHostSkillObserver(options.root, options.now);
+  }
   private loadInventory(runtime: Pick<ClassificationRuntimeSnapshot, "externalSkillRoots" | "hostDiscoveryRef">): Promise<ObservedHostInventory> {
     return loadHostObservedInventory({root: this.options.root, ...(this.options.now ? {now: this.options.now} : {}),
       ...(runtime.externalSkillRoots ? {externalSkillRoots: runtime.externalSkillRoots} : {}),
       ...(runtime.hostDiscoveryRef !== undefined ? {hostDiscoveryRef: runtime.hostDiscoveryRef} : {}),
-      ...(this.options.observeHostSkills ? {observeHostSkills: this.options.observeHostSkills} : {})});
+      ...(this.options.observeHostSkills ? {observeHostSkills: this.options.observeHostSkills}
+        : runtime.hostDiscoveryRef ? {} : {observeHostSkills: this.observeInstalledHostSkills})});
   }
   async inventory() {
     try {
