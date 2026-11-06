@@ -27,3 +27,9 @@ SOLID: 정책은 신뢰된 결정 해석의 작은 함수 계약에 의존한다
 원격 명령: `corepack pnpm install --frozen-lockfile && node node_modules/vitest/vitest.mjs run tests/mcp/ags38-approval.test.ts` (동일 시험 digest로 baseline test-only commit과 fix commit 비교). 생성물 신선도와 전체 통합/실호스트 검증은 통합 담당자 소유다.
 
 상태: 시험 계획 작성 완료, 제품 실행 NOT_RUN. 수리 담당 v380_approval_fix, TEST 담당 root 지정 담당자, 권한 경계 독립감사 필요. 생산 composition에서 기존 사용자 결정을 해석할 허용 정본 경로는 미확정이며 D0008 완전 수리의 남은 제한이다.
+
+생산 경로 추적: `builtin-hook-host-adapters.ts:88`은 실제 `input.prompt`를 wake marker 분류에만 쓰고 `:105`에서 `wakeCandidates/wakeOnly`만 전달한다. `InputObservation`에는 원문·사용자 결정 필드가 없다. `continuity-hook.ts:232`의 사용자 입력 처리는 fork parent pin과 checkpoint cue뿐이다. `host-input-adapter.ts`의 `LineageRead`는 구조 ID·시각만 받는다. `TrustStore.recordInputSource`의 실제 producer는 `session-message-hook.ts:346`과 `session-message-wake-port.ts:201`의 peer이며 권한 효과는 none이다. `TrustStore:102`는 user-turn 발급을 거부한다. 이 관측으로 기존 생산 사용자 승인 resolver가 없음을 판단했으며, 다른 세션 대화/로그/인증 파일은 열지 않았다.
+
+부분 구현: `root-approval.ts`는 host/composition이 해석한 기존 결정과 현재 행위·root·actor의 결속만 검사하는 모듈이다. 이 모듈 자체는 사용자 결정 producer가 아니며 도구 입력의 자기 선언을 신뢰하도록 연결하면 안 된다. `workflow-service.ts`는 다른 worker 단일 소유이므로 이 작업 사본에서는 수정하지 않았다. 미연결 모듈을 D0008 수리 완료나 GREEN으로 보고하지 않는다.
+
+정적 확인: Node `v24.19.0`에서 신규 test와 helper 각각 `node --check` 종료 0, `git diff --check` 종료 0. 제품 시험/동적 red/green/전체 tsc는 NOT_RUN. test-only 핀 `ebb2b432ae99b775e0bea9519e167ef9384cb387`은 새 모듈 import 없이 기준 결함 구현의 공개 경계를 실행한다.
