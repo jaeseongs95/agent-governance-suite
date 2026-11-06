@@ -1730,7 +1730,7 @@ try {
 
     // (d) Isolated child process default `handleSessionMessageHook` -> `ensure-relay` failure path (no `sessionMessageHook` callback):
     // Uses a real live process (`process.pid` with an adapter-supplied start token; no OS identity query exists) and points `AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR`
-    // at a regular file so the default `handleSessionMessageHook` fails in `ensure-relay` and emits `[agent-governance-suite] peer-hook-failure`
+    // at a regular file so the default `handleSessionMessageHook` fails in `ensure-relay` and emits the JSON `peer-hook-failure` diagnostic
     // with phase/reason/context on the isolated child's stderr.
     const blockedStateFile = path.join(tmpDir, "blocked-state-file");
     writeFileSync(blockedStateFile, "not-a-directory", "utf8");
@@ -1759,14 +1759,13 @@ try {
     );
     assert.equal(ensureFailChild.status, 0);
     assert.equal(ensureFailChild.signal, null);
-    assert.match(ensureFailChild.stderr, /\[agent-governance-suite\] peer-hook-failure /u);
-    const peerFailureJson = ensureFailChild.stderr
+    const parsedPeerFailure = ensureFailChild.stderr
       .trim()
       .split(/\r?\n/u)
-      .find((line) => line.startsWith("[agent-governance-suite] peer-hook-failure "))
-      ?.slice("[agent-governance-suite] peer-hook-failure ".length);
-    assert.ok(peerFailureJson, `Expected peer-hook-failure line in stderr, got: ${ensureFailChild.stderr}`);
-    const parsedPeerFailure = JSON.parse(peerFailureJson);
+      .filter((line) => line.startsWith("{"))
+      .map((line) => JSON.parse(line))
+      .find((value) => value.component === "session-message-hook" && value.event === "peer-hook-failure");
+    assert.ok(parsedPeerFailure, `Expected peer-hook-failure JSON diagnostic in stderr, got: ${ensureFailChild.stderr}`);
     assert.equal(parsedPeerFailure.phase, "ensure-relay");
     assert.equal(typeof parsedPeerFailure.reason, "string");
     assert.equal(typeof parsedPeerFailure.context, "object");
