@@ -93,12 +93,18 @@ describe("shared intake: merged without dropping a rule (AGS3-D-0032)", () => {
       "지금 세션이나 다른 세션이 그것에 연결돼 있는지 먼저 확인",
       "요청받은 일을 가장 짧은 경로로 직접 한다",
       "지정된 시험 환경이나 실제 충돌 방지에 필요한 격리는 유지",
-      "결과는 개수·해시·조회 한 번·기존 시험처럼 직접 확인한다",
+      // 3.8.0 (AGS3-D-0031, formerly D-0035): the direct check runs the cases fixed before the work at the user's real
+      // entry point; an unrun scope is reported as unverified, which still never calls it done.
+      "개수·해시·조회·기존 시험처럼 직접 실행해 확인하고",
       "현재 도구·권한으로 할 수 있는 실행·검증은 끝내고 실제 결과를 보고",
-      "실행 가능한 확인을 사용자에게 떠넘기거나 미실행을 완료로 표현하지 않는다",
+      "실행 가능한 확인을 사용자에게 떠넘기지 않고 실행하지 않은 범위는 미검증으로 적는다",
       "사용자만 할 수 있는 승인·비밀값 입력·사용자 화면 조작은 그 부분과 이유만 요청",
       "「사용자가 할 일」과 「에이전트가 이어서 할 일」을 나눠 적는다",
-      "우회하지 말고 대상·영향·실행할 명령을 담아 사용자에게 한 번에 바로 묻는다",
+      // 3.8.0 (AGS3-D-0039): the target and the exact command of every request to the user, an approval ask included,
+      // are stated by the specific-request sentence; the approval ask keeps the impact.
+      "앞 문맥 없이 바로 할 수 있게 대상(어떤 값·파일·화면인지",
+      "실행할 정확한 명령을 적는다",
+      "우회하지 말고 영향까지 담아 한 번에 바로 묻는다",
       "그 전제 위에 처음 쓰기 전에 한 번에 묻는다",
       "증거가 흔한 기본값과 어긋나면 묻는 신호로 보고",
       "토론은 실제로 막힌 정책·설계 선택에만 쓴다",
@@ -129,10 +135,14 @@ describe("shared intake: merged without dropping a rule (AGS3-D-0032)", () => {
     ]) expect(intake, fragment).toContain(fragment);
   });
 
-  it("stays within the pre-3.8.0 size although it gained a rule", () => {
+  it("does not grow past the reviewed 3.8.0 size", () => {
     const block = intake.slice(intake.indexOf("## 공통 접수·선택 기준"));
     // 4,771 characters was the 3.7.0 block (skills/orchestrator/SKILL.md at d068dfd6). The AGS3-D-0031 (formerly D-0034) blocked-step
-    // rule (4,732 -> 4,768) still fits because it replaces three narrower sentences.
-    expect([...block.slice(0, block.indexOf("\n\n여러 전문 단계를 연결할 때"))].length).toBeLessThan(4771);
+    // rule (4,732 -> 4,768) still fit because it replaced three narrower sentences. The rules for verification cases and
+    // the real entry point (D-0031, D-0036), specific requests (D-0039), follow-up repairs inside an approved goal (D-0040)
+    // and a peer's blocker (D-0041) add 461 characters (4,768 -> 5,229) after folding the direct-check, unrun-report and
+    // approval-ask sentences into them; no other sentence could be shortened without dropping a rule, so the reviewed
+    // 3.8.0 size, not the 3.7.0 one, is the limit now.
+    expect([...block.slice(0, block.indexOf("\n\n여러 전문 단계를 연결할 때"))].length).toBeLessThanOrEqual(5229);
   });
 });

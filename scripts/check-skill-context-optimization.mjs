@@ -45,6 +45,9 @@ function git(...args) {
 //   addition below), SKILL.md keeps a one-line pointer, and entry-details.md links the moved section.
 // - 3.8.0 intake blocked step (AGS3-D-0031, formerly D-0034): one rule holds only a blocked step and the steps that depend on it, says
 //   what is blocked and who is waited on, and keeps the rest of the work going; the three narrower sentences merge into it.
+// - 3.8.0 intake verify and ask (AGS3-D-0031, D-0036, D-0039, D-0040, D-0041): verification cases fixed before the work and
+//   run at the user's real entry point, specific requests to the user, follow-up repairs inside an approved goal, and a
+//   peer's blocker inside this session's role handled in that turn (intake lines 12 and 13).
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
@@ -126,6 +129,13 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
     hashes: Object.freeze({
       "skills/orchestrator/classification.json": ["8af0e814b6cdc128de65a392274d718ba14ce3e34061d8c0492164e8d883109e", "478364b9bbd1cfd3b0c9102e4949d302abcca1b061a998321a40d37908be0c4d"],
       "skills/orchestrator/references/intake.md": ["77b5496ce490207317d016d2ca9f6a467dbd85bcfc39df86c561dec8d5a685b1", "0f9be58edcaa80ad7bd6a51ff7f49b39026bfa88e8955abf5d400ef11b4c6d80"],
+    }),
+  }),
+  Object.freeze({
+    revision: "e7990a87e1524b4114a5bb20bc520afcceab24a8",
+    hashes: Object.freeze({
+      "skills/orchestrator/classification.json": ["478364b9bbd1cfd3b0c9102e4949d302abcca1b061a998321a40d37908be0c4d", "62b52946ac5b7a07b98d66de34efac60b0e80d331deb00d8abc70aef71718463"],
+      "skills/orchestrator/references/intake.md": ["0f9be58edcaa80ad7bd6a51ff7f49b39026bfa88e8955abf5d400ef11b4c6d80", "862109098be9ae581ab6fe7f99c57060862818bc966ae5d3a62fd0d1ed288410"],
     }),
   }),
 ]);
