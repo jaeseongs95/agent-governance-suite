@@ -92,7 +92,7 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     // 지침 전달만 검사하며 실제 호스트 행동·거부·재시도 검증을 대신하지 않는다.
     const intake = instructions("SKILL.md");
     const classification = instructions("references/skill-classification.md");
-    expect(intake).toContain("도구 노출만으로 지원 설정을 추정하지 않는다");
+    expect(intake).toContain("도구 노출만으로 지원 설정을 추정하지 않");
     expect(intake).toContain("독립적으로 가능한 작업과 막힌 의존 단계를 구분한다");
     for (const criterion of [
       "기존 승인된 설치 설정과 호스트 호출 경로에서 지원이 확인된 경우",

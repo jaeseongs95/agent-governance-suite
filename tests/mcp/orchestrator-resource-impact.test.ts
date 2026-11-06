@@ -8,6 +8,7 @@ const intake = shared.match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill
 const impactLine = intake.split("\n").find((line) => line.startsWith("- 대형 빌드·시험")) ?? "";
 const resumeLine = intake.split("\n").find((line) => line.includes("자원 문제로 정한 실행 위치")) ?? "";
 const gateLine = intake.split("\n").find((line) => line.startsWith("- 무거운 단계")) ?? "";
+const selectionLine = intake.split("\n").find((line) => line.startsWith("요청의 목적")) ?? "";
 
 /** Candidate-derived synthetic cases for a designated evaluator; none is a holdout or a model result. */
 export const resourceImpactBehaviorEvaluation = {
@@ -78,13 +79,18 @@ describe("orchestrator resource-impact prompt propagation", () => {
     expect(impactLine).toContain("작은 읽기·편집마다 계측·보고·새 점검 도구를 만들지 않으며");
     expect(impactLine).toContain("이 점검을 이미 허용된 빌드·시험·작업 브랜치 push·CI의 추가 승인이나 PRE로 만들지 않는다");
     expect(intake.indexOf(impactLine)).toBeLessThan(intake.indexOf(gateLine));
-    expect(intake).toContain("선택한 전문 스킬은 해당 전문 판단·행동을 시작하기 전에 호스트가 제공하는 방식으로 실제 호출하고 지침을 적용한다");
-    expect(resumeLine).toContain("다음 해당 판단·행동 전에 필요한 스킬을 호출·적용한다");
+    expect(selectionLine).toContain("선택한 전문 스킬은 해당 전문 판단·행동을 시작하기 전에 호스트가 제공하는 방식으로 실제 호출하고 지침을 적용");
+    // 3.8.0 (AGS3-D-0032): re-selection on a changed goal, scope or risk sits with the selection rules, and every new
+    // user message is checked for such a change.
+    expect(selectionLine).toContain("작업 중이나 새 사용자 메시지에서 목표·범위·위험이나 필요한 전문 판단이 달라지면");
+    expect(selectionLine).toContain("다음 해당 판단·행동 전에 필요한 스킬을 호출·적용한다");
     expect(resumeLine).toContain("사용자 교정으로 바뀐 행동·적용 범위와 남은 검증");
-    expect(resumeLine).toContain("전달받거나 복원한 근거가 없으면 이전 교정·실행·검증을 기억한다고 주장하지 않는다");
-    expect(resumeLine).toContain("압축·새 세션·재부팅 뒤에는 해당 제약과 현재 환경을 다시 대조");
-    expect(intake).toContain("현재 도구·권한으로 할 수 있는 실행·검증은 끝내고 실제 결과를 보고한다");
-    expect(intake).toContain("사용자만 할 수 있는 승인·비밀값 입력·사용자 화면 조작이 남으면 그 부분과 이유만 요청");
+    expect(resumeLine).toContain("저장본이나 전달받은 근거가 없으면 이전 교정·실행·검증을 기억한다고 주장하지 않는다");
+    expect(resumeLine).toContain("압축·새 세션·재부팅 뒤에는 `inspect_context`·`load_context`로");
+    expect(resumeLine).toContain("현재 환경과 대조해 지적된 행동을 반복하지 않");
+    expect(resumeLine).toContain("인계된 교정·제약 근거를 영향받는 실행 전에 대조");
+    expect(intake).toContain("현재 도구·권한으로 할 수 있는 실행·검증은 끝내고 실제 결과를 보고");
+    expect(intake).toContain("사용자만 할 수 있는 승인·비밀값 입력·사용자 화면 조작은 그 부분과 이유만 요청");
     expect(gateLine).toContain("mutation-risk-preflight");
     expect(gateLine).toContain("change-scope-guardian");
     expect(gateLine).toContain("작업 브랜치 commit·push, 시험·CI 실행은 이 단계 없이 바로 한다");

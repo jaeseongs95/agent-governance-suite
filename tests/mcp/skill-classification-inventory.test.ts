@@ -193,7 +193,7 @@ describe("signed source evidence and selection context regression", () => {
   });
 
   it.each([
-    ["orchestrator", "skills/orchestrator/SKILL.md", "작업 중 목표·범위·위험이나 필요한 전문 판단이 달라지면"],
+    ["orchestrator", "skills/orchestrator/SKILL.md", "작업 중이나 새 사용자 메시지에서 목표·범위·위험이나 필요한 전문 판단이 달라지면"],
     ["orchestrator", "skills/orchestrator/SKILL.md", "- 코드 작성·수정·설계나 라이브러리·의존성 선택 단계에는"],
     ["orchestrator", "skills/orchestrator/SKILL.md", "- 대형 빌드·시험, 대량 파일·데이터 처리, 장시간·동시 실행을 시작하기 전에는"],
     ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", "- `pre-execution`에서는"],

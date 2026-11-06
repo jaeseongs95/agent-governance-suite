@@ -39,6 +39,8 @@ function git(...args) {
 // - 3.8.0 intake role line (AGS3-D-0002/0003/0030): a session writes the role its user gave it, hands a request outside
 //   it to the session holding that role or asks the user, and reviews delegation for independent units with the brief
 //   rules; coordinate-subagents checks the net-benefit conditions instead of keeping work local by default.
+// - 3.8.0 intake text (AGS3-D-0031/0032): the shared intake merges repeated sentences without dropping a rule and adds
+//   the line that checks whether a target's purpose was already met before closing, deleting, reverting or replacing it.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
@@ -98,6 +100,13 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/coordinate-subagents/classification.json": ["e39a699e1bf8a024513fc79de21cd3b960f345af068cd1e4d761474b570e65a0", "c474abe1127e6206ed72c94902c24691c0d106ae4395ea7bbcbc92006a84de8a"],
       "skills/coordinate-subagents/references/entry-details.md": ["5769d6ee39c9396cac4e55ace84257a93219c0fc3e8b293f67c9973747a0dc88", "266ceb4fb5d7d3c553ef85485c93ac87c4df1bf0df5e2219fd99cc9a146bf882"],
       "skills/orchestrator/references/collaboration.md": ["e590f6cd87e5a352c27740f60329dae51a6ba95505747d9edaae59e3557f2f0d", "5f4aa4dedb3019a4c3f3515dd1fdfd03f78e136de0bded19c3b0ce46b99ce22a"],
+    }),
+  }),
+  Object.freeze({
+    revision: "d068dfd6ed0546c2f9ec422f3ecde73c48ddf610",
+    hashes: Object.freeze({
+      "skills/orchestrator/SKILL.md": ["ff64ea71c558540a990a8be07e75af5259b79fd390c104eb39d961fdc5174e10", "a491ab1d9ebf022a98d66713c8f4430b82eddb506424e9605659506825a0d39e"],
+      "skills/orchestrator/classification.json": ["7672db7d4e40ec4a8b8deb9f46ca8f0c8fe4253e9a537158de95de30b8712077", "fdd6a12c9ef4916a1a65d91306544631af8ade845a499869464d9e187e8b300d"],
     }),
   }),
 ]);
