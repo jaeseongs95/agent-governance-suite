@@ -23,4 +23,6 @@ pnpm exec vitest run tests/mcp/ags38-host-discovery-native.test.ts tests/mcp/ags
 
 test-only `9d6c1a8eee166a1af1aebd313bf32cd689e95f33`의 Windows TEST는 총29건 중24 PASS/4 FAIL/1 Linux 전용 SKIP, native exit1이었다. 4건 모두 Codex·AGY 정상/disable 관측에서 기대 `COMPLETE/host`, 실제 `UNAVAILABLE/local-tree`였다. 기존 Claude 9건과 신규 거부 15건은 통과했다. 원로그와 종료코드는 `C:/ags-330-test/ags38-d13-red-9d6c1a8e/red-native-python.log`, `red-native.exitcode.txt`에 보존했다. 최초 PowerShell wrapper의 native stderr 처리 오류는 제품 RED에서 제외했다.
 
-수정 후 TEST 결과, 생성 bundle 통합 후 실제 Codex/AGY 설치·단일 native tool 호출 결과는 각각 별도 회수해야 한다. 소스 fixture의 GREEN을 실제 호스트 수용이나 공개 릴리스 완료로 승격하지 않는다. 이 작업에서 로컬 제품시험·설치·전역 설정 변경·인증파일 열람은 수행하지 않는다.
+수정 `d2eefae5e8d2e94b2a5ff497824c86f8d126b86b`의 동일 Windows TEST는 28 PASS/1 Linux 전용 SKIP, native exit0이었다. 로그·종료코드는 `C:/ags-330-test/ags38-d13-green-d2eefae5/green-native.log`, `green-native.exitcode.txt`에 있다. Linux에서는 같은 SHA의 실제 execFile 사례 1건만 실행해 PASS, 필터 외19건 제외, native exit0을 확인했다. 로그·종료코드는 `B/d13-cli-d2eefae5/green-cli.log`, `green-cli.exitcode.txt`다. 로컬에서는 tsc, 대상 eslint, fixture node --check, git diff --check만 실행했고 모두 exit0이었다.
+
+생성 bundle 통합 후 실제 Codex/AGY 설치·단일 native tool 호출 결과는 별도 회수해야 한다. 소스 fixture의 GREEN을 실제 호스트 수용이나 공개 릴리스 완료로 승격하지 않는다. 이 작업에서 로컬 제품시험·설치·전역 설정 변경·인증파일 열람은 수행하지 않는다.
