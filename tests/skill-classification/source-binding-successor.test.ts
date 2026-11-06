@@ -682,7 +682,7 @@ it("chains the intake move after the purpose-check source, moving the intake blo
   })).toEqual(["orchestrator:applicability[9]"]);
 });
 it("chains the intake blocked-step rule after the intake move, rewording only intake lines and moving none", async () => {
-  // AGS3-D-0034: one rule holds only a blocked step and the steps that depend on it and keeps the rest of the work
+  // AGS3-D-0031 (formerly D-0034): one rule holds only a blocked step and the steps that depend on it and keeps the rest of the work
   // going; the three narrower continue-the-independent-work sentences (lines 6, 12 and 16) merge into it.
   expect(hash(blockedBytes)).toBe("sha256:68ce214f41600ba36422f9549d9004c727c103a0c35374f43181ce683bdff199");
   expect(blockedBytes.includes(Buffer.from("\r\n"))).toBe(false);
