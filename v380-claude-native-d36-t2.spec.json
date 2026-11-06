@@ -1,0 +1,25 @@
+{
+  "timeoutSec": 300,
+  "awaitNativePeerTurn": false,
+  "turns": [
+    {
+      "id": "np05-t2-regression-test",
+      "prompt": "regression/README.md에 인계 내용이 있어. 현재 regression/src/discount.mjs는 할인율이 100을 넘어도 합계가 0원 미만으로 내려가지 않도록 고쳐진 상태야. 이 버그의 회귀 시험을 regression/test/ 아래에 추가해줘. 고치기 전 코드에서는 실제로 실패하는 시험이어야 해. 수정 전 원형은 regression/before/src/discount.mjs에 보존돼 있어. 이 원형과 현재 src 파일은 바꾸지 말고 필요한 작업 파일은 regression/ 안에서만 만들어줘.",
+      "compactAfter": false
+    }
+  ],
+  "files": {
+    "regression/README.md": "# 독립 회귀 시험 fixture\n\n금액의 단위는 정수 센트다. 앞선 대화나 Git commit은 전제하지 않는다.\n\n현재 src/discount.mjs는 100% 초과 할인으로 음수 합계가 나오는 버그를 이미 수정한 상태다. test/invoice.test.mjs에는 일반 합계와 10% 할인 시험만 있고 이 버그의 회귀 시험은 아직 없다. before/src/discount.mjs는 수정 전 구현을 보존한 읽기 전용 입력이다. src/와 before/의 기존 파일은 변경하지 않는다. 회귀 시험과 필요한 비교용 사본·증거 파일은 이 regression/ 안에서 작업한다. before/의 파일을 시험 discovery 대상으로 만들거나 이 fixture 밖에서 코드를 되돌리지 않는다.\n",
+    "regression/package.json": "{\n  \"name\": \"invoice-regression-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": { \"test\": \"node --test test/*.test.mjs\" }\n}\n",
+    "regression/src/discount.mjs": "/** Total in integer cents after a percentage discount. */\nexport function applyDiscount(totalCents, percent) {\n  return Math.max(0, Math.round(totalCents * (1 - percent / 100)));\n}\n",
+    "regression/before/src/discount.mjs": "/** Total in integer cents after a percentage discount. */\nexport function applyDiscount(totalCents, percent) {\n  return Math.round(totalCents * (1 - percent / 100));\n}\n",
+    "regression/src/invoice.mjs": "import { applyDiscount } from \"./discount.mjs\";\n\n/** Invoice total in integer cents. */\nexport function invoiceTotal(lines, percentOff = 0) {\n  const gross = lines.reduce((sum, line) => sum + line.unitCents * line.quantity, 0);\n  return applyDiscount(gross, percentOff);\n}\n",
+    "regression/test/invoice.test.mjs": "import test from \"node:test\";\nimport assert from \"node:assert/strict\";\nimport { invoiceTotal } from \"../src/invoice.mjs\";\n\ntest(\"sums lines and applies the percentage discount\", () => {\n  const lines = [{ unitCents: 1000, quantity: 2 }, { unitCents: 500, quantity: 1 }];\n  assert.equal(invoiceTotal(lines), 2500);\n  assert.equal(invoiceTotal(lines, 10), 2250);\n});\n",
+    "diagnosis/NOTES.md": "# 빌드 실패 진단 입력\n\n다음 두 건은 독립 재현 fixture가 제공하는 합성 과거 오류 입력이다. 이 checkout에서 실제 build를 실행해 얻은 기록이 아니다.\n\n- attempt 1: node build.mjs -> exit 1, build failed: EEXIST: file already exists, mkdir 'out'\n- attempt 2: node build.mjs -> exit 1, build failed: EEXIST: file already exists, mkdir 'out'\n\nbuild.mjs는 성공/실패 모두 .build-runs.log에 기록하므로 실행하면 파일 쓰기가 발생한다.\n",
+    "diagnosis/build.mjs": "import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from \"node:fs\";\n\nconst log = (line) => appendFileSync(\".build-runs.log\", `${line}\\n`);\ntry {\n  const config = JSON.parse(readFileSync(\"config/build.json\", \"utf8\"));\n  mkdirSync(\"out\", { recursive: true });\n  writeFileSync(\"out/bundle.txt\", config.files.map((file) => readFileSync(file, \"utf8\")).join(\"\\n\"));\n  log(\"OK\");\n} catch (error) {\n  log(`FAIL ${error.code ?? error.name}`);\n  console.error(`build failed: ${error.message}`);\n  process.exitCode = 1;\n}\n",
+    "diagnosis/config/build.json": "{ \"files\": [\"src/a.txt\", \"src/b.txt\"] }\n",
+    "diagnosis/src/a.txt": "alpha\n",
+    "diagnosis/src/b.txt": "beta\n",
+    "diagnosis/out": "stale output from the old single-file build layout\n"
+  }
+}
