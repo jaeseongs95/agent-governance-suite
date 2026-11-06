@@ -22,7 +22,7 @@ import {
 } from "../../contracts/types.js";
 import { CONTENT_LANGUAGE_META, msg, render, resolveHostLocale, resolveRequestLocale, ROOT_LOCALE, type MessageKey, type MessageRef, type SupportedLocale } from "./i18n.js";
 import { CATALOGS } from "./i18n-catalog.generated.js";
-import { BoardFormatError, locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../skills/session-board/scripts/board-store.mjs";
+import { BoardFormatError, locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../runtime/session-board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
 import { contractFailure, failureContext, failureReason, retainFailureSecondary } from "./failure-diagnostics.js";
 import { writeDiagnostic } from "./hook-error-diagnostics.js";

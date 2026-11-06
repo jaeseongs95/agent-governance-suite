@@ -3,8 +3,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 const f = vi.hoisted(() => ({
   open: vi.fn(), close: vi.fn(), prune: vi.fn(), input: vi.fn(), summary: vi.fn(), request: vi.fn(),
 }));
-vi.mock("../../skills/session-board/scripts/board-store.mjs", async original => ({
-  ...await original<typeof import("../../skills/session-board/scripts/board-store.mjs")>(),
+vi.mock("../../runtime/session-board-store.mjs", async original => ({
+  ...await original<typeof import("../../runtime/session-board-store.mjs")>(),
   openBoard: f.open, pruneBoard: f.prune, recordInput: f.input, setSummary: f.summary,
 }));
 vi.mock("../../mcp-server/src/session-message-client.js", async original => ({

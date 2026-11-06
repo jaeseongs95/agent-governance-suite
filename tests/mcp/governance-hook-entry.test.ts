@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import * as boardStore from "../../skills/session-board/scripts/board-store.mjs";
+import * as boardStore from "../../runtime/session-board-store.mjs";
 import { runGovernanceHook } from "../../mcp-server/src/governance-hook.js";
 import { runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";

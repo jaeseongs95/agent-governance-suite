@@ -34,7 +34,7 @@ import { ClassificationInitializationError, loadClassificationProviderRuntime, r
 import { readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { digestClassificationValue } from "./skill-classification/request.js";
-import { listPromptMarkers, openBoard } from "../../skills/session-board/scripts/board-store.mjs";
+import { listPromptMarkers, openBoard } from "../../runtime/session-board-store.mjs";
 import { hostActorId } from "./host-attestation.js";
 import { createNativeClassificationAdapters, type NativeClassificationAdapterDefinition, type NativeCliBehavior } from "./skill-classification/native-adapters.js";
 import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
