@@ -5,17 +5,36 @@ import {z} from "zod";
 import type {HostSkillDiscoverySnapshot} from "./host-discovery-adapter.js";
 import {loadSkillInventory} from "./inventory.js";
 import {digestClassificationValue} from "./request.js";
+import {observeCodexInstalledPlugin} from "./codex-installed-plugin.js";
+import {observeAntigravityInstalledPlugin} from "./antigravity-installed-plugin.js";
 
 const plugin = z.object({id: z.string().min(1), version: z.string().min(1), enabled: z.boolean(),
   installPath: z.string().min(1), readFromFolder: z.string().min(1).optional(), errors: z.array(z.string()).optional()}).passthrough();
 const manifest = z.object({name: z.string().min(1), version: z.string().min(1)}).passthrough();
 
 /** Read-only host command. No shell, model turn, install, credentials or conversation file reads. */
-function listClaudePlugins(): Promise<string> {
+function hostCommand(file: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile("claude", ["plugin", "list", "--json"], {encoding: "utf8", timeout: 5000, maxBuffer: 1024 * 1024, windowsHide: true},
-      (error, stdout) => {if (error) reject(new Error("HOST_SKILL_LIST_FAILED")); else resolve(stdout);});
+    execFile(file, args, {encoding: "utf8", timeout: 5000, maxBuffer: 1024 * 1024, windowsHide: true},
+      (error, stdout) => {if (error || Buffer.byteLength(stdout) > 1024 * 1024) reject(new Error("HOST_SKILL_LIST_FAILED")); else resolve(stdout);});
   });
+}
+
+async function observeClaudeInstalledPlugin(root: string) {
+  const bytes = await hostCommand("claude", ["plugin", "list", "--json"]);
+  const plugins = z.array(plugin).max(1000).parse(JSON.parse(bytes));
+  const manifestBytes = await readFile(path.join(root, ".claude-plugin/plugin.json"));
+  if (manifestBytes.length > 64 * 1024) throw new Error("HOST_PLUGIN_MANIFEST_TOO_LARGE");
+  const installedManifest = manifest.parse(JSON.parse(manifestBytes.toString("utf8")));
+  const matches = [];
+  for (const entry of plugins) {
+    if (entry.id.split("@")[0] !== installedManifest.name) continue;
+    const location = entry.readFromFolder ?? entry.installPath;
+    if (!path.isAbsolute(location)) continue;
+    if (await realpath(location) === root && entry.version === installedManifest.version && !entry.errors?.length) matches.push(entry);
+  }
+  if (matches.length !== 1) return null;
+  return {enabled: matches[0]!.enabled, entry: matches[0]!};
 }
 
 /**
@@ -29,29 +48,19 @@ async function observeInstalledHostSkills(options: {
   host?: string | undefined;
   now?: (() => Date) | undefined;
 }): Promise<HostSkillDiscoverySnapshot | null> {
-  if (options.host !== "claude-code") return null;
-  const bytes = await listClaudePlugins();
-  const plugins = z.array(plugin).max(1000).parse(JSON.parse(bytes));
+  if (!["claude-code", "codex", "antigravity"].includes(options.host ?? "")) return null;
   const root = await realpath(options.root);
-  const manifestBytes = await readFile(path.join(root, ".claude-plugin/plugin.json"));
-  if (manifestBytes.length > 64 * 1024) throw new Error("HOST_PLUGIN_MANIFEST_TOO_LARGE");
-  const installedManifest = manifest.parse(JSON.parse(manifestBytes.toString("utf8")));
-  const matches = [];
-  for (const entry of plugins) {
-    if (entry.id.split("@")[0] !== installedManifest.name) continue;
-    const location = entry.readFromFolder ?? entry.installPath;
-    if (!path.isAbsolute(location)) continue;
-    if (await realpath(location) === root && entry.version === installedManifest.version && !entry.errors?.length) matches.push(entry);
-  }
-  if (matches.length !== 1) return null;
-  const entry = matches[0]!;
+  const binding = options.host === "claude-code" ? await observeClaudeInstalledPlugin(root)
+    : options.host === "codex" ? await observeCodexInstalledPlugin(root, hostCommand)
+      : await observeAntigravityInstalledPlugin(root, hostCommand);
+  if (!binding) return null;
   const inventory = await loadSkillInventory({root});
-  if (inventory.issues.length) return null;
-  const skills = inventory.skills.map(skill => ({skillId: skill.skillId, installed: true, enabled: entry.enabled,
+  if (inventory.issues.length || ("skillCount" in binding && binding.skillCount !== inventory.skills.length)) return null;
+  const skills = inventory.skills.map(skill => ({skillId: skill.skillId, installed: true, enabled: binding.enabled,
     hostSupported: true, root: null}));
   const observedAt = options.now?.() ?? new Date();
-  return {schemaVersion: "1.0.0", sourceRef: `host:claude-code:installed-plugin:${root}`,
-    revision: digestClassificationValue({host: options.host, root, entry, inventoryDigest: inventory.inventoryDigest}),
+  return {schemaVersion: "1.0.0", sourceRef: `host:${options.host}:installed-plugin:${root}`,
+    revision: digestClassificationValue({host: options.host, root, entry: binding.entry, inventoryDigest: inventory.inventoryDigest}),
     observedAt: observedAt.toISOString(), expiresAt: new Date(observedAt.getTime() + 30_000).toISOString(), skills};
 }
 
