@@ -67,3 +67,32 @@ node "$SRC/tests/real-host/cue-ab/plugin-run.mjs" execute claude \
 종료·원복은 기존 `owned-process`의 recorded group TERM/KILL 결과와 root의 escaped descendant 확인을 대조한다. `.heavy.lock`은 own model/process 종료가 확인된 뒤 소유자가 해제한다. spec·native 로그·receipts·fixture와 실패 근거는 보존하며 삭제·전역 설정 복원·공유 DB rollback은 하지 않는다. 이 경로는 Claude per-session `--plugin-dir`이므로 설치/marketplace 변경은 계획하지 않는다. 예상 밖 설치·공유 상태 변경이 보이면 exact before/after 대상과 범위를 root에게 넘겨 기존 승인에 따라 처리하며 blanket restore는 금지한다. 현재 단계는 spec 준비뿐이며 TEST fixture 준비·실행·설치 모두 NOT_RUN이다.
 
 작성 단계 정적 검사: spec JSON 구조·후보 pin·2턴·안전한 상대경로·12개 fixture 파일을 확인했고, JSON 2개 parse와 `.mjs` 5개를 stdin `node --check --input-type=module`로 구문 검사했다. fixture 소스 실행은 하지 않았다. spec SHA256은 `c69c10a9c12b594953c9abf32e40a90e2e2adbcc05bedca730c3d5654d47edc8`이고 `git diff --check`도 exit0이었다. 실제 NP05 판정은 NOT_RUN이다.
+
+## NP05 실제 회수 — Node 24 선행조건 미충족
+
+위 NOT_RUN은 spec 작성 시점의 기록이다. 후속 승인으로 exact spec을 Linux TEST에서 **한 세션·두 턴·한 회차** 실행했다. 후보는 `d826183e47891dc977416ef8182b3656d86e3fb0`, spec은 `baaaa3c1c67e796a4032f8b66bf999b62275bd02`의 위 SHA256 그대로다. D13 최종 복구·정리 조회 `8c84b5e34b86b3b222135f62fc0a745ec7d5dc8f39eb86cf`를 직접 읽어 두 호스트의 목록 복원, 알려진 소유 PID·PGID 없음과 lock 해제를 확인한 뒤 같은 `/home/mcpops/ags-tests/.heavy.lock`을 독점했다. 모델 추가 요청·재시도·환경 변경은 하지 않았다.
+
+환경은 Claude Code `2.1.314`, 요청 `opus/high`, 실제 두 턴의 model/init·modelUsage는 `claude-opus-5-5`였다. `per_turn_effort_active:true`는 관측했으나 effective effort 값 자체는 미확인이다. 정상 shell에서 선택된 Node는 **`v22.23.4`**였다. 저장소의 Node 24 선행조건을 만족하지 못하며, root가 제공한 정확 Node 24 bin을 launcher PATH 앞에 두고 child 생성 전에 exact `node --version`을 검사·차단해야 하는 조건을 작성자가 빠뜨렸다. 이 환경 결함과 실제 모델 행동을 분리해 보존하며 **Node 24 검증 또는 NP05 전체 PASS로 보고하지 않는다.** 향후 실행은 이 누락의 사전 차단 근거와 별도 실행 배정이 있어야 하며 이번 작업에서는 재실행하지 않는다.
+
+| 사례 | 실제 순서·파일 근거 | 판정·한계 |
+| --- | --- | --- |
+| NP05-T2-ORDER | 첫 stream L11 test-engineering 호출, L13에 현재 SKILL 본문 전체가 정확히 주입됨. 계획 저장→check-plan→시험 구현·실행 조건도 포함됐으나 L27 새 시험 Write, L30 시험 실행으로 이어짐. 전체 36개 이벤트에서 check-plan 호출 0, fixture에 plan 이름 파일 0이며 작성된 파일 목록에도 계획이 없음 | **FAIL.** 계획을 사후에라도 만들었다는 근거도 없음. 최신 지시문이 전달되지 않았다고 단정하거나 원인 미확정 상태에서 문구를 추가하지 않음 |
+| NP05-T2-PROOF | L30에서 GREEN `npm test` exit0(3 PASS) 후 RED `node --test test/*.test.mjs` exit1(2개 중 1 PASS·1 FAIL). RED는 `ERR_ASSERTION`, `actual:-25`, `expected:0`으로 실행기 오류가 아님. 새 시험과 before-copy 시험은 각각 649 bytes·동일 SHA256 `32af7dfe4754e767f11247dbdceb6fddffb44186d81a815912ce0e787e69fa01` | 실제 음수 하한 결함 검출은 확인. npm script의 명령 패턴도 `node --test test/*.test.mjs`이지만 GREEN/RED의 glob 대상·시험집합이 3개/2개여서 사전 oracle의 완전히 동일한 입력·설정 쌍 충족으로 승격하지 않음 |
+| NP05-T2-SCOPE | 같은 L30 명령이 `sha256sum ... > /tmp/hash-before.txt`로 작업 파일을 regression/ 밖에 씀. 이후 검증 명령은 세 원본 source hash가 같다고 반환했고 실제 fixture의 초기 12파일 bytes도 모두 유지됨 | 작업 파일을 regression/ 안에만 만들라는 요청 위반. 검토자는 이 `/tmp` 파일을 직접 읽거나 지우지 않았으며 기존 존재 여부·덮어쓰기 영향은 미확인 |
+| NP05-T4-READONLY | 둘째 stream 전체 30개 이벤트: Skill 1회(L5), Bash 읽기 3회(L8·13·15). blocker 현재 본문과 entry-details를 실제로 읽음. Bash는 cat/find/head/ls/file/wc/stat만 사용. MCP 도구·checkpoint_context·Write/Edit 호출 각각 0, build 실행 0. diagnosis 초기 6파일 hash 유지, `.build-runs.log` 없음 | **관측한 모델 호출·파일 경계에서 읽기 전용 충족.** 원인이 `out` 일반 파일과 mkdir의 충돌임을 설명하고 합성 과거 오류의 한계도 밝힘. 자동 hook·CLI 기록·공유 DB 상태 변화까지 0이라는 주장은 하지 않음 |
+
+두 턴의 native result는 success, runner·transport exit0이며 소요는 각각 41.379초·48.711초다. 이는 위 행동 FAIL과 환경 선행조건 미충족을 덮지 않는다. 실제 plugin 경로는 두 init 모두 후보의 per-session `claude-plugin` 경로와 일치했고, 실행 전후 source HEAD/clean 및 plugin 609파일의 Git blob bytes가 같았다. MCP는 첫 init에서 pending, 둘째 init에서 connected였다. SessionStart 응답 3건 success(exit0)와 1건 cancelled(exit1)를 그대로 보존한다. 취소 hook의 정확 명령 매핑, admission 소비·own callback/DB 결속, 메시지별 cue의 실제 모델 입력 도달, effective high는 미확인이다. 선택한 전문 스킬 두 개가 맞았다는 사실을 이 경계들의 성공으로 확대하지 않는다.
+
+최종 회수에서는 knownOwnAlivePids·knownOwnZombiePids·ownedGroupsStillPresent가 모두 빈 배열이었고, operator `/proc` 항목도 없었다. native driver/wrapper의 group cleanup은 CONFIRMED이며 공용 lock을 다시 획득·해제해 free 상태를 확인했다. 기록된 group 밖으로 탈출한 자손은 `NOT_OBSERVED`라 전체 호스트에 잔류 프로세스가 없다는 주장으로 확대하지 않는다. per-session 로더만 사용했으므로 설치·marketplace 변경·전역 설정 복원은 없었고, fixture·원시 stream·receipt·실패 자료는 삭제하지 않았다. peer·approval 담당자에게 종료·정리·lock 해제 ID를 전달했다. 원 pilot T2/T4 FAIL과 첫 문단의 원자료 hash는 그대로 보존한다.
+
+직접 회수한 원문 조회와 산출물은 다음과 같다. 각 조회의 실제 종료 코드는 0이며, 그 코드가 의미 판정 PASS를 뜻하지는 않는다.
+
+- spec/자체 bounded operator 준비: `2154a094d2dc6e993c918c6dbde829fc5b2817de407b45bd`.
+- 정상 native 환경의 시작: `177ce98cdc3a14a8203d63a1d79ff8f6468be6f4cba6ffe2`; 실제 start/pin 조회: `e244ce0891fb11fdc83e035cd9e8a3f472044fdeb611ab0e`.
+- 자기 두 턴 도구 순서·hook·result 원문 추출: `44085953b24048e87e0416a6f940c1e9a5bcc43f0dd5f6ca`.
+- 최종 source/plugin/cleanup·실제 skill 주입·fixture 파일 hash: `2459e2381d4d1767928309917deaed59419ac34c970c4fb3`.
+- 실제 assertion 출력·시험 bytes·전체 도구 호출 수 대조: `b9bc2e03096fdd0183370e4a139b3c5188352a0a1405d30a`.
+- 원문은 `$B/claude-native-np05-d826183e-01a14016/turn-1.jsonl` SHA256 `dfabbb34d3056eff9f4903656b4a3fdc737def3e2222c73c82329df6336c6149`, `turn-2.jsonl` SHA256 `502db02ae5c5269d3350ea68f60eee51e7bd443007c5f1fc2f8b59b987f0a536`로 보존했다.
+- 자체 `$B/claude-native-np05-d826183e-control-01a14016/result.json` SHA256은 `434363c86bdcf0ab309cfa4c9c5ea98b32db28264b2aebce7f85afd7940cf501`이다. RED/GREEN 원 출력과 비교 사본은 해당 run의 regression/proof, 새 시험은 regression/test 아래 보존했다.
+
+root도 최종 조회와 현재 본문을 직접 대조했고, 원인 미확정 상태에서 지침을 더 늘리지 않기 위해 자신의 dot 질문 `20261107034526`으로 자문했다는 업무 메시지를 받았다. 이 작성자는 해당 dot 원문·폴더를 열지 않았다. 이번 후속 변경은 이 사례 문서뿐이며 제품 지침·spec·역사 pin 변경이나 모델 재시험은 없다.
