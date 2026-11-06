@@ -30,12 +30,14 @@ const cases: Case[] = [
 const escapedString = (text: string) => '"' + [...text].map(char => "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0")).join("") + '"';
 
 /** Caller owns a fresh temporary root and its cleanup. No import-time execution or real provider call. */
-export async function checkProviderObservationRetention(api: Api, repo: string, root: string): Promise<string[]> {
+export async function checkProviderObservationRetention(api: Api, repo: string, root: string,
+  observe: (caseId: string, phase: "fixture" | "run" | "verify", event: "begin" | "complete") => void = () => {}): Promise<string[]> {
   const checked: string[] = [];
   let fixtureBinding: FixtureBinding | null = null;
   let createProfile: Parameters<typeof readyMockFromBinding>[5] | null = null;
   let firstCaseId: string | null = null;
   for (const spec of cases) {
+    observe(spec.id, "fixture", "begin");
     const output = path.join(root, "retention-" + spec.id);
     const options = {requests: 1, ...(spec.id === "timeout-safe-chunk" ? {timeoutMs: 30000} : {})};
     let config: Awaited<ReturnType<typeof readyMockFromBinding>>;
@@ -53,6 +55,7 @@ export async function checkProviderObservationRetention(api: Api, repo: string, 
       config.limits!.responseBytes = 32;
       await bindMockAuthorityAndEvidence(api, config);
     }
+    observe(spec.id, "fixture", "complete");
     let calls = 0, cancellations = 0, deliveredBody = "";
     const pending: {release?: () => void; reached: boolean} = {reached: false};
     const nativeSetTimeout = globalThis.setTimeout;
@@ -136,6 +139,7 @@ export async function checkProviderObservationRetention(api: Api, repo: string, 
       if (spec.id === "invalid-json") return new Response('{"model":');
       return new Response(deliveredBody, {status: spec.id === "http500" ? 500 : 200});
     };
+    observe(spec.id, "run", "begin");
     const result = await (async () => {
       try {return await api.run(config, {env: {...mockEnv}, fetcher, executionKind: "offline-mock"});}
       finally {
@@ -146,6 +150,8 @@ export async function checkProviderObservationRetention(api: Api, repo: string, 
       }
     })() as unknown as {
       status: string; transportAttempts: number; stopReason: string | null; qualificationStatus: string; productionProfileWritten: boolean};
+    observe(spec.id, "run", "complete");
+    observe(spec.id, "verify", "begin");
     assert.equal(result.status, "RAW_EVALUATION_RECORDED", spec.id);
     if (spec.error !== undefined) assert.equal(result.stopReason, spec.error, spec.id);
     assert.equal(calls, 1, spec.id); // Includes failures: no resend or alternate attempt.
@@ -205,6 +211,7 @@ export async function checkProviderObservationRetention(api: Api, repo: string, 
       assert.equal(cancellations, 1, spec.id);
     }
     checked.push(spec.id);
+    observe(spec.id, "verify", "complete");
   }
   return checked; // Fixed mock answers are protocol fixtures, never model quality gold.
 }

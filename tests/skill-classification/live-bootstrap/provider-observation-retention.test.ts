@@ -2,6 +2,7 @@ import {cp, mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
 import {createHash} from "node:crypto";
 import os from "node:os";
 import path from "node:path";
+import {performance} from "node:perf_hooks";
 import {describe, expect, it} from "vitest";
 import * as api from "./bootstrap.mjs";
 import {checkProviderObservationRetention} from "./provider-observation-retention.mjs";
@@ -38,14 +39,27 @@ describe("prepared evaluation provider observation retention", () => {
     expect(mismatches, "source preparation is separate from the provider retention oracle").toEqual([]);
   });
   it("keeps safe raw/usage across errors and omits unsafe or uninspectable bodies without resend", async () => {
+    const started = performance.now();
+    let phaseStarted = started;
+    // Bounded fixture IDs and phases only: preserve the original 90s failure while locating its last unfinished phase.
+    const observe = (caseId: string, phase: string, event: "begin" | "complete") => {
+      const now = performance.now();
+      if (event === "begin") phaseStarted = now;
+      console.info(JSON.stringify({observation: "provider-retention-phase", caseId, phase, event,
+        elapsedMs: Math.round(now - started), ...(event === "complete" ? {phaseElapsedMs: Math.round(now - phaseStarted)} : {})}));
+    };
     const root = await mkdtemp(path.join(os.tmpdir(), "ags-provider-retention-"));
     try {
-      const checks = await checkProviderObservationRetention(api, repo, root);
+      const checks = await checkProviderObservationRetention(api, repo, root, observe);
       expect(checks).toEqual(["success", "http500", "revoked-after-fetch", "safe-chunk-read-error", "truncated-read-error",
         "invalid-score", "escaped-credential", "endpoint-echo", "overwritten-secret", "byte-cap", "invalid-utf8", "invalid-json", "timeout-safe-chunk"]);
       await writeFile(path.join(root, "checks.json"), JSON.stringify({status: "OFFLINE_PROVIDER_RETENTION_PASS", checks, actualApiCalls: 0}) + "\n", {flag: "wx"});
       console.info(JSON.stringify({status: "OFFLINE_PROVIDER_RETENTION_PASS", checks, actualApiCalls: 0}));
     }
-    finally {await preserveAndRemove(root);}
+    finally {
+      observe("all", "cleanup", "begin");
+      await preserveAndRemove(root);
+      observe("all", "cleanup", "complete");
+    }
   }, 90000);
 });
