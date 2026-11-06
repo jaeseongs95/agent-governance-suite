@@ -35,6 +35,8 @@ function hydrateDigests(request) {
   request.root.revision = 7;
   request.root.frame = makeFrame(request.root.controlFrame, request.root.targetFrame);
   request.proposal.frame = makeFrame(request.proposal.controlFrame, request.proposal.targetFrame);
+  request.root.contract.targetLocations = request.root.frame.targetArtifacts.map((item) => item.locator);
+  request.proposal.contract.targetLocations = request.proposal.frame.targetArtifacts.map((item) => item.locator);
   delete request.root.controlFrame;
   delete request.root.targetFrame;
   delete request.proposal.controlFrame;

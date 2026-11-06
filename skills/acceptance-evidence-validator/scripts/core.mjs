@@ -106,15 +106,15 @@ export function assertTaskEnvelope(task) {
   }
 }
 
-function criterionId(index) {
-  return `AC-${String(index + 1).padStart(3, "0")}`;
+function criterionId(statement) {
+  return `AC-${createHash("sha256").update(statement, "utf8").digest("hex").slice(0, 12)}`;
 }
 
 export function analyzeAcceptance(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new InputError(hostText("skillScripts.acceptanceEvidence.inputNotObject"));
   if (!validateInputSchema(input)) throw new InputError(hostText("skillScripts.acceptanceEvidence.inputSchemaFailed"), { errors: structuredClone(validateInputSchema.errors) });
   if (input.schemaVersion !== "1.0.0") throw new InputError(hostText("skillScripts.acceptanceEvidence.schemaVersion"));
-  exactKeys(input, ["schemaVersion", "taskEnvelope", "target", "evidence", "verificationCommands", "knownLimitations", "criterionOverrides"], "input");
+  exactKeys(input, ["schemaVersion", "taskEnvelope", "target", "evidence", "verificationCommands", "knownLimitations", "criterionOverrides", "criterionBindings"], "input");
   assertTaskEnvelope(input.taskEnvelope);
   if (!input.target || typeof input.target !== "object") throw new InputError(hostText("skillScripts.acceptanceEvidence.targetRequired"));
   exactKeys(input.target, ["kind", "identifier", "digest"], "target");
@@ -125,8 +125,37 @@ export function analyzeAcceptance(input) {
   stringArray(input.knownLimitations, "knownLimitations");
   if (!Array.isArray(input.criterionOverrides)) throw new InputError(hostText("skillScripts.acceptanceEvidence.criterionOverridesNotArray"));
 
-  const validCriterionIds = input.taskEnvelope.acceptanceCriteria.map((_, index) => criterionId(index));
+  const validCriterionIds = input.taskEnvelope.acceptanceCriteria.map(criterionId);
+  stringArray(validCriterionIds, "criterionIds", { min: 1 });
   const validSet = new Set(validCriterionIds);
+  const aliases = new Map();
+  const boundStatements = new Set();
+  for (const binding of input.criterionBindings ?? []) {
+    if (!input.taskEnvelope.acceptanceCriteria.includes(binding.statement)) {
+      throw new InputError(hostText("skillScripts.acceptanceEvidence.criteriaMismatch"), { code: "CRITERION_BINDING_STATEMENT_MISMATCH", binding });
+    }
+    if (aliases.has(binding.criterionId) || boundStatements.has(binding.statement)) {
+      throw new InputError(hostText("skillScripts.acceptanceEvidence.mustNotDuplicate", { name: "criterionBindings" }));
+    }
+    const id = criterionId(binding.statement);
+    if (validSet.has(binding.criterionId) && binding.criterionId !== id) {
+      throw new InputError(hostText("skillScripts.acceptanceEvidence.criteriaMismatch"), { code: "CRITERION_BINDING_ID_COLLISION", binding });
+    }
+    aliases.set(binding.criterionId, id);
+    boundStatements.add(binding.statement);
+  }
+  const unboundLegacyIds = new Set();
+  const resolveCriterion = (id, subject) => {
+    if (validSet.has(id)) return id;
+    if (aliases.has(id)) return aliases.get(id);
+    // Legacy inputs remain readable, but an array position does not identify a statement.
+    if (/^AC-[0-9]{3,}$/u.test(id) && Number(id.slice(3)) >= 1 && Number(id.slice(3)) <= validSet.size) {
+      unboundLegacyIds.add(id);
+      return null;
+    }
+    throw new InputError(hostText("skillScripts.acceptanceEvidence.evidenceUnknownCriterion", { evidenceId: subject, criterionId: id }));
+  };
+  const resolveCriteria = (ids, subject) => [...new Set(ids.map((id) => resolveCriterion(id, subject)).filter((id) => id !== null))];
   const evidenceIds = new Set();
   for (const evidence of input.evidence) {
     exactKeys(evidence, ["id", "kind", "locator", "digest", "targetDigest", "verified", "criterionIds", "direction", "observedResult"], `evidence ${evidence?.id ?? "unknown"}`);
@@ -141,7 +170,7 @@ export function analyzeAcceptance(input) {
     if (typeof evidence.verified !== "boolean") throw new InputError(hostText("skillScripts.acceptanceEvidence.evidenceVerified", { id: evidence.id }));
     if (!["supports", "refutes"].includes(evidence.direction)) throw new InputError(hostText("skillScripts.acceptanceEvidence.evidenceDirection", { id: evidence.id }));
     stringArray(evidence.criterionIds, `evidence ${evidence.id} criterionIds`, { min: 1 });
-    for (const id of evidence.criterionIds) if (!validSet.has(id)) throw new InputError(hostText("skillScripts.acceptanceEvidence.evidenceUnknownCriterion", { evidenceId: evidence.id, criterionId: id }));
+    for (const id of evidence.criterionIds) resolveCriterion(id, evidence.id);
     nonEmptyString(evidence.observedResult, `evidence ${evidence.id} observedResult`);
   }
 
@@ -157,21 +186,30 @@ export function analyzeAcceptance(input) {
     nonEmptyString(command.locator, "verificationCommand.locator");
     if (!/^sha256:[a-f0-9]{64}$/u.test(command.targetDigest ?? "")) throw new InputError(hostText("skillScripts.acceptanceEvidence.commandTargetDigest"));
     stringArray(command.criterionIds, `verificationCommand ${command.id} criterionIds`, { min: 1 });
-    for (const id of command.criterionIds) if (!validSet.has(id)) throw new InputError(hostText("skillScripts.acceptanceEvidence.commandUnknownCriterion", { commandId: command.id, criterionId: id }));
+    for (const id of command.criterionIds) resolveCriterion(id, `command:${command.id}`);
   }
 
   const overrides = new Map();
+  const overrideIds = new Set();
   for (const override of input.criterionOverrides) {
     exactKeys(override, ["criterionId", "status", "rationale", "authorityRef"], `override ${override?.criterionId ?? "unknown"}`);
-    if (!validSet.has(override.criterionId)) throw new InputError(hostText("skillScripts.acceptanceEvidence.overrideUnknownCriterion", { criterionId: override.criterionId }));
-    if (overrides.has(override.criterionId)) throw new InputError(hostText("skillScripts.acceptanceEvidence.duplicateOverride", { criterionId: override.criterionId }));
+    const resolvedId = resolveCriterion(override.criterionId, "criterionOverrides");
+    if (overrideIds.has(override.criterionId) || overrides.has(resolvedId)) throw new InputError(hostText("skillScripts.acceptanceEvidence.duplicateOverride", { criterionId: override.criterionId }));
+    overrideIds.add(override.criterionId);
     if (override.status !== "not-applicable") throw new InputError(hostText("skillScripts.acceptanceEvidence.onlyNotApplicable"));
     nonEmptyString(override.rationale, `override ${override.criterionId} rationale`);
     nonEmptyString(override.authorityRef, `override ${override.criterionId} authorityRef`);
-    overrides.set(override.criterionId, override);
+    if (resolvedId !== null) overrides.set(resolvedId, { ...override, criterionId: resolvedId });
   }
 
+  const sourceEvidenceById = new Map(input.evidence.map((item) => [item.id, item]));
+  input = {
+    ...input,
+    evidence: input.evidence.map((item) => ({ ...item, criterionIds: resolveCriteria(item.criterionIds, item.id) })).filter((item) => item.criterionIds.length > 0),
+    verificationCommands: input.verificationCommands.map((item) => ({ ...item, criterionIds: resolveCriteria(item.criterionIds, `command:${item.id}`) })).filter((item) => item.criterionIds.length > 0),
+  };
   const limitations = [...input.knownLimitations];
+  if (unboundLegacyIds.size > 0) limitations.push(`Legacy positional criterion IDs (${[...unboundLegacyIds].join(", ")}) lack exact statement bindings. Supply criterionBindings from the frozen original request/report or collect fresh content-bound evidence.`);
   const currentEvidence = input.evidence.filter((item) => {
     const current = item.targetDigest === input.target.digest;
     if (!current) limitations.push(`Evidence ${item.id} is stale for target ${input.target.identifier}.`);
@@ -208,12 +246,12 @@ export function analyzeAcceptance(input) {
     const collection = match[1] === "scope/excluded" ? input.taskEnvelope.scope.excluded : input.taskEnvelope.authorization.prohibitedActions;
     const value = collection[Number(match[2])];
     if (typeof value !== "string" || value.length === 0) throw new InputError(hostText("skillScripts.acceptanceEvidence.overrideLocatorUnresolved", { criterionId: override.criterionId }));
-    const expectedDigest = authorityEvidenceDigest(authority, value);
+    const expectedDigest = authorityEvidenceDigest(sourceEvidenceById.get(authority.evidenceId), value);
     if (authority.digest !== expectedDigest) throw new InputError(hostText("skillScripts.acceptanceEvidence.overrideDigestMismatch", { criterionId: override.criterionId }));
   }
 
-  const criteria = input.taskEnvelope.acceptanceCriteria.map((statement, index) => {
-    const id = criterionId(index);
+  const criteria = input.taskEnvelope.acceptanceCriteria.map((statement) => {
+    const id = criterionId(statement);
     const override = overrides.get(id);
     const evidence = allCurrentEvidence.filter((item) => item.criterionIds.includes(id));
     const refuting = evidence.filter((item) => item.direction === "refutes");
@@ -226,6 +264,16 @@ export function analyzeAcceptance(input) {
         evidenceRefs: refuting.map((item) => item.evidenceId),
         observedResult: refuting.map((item) => item.observedResult).join("; "),
         rationale: "Current target evidence contradicts this acceptance criterion."
+      };
+    }
+    if (unboundLegacyIds.size > 0) {
+      return {
+        criterionId: id,
+        statement,
+        status: "insufficient-evidence",
+        evidenceRefs: [],
+        observedResult: "",
+        rationale: "Legacy positional evidence cannot be assigned to exact criterion statements."
       };
     }
     if (override) {
@@ -337,7 +385,7 @@ export function validateReportAgainstRequest(report, request) {
     const ids = report.criteria.map((item) => item.criterionId);
     if (new Set(ids).size !== ids.length) errors.push(hostText("skillScripts.acceptanceEvidence.criterionIdsUnique"));
     for (const item of report.criteria) {
-      if (!/^AC-[0-9]{3,}$/u.test(item.criterionId ?? "")) errors.push(hostText("skillScripts.acceptanceEvidence.criterionIdInvalid", { criterionId: item.criterionId }));
+      if (!/^AC-[a-f0-9]{12}$/u.test(item.criterionId ?? "")) errors.push(hostText("skillScripts.acceptanceEvidence.criterionIdInvalid", { criterionId: item.criterionId }));
       if (!["satisfied", "unsatisfied", "insufficient-evidence", "not-applicable"].includes(item.status)) errors.push(hostText("skillScripts.acceptanceEvidence.criterionStatusInvalid", { criterionId: item.criterionId }));
       if (item.status === "satisfied" && (!Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0)) errors.push(hostText("skillScripts.acceptanceEvidence.satisfiedWithoutEvidence", { criterionId: item.criterionId }));
       if (item.status === "not-applicable" && (!item.rationale || !Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0)) errors.push(hostText("skillScripts.acceptanceEvidence.notApplicableWithoutAuthority", { criterionId: item.criterionId }));
