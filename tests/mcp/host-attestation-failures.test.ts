@@ -71,7 +71,7 @@ it.each(["null", "[]", "42", '"primitive"', '{"synthetic-secret":'])(
     expect(result.stdout).toBe("");
     const diagnostic = JSON.parse(result.stderr.trim());
     const reason = input.startsWith("{") ? "INVALID_JSON" : "INVALID_HOOK_INPUT";
-    expect(diagnostic).toEqual({ component: "host-attestation-hook", phase: "input", reason,
+    expect(diagnostic).toEqual({ component: "host-attestation-hook", event: "observation-failure", phase: "input", reason,
       context: reason === "INVALID_JSON" ? { type: "syntax-error" } : fixedCodeContext(reason) });
     expect(result.stderr).not.toContain("synthetic-secret");
     expect(readdirSync(directory)).toEqual([]);

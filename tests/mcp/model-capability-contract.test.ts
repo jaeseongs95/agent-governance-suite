@@ -127,7 +127,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         () => service.planWorkflow(input, true));
       expect(planned.ok).toBe(true);
       expect(planned.data?.bootstrapExecution?.context).toMatchObject({ model, modelClass, reasoningEffort: effort });
-      expect(provider.lastObservedCapability()).toMatchObject({ provider: "synthetic-authority", policyRevision: "d0094-authority-r1", rawModel: model });
+      expect(resolveAdapterModelCapability(adapter, model, "synthetic-authority-host:runtime")).toMatchObject({ provider: "synthetic-authority", policyRevision: "d0094-authority-r1", rawModel: model });
       expect(provider.run("plan_workflow", caller,
         () => service.planWorkflow(input, true)).error?.code).toBe("BINDING_INVALID");
 
@@ -182,7 +182,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
       const recorded = provider.run("record_stage_result", stageCaller,
         () => service.recordStageResult(stageInput, true, observedCaller(stageCaller)));
-      expect(provider.lastObservedCapability()).toMatchObject({ provider: adapter.provider, policyRevision: adapter.policyRevision, rawModel: model });
+      expect(resolveAdapterModelCapability(adapter, model, "synthetic-authority-host:runtime")).toMatchObject({ provider: adapter.provider, policyRevision: adapter.policyRevision, rawModel: model });
       if (modelClass === "lightweight" || effort === "low" || effort === null) {
         expect(recorded.error).toMatchObject({ code: "GATE_FAILED", details: { reasonCode: effort === null ? "REASONING_EFFORT_UNOBSERVED"
           : effort === "low" ? "REASONING_EFFORT_BELOW_FLOOR" : "MODEL_CLASS_BELOW_FLOOR" } });
@@ -340,7 +340,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       modelClass: "frontier",
       reasoningEffort: "xhigh",
     });
-    expect(provider.lastObservedCapability()).toEqual({
+    expect(resolveAdapterModelCapability(syntheticSuite.adapters.get("codex")!, "gpt-6.5-nova-canonical", "codex:mcp-meta")).toEqual({
       provider: "openai-codex",
       host: "codex",
       rawModel: "gpt-6.5-nova-canonical",
@@ -389,7 +389,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const claudeCaller = rootCaller("claude-code", SESSION, { callId: "toolu_mythos", execution: claudeExecution });
     const claudePlanned = claudeProvider.run("plan_workflow", claudeCaller, () => claudeService.planWorkflow(claudeInput, true));
     expect(claudePlanned.ok).toBe(true);
-    expect(claudeProvider.lastObservedCapability()).toMatchObject({
+    expect(resolveAdapterModelCapability(syntheticSuite.adapters.get("claude-code")!, "us.anthropic.claude-mythos-preview-v1:0", "claude-code:transcript-tool-use")).toMatchObject({
       provider: "anthropic-claude-code",
       rawModel: "us.anthropic.claude-mythos-preview-v1:0",
       resolvedModel: "mythos",
@@ -412,7 +412,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       () => geminiService.planWorkflow(geminiInput, true),
     );
     expect(geminiPlanned.ok).toBe(true);
-    expect(geminiProvider.lastObservedCapability()).toMatchObject({
+    expect(resolveAdapterModelCapability(syntheticSuite.adapters.get("gemini")!, "models/gemini-4.0-argon_pro", "gemini:wrapper-runtime")).toMatchObject({
       provider: "google-gemini",
       rawModel: "models/gemini-4.0-argon_pro",
       resolvedModel: "argon",
@@ -558,7 +558,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       () => defaultService.planWorkflow(planArgs, true),
     );
     expect(first.ok).toBe(true);
-    expect(defaultProvider.lastObservedCapability()?.resolvedModel).toBe("gpt-6-astra");
+    expect(resolveAdapterModelCapability(codexExecutionAdapter, "gpt-6-astra")?.resolvedModel).toBe("gpt-6-astra");
 
     const replay = defaultProvider.run(
       "plan_workflow",
@@ -567,14 +567,14 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     );
     expect(replay.error?.code).toBe("BINDING_INVALID");
 
-    // A missing host observation on a subsequent observe() clears lastObservedCapability so stale call metadata cannot leak.
+    // A missing host observation on a subsequent call never reuses the previous public execution result.
     const missingObservationCall = defaultProvider.run(
       "plan_workflow",
       rootCaller("codex", SESSION, { callId: "call-missing-1" }),
       () => defaultService.planWorkflow(planArgs, true),
     );
     expect(missingObservationCall.error?.code).toBe("BINDING_REQUIRED");
-    expect(defaultProvider.lastObservedCapability()).toBeNull();
+    expect(missingObservationCall.data?.bootstrapExecution).toBeUndefined();
   });
 
   it("keeps both catalog and observed host class floors when policy reclassifies a model (AC3, AC4)", () => {
@@ -777,7 +777,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const fresh = provider.run("plan_workflow", rootCaller("codex", SESSION, { callId: "descriptor-call", execution }),
       () => service.planWorkflow(args, true));
     expect(fresh.ok).toBe(true);
-    expect(provider.lastObservedCapability()?.policyRevision).toBe("descriptor-r2");
+    expect(resolveAdapterModelCapability(adapter, execution.model, execution.provenance)?.policyRevision).toBe("descriptor-r2");
 
     // @ts-expect-error Legacy/custom adapter without resolveModel must declare provider at compile time.
     const providerlessLegacy: HostExecutionAdapter = {
@@ -798,6 +798,6 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     // The legacy class answer still grants no class; the model runs unclassified (3.1.1).
     expect(legacyResult.ok, JSON.stringify(legacyResult)).toBe(true);
     expect(legacyResult.data!.bootstrapExecution!.context).toMatchObject({ modelClass: null, policyNotes: ["MISSING_MODEL_CAPABILITY"] });
-    expect(legacyProvider.lastObservedCapability()).toBeNull();
+    expect(legacyProvider.observe({ phase: "bootstrap", taskId: "after-call", runId: null, stageId: null, revision: null })).toBeNull();
   });
 });

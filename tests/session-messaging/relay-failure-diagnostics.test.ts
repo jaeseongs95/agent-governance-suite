@@ -42,7 +42,7 @@ function controlledWatch() {
 function lines(spy: { mock: { calls: unknown[][] } }, prefix: string): Array<Record<string, unknown>> {
   return spy.mock.calls
     .map((call: unknown[]) => String(call[0]))
-    .filter((line: string) => line.startsWith(prefix))
+    .filter((line: string) => line.startsWith("{") && JSON.parse(line).event === prefix)
     .map((line: string) => JSON.parse(line.slice(line.indexOf("{"))) as Record<string, unknown>);
 }
 function allText(spy: { mock: { calls: unknown[][] } }): string {
@@ -67,7 +67,7 @@ it("reports an asynchronous relay spawn failure instead of escaping the hook", a
   expect(f.spawn).toHaveBeenCalledTimes(1);
   const child = f.spawn.mock.results[0]!.value as EventEmitter;
   expect(() => child.emit("error", Object.assign(new Error("secret-canary spawn"), { code: "ENOENT" }))).not.toThrow();
-  const reported = lines(stderr, "[agent-governance-suite] peer-hook-failure");
+  const reported = lines(stderr, "peer-hook-failure");
   expect(reported).toHaveLength(1);
   expect(reported[0]).toMatchObject({ phase: "relay-start", reason: "ENOENT" });
   expect(allText(stderr)).not.toContain("secret-canary");
@@ -84,7 +84,7 @@ it("reports a failed relay release with the original producer reason after its h
   await runSessionMessageRelay(relayOptions, port, { watch: () => watch, delay: (_ms, stop) => stop });
   expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["relay-tick", "release-relay"]);
   expect(f.request.mock.calls[1]![1]).toMatchObject({ relayId, instanceId: "instance-1", reason: "host-process-ended" });
-  const reported = lines(stderr, "[agent-governance-suite] relay-failure");
+  const reported = lines(stderr, "relay-failure");
   expect(reported).toHaveLength(1);
   expect(reported[0]).toMatchObject({ phase: "release", reason: "MESSAGING_STORAGE_FAILED" });
   expect(allText(stderr)).not.toContain("secret-canary");
@@ -108,7 +108,7 @@ it("reports each tick failure and keeps the loop running until its host ends", a
   await runSessionMessageRelay(relayOptions, port, { watch: () => watch, delay });
   expect(ticks).toBe(2);
   expect(waits).toEqual([5000, 5000]);
-  const reported = lines(stderr, "[agent-governance-suite] relay-failure");
+  const reported = lines(stderr, "relay-failure");
   expect(reported.map((entry: Record<string, unknown>) => entry.phase)).toEqual(["tick", "tick"]);
   for (const entry of reported) expect(entry).toMatchObject({ reason: "MESSAGING_BUSY" });
   expect(f.request.mock.calls.at(-1)![0]).toBe("release-relay");
@@ -123,7 +123,7 @@ it("records a relay fenced by its lease as an abnormal end and releases only its
   await runSessionMessageRelay(relayOptions, port, { watch: () => watch, delay: (_ms, stop) => stop });
   expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["relay-tick", "release-relay"]);
   expect(f.request.mock.calls[1]![1]).toMatchObject({ relayId, reason: "relay-ended" });
-  expect(lines(stderr, "[agent-governance-suite] relay-failure")).toEqual([expect.objectContaining({ phase: "run", reason: "RELAY_LEASE_LOST" })]);
+  expect(lines(stderr, "relay-failure")).toEqual([expect.objectContaining({ phase: "run", reason: "RELAY_LEASE_LOST" })]);
 });
 
 it.each(["gemini"])("unsupported native %s cannot reach relay spawn", async (host) => {

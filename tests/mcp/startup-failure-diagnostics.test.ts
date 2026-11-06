@@ -9,7 +9,6 @@ import {expect, it} from "vitest";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const bundle = path.join(root, "mcp-server/dist/server.mjs");
-const prefix = "[agent-governance-suite] startup-failure ";
 const privateCode = "PRIVATE_STARTUP_CODE:" + "s".repeat(300);
 const privateMessage = "PRIVATE_STARTUP_MESSAGE Bearer synthetic-auth /private/startup/path SELECT private_sql";
 const codeContext = (code: string) => ({type: "string", length: code.length, prefixCodeUnits: Math.min(code.length, 256),
@@ -59,9 +58,9 @@ Map.prototype.get = function(key) {
     expect(child.signal).toBeNull();
     expect(child.status, child.stderr).toBe(1);
     expect(child.stdout).toBe("");
-    expect(child.stderr, "STARTUP_FAILURE_DIAGNOSTIC_REQUIRED").toMatch(/^\[agent-governance-suite\] startup-failure \{[^\r\n]*\}\n$/u);
-    const record = JSON.parse(child.stderr.slice(prefix.length));
-    expect(record).toEqual({phase: "startup", context: mode === "default-log-off"
+    expect(child.stderr, "STARTUP_FAILURE_DIAGNOSTIC_REQUIRED").toMatch(/^\{[^\r\n]*\}\n$/u);
+    const record = JSON.parse(child.stderr);
+    expect(record).toEqual({component: "server", event: "startup-failure", phase: "startup", context: mode === "default-log-off"
       // AGS 3.0 error model R6: the redacted producer cause (SQLITE_NOTADB) stays attached to the startup diagnostic.
       ? {type: "error", code: codeContext("MCP_UNAVAILABLE"), producerCause: {type: "error", code: codeContext("ERR_SQLITE_ERROR"), sqlite: {errcode: 26, primaryCode: 26}}}
       : {type: "type-error", code: codeContext(privateCode), cause: {type: "syntax-error"}}});

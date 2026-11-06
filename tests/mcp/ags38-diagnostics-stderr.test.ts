@@ -49,7 +49,7 @@ describe("AGS3-D-0023 one stderr record contract", () => {
   it("DG01 native host hook keeps stdout and exit behavior while emitting the shared record", () => {
     const cwd = fileURLToPath(new URL("../../", import.meta.url));
     const result = spawnSync(process.execPath, ["--import", "tsx", "mcp-server/src/host-attestation-hook.ts"], {
-      cwd, encoding: "utf8", input: "{", env: process.env,
+      cwd, encoding: "utf8", input: "{", windowsHide: true, env: { ...process.env, NODE_NO_WARNINGS: "1" },
     });
     expect(result.error).toBeUndefined();
     expect(result.status).toBe(0);

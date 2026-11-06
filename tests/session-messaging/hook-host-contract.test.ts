@@ -205,9 +205,8 @@ it.each(["empty", "input", "stdin", "state-directory"] as const)(
     expect(result.error).toBeUndefined();
     expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
-    const prefix = "[agent-governance-suite] peer-hook-failure ";
-    const diagnostics = result.stderr.split(/\r?\n/u).filter(line => line.startsWith(prefix))
-      .map(line => JSON.parse(line.slice(prefix.length)));
+    const diagnostics = result.stderr.split(/\r?\n/u).filter(line => line.startsWith("{") && JSON.parse(line).event === "peer-hook-failure")
+      .map(line => JSON.parse(line));
     if (scenario === "empty") expect(diagnostics).toEqual([]);
     else {
       const [phase, reason] = scenario === "state-directory" ? ["handle", "MESSAGING_STATE_DIRECTORY_FAILED"]

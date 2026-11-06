@@ -36,7 +36,7 @@ function pathForms(value: string): string[] {
 }
 
 function lines(spy: { mock: { calls: unknown[][] } }): string[] {
-  return spy.mock.calls.map((call) => String(call[0])).filter((line) => line.includes("board-hook-failure "));
+  return spy.mock.calls.map((call) => String(call[0])).filter((line) => line.startsWith("{") && JSON.parse(line).event === "board-hook-failure");
 }
 
 afterEach(() => {

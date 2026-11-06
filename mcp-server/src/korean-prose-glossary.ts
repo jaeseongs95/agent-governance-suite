@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { writeSync } from "node:fs";
+import { writeDiagnostic } from "./hook-error-diagnostics.js";
 import { failureContext, producerFailureReason, retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
 
 import { WorkflowContractError, type KoreanProseGlossaryLookupRequestV1, type KoreanProseGlossaryLookupResultV1 } from "../../contracts/types.js";
@@ -122,9 +123,9 @@ export class SqliteKoreanProseGlossary implements KoreanProseGlossaryGateway {
 /** Diagnostic output cannot turn the optional glossary into a hard dependency. */
 function reportGlossaryFailure(phase: "lookup", error: unknown): void {
   try {
-    writeSync(2, JSON.stringify({
-      component: "korean-prose-glossary", phase, reason: producerFailureReason(error) ?? "GLOSSARY_UNAVAILABLE", context: failureContext(error),
-    }) + "\n");
+    writeDiagnostic("korean-prose-glossary", "glossary-failure", {
+      phase, reason: producerFailureReason(error) ?? "GLOSSARY_UNAVAILABLE", context: failureContext(error),
+    }, line => { writeSync(2, line + "\n"); });
   } catch { /* A failed diagnostic sink does not replace the operation result/error. */ }
 }
 

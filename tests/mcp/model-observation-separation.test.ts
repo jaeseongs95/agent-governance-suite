@@ -72,7 +72,7 @@ describe("C call-time execution eligibility controls", () => {
     const f = fixture(legacy);
     // 3.1.1: it runs unclassified; the class answer is never used.
     expect(f.run()).toMatchObject({ ok: true, data: { bootstrapExecution: { context: { modelClass: null, policyNotes: ["MISSING_MODEL_CAPABILITY"] } } } });
-    expect(f.provider.lastObservedCapability()).toBeNull();
+    expect(f.provider.observe({ phase: "bootstrap", taskId: "after-call", runId: null, stageId: null, revision: null })).toBeNull();
     expect(classify).not.toHaveBeenCalled();
     // The same opaque model name passes once the adapter states a trusted descriptor: the name itself is never the reason.
     const described: HostExecutionAdapter = { ...legacy, policyRevision: "owned-r1",
@@ -81,19 +81,19 @@ describe("C call-time execution eligibility controls", () => {
         policyRevision: "owned-r1", provenance } : null };
     const g = fixture(described);
     expect(g.run()).toMatchObject({ ok: true });
-    expect(g.provider.lastObservedCapability()).toMatchObject({ modelClass: "deep", supportedEfforts: ["high"], policyRevision: "owned-r1" });
+    expect(resolveAdapterModelCapability(described, MODEL)).toMatchObject({ modelClass: "deep", supportedEfforts: ["high"], policyRevision: "owned-r1" });
   });
   it("observes unsupported legacy observations without inventing eligibility or a revision", () => {
     const f = fixture({ host: HOST, provider: "owned-provider", modelClassForModel: () => null });
     expect(f.run("opaque-unsupported")).toMatchObject({ ok: true, data: { bootstrapExecution: { context: { model: "opaque-unsupported", modelClass: null } } } });
-    expect(f.provider.lastObservedCapability()).toBeNull();
+    expect(f.provider.observe({ phase: "bootstrap", taskId: "after-call", runId: null, stageId: null, revision: null })).toBeNull();
   });
   it("does not invent a revision for a modern descriptor that supplies none", () => {
     const { adapter, state } = modern(false);
     state.value = { ...state.value, policyRevision: "" };
     const f = fixture(adapter);
     expect(f.run()).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "QUALIFICATION_POLICY_REVISION_MISMATCH" } } });
-    expect(f.provider.lastObservedCapability()).toBeNull();
+    expect(f.provider.observe({ phase: "bootstrap", taskId: "after-call", runId: null, stageId: null, revision: null })).toBeNull();
   });
   it.each([
     { name: "a declared adapter revision that differs from the descriptor", patch: {}, declared: "owned-r0", reasonCode: "QUALIFICATION_POLICY_REVISION_MISMATCH" },
@@ -125,6 +125,6 @@ describe("C call-time execution eligibility controls", () => {
     expect(f.run()).toMatchObject({ ok: true });
     state.value = { ...state.value, policyRevision: "owned-r2" };
     expect(f.run()).toMatchObject({ ok: true });
-    expect(f.provider.lastObservedCapability()?.policyRevision).toBe("owned-r2");
+    expect(resolveAdapterModelCapability(adapter, MODEL)?.policyRevision).toBe("owned-r2");
   });
 });

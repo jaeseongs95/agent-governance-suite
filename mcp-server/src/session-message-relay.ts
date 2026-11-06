@@ -1,4 +1,5 @@
 import { failureContext, producerFailure, producerFailureReason } from "./failure-diagnostics.js";
+import { writeDiagnostic } from "./hook-error-diagnostics.js";
 import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-message-client.js";
 import { watchHostProcess, type HostWatch } from "./host-process-watch.js";
 import { persistRelayFailure, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
@@ -14,10 +15,10 @@ export type RelayFailurePhase = "arguments" | "acquire" | "tick" | "release" | "
 /** Local diagnostic only: producer reason plus bounded fingerprinted context, never messages, paths or bodies. */
 export function reportRelayFailure(phase: RelayFailurePhase, error: unknown): void {
   try {
-    const serialized = JSON.stringify({ phase,
-      reason: producerFailureReason(error) ?? "UNEXPECTED_FAILURE", context: failureContext(error) });
-    persistRelayFailure(serialized);
-    console.error("[agent-governance-suite] relay-failure " + serialized);
+    const diagnostic = { phase,
+      reason: producerFailureReason(error) ?? "UNEXPECTED_FAILURE", context: failureContext(error) };
+    persistRelayFailure(JSON.stringify(diagnostic));
+    writeDiagnostic("session-message-relay", "relay-failure", diagnostic);
   } catch { /* A broken diagnostic sink cannot stop the relay or its cleanup. */ }
 }
 

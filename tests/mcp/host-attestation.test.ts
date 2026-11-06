@@ -77,7 +77,7 @@ function expectUnclassifiedObservation(adapter: HostExecutionAdapter, execution:
   const context = provider.run("plan_workflow", rootCaller(adapter.host, SESSION, { execution }), () => provider.observe(bootstrap("unclassified")));
   expect(context).toMatchObject({ model: "model" in execution ? execution.model : "", modelClass: null,
     policyNotes: [expect.stringMatching(/^[A-Z_]+$/)] });
-  expect(provider.lastObservedCapability()).toBeNull();
+  expect(provider.observe(bootstrap("after-unclassified"))).toBeNull();
 }
 
 function task(taskId: string): TaskEnvelopeV1 {
@@ -1079,7 +1079,7 @@ describe("AGS-D-0179 correlated issuing observations", () => {
     const provider = new HostAttestationProvider(trusted);
     expect(provider.run("plan_workflow", rootCaller("claude-code", SESSION, { execution }), () => provider.observe(bootstrap("d0179"))))
       .toMatchObject({ model, modelClass: "deep" });
-    expect(provider.lastObservedCapability()).toMatchObject({ provider: "synthetic", modelClass: "deep" });
+    expect(resolveAdapterModelCapability(trusted, model, "claude-code:transcript-tool-use")).toMatchObject({ provider: "synthetic", modelClass: "deep" });
     expectUnclassifiedObservation({ ...trusted, modelClassForModel: () => null, resolveModel: () => null }, execution);
     // Hook preservation only: the full opaque-model workflow policy (0086 etc.) remains a separate obligation.
   });
@@ -1365,7 +1365,7 @@ describe("AGS-D-0328 host and model-vendor separation", () => {
         execution: { model: "colliding-model", effort: "high", turnId: "turn-d0328", provenance: "synthetic-polyglot-host:test" } }),
       () => collidingProvider.observe(bootstrap("d0328-colliding-task")),
     )).toMatchObject({ model: "colliding-model", modelClass: null, policyNotes: ["AMBIGUOUS_PROVIDER_MATCH"] });
-    expect(collidingProvider.lastObservedCapability()).toBeNull();
+    expect(collidingProvider.observe(bootstrap("after-collision"))).toBeNull();
 
     // Legacy/custom adapter without provider identity must not infer provider from adapter.host.
     // @ts-expect-error Legacy/custom adapter without resolveModel must declare provider at compile time.

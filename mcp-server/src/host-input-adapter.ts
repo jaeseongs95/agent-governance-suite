@@ -1,6 +1,6 @@
 import { types as utilTypes } from "node:util";
 import type { CallerExecution } from "./caller-identity.js";
-import { hookFailure, hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
+import { hookFailure, hookFailureContext, hookFailureReason, writeDiagnostic } from "./hook-error-diagnostics.js";
 import { type DeliveryCapabilities, type InputObservation } from "./input-observation.js";
 import type { SessionMessageTransport } from "./session-message-relay.js";
 
@@ -152,7 +152,6 @@ export function resolveHookProcessPid(host: string, explicitHostPid?: number, ho
 
 export function hostDeliveryProfile(host: string, environment: NodeJS.ProcessEnv = process.env,
   diagnose: (reason: string, observation?: unknown) => void = (reason, observation) => {
-    const prefix = `[agent-governance-suite] ${host} queue settings: ${reason}.`;
     let detail: Record<string, unknown> | null = null;
     try {
       if (observation && typeof observation === "object" && !utilTypes.isProxy(observation)) {
@@ -166,7 +165,8 @@ export function hostDeliveryProfile(host: string, environment: NodeJS.ProcessEnv
         }
       }
     } catch { /* Opaque observations cannot supply producer diagnostics. */ }
-    console.error(prefix + (detail ? " " + JSON.stringify(detail) : ""));
+    writeDiagnostic("host-input-adapter", "queue-settings-failure", { host, reason,
+      ...(detail ? { ...detail, configurationReason: reason } : {}) });
   }, defaultQueueWake = false): HostDeliveryProfile {
   const adapter = selectedHookHostAdapter(host);
   if (!adapter) throw hookHostFailure("unavailable");

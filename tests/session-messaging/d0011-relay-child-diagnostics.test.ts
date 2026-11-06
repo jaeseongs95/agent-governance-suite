@@ -34,10 +34,9 @@ function records(): Array<Record<string, unknown>> {
 }
 
 function hookFailureLines(): Array<Record<string, unknown>> {
-  const prefix = "[agent-governance-suite] peer-hook-failure ";
   return stderr.mock.calls.map(([line]: unknown[]) => line)
-    .filter((line: unknown): line is string => typeof line === "string" && line.startsWith(prefix))
-    .map((line: string) => JSON.parse(line.slice(prefix.length)) as Record<string, unknown>);
+    .filter((line: unknown): line is string => typeof line === "string" && line.startsWith("{") && JSON.parse(line).event === "peer-hook-failure")
+    .map((line: string) => JSON.parse(line) as Record<string, unknown>);
 }
 
 function relayChild(): EventEmitter & { pid: number; unref: ReturnType<typeof vi.fn> } {

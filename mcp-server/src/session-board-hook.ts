@@ -1,7 +1,7 @@
 import { isHookEntry } from "./hook-entry.js";
 import { actorAccess } from "./input-observation.js";
 import "./builtin-hook-host-adapters.js";
-import { hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
+import { hookFailureContext, hookFailureReason, writeDiagnostic } from "./hook-error-diagnostics.js";
 import { failureReason } from "./failure-diagnostics.js";
 import { readFileSync } from "node:fs";
 
@@ -13,10 +13,10 @@ import { adaptHostInput, resolveHookHost } from "./host-input-adapter.js";
 type BoardFailurePhase = "host-entry" | "stdin" | "stdout" | "input" | "consume-wake" | "open" | "handle" | "close";
 
 function reportBoardFailure(phase: BoardFailurePhase, cause: unknown): void {
-  try { console.error("[agent-governance-suite] board-hook-failure " + JSON.stringify({
+  try { writeDiagnostic("session-board-hook", "board-hook-failure", {
     // An OS, SQLite or JSON cause keeps its own class instead of UNEXPECTED_FAILURE (same rule as the continuity hook).
     phase, reason: hookFailureReason(cause) ?? (cause instanceof BoardFormatError ? cause.code : null) ?? failureReason(cause).reason ?? "UNEXPECTED_FAILURE", context: hookFailureContext(cause),
-  })); } catch { /* Diagnostics cannot change the fail-open behavior. */ }
+  }); } catch { /* Diagnostics cannot change the fail-open behavior. */ }
 }
 
 type HookInput = Record<string, unknown>;

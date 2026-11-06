@@ -5,6 +5,7 @@ import { actorAccess, type DeliveryCapabilities, type InputObservation } from ".
 import type { SessionIdentity } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
 import { failureContext, producerFailureReason } from "./failure-diagnostics.js";
+import { writeDiagnostic } from "./hook-error-diagnostics.js";
 import type { InputSourceReceiptV1 } from "../../contracts/types.js";
 import { resolveSessionMessageStateDirectory, resolveTrustDatabasePath } from "./runtime-config.js";
 import { msg } from "./i18n.js";
@@ -138,7 +139,7 @@ function persistRelayFailureHistory(directory: string, serialized: string): void
     }
   } catch (cause) {
     // A failed diagnostic sink cannot replace the original relay/wake outcome; expose only safe metadata.
-    try { console.error("[agent-governance-suite] relay-history-failure " + JSON.stringify(failureContext(cause))); }
+    try { writeDiagnostic("session-message-wake-port", "relay-history-failure", { context: failureContext(cause) }); }
     catch { /* The primary failure remains independent of stderr too. */ }
   }
 }
@@ -160,14 +161,14 @@ export function persistRelayFailure(serialized: string, environment: NodeJS.Proc
 }
 /** Bounded diagnostic only: failureContext never emits messages, argv, stdout or paths. Vendors pass their own detail. */
 export function reportWakeFailure(phase: string, error: Error, environment: NodeJS.ProcessEnv = process.env, detail?: string): void {
-  const serialized = JSON.stringify({
+  const diagnostic = {
     phase,
     reason: producerFailureReason(error),
     ...(detail ? { detail } : {}),
     context: failureContext(error),
-  });
-  persistRelayFailure(serialized, environment);
-  console.error(`agent-governance-suite wake diagnostic ${serialized}`);
+  };
+  persistRelayFailure(JSON.stringify(diagnostic), environment);
+  writeDiagnostic("session-message-wake-port", "wake-failure", diagnostic);
 }
 
 /** Local root-hook liveness only; this cannot attest permission or W06 authority. */

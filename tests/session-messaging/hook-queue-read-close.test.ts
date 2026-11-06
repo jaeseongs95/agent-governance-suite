@@ -104,7 +104,8 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
     expect(hostDeliveryProfile("antigravity", automaticEnvironment, undefined, true).transport).toBe("gemini-deferred");
     expect(diagnosticRecord(sink)).toMatchObject({phase: "close", reason: "QUEUE_SETTINGS_CLOSE_FAILED", cleanup: "unknown",
       context: {producerReason: "QUEUE_SETTINGS_CLOSE_FAILED", producerCause: {type: "error"}}});
-    expect(sink.mock.calls[0]![0]).toContain("queue settings: close-failed.");
+    expect(JSON.parse(sink.mock.calls[0]![0] as string)).toMatchObject({ configurationReason: "close-failed",
+      component: "host-input-adapter", event: "queue-settings-failure" });
     expect(f.open).toHaveBeenCalledTimes(1); expect(f.close).toHaveBeenCalledExactlyOnceWith(0);
   });
   it.each(["EIO", "ENOENT"] as const)("keeps actual read %s primary and close secondary without retry or default promotion", code => {
@@ -239,7 +240,8 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
     }, processPid: () => undefined});
     const sink = vi.spyOn(console, "error").mockImplementation(() => {});
     hostDeliveryProfile(host, {});
-    expect(sink).toHaveBeenCalledExactlyOnceWith("[agent-governance-suite] " + host + " queue settings: unavailable.");
+    expect(sink).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ host, reason: "unavailable",
+      component: "host-input-adapter", event: "queue-settings-failure" }));
     expect(trap).not.toHaveBeenCalled();
   });
   it("does not infer a producer phase from a forged public code in the actual diagnostic sink", () => {
@@ -251,7 +253,8 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
     }, processPid: () => undefined});
     const sink = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(hostDeliveryProfile("0188-counterfeit", {}, undefined).transport).toBe("claude-inbox");
-    expect(sink).toHaveBeenCalledExactlyOnceWith("[agent-governance-suite] 0188-counterfeit queue settings: close-failed.");
+    expect(sink).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ host: "0188-counterfeit", reason: "close-failed",
+      component: "host-input-adapter", event: "queue-settings-failure" }));
     expect(trap).not.toHaveBeenCalled(); expect(f.open).not.toHaveBeenCalled();
   });
 });

@@ -12,7 +12,7 @@ import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.
 import { ContinuityService } from "./continuity-service.js";
 import { failureReason } from "./failure-diagnostics.js";
 import { WorkflowContractError } from "../../contracts/types.js";
-import { hookFailureContext, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
+import { hookFailureContext, retainHookFailureSecondary, writeDiagnostic, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import { msg } from "./i18n.js";
 
 const CONTINUITY_TOOLS = new Set(["open_convergence_root", "checkpoint_context", "inspect_context", "load_context", "suppress_context_restore", "purge_direct_context"]);
@@ -104,14 +104,14 @@ export async function runGovernanceHook(
     const reasonCode = failureReasonCode(failure);
     // The observation step's own cause class (EACCES, EISDIR, ...) stays separate from the step code.
     const causeReason = observationFailureCode(failure) && failure instanceof Error ? failureReason(failure.cause).reason : null;
-    try { writeFailureDiagnostic(JSON.stringify({ component: "governance-hook", reasonCode, ...(causeReason ? { causeReason } : {}),
-      context: hookFailureContext(failure) })); }
+    try { writeDiagnostic("governance-hook", "governance-hook-failure", { reasonCode, ...(causeReason ? { causeReason } : {}),
+      context: hookFailureContext(failure) }, line => writeFailureDiagnostic(line + "\n")); }
     catch { /* The nonzero failure and denial do not depend on diagnostic output. */ }
     if (tool === "start_workflow" && sessionId) {
       try { recordStartRefusal(environment, sessionId, reasonCode); }
       catch (cause) {
-        try { writeFailureDiagnostic(JSON.stringify({ component: "governance-hook", reasonCode: "WORKFLOW_START_FAILURE_UNRECORDED",
-          causeReason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" })); } catch { /* The denial stands either way. */ }
+        try { writeDiagnostic("governance-hook", "workflow-start-failure-unrecorded", { reasonCode: "WORKFLOW_START_FAILURE_UNRECORDED",
+          causeReason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" }, line => writeFailureDiagnostic(line + "\n")); } catch { /* The denial stands either way. */ }
       }
     }
     return { ok: false, output: JSON.stringify(denied(reasonCode)) };

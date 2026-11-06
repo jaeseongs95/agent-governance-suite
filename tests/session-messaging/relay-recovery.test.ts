@@ -33,10 +33,10 @@ const relayOptions = { host: "synthetic-host", sessionId: "relay-recovery", inst
 const post = { hook_event_name: "PostToolUse", session_id: "relay-recovery", tool_name: "shell", tool_input: {}, syntheticActor: "root" };
 const hint = { instanceId: "I2", hostPid: 424242 };
 const hookFailures = (spy: { mock: { calls: unknown[][] } }) => spy.mock.calls.map((call) => String(call[0]))
-  .filter((line) => line.startsWith("[agent-governance-suite] peer-hook-failure"))
+  .filter((line) => line.startsWith("{") && JSON.parse(line).event === "peer-hook-failure")
   .map((line) => JSON.parse(line.slice(line.indexOf("{"))) as { phase: string; reason: string });
 const failures = (spy: { mock: { calls: unknown[][] } }) => spy.mock.calls.map((call) => String(call[0]))
-  .filter((line) => line.startsWith("[agent-governance-suite] relay-failure"))
+  .filter((line) => line.startsWith("{") && JSON.parse(line).event === "relay-failure")
   .map((line) => JSON.parse(line.slice(line.indexOf("{"))) as { phase: string; reason: string });
 /** Answers the boundary claim with a recovery hint and grant-relay with a fresh relay id. */
 const answer = (hinted: string[], recovery: unknown = hint, grant: unknown = { relayId }) => async (operation: string) =>

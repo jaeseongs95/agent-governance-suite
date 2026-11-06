@@ -4,6 +4,7 @@ import {z} from "zod";
 import {ApprovedRouteClassificationProvider, bindClassificationRouteTransport, resolveClassificationWireAdapter, type ApprovedClassificationRoute, type ClassificationWireAdapter} from "./providers.js";
 import {resolveNativeClassificationAdapter, type NativeClassificationAdapterRegistry} from "./native-adapters.js";
 import {InMemoryClassificationBudget} from "./service.js";
+import {writeDiagnostic} from "../hook-error-diagnostics.js";
 
 const text = z.string().min(1);
 const routeBase = {
@@ -98,7 +99,7 @@ export class ClassificationInitializationError extends Error {
 
 export function reportClassificationInitializationFailure(error: unknown,
   report: (record: Readonly<{phase: "classification-initialization"; reason: string}>) => void = record => {
-    console.error("[agent-governance-suite] classification-initialization-failed " + JSON.stringify(record));
+    writeDiagnostic("skill-classification", "classification-initialization-failed", record);
   }): void {
   const reason = classificationInitializationFailureReason(error);
   try { report(Object.freeze({phase: "classification-initialization", reason})); }

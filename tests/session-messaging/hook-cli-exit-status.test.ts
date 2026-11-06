@@ -71,7 +71,7 @@ async function runCli(raw: string | Error, args: readonly string[] = ["--host=cl
 
 function failures(): Array<Record<string, unknown>> {
   return vi.mocked(console.error).mock.calls.map((call) => String(call[0]))
-    .filter((line) => line.includes("peer-hook-failure "))
+    .filter((line) => line.startsWith("{") && JSON.parse(line).event === "peer-hook-failure")
     .map((line) => JSON.parse(line.slice(line.indexOf("{"))) as Record<string, unknown>);
 }
 

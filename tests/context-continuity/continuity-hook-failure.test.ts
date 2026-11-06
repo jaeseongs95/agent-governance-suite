@@ -50,7 +50,7 @@ function toolInput() {
 
 function failureLines(spy: ReturnType<typeof vi.spyOn>): string[] {
   return spy.mock.calls.map((args: unknown[]) => args[0])
-    .filter((value: unknown): value is string => typeof value === "string" && value.includes("continuity-hook-failure "));
+    .filter((value: unknown): value is string => typeof value === "string" && value.startsWith("{") && JSON.parse(value).event === "continuity-hook-failure");
 }
 
 describe("continuity hook failure reporting (AGS-D-0055)", () => {

@@ -154,7 +154,8 @@ it("reports a host-neutral settings diagnostic without inventing an adapter fall
   const diagnostic = vi.spyOn(console, "error").mockImplementation(() => {});
   const transport = hostInput.hostDeliveryProfile("antigravity", { AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE: "invalid" }, undefined, true).transport;
   expect(transport).toBe("gemini-deferred");
-  expect(diagnostic).toHaveBeenCalledExactlyOnceWith("[agent-governance-suite] antigravity queue settings: invalid-environment.");
+  expect(diagnostic).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ host: "antigravity", reason: "invalid-environment",
+    component: "host-input-adapter", event: "queue-settings-failure" }));
   expect(diagnostic.mock.calls[0]![0]).not.toContain("using codex");
 });
 

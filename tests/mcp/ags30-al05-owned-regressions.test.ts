@@ -105,7 +105,7 @@ describe("AGS-D-0033 actual model identity of the call", () => {
     expect(failure).toBeUndefined();
     expect(context).toMatchObject({ model: "al05-unknown-new-model", modelClass: null, reasoningEffort: "high",
       policyNotes: [expect.stringMatching(/^[A-Z_]+$/)] });
-    expect(provider.lastObservedCapability()).toBeNull();
+    expect(provider.observe({ phase: "bootstrap", taskId: "after-call", runId: null, stageId: null, revision: null })).toBeNull();
   });
 });
 
@@ -156,7 +156,7 @@ describe("AGS-D-0091 관측의 현재 정책 거절 원인", () => {
   });
 });
 
-it("AGS-D-0185 reuses the capability that was verified instead of resolving it again for diagnostics", () => {
+it("AGS3-D-0021 observes the descriptor once without a diagnostic-only capability cache", () => {
   const capability: ResolvedModelCapabilityV1 = {
     host: adapter.host, provider: "al05-provider", rawModel: model, resolvedModel: model,
     modelClass: "deep", minimumReasoningEffort: "high", supportedEfforts: ["high"], aliasUsed: false,
@@ -164,10 +164,10 @@ it("AGS-D-0185 reuses the capability that was verified instead of resolving it a
   };
   const resolve = vi.fn(() => capability);
   const observedAdapter: HostExecutionAdapter = { ...adapter, resolveModel: resolve };
-  const { context, provider } = qualify(observedAdapter, { model, effort: "high", turnId: "al05-turn", provenance: "al05-host-owned" });
+  const { context } = qualify(observedAdapter, { model, effort: "high", turnId: "al05-turn", provenance: "al05-host-owned" });
   expect(context).toMatchObject({ model, modelClass: "deep", reasoningEffort: "high" });
   expect(resolve).toHaveBeenCalledTimes(1);
-  expect(provider.lastObservedCapability()).toBe(capability);
+  expect(resolve.mock.results[0]?.value).toBe(capability);
 });
 
 it("AGS-D-0209 preserves producer serialization and absorbs only diagnostic writer failures", () => {

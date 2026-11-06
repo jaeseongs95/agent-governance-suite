@@ -72,8 +72,8 @@ describe("AL03 D0011 detached relay diagnostics", () => {
     expect(() => reportRelayFailure("release", primary)).not.toThrow();
     const [descriptor] = vi.mocked(fs.closeSync).mock.calls.at(-1)!;
     expect(() => fs.fstatSync(descriptor)).toThrow();
-    expect(console.error).toHaveBeenCalledWith("[agent-governance-suite] relay-failure "
-      + JSON.stringify({ phase: "release", reason: "PRIMARY_RELAY_FAILURE", context: before }));
+    expect(console.error).toHaveBeenCalledWith(JSON.stringify({ phase: "release", reason: "PRIMARY_RELAY_FAILURE", context: before,
+      component: "session-message-relay", event: "relay-failure" }));
     expect(failureContext(primary)).toEqual(before);
   });
 

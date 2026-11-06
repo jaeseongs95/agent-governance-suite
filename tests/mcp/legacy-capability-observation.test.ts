@@ -90,7 +90,7 @@ describe("D0089 레거시 분류 콜백은 능력 관측이 아니다", () => {
       // 3.1.1: the model runs, but the legacy callback's "frontier" never becomes its class.
       expect(result.ok, JSON.stringify(result)).toBe(true);
       expect(result.data!.bootstrapExecution!.context).toMatchObject({ model, modelClass: null, policyNotes: ["MISSING_MODEL_CAPABILITY"] });
-      expect(f.provider.lastObservedCapability()).toBeNull();
+      expect(f.provider.observe({ phase: "bootstrap", taskId: "after-call", runId: null, stageId: null, revision: null })).toBeNull();
       expect(classify).not.toHaveBeenCalled();
     },
   );
@@ -119,7 +119,7 @@ describe("D0089 레거시 분류 콜백은 능력 관측이 아니다", () => {
     expect(accepted).toMatchObject({ ok: true, data: { bootstrapExecution: { context: {
       model: OPAQUE, modelClass: "deep", reasoningEffort: "high", actorId: hostActorId(HOST, SESSION), source: "runtime",
     } } } });
-    expect(f.provider.lastObservedCapability()).toMatchObject({ provider: PROVIDER, resolvedModel: "synthetic-d0089-resolved", supportedEfforts: ["high", "xhigh"] });
+    expect(resolveAdapterModelCapability(adapter, OPAQUE, PROVENANCE)).toMatchObject({ provider: PROVIDER, resolvedModel: "synthetic-d0089-resolved", supportedEfforts: ["high", "xhigh"] });
     expect(f.run(OPAQUE)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
     expect(f.run(OPAQUE, "d0089-fresh-call")).toMatchObject({ ok: true });
     expect(classify).not.toHaveBeenCalled();

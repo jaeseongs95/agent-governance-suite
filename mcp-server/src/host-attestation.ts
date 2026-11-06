@@ -249,14 +249,8 @@ function qualificationRejectionReason(capability: ResolvedModelCapabilityV1, eff
  */
 export class HostAttestationProvider implements TrustedExecutionContextProvider {
   private current: { tool: string; caller: VerifiedCaller } | null = null;
-  private lastVerifiedCapability: ResolvedModelCapabilityV1 | null = null;
 
   constructor(private readonly adapter: HostExecutionAdapter, private readonly now: () => Date = () => new Date()) {}
-
-  /** Returns the vendor-neutral capability metadata and policy revision verified on the latest observe() call. */
-  lastObservedCapability(): ResolvedModelCapabilityV1 | null {
-    return this.lastVerifiedCapability;
-  }
 
   diagnose(): Record<string, unknown> {
     const execution = this.current?.caller.execution;
@@ -283,7 +277,6 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
   }
 
   observe(binding: ExecutionObservationBindingV1): ExecutionContextV1 | null {
-    this.lastVerifiedCapability = null;
     const current = this.current;
     if (!current || !HOST_ATTESTATION_TOOLS.has(current.tool)) return null;
     const { caller } = current;
@@ -311,7 +304,6 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
       if (mismatch) throw invalid(msg("services.hostAttestation.capabilityMismatch", {}), { reasonCode: mismatch });
       if (effort !== null && !satisfiesModelEffortPolicy(capability, effort)) notes.push(qualificationRejectionReason(capability, effort));
     }
-    this.lastVerifiedCapability = capability;
     const now = this.now();
     return {
       schemaVersion: CONTRACT_VERSION,

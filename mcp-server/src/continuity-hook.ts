@@ -10,7 +10,7 @@ import { types } from "node:util";
 
 import { ContinuityService, minimalWorkflowStartExample, renderHookText, subagentStartCue, workflowFailureCode } from "./continuity-service.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
-import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
+import { hookFailureContext, hookFailureReason, retainHookFailureSecondary, writeDiagnostic } from "./hook-error-diagnostics.js";
 import { failureReason } from "./failure-diagnostics.js";
 import { adaptHostInput, hostAgentNoteRoots, isGovernanceHookTool, resolveHookHost, turnEndContinuation, type AdaptedHostInput, type ContinuityAction, type ForkHostParentRead, type ForkOriginRead, type LineageRead } from "./host-input-adapter.js";
 import {
@@ -274,11 +274,11 @@ function reportContinuityFailure(phase: ContinuityHookPhase, cause: unknown): vo
         : workflowError ? `WORKFLOW_${workflowError.code}`
           // The shared classification keeps an OS, SQLite or JSON cause distinct instead of UNEXPECTED_FAILURE.
           : failureReason(cause).reason ?? "UNEXPECTED_FAILURE");
-    console.error("[agent-governance-suite] continuity-hook-failure " + JSON.stringify({
+    writeDiagnostic("continuity-hook", "continuity-hook-failure", {
       phase, reason, context: hookFailureContext(cause),
       ...(Number.isInteger(sqliteErrcode) ? { sqliteErrcode } : {}),
       ...(storeError && storeError.causeValue !== undefined ? { storeCause: hookFailureContext(storeError.causeValue) } : {}),
-    }));
+    });
   } catch { /* A broken diagnostic sink cannot block the host. */ }
 }
 

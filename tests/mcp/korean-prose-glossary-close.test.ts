@@ -185,7 +185,7 @@ it("actual MCP lookup keeps missing storage unavailable while reporting the orig
   calls.open.mockImplementationOnce(() => { throw primary; });
   const response = await lookupMcp();
   expect(response).toMatchObject({ ok: true, data: unavailable, error: null });
-  expect(diagnostic()).toEqual({ component: "korean-prose-glossary", phase: "lookup",
+  expect(diagnostic()).toEqual({ component: "korean-prose-glossary", event: "glossary-failure", phase: "lookup",
     reason: "GLOSSARY_UNAVAILABLE", context: failureContext(primary) });
   expect(calls.close).not.toHaveBeenCalled();
   expect(response.data).not.toHaveProperty("context");

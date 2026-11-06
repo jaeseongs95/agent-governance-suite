@@ -2,7 +2,7 @@ import "./builtin-hook-host-adapters.js";
 import { readFileSync } from "node:fs";
 
 import { failureReason } from "./failure-diagnostics.js";
-import { hookFailureReason } from "./hook-error-diagnostics.js";
+import { hookFailureReason, writeDiagnostic } from "./hook-error-diagnostics.js";
 import { isHookEntry } from "./hook-entry.js";
 import { adaptHostInput, resolveHookHost } from "./host-input-adapter.js";
 import { resolveHostLocale, type SupportedLocale } from "./i18n.js";
@@ -28,7 +28,7 @@ export function intakeHookOutput(input: Record<string, unknown>, host: string,
 /** Bounded diagnostics only: the stage and a stable reason, never input, paths or text. */
 function reportIntakeFailure(stage: string, cause: unknown): void {
   try {
-    console.error("[agent-governance-suite] intake-hook-failure " + JSON.stringify({ stage, reason: hookFailureReason(cause) ?? failureReason(cause).reason ?? "UNEXPECTED_FAILURE" }));
+    writeDiagnostic("intake-hook", "intake-hook-failure", { stage, reason: hookFailureReason(cause) ?? failureReason(cause).reason ?? "UNEXPECTED_FAILURE" });
   } catch { /* A broken diagnostic sink cannot block the host. */ }
 }
 

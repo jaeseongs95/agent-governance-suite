@@ -107,7 +107,7 @@ describe("AGS-D-0024 in-process messaging stage failures outside the OS code all
     const options = {executionBudget: {deadlineMonotonicMs: performance.now() + 5000, postClaimReserveMs: 100}};
     expect(await runSessionMessageHook(host, input, undefined, options)).toBe("");
     const line = spy.mock.calls.map((args: unknown[]) => args[0])
-      .find((value: unknown): value is string => typeof value === "string" && value.includes("peer-hook-failure "));
+      .find((value: unknown): value is string => typeof value === "string" && value.startsWith("{") && JSON.parse(value).event === "peer-hook-failure");
     if (typeof line !== "string") throw new Error("Expected hook failure diagnostic");
     expect(line).not.toContain("PRIVATE_");
     const value = JSON.parse(line.slice(line.indexOf("{")));

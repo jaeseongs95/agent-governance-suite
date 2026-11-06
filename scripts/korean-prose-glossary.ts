@@ -4,6 +4,7 @@ import path from "node:path";
 import { buildGlossaryWithRecovery } from "./korean-prose-glossary-build.js";
 import { buildGlossaryDatabase, checkGlossaryDatabase, parseGlossarySeed } from "../mcp-server/src/korean-prose-glossary.js";
 import { failureContext, producerFailureReason } from "../mcp-server/src/failure-diagnostics.js";
+import { writeDiagnostic } from "../mcp-server/src/hook-error-diagnostics.js";
 
 const root = path.resolve(import.meta.dirname, "..");
 let phase: "input" | "build" | "check" | "output" = "input";
@@ -45,8 +46,7 @@ try {
       (error as Error & { code?: string }).code ?? "") ? error : null;
   const first = recovery ? recovery.errors[0] : error;
   try {
-    writeSync(2, JSON.stringify({
-      component: "korean-prose-glossary", phase,
+    writeDiagnostic("korean-prose-glossary", "glossary-failure", { phase,
       // Untagged build failures (lock EEXIST, mkdtemp, publish rename/lstat, opening the temporary DB)
       // must not read as an unavailable glossary: the build phase has its own fallback.
       reason: producerFailureReason(first) ?? (phase === "input" ? "GLOSSARY_INPUT_INVALID"
@@ -57,7 +57,7 @@ try {
         recoveryReason: (recovery as AggregateError & { code: string }).code,
         secondary: recovery.errors.slice(1).map(secondary => failureContext(secondary)),
       } : {}),
-    }) + "\n");
+    }, line => { writeSync(2, line + "\n"); });
   } catch { /* A failed stderr sink must not turn a failed command into success. */ }
   process.exitCode = 1;
 }

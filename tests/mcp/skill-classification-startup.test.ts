@@ -32,16 +32,16 @@ for (const mode of ["unsupported-sibling", "invalid-isolation"] as const) server
   }).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
   // Existing source-stdio test runner: actual index, producer, factory, catch and MCP gateway. No native CLI invocation.
   let diagnostic = "";
-  const diagnosticPrefix = "[agent-governance-suite] classification-initialization-failed ";
+  const isDiagnostic = (line: string) => line.startsWith("{") && JSON.parse(line).event === "classification-initialization-failed";
   let received!: () => void;
   const diagnosticReceived = new Promise<void>(resolve => {received = resolve;});
   const server = await connect("native-startup-source-fixture", {command: process.execPath, args: ["--import", "tsx", path.join(root, "mcp-server", "src", "index.ts")], cwd: root, env: environment},
     stream => stream?.on("data", chunk => {
       diagnostic += String(chunk);
-      if (diagnostic.split(/\r?\n/u).slice(0, -1).some(line => line.startsWith(diagnosticPrefix))) received();
+      if (diagnostic.split(/\r?\n/u).slice(0, -1).some(line => isDiagnostic(line))) received();
     }));
-  return {directory, definitionsPath, environment, diagnosticPrefix, diagnosticReceived, diagnostic: () => diagnostic, server};
-}, async ({directory, definitionsPath, environment, diagnosticPrefix, diagnosticReceived, diagnostic, server}) => {
+  return {directory, definitionsPath, environment, isDiagnostic, diagnosticReceived, diagnostic: () => diagnostic, server};
+}, async ({directory, definitionsPath, environment, isDiagnostic, diagnosticReceived, diagnostic, server}) => {
   expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
   const {client} = server;
   try {
@@ -78,10 +78,10 @@ for (const mode of ["unsupported-sibling", "invalid-isolation"] as const) server
         await Promise.race([diagnosticReceived, new Promise<never>((_resolve, reject) => {timer = setTimeout(() => reject(new Error("STARTUP_DIAGNOSTIC_TIMEOUT")), 2000);})]);
       } finally {if (timer !== undefined) clearTimeout(timer);}
     }
-    const records = diagnostic().split(/\r?\n/u).filter(line => line.startsWith(diagnosticPrefix));
+    const records = diagnostic().split(/\r?\n/u).filter(line => isDiagnostic(line));
     if (mode === "invalid-isolation") {
       expect(records).toHaveLength(1);
-      expect(JSON.parse(records[0]!.slice(records[0]!.indexOf("{")))).toEqual({phase: "classification-initialization", reason: "INVALID_NATIVE_ISOLATION_ARGUMENT"});
+      expect(JSON.parse(records[0]!.slice(records[0]!.indexOf("{")))).toEqual({component: "skill-classification", event: "classification-initialization-failed", phase: "classification-initialization", reason: "INVALID_NATIVE_ISOLATION_ARGUMENT"});
     } else expect(records).toHaveLength(0);
     if (mode === "invalid-isolation") {
       // D0068: a valid follow-up classify call reports the typed initialization reason, and the server keeps serving.

@@ -55,7 +55,7 @@ const input = JSON.stringify({hook_event_name: "PostToolUse", session_id: "PRIVA
 const options = {executionBudget: {deadlineMonotonicMs: 1000, postClaimReserveMs: 200}};
 let root = "", stateDirectory = "";
 function diagnosticValue(spy: ReturnType<typeof vi.spyOn>) {
-  const line = spy.mock.calls.map((args: unknown[]) => args[0]).find((value: unknown): value is string => typeof value === "string" && value.includes("peer-hook-failure "));
+  const line = spy.mock.calls.map((args: unknown[]) => args[0]).find((value: unknown): value is string => typeof value === "string" && value.startsWith("{") && JSON.parse(value).event === "peer-hook-failure");
   if (typeof line !== "string") throw new Error("Expected hook failure diagnostic");
   for (const marker of ["PRIVATE_", "session-messages.sqlite3", key, root]) expect(line).not.toContain(marker);
   return JSON.parse(line.slice(line.indexOf("{")));

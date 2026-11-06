@@ -51,7 +51,7 @@ const decoded = (args: string[]) => {
 const lookups = () => (f.execFile.mock.calls as ExecCall[]).filter(([file, args]) => file === "ps" || decoded(args).includes("Get-CimInstance"));
 const launches = () => (f.execFile.mock.calls as ExecCall[]).filter(([, args]) => decoded(args).includes("Start-Process"));
 const hookFailures = () => vi.mocked(console.error).mock.calls.map((call) => String(call[0]))
-  .filter((line) => line.includes("peer-hook-failure "))
+  .filter((line) => line.startsWith("{") && JSON.parse(line).event === "peer-hook-failure")
   .map((line) => JSON.parse(line.slice(line.indexOf("{"))) as Record<string, unknown>);
 
 const originalArgv = process.argv;

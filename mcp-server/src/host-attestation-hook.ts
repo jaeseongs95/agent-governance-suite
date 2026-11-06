@@ -1,5 +1,5 @@
 import { isHookEntry } from "./hook-entry.js";
-import { hookFailureContext, hookFailureReason, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
+import { hookFailureContext, hookFailureReason, retainHookFailureSecondary, writeDiagnostic, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import { failureReason } from "./failure-diagnostics.js";
 import { closeSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -38,8 +38,8 @@ export function observationFailureCode(error: unknown): HookObservationFailureCo
 }
 
 function reportObservationFailure(phase: string, reason: string, cause?: unknown): void {
-  try { writeFailureDiagnostic(JSON.stringify({ component: "host-attestation-hook", phase, reason,
-    ...(cause === undefined ? {} : { context: hookFailureContext(cause) }) }) + "\n"); }
+  try { writeDiagnostic("host-attestation-hook", "observation-failure", { phase, reason,
+    ...(cause === undefined ? {} : { context: hookFailureContext(cause) }) }, line => writeFailureDiagnostic(line + "\n")); }
   catch { /* Diagnostics cannot authorize a call or block argument stripping. */ }
 }
 
