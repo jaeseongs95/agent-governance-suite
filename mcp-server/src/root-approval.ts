@@ -82,7 +82,7 @@ export function createRootApprovalHandler(server: Pick<Server, "getClientCapabil
         if (response.action !== "accept" || response.content?.confirm !== true) {
           throw rootApprovalFailure(response.action === "cancel" ? "USER_APPROVAL_CANCELLED" : "USER_APPROVAL_DECLINED", "INVALID_TRANSITION");
         }
-        const stored = service.recordRootApproval(pending, { kind: "mcp-form", connectionId, requestId: String(extra.requestId) }, access, extra.signal);
+        const stored = service.recordRootApproval(pending, { kind: "mcp-form", connectionId, requestId: JSON.stringify(extra.requestId) }, access, extra.signal);
         if (!stored.ok) return { ...stored, data: null };
       }
       return service.executePreparedRootOperation(pending, access, extra.signal);

@@ -471,7 +471,7 @@ export class WorkflowService {
       }
       // Resolve machine identity before acquiring the writer lock. Parent checks and abandonment/insertion share it.
       hostIdentity();
-      return this.store.withWorkflowTransaction(() => {
+      const insertRoot = () => {
       const context = request.parentRootId ? this.rootApprovalContext("replace-root", request, access) : null;
       const approval = context ? this.lookupRootApproval(context.scope, request.userApprovalRefs) : null;
       if (context && !approval) throw rootApprovalFailure("USER_APPROVAL_REQUIRED");
@@ -494,12 +494,16 @@ export class WorkflowService {
       this.validator.convergenceRoot(root);
       // The store decides workspace binding and conflicts from server-derived identities, in the insert transaction.
       const conflict = this.store.insertConvergenceRoot(root);
-      if (conflict) {
-        throw this.rootConflict(conflictDetails(conflict), "open", rootId => access?.ownsRoot(rootId) ?? false,
+      return { root: clone(root), conflict };
+      };
+      // Only replacement needs the enclosing authorization/mutation transaction. A conflict is a no-mutation value:
+      // let the store commit its observed identity backfill before reporting the conflict, as initial opens did.
+      const inserted = request.parentRootId ? this.store.withWorkflowTransaction(insertRoot) : insertRoot();
+      if (inserted.conflict) {
+        throw this.rootConflict(conflictDetails(inserted.conflict), "open", rootId => access?.ownsRoot(rootId) ?? false,
           access ? rootId => access.ownerPresence(rootId) : null);
       }
-      return clone(root);
-      });
+      return inserted.root;
     });
   }
 
@@ -531,13 +535,18 @@ export class WorkflowService {
   }
 
   executePreparedRootOperation(pending: PendingRootApproval, access: RootAccess, signal: AbortSignal): ApiResultV1<RootOperationResult> {
-    return this.attempt(() => this.store.withWorkflowTransaction(() => {
-      this.assertRootApprovalPending(pending, access, signal, true);
-      const result: RootOperationResult = pending.scope.action === "replace-root"
-        ? unwrapResult(this.openConvergenceRoot(pending.request, access)) : unwrapResult(this.releaseConvergenceRoot(pending.request, access));
-      if (signal.aborted) throw rootApprovalFailure("USER_APPROVAL_CANCELLED", "INVALID_TRANSITION");
-      return result;
-    }));
+    return this.attempt(() => {
+      const result = this.store.withWorkflowTransaction(() => {
+        this.assertRootApprovalPending(pending, access, signal, true);
+        const result: ApiResultV1<RootOperationResult> = pending.scope.action === "replace-root"
+          ? this.openConvergenceRoot(pending.request, access) : this.releaseConvergenceRoot(pending.request, access);
+        // ROOT_CONFLICT precedes root mutation; its identity observations are still useful. Other failures roll back.
+        if (!result.ok && result.error?.code !== "ROOT_CONFLICT") unwrapResult(result);
+        if (signal.aborted) throw rootApprovalFailure("USER_APPROVAL_CANCELLED", "INVALID_TRANSITION");
+        return result;
+      });
+      return unwrapResult(result);
+    });
   }
 
   private assertRootApprovalPending(pending: PendingRootApproval, access: RootAccess, signal: AbortSignal, checkRevision: boolean): void {
