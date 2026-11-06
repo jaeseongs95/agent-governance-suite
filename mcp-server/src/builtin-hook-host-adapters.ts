@@ -478,7 +478,7 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
     adaptInput: adaptClaudeHookInput, ownsTool: ownsGovernanceTool,
     observeExecution: (input, environment) => observeClaudeExecution(input, { host: "claude-code",
       readSessionModel: (id) => readSessionModel(sessionModelDirectory(resolveWorkflowDatabasePath(environment)), id) }),
-    deliveryProfile: () => deliveryProfile("claude-inbox", false),
+    deliveryProfile: () => deliveryProfile("claude-inbox", true),
     processPid: () => process.ppid, agentNoteRoots: claudeNoteRoots,
   }],
   ["gemini", {
