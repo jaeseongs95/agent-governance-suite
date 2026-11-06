@@ -6,10 +6,10 @@
  import { observedCaller } from "./caller-actor.js";
 +import { createRootApprovalHandler } from "./root-approval.js";
  import { existsSync } from "node:fs";
- 
+
  import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 @@ -8,6 +9,7 @@
- 
+
  import {
    type ApiResultV1,
 +  type ConvergenceRootV1,
@@ -19,7 +19,7 @@
 @@ -630,6 +632,8 @@
      { capabilities: { tools: {} }, instructions: serverInstructions(defaultLocale) },
    );
- 
+
 +  const rootOperation = createRootApprovalHandler(server, service);
 +
    // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
@@ -28,7 +28,7 @@
 @@ -859,7 +863,7 @@
      return { tools: toolsFor(locale), _meta: { [CONTENT_LANGUAGE_META]: locale } };
    });
- 
+
 -  server.setRequestHandler(CallToolRequestSchema, async (request) => {
 +  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
      const locale = resolveRequestLocale(request.params._meta, defaultLocale);
@@ -75,7 +75,7 @@
 --- a/mcp-server/src/index.ts
 +++ b/mcp-server/src/index.ts
 @@ -72,7 +72,7 @@
- 
+
    const validator = new ContractValidator();
    const hostAttestation = executionAdapter ? new HostAttestationProvider(executionAdapter) : null;
 -  // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
