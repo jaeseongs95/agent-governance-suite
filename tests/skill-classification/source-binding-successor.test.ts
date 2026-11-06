@@ -385,7 +385,8 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
     // The predecessor is what the earlier successors bound last, read at this successor's base.
     expect(latestDigest(binding.path, null, [specialist, multi, overwrite, premise])).toBe(binding.previousDigest);
     base(binding.path);
-    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    // Later successors rebind some of these paths; the chain resolves to the last of them.
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latestDigest(binding.path, binding.digest, [role, purpose, move, blocked, neutral]));
     if (binding.digest === null) {
       expect(retiredPaths).toContain(binding.path);
       expect(binding.bytes).toBe(0);
