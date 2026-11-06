@@ -1,10 +1,14 @@
 import path from "node:path";
+import {cpSync, mkdtempSync, rmSync} from "node:fs";
+import {spawnSync} from "node:child_process";
+import {tmpdir} from "node:os";
 import {fileURLToPath} from "node:url";
 import {build} from "esbuild";
 import {describe, expect, it} from "vitest";
 import {resolveCatalogModel} from "../../skills/coordinate-subagents/scripts/model-catalog-adapter.mjs";
 import {collaborationDecisionStructuralDiagnostic} from "../../skills/orchestrator/scripts/collaboration-decision.mjs";
 import {openBoard, recordInput, setSummary, readEntry} from "../../skills/session-board/scripts/board-store.mjs";
+import {createCatalogExecutionAdapters, type CatalogModelEntryV1} from "../../mcp-server/src/host-execution-adapters.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 describe("AGS3 D0007 shared implementation boundaries", () => {
@@ -35,5 +39,28 @@ describe("AGS3 D0007 shared implementation boundaries", () => {
       setSummary(db, session, "updated");
       expect(readEntry(db, session.host, session.sessionId)).toMatchObject({summary: "updated", role: "reviewer", lastPromptAt: session.now});
     } finally {db.close();}
+  });
+  it("CB-11 preserves the skill-folder-only CLI without a shared runtime", () => {
+    const clean = mkdtempSync(path.join(tmpdir(), "ags38-catalog-standalone-"));
+    try {
+      cpSync(path.join(root, "skills/coordinate-subagents"), path.join(clean, "skill"), {recursive: true});
+      const result = spawnSync(process.execPath, [path.join(clean, "skill/scripts/model-routing.mjs")], {cwd: clean, encoding: "utf8", windowsHide: true});
+      expect(result.error).toBeUndefined();
+      expect(result.stderr.trim()).toBe("skillTools.modelRouting.usage");
+    } finally {rmSync(clean, {recursive: true, force: true});}
+  });
+  it("CB-12 compiles only declared admission IDs and snapshots their capability metadata", () => {
+    const entry: CatalogModelEntryV1 = {model_class: "general", minimum_effort: "medium", supported_efforts: ["medium", "high"]};
+    const catalog = {matching: "exact-only" as const, models: {"model-a": entry, balanced: entry},
+      aliases: {observed: "model-a", dangling: "missing", "model-a": "model-a"}, profile_only_keys: ["balanced"]};
+    const suite = createCatalogExecutionAdapters({schema_version: 1, model_class_order: ["general"], effort_order: ["medium", "high"],
+      providers: {vendor: {host: "neutral-admission-host", catalog, minimum_efforts: {observed: "high"}}}});
+    const adapter = suite.adapters.get("neutral-admission-host")!;
+    expect(adapter.resolveModel?.("model-a")).toMatchObject({modelClass: "general", resolvedModel: "model-a", minimumReasoningEffort: "medium", aliasUsed: false});
+    expect(adapter.resolveModel?.("observed")).toMatchObject({modelClass: "general", resolvedModel: "model-a", minimumReasoningEffort: "high", aliasUsed: true});
+    for (const raw of ["model-a-next", "balanced", "dangling"]) expect(adapter.resolveModel?.(raw)).toBeNull();
+    catalog.models["model-a"] = {model_class: "frontier", minimum_effort: "high", supported_efforts: ["high"]};
+    catalog.aliases.observed = "missing";
+    expect(adapter.resolveModel?.("observed")).toMatchObject({modelClass: "general", resolvedModel: "model-a", minimumReasoningEffort: "high"});
   });
 });
