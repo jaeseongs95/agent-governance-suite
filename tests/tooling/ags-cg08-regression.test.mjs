@@ -6,7 +6,15 @@ import { analyzeAcceptance, validateReport, sha256 } from "../../skills/acceptan
 import { InputError, validateRequest, validateReview } from "../../skills/iteration-frame-auditor/scripts/core.mjs";
 
 const json = async (relative) => JSON.parse(await readFile(new URL(relative, import.meta.url), "utf8"));
-const acceptanceFixture = () => json("../acceptance-evidence-validator/fixtures/not-applicable.json");
+const acceptanceFixture = async () => {
+  const input = await json("../acceptance-evidence-validator/fixtures/not-applicable.json");
+  // Migrate the frozen fixture's original ID-to-statement table, never its current array order.
+  input.criterionBindings = [
+    { criterionId: "AC-001", statement: "문서 링크가 유효하다." },
+    { criterionId: "AC-002", statement: "프로덕션 배포가 성공한다." },
+  ];
+  return input;
+};
 const criterionId = (statement) => `AC-${createHash("sha256").update(statement, "utf8").digest("hex").slice(0, 12)}`;
 
 describe("CG08 iteration and acceptance contract regressions", () => {

@@ -59,6 +59,7 @@ describe("security audit integration", () => {
     const { report } = fixture(); report.findings.push(finding());
     const taskEnvelope = task(); taskEnvelope.acceptanceCriteria = ["No unresolved cross-user disclosure"];
     const input = { schemaVersion: "1.0.0", taskEnvelope, target: { kind: "artifact", identifier: "fixture", digest: report.targetDigest },
+      criterionBindings: [{ criterionId: "AC-001", statement: "No unresolved cross-user disclosure" }],
       evidence: [{ id: "security-report", kind: "document", locator: "report.json", digest: digest(report), targetDigest: report.targetDigest, verified: true, criterionIds: ["AC-001"], direction: "refutes", observedResult: report.findings[0].impact }], verificationCommands: [], knownLimitations: report.limitations, criterionOverrides: [] };
     const acceptance = analyzeAcceptance(input);
     expect(acceptance.verdict).toBe("FAIL");
@@ -71,6 +72,7 @@ describe("security audit integration", () => {
     const taskEnvelope = task(undefined, targetDigest(request));
     expect(() => assertTaskEnvelope(taskEnvelope)).not.toThrow();
     const input = { schemaVersion: "1.0.0", taskEnvelope,
+      criterionBindings: [{ criterionId: "AC-001", statement: "Report uncertainty" }],
       target: { kind: "artifact", identifier: "fixture", digest: targetDigest(request) },
       evidence: [{ id: "security-report", kind: "document", locator: "report.json", digest: digest(report),
         targetDigest: targetDigest(request), verified: true, criterionIds: ["AC-001"], direction: "supports", observedResult: "Uncertainty is explicitly reported." }],
