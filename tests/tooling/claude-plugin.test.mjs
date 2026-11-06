@@ -113,7 +113,7 @@ describe("generated Claude plugin", () => {
     const shared = await orchestrator(root, "SKILL.md");
     const generated = await orchestrator(pluginRoot, "SKILL.md");
     // The shared source names no host invocation syntax or product.
-    for (const document of ["SKILL.md", "references/entry-details.md", "references/mcp-execution.md"]) {
+    for (const document of ["SKILL.md", "references/intake.md", "references/entry-details.md", "references/mcp-execution.md"]) {
       const text = await orchestrator(root, document);
       for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9]*(?:-[a-z0-9]+)*\b/u, /Claude/u, /Codex/u, /UserPromptSubmit/u, /transcript/u]) {
         expect(text, document).not.toMatch(hostSpecific);
@@ -144,32 +144,41 @@ describe("generated Claude plugin", () => {
     for (const guard of ["하한 미달로 `GATE_FAILED`가 확인된 subagent", "만료가 확인된 경우", "결속, 신선도, 한 번 소비와 기존 수렴 가드", "코드나 승인 대기 시간만으로 원인을 만료로 단정"]) {
       expect(recovery).toContain(guard);
     }
-    // Each common selection sentence reaches Claude exactly once.
+    // Each common selection sentence reaches Claude exactly once, in the intake reference (3.8.0, AGS3-D-0032).
+    const sharedIntake = await orchestrator(root, "references", "intake.md");
+    const generatedIntake = await orchestrator(pluginRoot, "references", "intake.md");
     for (const sentence of ["키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다.", "필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.", "이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다."]) {
-      expect(shared.split(sentence)).toHaveLength(2);
-      expect(generated.split(sentence)).toHaveLength(2);
+      expect(sharedIntake.split(sentence)).toHaveLength(2);
+      expect(generatedIntake.split(sentence)).toHaveLength(2);
+      expect(generated).not.toContain(sentence);
     }
   });
 
   it("keeps no copy of the common intake sentences in any tracked file outside the shared source", async () => {
     const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
-    const intake = shared.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
+    // 3.8.0 (AGS3-D-0032): the block lives in references/intake.md, and SKILL.md keeps no copy of it.
+    const sharedIntake = await readFile(path.join(root, "skills", "orchestrator", "references", "intake.md"), "utf8");
+    const intake = sharedIntake.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
     const sentences = intake.split("\n").filter((line) => !line.startsWith("#")).flatMap((line) => line.replace(/^- /u, "").split(/(?<=다\.) /u)).filter((sentence) => sentence.length > 20);
     expect(sentences.length).toBeGreaterThan(10);
+    for (const sentence of sentences) expect(shared.includes(sentence), `SKILL.md: ${sentence}`).toBe(false);
     // The classification projection embeds immutable canonical bytes mechanically;
     // it does not define another editable intake policy.
     const projectionPath = "claude-plugin/skills/classification-projection.json";
     const projection = JSON.parse(await readFile(path.join(root, projectionPath), "utf8"));
-    const canonicalIntake = projection.canonicalSources.filter((source) => source.path === "skills/orchestrator/SKILL.md");
+    const canonicalSkill = projection.canonicalSources.filter((source) => source.path === "skills/orchestrator/SKILL.md");
+    expect(canonicalSkill).toHaveLength(1);
+    expect(canonicalSkill[0].content).toBe(shared);
+    const canonicalIntake = projection.canonicalSources.filter((source) => source.path === "skills/orchestrator/references/intake.md");
     expect(canonicalIntake).toHaveLength(1);
-    expect(canonicalIntake[0].content).toBe(shared);
+    expect(canonicalIntake[0].content).toBe(sharedIntake);
     const frozenAdditionPath = "scripts/fixtures/skill-classification-intake.2.9.1.md";
     const frozenAddition = await readFile(path.join(root, frozenAdditionPath), "utf8");
     // Frozen provenance stays intact; current governance intentionally replaces its imperative wording.
     expect(createHash("sha256").update(frozenAddition).digest("hex")).toBe("640b42d913010477835200f35303790cc2015fabc9740d97b4f0ddabbe6f7bd3");
     expect(matchesSkillPolicyWordingSuccessorBytes("skills/orchestrator/SKILL.md", Buffer.from(shared))).toBe(true);
     expect(matchesGovernanceSourceSuccessor("skills/orchestrator/SKILL.md", readHistoricalSource("skills/orchestrator/SKILL.md"))).toBe(true);
-    const allowed = new Set(["skills/orchestrator/SKILL.md", "claude-plugin/skills/orchestrator/SKILL.md", "tests/tooling/claude-plugin.test.mjs", projectionPath, frozenAdditionPath]);
+    const allowed = new Set(["skills/orchestrator/references/intake.md", "claude-plugin/skills/orchestrator/references/intake.md", "tests/tooling/claude-plugin.test.mjs", projectionPath, frozenAdditionPath]);
     const listed = spawnSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
     expect(listed.status).toBe(0);
     // The English packages are generated copies of those files (scripts/build-en-packages.mjs).
@@ -193,17 +202,18 @@ describe("generated Claude plugin", () => {
     temporaryDirectories.push(directory);
     await mkdir(path.join(directory, "hooks"));
     await mkdir(path.join(directory, "runtime"));
-    await mkdir(path.join(directory, "skills", "orchestrator"), { recursive: true });
+    await mkdir(path.join(directory, "skills", "orchestrator", "references"), { recursive: true });
     // The plugin layout: hooks/ beside runtime/, whose catalog bundle and package locale (ko) the launcher reads.
     for (const file of ["i18n.mjs", "locale.json"]) await writeFile(path.join(directory, "runtime", file), await readFile(path.join(root, "runtime", file)));
     const launcher = await readFile(path.join(root, "claude-overlay", "hooks", "skill-trigger-hook.mjs"));
-    const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
+    const shared = await readFile(path.join(root, "skills", "orchestrator", "references", "intake.md"), "utf8");
     // A changed source must change the emitted context, proving there is no adapter policy copy.
     const current = shared.replace("<!-- skill-intake:end -->", "fixture-source-revision\n<!-- skill-intake:end -->");
     const intake = current.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
     const hook = path.join(directory, "hooks", "skill-trigger-hook.mjs");
     await writeFile(hook, launcher);
-    await writeFile(path.join(directory, "skills", "orchestrator", "SKILL.md"), current);
+    await writeFile(path.join(directory, "skills", "orchestrator", "SKILL.md"), await readFile(path.join(root, "skills", "orchestrator", "SKILL.md")));
+    await writeFile(path.join(directory, "skills", "orchestrator", "references", "intake.md"), current);
     const hostEnvironment = { ...process.env };
     delete hostEnvironment.AGENT_GOVERNANCE_LOCALE;
     const invoke = (input, env = hostEnvironment) => spawnSync(process.execPath, [hook], { input: JSON.stringify(input), encoding: "utf8", env });

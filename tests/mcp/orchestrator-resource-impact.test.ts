@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 import { SKILL_INTAKE_SERVER_INSTRUCTIONS, serverInstructions } from "../../mcp-server/src/server.js";
 
 const shared = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8");
-const intake = shared.match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1] ?? "";
+// 3.8.0 (AGS3-D-0032): the intake block lives in its own reference, so the orchestrator skill does not load it twice.
+const sharedIntake = readFileSync(new URL("../../skills/orchestrator/references/intake.md", import.meta.url), "utf8");
+const intake = sharedIntake.match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1] ?? "";
 const impactLine = intake.split("\n").find((line) => line.startsWith("- 대형 빌드·시험")) ?? "";
 const resumeLine = intake.split("\n").find((line) => line.includes("자원 문제로 정한 실행 위치")) ?? "";
 const gateLine = intake.split("\n").find((line) => line.startsWith("- 무거운 단계")) ?? "";
@@ -111,8 +113,10 @@ describe("orchestrator resource-impact prompt propagation", () => {
     expect(adaptation.replacements).toHaveLength(1);
     const { find, replace } = adaptation.replacements[0]!;
     expect(generated).toBe(shared.replace(find, replace));
-    expect(generated).toContain(impactLine);
-    expect(generated).toContain(resumeLine);
+    const generatedIntake = readFileSync(new URL("../../claude-plugin/skills/orchestrator/references/intake.md", import.meta.url), "utf8");
+    expect(generatedIntake).toBe(sharedIntake);
+    expect(generatedIntake).toContain(impactLine);
+    expect(generatedIntake).toContain(resumeLine);
 
     const projection = JSON.parse(readFileSync(new URL("../../claude-plugin/skills/classification-projection.json", import.meta.url), "utf8")) as {
       canonicalSources: Array<{ path: string; content: string }>;
@@ -120,7 +124,10 @@ describe("orchestrator resource-impact prompt propagation", () => {
     const canonical = projection.canonicalSources.filter((source) => source.path === "skills/orchestrator/SKILL.md");
     expect(canonical).toHaveLength(1);
     expect(canonical[0]!.content).toBe(shared);
-    expect(canonical[0]!.content).toContain(impactLine);
+    const canonicalIntake = projection.canonicalSources.filter((source) => source.path === "skills/orchestrator/references/intake.md");
+    expect(canonicalIntake).toHaveLength(1);
+    expect(canonicalIntake[0]!.content).toBe(sharedIntake);
+    expect(canonicalIntake[0]!.content).toContain(impactLine);
   });
 
   // These are evaluation specifications only. No model, provider, or actual behavior was executed here.

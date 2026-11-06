@@ -337,17 +337,24 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, purpose.frozenPredecessor.path) !== rolePath || roleBytes.length !== purpose.frozenPredecessor.bytes || hashBytes(roleBytes) !== purpose.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings];
+  const movePath = resolve(repo, "tests/skill-classification/fixtures.intake-reference-move-source-successor.json");
+  const moveBytes = readFileSync(movePath);
+  if (hashBytes(moveBytes) !== "sha256:cb81c00e4e854e20c1ea58d561c205cafeba7665d66692f8520ab563066fae88") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const move = JSON.parse(moveBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, move.frozenPredecessor.path) !== purposePath || purposeBytes.length !== move.frozenPredecessor.bytes || hashBytes(purposeBytes) !== move.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: purpose.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath);
+  const currentManifest = {...manifest, revision: move.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(purposeBytes),
+    manifest: currentManifest, files, digest: hashBytes(moveBytes),
     /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
     resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);

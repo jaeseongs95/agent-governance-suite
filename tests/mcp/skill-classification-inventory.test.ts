@@ -193,9 +193,10 @@ describe("signed source evidence and selection context regression", () => {
   });
 
   it.each([
-    ["orchestrator", "skills/orchestrator/SKILL.md", "작업 중이나 새 사용자 메시지에서 목표·범위·위험이나 필요한 전문 판단이 달라지면"],
-    ["orchestrator", "skills/orchestrator/SKILL.md", "- 코드 작성·수정·설계나 라이브러리·의존성 선택 단계에는"],
-    ["orchestrator", "skills/orchestrator/SKILL.md", "- 대형 빌드·시험, 대량 파일·데이터 처리, 장시간·동시 실행을 시작하기 전에는"],
+    // 3.8.0: the intake block lives in references/intake.md, and its continuity paragraph opens with the per-message check.
+    ["orchestrator", "skills/orchestrator/references/intake.md", "새 사용자 메시지마다 교정, 새 결정·승인·금지, 추가 작업, 범위 변경이 생겼는지"],
+    ["orchestrator", "skills/orchestrator/references/intake.md", "- 코드 작성·수정·설계나 라이브러리·의존성 선택 단계에는"],
+    ["orchestrator", "skills/orchestrator/references/intake.md", "- 대형 빌드·시험, 대량 파일·데이터 처리, 장시간·동시 실행을 시작하기 전에는"],
     ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", "- `pre-execution`에서는"],
     ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", "- `post-execution`에서는"],
     ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", "저장소의 동결 평가에서는"],
@@ -215,7 +216,7 @@ describe("signed source evidence and selection context regression", () => {
   });
 
   it("keeps the no-specialist reply clause separate from orchestration exclusions", async () => {
-    const source = await readFile("skills/orchestrator/SKILL.md", "utf8");
+    const source = await readFile("skills/orchestrator/references/intake.md", "utf8");
     const line = source.split("\n").find(text => text.startsWith("- 질문 답변, 설명, 인사"))!;
     expect(line).toBeTypeOf("string");
     const boundary = line.indexOf(". ");

@@ -33,7 +33,7 @@ it("keeps causal correction in the existing bug-fix and test rules without a new
 });
 it("keeps explicit disable and user override above persistence and mandatory-first intake", async () => {
   const text = await read("skills/ponytail/SKILL.md");
-  const intake = await read("skills/orchestrator/SKILL.md");
+  const intake = await read("skills/orchestrator/references/intake.md");
   expect(text).not.toContain("Off only:");
   expect(text).toContain("Explicit disable or user override takes precedence over automatic selection and mandatory-first wording");
   expect(text).toContain("examples, not the only ways to disable it");

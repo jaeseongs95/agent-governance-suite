@@ -595,7 +595,8 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
       expect(text).toContain("같은 디스크 안 이동·이름 변경과 되돌릴 수 있는 로컬 편집은 이 표의 대상이 아니다.");
     }
 
-    for (const text of readBoth("skills/orchestrator/SKILL.md")) {
+    // 3.8.0 (AGS3-D-0032): the shared intake lives in references/intake.md.
+    for (const text of readBoth("skills/orchestrator/references/intake.md")) {
       expect(text).toContain("행동 이름이 아니라 실제 위험으로");
       expect(text).toContain("가장 짧은 경로로 직접 한다");
       expect(text).toContain("맡긴 역할 범위의 일은 그 근거로");

@@ -160,7 +160,7 @@ describe("schema description catalog (docs/i18n-design.md 5.2)", () => {
 
 describe("server instructions (docs/i18n-design.md 4.2, 6)", () => {
   it("renders the frame and session guidance in the service default locale around the installed intake block", async () => {
-    const shared = readFileSync(new URL("skills/orchestrator/SKILL.md", root), "utf8");
+    const shared = readFileSync(new URL("skills/orchestrator/references/intake.md", root), "utf8");
     const intake = shared.split("<!-- skill-intake:start -->\n")[1]?.split("\n<!-- skill-intake:end -->")[0] ?? "";
     expect(intake).not.toBe("");
     expect(serverInstructions("ko")).toBe(`${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);

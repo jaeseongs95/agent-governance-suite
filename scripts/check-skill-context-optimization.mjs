@@ -41,6 +41,8 @@ function git(...args) {
 //   rules; coordinate-subagents checks the net-benefit conditions instead of keeping work local by default.
 // - 3.8.0 intake text (AGS3-D-0031/0032): the shared intake merges repeated sentences without dropping a rule and adds
 //   the line that checks whether a target's purpose was already met before closing, deleting, reverting or replacing it.
+// - 3.8.0 intake move (AGS3-D-0032): the intake block moves unchanged from SKILL.md to references/intake.md (a reviewed
+//   addition below), SKILL.md keeps a one-line pointer, and entry-details.md links the moved section.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
@@ -109,8 +111,29 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/orchestrator/classification.json": ["7672db7d4e40ec4a8b8deb9f46ca8f0c8fe4253e9a537158de95de30b8712077", "fdd6a12c9ef4916a1a65d91306544631af8ade845a499869464d9e187e8b300d"],
     }),
   }),
+  Object.freeze({
+    revision: "bdcb07922ffab9b40a166a6c15ef42db184fbe5f",
+    hashes: Object.freeze({
+      "skills/orchestrator/SKILL.md": ["a491ab1d9ebf022a98d66713c8f4430b82eddb506424e9605659506825a0d39e", "bffef87a7f7a2c88be3a5d778cb8dac01fcd25f11c2c55bf142da80a7031652f"],
+      "skills/orchestrator/classification.json": ["fdd6a12c9ef4916a1a65d91306544631af8ade845a499869464d9e187e8b300d", "8af0e814b6cdc128de65a392274d718ba14ce3e34061d8c0492164e8d883109e"],
+      "skills/orchestrator/references/entry-details.md": ["9827e50e480fbd70813e9c6f9643029e17e6b50d577bebd38d14b0e803a775fa", "abce8a5addf52b66c361561000a0f0db5c31f93fff9ad09a9fc8c2cc02988e41"],
+    }),
+  }),
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
+// Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes.
+// - 3.8.0 (AGS3-D-0032): the shared intake block, moved without a byte change from skills/orchestrator/SKILL.md at
+//   bdcb0792 (its lines 15-31), so invoking the orchestrator skill does not load it a second time.
+const GUIDANCE_ADDITIONS = Object.freeze({
+  "skills/orchestrator/references/intake.md": "77b5496ce490207317d016d2ca9f6a467dbd85bcfc39df86c561dec8d5a685b1",
+});
+/** True only for a reviewed addition that holds its exact reviewed bytes. */
+function isReviewedGuidanceAddition(relative) {
+  if (!Object.hasOwn(GUIDANCE_ADDITIONS, relative)) return false;
+  let bytes;
+  try { bytes = readFileBytes(join(ROOT, ...relative.split("/"))); } catch { return false; }
+  return createHash("sha256").update(bytes).digest("hex") === GUIDANCE_ADDITIONS[relative];
+}
 
 // Retired skills. context-continuity is no longer a skill: continuity is the MCP tools checkpoint_context,
 // inspect_context, load_context, suppress_context_restore and purge_direct_context plus the hooks. The tree holds none
@@ -391,7 +414,7 @@ export function checkSpecialistBehaviorSources() {
     && readFileSync(join(root, relative)).equals(git("show", `${SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision}:${relative}`));
   for (const relative of contextChanges) {
     if (!Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, relative) && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.additions, relative)
-      && !projectsToBaseline(relative)) {
+      && !projectsToBaseline(relative) && !isReviewedGuidanceAddition(relative)) {
       errors.push(`specialist behavior unpinned context change: ${relative}`);
     }
   }
@@ -1514,6 +1537,9 @@ export function checkSkillContextOptimization() {
     }
     for (const currentPath of Object.keys(CONTEXT_CONTRACT_PINS.hashes)) {
       if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
+    }
+    for (const currentPath of Object.keys(GUIDANCE_ADDITIONS)) {
+      if (currentPath.startsWith(`skills/${skillId}/`) && isReviewedGuidanceAddition(currentPath)) allowed.add(currentPath);
     }
     for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) if (reviewedPath.startsWith(`skills/${skillId}/`)) allowed.add(reviewedPath);
     for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);

@@ -195,7 +195,9 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
     expect(orchestratorText).toContain("## Antigravity에서의 호출과 도구 스키마 제약");
     expect(orchestratorText).toContain("invoke_subagent");
     expect(orchestratorText).toContain("mcp_agent-governance-suite_ags_<toolName>");
-    expect(orchestratorText).toContain("<!-- skill-intake:start -->");
+    // 3.8.0 (AGS3-D-0032): the shared intake block lives in references/intake.md; SKILL.md points at it.
+    expect(orchestratorText).toContain("](references/intake.md)");
+    expect(adapted.get("skills/orchestrator/references/intake.md").toString("utf8")).toContain("<!-- skill-intake:start -->");
 
     const preflightAuth = adapted.get("skills/mutation-risk-preflight/references/approval-and-authority.md").toString("utf8");
     expect(preflightAuth).toContain("Antigravity에서는 별도 승인창이 자동으로 뜨지 않으므로 요청 ID·대상·명령·영향·승인할 곳을 텍스트로 알리고 기다린다.");
@@ -257,7 +259,7 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
         {
           replacements: [
             {
-              file: "SKILL.md",
+              file: "references/intake.md",
               find: "<!-- skill-intake:start -->",
               replace: "<!-- skill-intake:start -->\n- 임의 덮어쓰기",
             },
@@ -265,7 +267,7 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
         },
         "antigravity-connector/adaptations/orchestrator.json",
       ),
-    ).toThrow(/adaptation must not override common policy in skills\/orchestrator\/SKILL\.md: skill-intake block/u);
+    ).toThrow(/adaptation must not override common policy in skills\/orchestrator\/references\/intake\.md: skill-intake block/u);
 
     const rawPreflightSkill = readFileSync(path.join(ROOT, "skills", "mutation-risk-preflight", "SKILL.md"), "utf8");
     const preflightBody = rawPreflightSkill.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/u, "");

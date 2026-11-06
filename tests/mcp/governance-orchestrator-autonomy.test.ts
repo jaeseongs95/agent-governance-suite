@@ -81,16 +81,18 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     expect(text).toContain("일반 한국어 답변·진행 보고·결과 설명은 요청 목적에 맞게 직접 작성한다");
     expect(text).toContain("일부 단계만 요청하면 필요한 기존 artifact를 제공");
     expect(text).toContain("reference-only policy는 유지한다");
-    expect(text).toContain("분류는 오류 가능한 조언");
-    expect(text).toContain("채택·교정·기각하고 최종 선택");
-    expect(text).toContain("점수는 정답이나 실행 승인이 아니다");
+    // 3.8.0 (AGS3-D-0032): the shared intake moved to references/intake.md, which every host gets at context start.
+    const intake = instructions("references/intake.md");
+    expect(intake).toContain("분류는 오류 가능한 조언");
+    expect(intake).toContain("채택·교정·기각하고 최종 선택");
+    expect(intake).toContain("점수는 정답이나 실행 승인이 아니다");
     const classification = instructions("references/skill-classification.md");
     expect(classification).toContain("오류 가능한 분류 조언");
     expect(classification).toContain("점수나 분류 결과를 정답·실행 승인으로 취급하지 않는다");
   });
   it("AGS-D-0352: 분류 지원 미확정과 거부 뒤 독립 작업의 지침을 전달한다", () => {
     // 지침 전달만 검사하며 실제 호스트 행동·거부·재시도 검증을 대신하지 않는다.
-    const intake = instructions("SKILL.md");
+    const intake = instructions("references/intake.md");
     const classification = instructions("references/skill-classification.md");
     expect(intake).toContain("도구 노출만으로 지원 설정을 추정하지 않");
     expect(intake).toContain("독립적으로 가능한 작업과 막힌 의존 단계를 구분한다");
@@ -117,7 +119,7 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
   it("continues authorized work after a specialist result without expanding analysis-only requests or bypassing gates", () => {
     const text = instructions("references/entry-details.md");
     const integration = text.split("## 결과 통합\n")[1]!.split("## MCP 도구 사용 계약")[0]!;
-    const intake = instructions("SKILL.md").split("<!-- skill-intake:start -->")[1]!.split("<!-- skill-intake:end -->")[0]!;
+    const intake = instructions("references/intake.md").split("<!-- skill-intake:start -->")[1]!.split("<!-- skill-intake:end -->")[0]!;
     const userOnlyBoundary = intake.match(/사용자만 할 수 있는[^.]+\./u)?.[0];
     expect(integration).toContain("해당 단계의 결과이며 사용자 요청 전체의 완료와 구분한다");
     expect(integration).toContain("분석·계획만 요청받았다면 후속 변경을 실행하지 않는다");
@@ -128,7 +130,7 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     expect(userOnlyBoundary).toBeDefined();
     expect(userOnlyBoundary).toContain("승인·비밀값 입력·사용자 화면 조작");
     expect(userOnlyBoundary).toContain("독립적인 작업은 계속한다");
-    expect(integration).toContain("[공통 접수·선택 기준](../SKILL.md#공통-접수선택-기준)");
+    expect(integration).toContain("[공통 접수·선택 기준](intake.md#공통-접수선택-기준)");
     expect(integration).not.toContain(userOnlyBoundary!);
     expect(integration).toContain("필수 입력이나 gate 실패로 막힌 의존 단계는 실행하지 않으며");
     expect(integration).toContain("실제 실행·검증 근거와 남은 제약");

@@ -25,10 +25,15 @@ describe("shared context-start intake", () => {
     for (const locale of ["ko", "en"] as const) expect(skillIntakeText(locale)).toBe(skillIntakeServerInstructions(locale));
   });
 
-  it("hook context is a short pointer to the installed SKILL.md that holds the intake block", () => {
-    const installed = path.join(root, "skills", "orchestrator", "SKILL.md");
+  it("hook context is a short pointer to the installed intake file that holds the intake block", () => {
+    // 3.8.0 (AGS3-D-0032): the block lives in references/intake.md; SKILL.md keeps only a pointer line, so invoking the
+    // orchestrator skill does not load the intake a second time.
+    const installed = path.join(root, "skills", "orchestrator", "references", "intake.md");
     expect(existsSync(installed)).toBe(true);
     expect(readFileSync(installed, "utf8")).toContain("<!-- skill-intake:start -->");
+    const skill = readFileSync(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
+    expect(skill).not.toContain("<!-- skill-intake:");
+    expect(skill).toContain("](references/intake.md)");
     for (const locale of ["ko", "en"] as const) {
       const pointer = skillIntakePointer(locale);
       expect(pointer).toContain(installed);

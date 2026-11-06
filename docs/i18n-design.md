@@ -15,7 +15,7 @@
 
 | 표면 | 지금 위치 | 지금 언어 | 받는 쪽 |
 |---|---|---|---|
-| MCP `instructions` | `server.ts` `SKILL_INTAKE_SERVER_INSTRUCTIONS`(앞뒤 문장 + `skills/orchestrator/SKILL.md` 접수 블록), `SESSION_MESSAGE_SERVER_INSTRUCTIONS` | 한국어 | 에이전트 |
+| MCP `instructions` | `server.ts` `SKILL_INTAKE_SERVER_INSTRUCTIONS`(앞뒤 문장 + `skills/orchestrator/references/intake.md` 접수 블록), `SESSION_MESSAGE_SERVER_INSTRUCTIONS` | 한국어 | 에이전트 |
 | 도구 설명·입력 필드 설명 | `server.ts` `description` 35곳, `contracts/*.schema.json`의 `description` | 영어(1곳 한국어) | 에이전트 |
 | 도구 결과·오류 문장 | `throw new` / `failure(` 약 463곳 | 영어 + code | 에이전트, 사용자 |
 | 저장 후 다시 보이는 문장 | `workflow-service.ts` `LATE_ADOPTION_LABEL` 등 | 한국어 | 에이전트, 관리자 페이지 |
@@ -184,7 +184,7 @@ locales/
 
 | 표면 | 렌더링 시점 | 방식 |
 |---|---|---|
-| MCP `instructions` | 서버 시작 | 앞뒤 문장과 세션 메시지 안내는 `server` 카탈로그. 접수 블록은 설치된 `skills/orchestrator/SKILL.md`(4.2). |
+| MCP `instructions` | 서버 시작 | 앞뒤 문장과 세션 메시지 안내는 `server` 카탈로그. 접수 블록은 설치된 `skills/orchestrator/references/intake.md`(4.2). |
 | 도구 설명·입력 필드 설명 | 서버 시작(`tools/list`) | `server.tool.*`, `server.schema.*` 키로 바꿔 내보낸다. |
 | 도구 결과·오류 | 호출마다 | `WorkflowContractError(code, MessageRef, details)`. 오류 본문에 `messageKey`, `params`를 더하고(계약 schema 4곳에 선택 필드 추가), 응답 경계가 요청 locale로 `message`를 렌더링하며 `_meta`에 `contentLanguage`를 적는다. 기존 필드는 그대로 둔다. |
 | 저장 후 다시 보이는 문장 | 읽을 때 | 저장은 key·params. 기존 행의 알려진 한국어 문장은 읽을 때 key로 대응. |

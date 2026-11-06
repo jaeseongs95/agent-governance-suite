@@ -4,11 +4,13 @@ import { fileURLToPath } from "node:url";
 import { msg, render, type SupportedLocale } from "./i18n.js";
 
 const SKILLS_DIRECTORY = new URL("../../skills/", import.meta.url);
-const INSTALLED_SKILL = new URL("orchestrator/SKILL.md", SKILLS_DIRECTORY);
+// The intake lives in its own reference so that invoking the orchestrator skill does not load it a second time
+// (AGS3-D-0032): every host already has it from the MCP server instructions or the context-start pointer.
+const INSTALLED_INTAKE = new URL("orchestrator/references/intake.md", SKILLS_DIRECTORY);
 
 /**
- * The shared intake: the block of the installed skills/orchestrator/SKILL.md in its frame, carried by the MCP server
- * instructions. The block stays the installed SKILL.md text, so it is in the package language (docs/i18n-design.md
+ * The shared intake: the block of the installed skills/orchestrator/references/intake.md in its frame, carried by the MCP
+ * server instructions. The block stays the installed file's text, so it is in the package language (docs/i18n-design.md
  * 4.2); only the frame around it follows `locale`.
  */
 export function skillIntakeText(locale: SupportedLocale): string {
@@ -17,11 +19,11 @@ export function skillIntakeText(locale: SupportedLocale): string {
 
 /**
  * A short pointer to the installed intake, for hook context. Hook context is repeated at every context start, so it
- * names the installed SKILL.md instead of carrying the whole block; it points only at a file that has the block.
+ * names the installed intake file instead of carrying the whole block; it points only at a file that has the block.
  */
 export function skillIntakePointer(locale: SupportedLocale): string {
   installedIntakeBlock();
-  return render(msg("instructions.intake.pointer", { path: fileURLToPath(INSTALLED_SKILL) }), locale);
+  return render(msg("instructions.intake.pointer", { path: fileURLToPath(INSTALLED_INTAKE) }), locale);
 }
 
 /**
@@ -47,7 +49,7 @@ export function installedSkillTargets(directory: URL = SKILLS_DIRECTORY): string
 }
 
 function installedIntakeBlock(): string {
-  const intake = readFileSync(INSTALLED_SKILL, "utf8")
+  const intake = readFileSync(INSTALLED_INTAKE, "utf8")
     .match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1];
   if (!intake) throw new Error("Shared skill intake instructions are missing.");
   return intake;
