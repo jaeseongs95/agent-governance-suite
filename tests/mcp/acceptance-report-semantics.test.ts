@@ -23,6 +23,7 @@ const ARTIFACT_TARGET = "b".repeat(64);
 const DECLARED_TARGET = `sha256:${ARTIFACT_TARGET}`;
 const OTHER_TARGET = `sha256:${"a".repeat(64)}`;
 const PRODUCED = ["acceptance-evidence-report", "verified-evidence-index"];
+const CONTENT_CRITERION = `AC-${createHash("sha256").update("Valid input returns PASS.", "utf8").digest("hex").slice(0, 12)}`;
 
 const acceptanceSkill: SkillDescriptorV2 = {
   schemaVersion: "2.0.0",
@@ -97,7 +98,7 @@ function validReport(target: string = DECLARED_TARGET): Record<string, unknown> 
     schemaVersion: "1.0.0",
     target: { kind: "commit", identifier: "abc123", digest: target },
     criteria: [{
-      criterionId: "AC-001",
+      criterionId: CONTENT_CRITERION,
       statement: "Valid input returns PASS.",
       status: "satisfied",
       evidenceRefs: ["test-pass"],
@@ -110,7 +111,7 @@ function validReport(target: string = DECLARED_TARGET): Record<string, unknown> 
       locator: "tests/results/pass.txt",
       digest: `sha256:${"c".repeat(64)}`,
       targetDigest: target,
-      criterionIds: ["AC-001"],
+      criterionIds: [CONTENT_CRITERION],
       direction: "supports",
     }],
     unresolvedCriteria: [],
@@ -168,6 +169,7 @@ function frozenRequest(target: string = DECLARED_TARGET, withEvidence = true): R
   return {
     schemaVersion: "1.0.0",
     taskEnvelope: envelope,
+    criterionBindings: [{ criterionId: "AC-001", statement: "Valid input returns PASS." }],
     target: { kind: "commit", identifier: "abc123", digest: target },
     evidence: withEvidence
       ? [{
