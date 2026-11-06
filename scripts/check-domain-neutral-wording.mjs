@@ -96,19 +96,33 @@ const EXCLUSION = /(?:사용하지|쓰지|적용하지|대신하지|대신 수�
 const ONLY = /에만|이외|\bonly\b/u;
 const CLAUSE_END = /(?:고|며|지만|으나|는데),\s|[;:]|\b(?:and|but),\s/u;
 // The word names the branch for that field: "화면이면", "코드일 때", "## 화면일 때".
-const BRANCH_SUFFIX = /^(?:이면|면|이라면|라면|일 때|인 경우|일 경우|에서는)/u;
+const BRANCH_SUFFIX = /^\s*(?:이면|면|이라면|라면|일 때|인 경우|일 경우|에서는)/u;
 const BRANCH_HEADING = /^#{2,}\s.*(?:일 때|인 경우|이면)\s*$|^#{2,}\s+When\b/u;
 // Explicit examples: "(예: PR이면 ...)", "예를 들어 ...", "e.g. ...".
 const EXAMPLE_GROUP = /\((?:예|e\.g\.|for example)[^)]*\)/gu;
 const EXAMPLE_LEAD = /예를 들어|예컨대|\be\.g\.|\bfor example\b|\bsuch as\b/u;
-// Names that contain a field word but are not about that field: code spans, link
-// targets, hyphenated identifiers (skill names), the UI/UX discipline, the Claude
+// Names that contain a field word but are not about that field: link targets,
+// hyphenated identifiers (skill names), the UI/UX discipline, the Claude
 // Code host, a command's exit or status code and a screenshot of the agent host.
-const NAMES = /`[^`]*`|\]\([^)]*\)|\bUI\/UX\b|\b[a-z]+(?:-[a-z]+)+\b|\bClaude Code\b|(?:종료|오류|상태|응답) 코드|화면 캡처/gu;
+const NAMES = /\]\([^)]*\)|\bUI\/UX\b|\b[a-z]+(?:-[a-z]+)+\b|\bClaude Code\b|(?:종료|오류|상태|응답) 코드|화면 캡처/gu;
+// Inline markup alone does not turn a field word into an identifier.
+const INLINE_IDENTIFIER = /^(?:[^\s]+[/\\]|[./\\]|\{|\[|v?\d+\.\d+|(?:node|python3?|git|pnpm|npm|npx)(?:\s|$))|^[^\s]+\.[a-zA-Z][a-zA-Z0-9]{0,7}$/u;
+// ponytail: these explicit clause markers are a wording heuristic, not a language parser.
+const CLAUSE_BOUNDARY = /(?:하고|하며|이고|이며|쓰고|쓰며|지만|으나|는데),?\s|[;:]|\b(?:and|but),\s/gu;
 
 const blank = (text) => text.replace(/[^\n]/gu, " ");
 const hasFieldTerm = (text) => FIELD_TERMS.some(([, pattern]) => new RegExp(pattern.source, pattern.flags.replace("g", "")).test(text));
 const FIELD_SKILLS = Object.keys(SKILL_FIELDS).filter((id) => SKILL_FIELDS[id] !== null);
+
+function clauseBounds(sentence, index) {
+  let start = 0;
+  for (const boundary of sentence.matchAll(CLAUSE_BOUNDARY)) {
+    const next = boundary.index + boundary[0].length;
+    if (next > index) return { start, end: boundary.index };
+    start = next;
+  }
+  return { start, end: sentence.length };
+}
 
 /** The `·`-joined word run around the match also lists a field-neutral item: "디자인·편집·촬영·구현". */
 function inMixedList(sentence, index, length) {
@@ -125,8 +139,10 @@ function inMixedList(sentence, index, length) {
 function allowance(sentence, raw, index, length, underBranchHeading) {
   if (underBranchHeading) return "branch-heading";
   if (BRANCH_SUFFIX.test(sentence.slice(index + length))) return "branch";
-  // The sentence routes work to a field-specific skill, whose field it names.
-  if (FIELD_SKILLS.some((id) => raw.includes(`\`${id}\``))) return "field-skill-routing";
+  const { start, end } = clauseBounds(sentence, index);
+  const clause = sentence.slice(start, end);
+  // Only this clause routes work to the field-specific skill whose field it names.
+  if (FIELD_SKILLS.some((id) => raw.slice(start, end).includes(`\`${id}\``))) return "field-skill-routing";
   for (const group of sentence.matchAll(EXAMPLE_GROUP)) {
     if (index >= group.index && index < group.index + group[0].length) return "example";
   }
@@ -136,8 +152,8 @@ function allowance(sentence, raw, index, length, underBranchHeading) {
     const items = group[1].split(/,\s*|·/u);
     if (items.length > 1 && items.some((item) => item.trim() && !hasFieldTerm(item))) return "example-list";
   }
-  const lead = sentence.search(EXAMPLE_LEAD);
-  if (lead >= 0 && lead < index) return "example";
+  const lead = clause.search(EXAMPLE_LEAD);
+  if (lead >= 0 && lead < index - start) return "example";
   if (inMixedList(sentence, index, length)) return "mixed-list";
   // The word must sit in the clause the exclusion closes, not in an earlier clause ("..판정하고, ..대신하지 않는다").
   const exclusion = EXCLUSION.exec(sentence.slice(index));
@@ -162,7 +178,9 @@ export function findFieldWording(text, { lines = null } = {}) {
     if (/^#{1,6}\s/u.test(raw)) underBranchHeading = BRANCH_HEADING.test(raw);
     if (lines && !lines.has(line)) return;
     // Blanking keeps every offset, so a span of `cleaned` is the same span of `raw`.
-    const cleaned = raw.replace(NAMES, blank);
+    const inlineNames = raw.replace(/`([^`]*)`/gu, (whole, content) =>
+      Object.hasOwn(SKILL_FIELDS, content) || INLINE_IDENTIFIER.test(content) ? blank(whole) : ` ${content} `);
+    const cleaned = inlineNames.replace(NAMES, blank);
     const ends = [...cleaned.matchAll(/(?<=[.!?])\s+/gu)].map((match) => [match.index, match.index + match[0].length]);
     let start = 0;
     for (const [end, next] of [...ends, [cleaned.length, cleaned.length]]) {
