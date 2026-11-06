@@ -135,15 +135,41 @@ afterEach(() => {
 });
 
 describe("inactive native shared connection", () => {
+  it("D0008: migrates populated workflow module v6 headers and preserves other module data", () => {
+    const dir = directory();
+    const before = bundle(dir);
+    expect(before.workflow.nextRunSequence()).toBe(1);
+    before.continuity.ensureTask("d0008-preserved-task", new Date(100).toISOString());
+    before.owner.close();
+    const database = new DatabaseSync(path.join(dir, "ags-state.sqlite3"));
+    const row = database.prepare("SELECT schema_json FROM shared_module_schema WHERE module='workflow'").get() as { schema_json: string };
+    // Reconstruct the genuine immediately preceding table/header shape, not a fresh empty database.
+    const priorShape = (JSON.parse(row.schema_json) as Array<{ name: string }>).filter(table => table.name !== "root_approval_decisions");
+    database.exec("DROP TABLE root_approval_decisions;");
+    database.prepare("UPDATE shared_module_schema SET version=6, schema_json=? WHERE module='workflow'").run(JSON.stringify(priorShape));
+    database.close();
+    const migrated = bundle(dir);
+    expect(migrated.workflow.getSchemaVersion()).toBe(7);
+    expect(migrated.workflow.nextRunSequence()).toBe(2);
+    expect(migrated.continuity.getTask("d0008-preserved-task")).not.toBeNull();
+    const snapshot = migrated.owner.inspect();
+    expect(snapshot.counts.root_approval_decisions).toBe(0);
+    expect(snapshot.integrity).toEqual([{ integrity_check: "ok" }]);
+    expect(snapshot.foreignKeyViolations).toEqual([]);
+    migrated.owner.close();
+    const reopened = bundle(dir);
+    expect(reopened.workflow.nextRunSequence()).toBe(3);
+    expect(reopened.continuity.getTask("d0008-preserved-task")).not.toBeNull();
+  });
   it("B2-OWNER-01: actual schemas, module versions and rows use one physical main connection", () => {
     const value = bundle();
     value.workflow.nextRunSequence(); value.continuity.ensureTask("synthetic-correlation", new Date(100).toISOString());
     value.messaging.send({ sender: { host: "fixture-a", sessionId: "s" }, target: { host: "fixture-b", sessionId: "r" }, messageId: "owner-message", body: "synthetic" }, 100);
     const snapshot = value.owner.inspect();
     expect(snapshot.databases.filter(row => row.file !== "")).toHaveLength(1); expect(snapshot.databases[0]).toMatchObject({ name: "main", file: value.owner.databasePath }); expect(snapshot.databases.every(row => row.name === "main" || row.name === "temp" && row.file === "")).toBe(true);
-    expect(Object.keys(snapshot.counts)).toHaveLength(32); expect(snapshot.counts.call_admissions).toBe(0); expect(snapshot.counts.messages).toBe(1); expect(snapshot.counts.continuity_tasks).toBe(1);
-    expect(snapshot.modules.map(row => [row.module, row.version])).toEqual([["board", 1], ["continuity", 2], ["messaging", 4], ["trust", 1], ["workflow", 6]]);
-    expect(snapshot.userVersion).toBe(1); expect(value.workflow.getSchemaVersion()).toBe(6); expect(value.continuity.getSchemaVersion()).toBe(2);
+    expect(Object.keys(snapshot.counts)).toHaveLength(33); expect(snapshot.counts.root_approval_decisions).toBe(0); expect(snapshot.counts.call_admissions).toBe(0); expect(snapshot.counts.messages).toBe(1); expect(snapshot.counts.continuity_tasks).toBe(1);
+    expect(snapshot.modules.map(row => [row.module, row.version])).toEqual([["board", 1], ["continuity", 2], ["messaging", 4], ["trust", 1], ["workflow", 7]]);
+    expect(snapshot.userVersion).toBe(1); expect(value.workflow.getSchemaVersion()).toBe(7); expect(value.continuity.getSchemaVersion()).toBe(2);
     expect(snapshot.integrity).toEqual([{ integrity_check: "ok" }]); expect(snapshot.foreignKeyViolations).toEqual([]);
     console.log("B2-RAW owner", JSON.stringify(snapshot));
   });

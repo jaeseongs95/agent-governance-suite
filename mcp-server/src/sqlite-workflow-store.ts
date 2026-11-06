@@ -36,6 +36,7 @@ import {
   type StoredIdentity,
 } from "./convergence-logic.js";
 import { hostIdentity, type RootIdentityV1 } from "./workspace-identity.js";
+import { rootApprovalFailure, type RootApprovalRecord } from "./root-approval.js";
 import {
   type CallAdmission,
   type ConvergenceSnapshot,
@@ -107,7 +108,7 @@ interface PluginUpdateRow {
   last_error_code: StoredPluginUpdateState["lastErrorCode"];
 }
 
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 /** Marks runs that v6 closed because they started under pre-3.0 gate rules. */
 export const PRE_V6_BLOCKER = "pre-3.0-gate-contract";
 
@@ -310,6 +311,44 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       );
       if (Number(attemptUpdate.changes) !== 1) throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.store.guardedAttemptOutcomeRecordedMissing", {}), { runId: receipt.runId });
       return true;
+    }));
+  }
+
+  getRootApproval(approvalId: string): RootApprovalRecord | null {
+    return this.guard(msg("workflow.service.unkeyedFailure", { message: "사용자 승인 기록을 읽을 수 없습니다." }), {}, () => {
+      const row = this.database.prepare("SELECT record_json FROM root_approval_decisions WHERE approval_id = ?")
+        .get(approvalId) as { record_json: string } | undefined;
+      return row ? JSON.parse(row.record_json) as RootApprovalRecord : null;
+    });
+  }
+
+  findRootApproval(scopeDigest: string): RootApprovalRecord | null {
+    return this.guard(msg("workflow.service.unkeyedFailure", { message: "사용자 승인 기록을 찾을 수 없습니다." }), {}, () => {
+      const row = this.database.prepare("SELECT record_json FROM root_approval_decisions WHERE scope_digest = ? AND revoked_at IS NULL ORDER BY created_at, approval_id LIMIT 1")
+        .get(scopeDigest) as { record_json: string } | undefined;
+      return row ? JSON.parse(row.record_json) as RootApprovalRecord : null;
+    });
+  }
+
+  insertRootApproval(record: RootApprovalRecord): RootApprovalRecord {
+    return this.guard(msg("workflow.service.unkeyedFailure", { message: "사용자 승인 기록을 저장할 수 없습니다." }), {}, () => this.transaction(() => {
+      this.database.prepare(`INSERT INTO root_approval_decisions
+        (approval_id, scope_digest, connection_id, request_id, record_json, created_at, revoked_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(connection_id, request_id) DO NOTHING`)
+        .run(record.approvalId, record.scopeDigest, record.source.connectionId, record.source.requestId,
+          JSON.stringify(record), record.createdAt, record.revokedAt);
+      const stored = this.database.prepare("SELECT record_json FROM root_approval_decisions WHERE connection_id = ? AND request_id = ?")
+        .get(record.source.connectionId, record.source.requestId) as { record_json: string };
+      const existing = JSON.parse(stored.record_json) as RootApprovalRecord;
+      if (existing.scopeDigest !== record.scopeDigest) throw rootApprovalFailure("USER_APPROVAL_SOURCE_CONFLICT");
+      return existing;
+    }));
+  }
+
+  revokeRootApproval(approvalId: string, revokedAt: string): boolean {
+    return this.guard(msg("workflow.service.unkeyedFailure", { message: "사용자 승인 기록을 철회할 수 없습니다." }), {}, () => this.transaction(() => {
+      return Number(this.database.prepare(`UPDATE root_approval_decisions SET revoked_at = ?, record_json = json_set(record_json, '$.revokedAt', ?)
+        WHERE approval_id = ? AND revoked_at IS NULL`).run(revokedAt, revokedAt, approvalId).changes) === 1;
     }));
   }
 
@@ -939,6 +978,17 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
           created_at TEXT NOT NULL,
           PRIMARY KEY (host, call_id)
         ) STRICT;
+        CREATE TABLE IF NOT EXISTS root_approval_decisions (
+          approval_id TEXT PRIMARY KEY,
+          scope_digest TEXT NOT NULL,
+          connection_id TEXT NOT NULL,
+          request_id TEXT NOT NULL,
+          record_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          revoked_at TEXT,
+          UNIQUE (connection_id, request_id)
+        ) STRICT;
+        CREATE INDEX IF NOT EXISTS root_approval_scope ON root_approval_decisions(scope_digest) WHERE revoked_at IS NULL;
 
       `);
       if (row.user_version > 0 && row.user_version < 6) this.migrateToV6();

@@ -62,6 +62,8 @@ import { assertCsStageBundle } from "./cs-engineering-validator.js";
 import { assertEngineeringStageBundle } from "./engineering-practices-validator.js";
 import { contractFailure, failureReason } from "./failure-diagnostics.js";
 import { hostIdentity } from "./workspace-identity.js";
+import { rootApprovalFailure, rootApprovalMessage, rootApprovalScope, type RootApprovalAction, type RootApprovalRecord,
+  type RootApprovalScope, type PendingRootApproval, type RootApprovalPreparation, type RootOperationResult } from "./root-approval.js";
 import {
   clone,
   createPlanSigningKey,
@@ -400,6 +402,7 @@ function unwrapResult<T>(result: ApiResultV1<T>): T {
 
 export class WorkflowService {
   private readonly planSigningKey: Buffer;
+  private readonly pendingRootApprovals = new WeakSet<PendingRootApproval>();
 
   constructor(
     private readonly registry: FileSkillRegistry,
@@ -460,32 +463,18 @@ export class WorkflowService {
   /** `access` is the calling session's (MCP tool call); without it, ownership is not checked and no presence is read. */
   openConvergenceRoot(rawRequest: unknown, access: RootAccess | null = null): ApiResultV1<ConvergenceRootV1> {
     return this.attempt(() => {
-      const request = this.validator.openConvergenceRootRequest(rawRequest);
+      const request = this.openRootRequest(rawRequest);
       this.validateWorkUnitGraph(request.taskEnvelope);
       this.assertConvergenceFrame(request.frame);
       if (!request.taskEnvelope.orchestration.requested || !request.taskEnvelope.orchestration.mcpAvailable) {
         throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.convergenceRootsRequireMCPBacked", {}));
       }
-      if (request.parentRootId && request.userApprovalRefs.length === 0) {
-        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.replacingConvergenceRootRequiresUser", {}), {
-          parentRootId: request.parentRootId,
-        });
-      }
-      if (request.parentRootId) {
-        const parent = this.requireConvergenceSnapshot(request.parentRootId).root;
-        // Replacing abandons the parent: only its own session may, so another session's root is not taken this way.
-        if (access?.ownedByOtherSession(parent.rootId)) {
-          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.replaceRootNotOwned", { rootId: parent.rootId }),
-            { field: "parentRootId", reason: "ROOT_NOT_OWNED", rootId: parent.rootId });
-        }
-        if (!["needs-review", "needs-user"].includes(parent.state)) {
-          throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.gatedConvergenceRootReplaced", {}), {
-            parentRootId: parent.rootId,
-            parentState: parent.state,
-          });
-        }
-      }
-
+      // Resolve machine identity before acquiring the writer lock. Parent checks and abandonment/insertion share it.
+      hostIdentity();
+      return this.store.withWorkflowTransaction(() => {
+      const context = request.parentRootId ? this.rootApprovalContext("replace-root", request, access) : null;
+      const approval = context ? this.lookupRootApproval(context.scope, request.userApprovalRefs) : null;
+      if (context && !approval) throw rootApprovalFailure("USER_APPROVAL_REQUIRED");
       const now = new Date().toISOString();
       const digests = this.convergenceDigests(request.taskEnvelope, request.frame);
       const root: ConvergenceRootV1 = {
@@ -498,7 +487,7 @@ export class WorkflowService {
         taskEnvelope: clone(request.taskEnvelope),
         frame: clone(request.frame),
         ...digests,
-        userApprovalRefs: [...request.userApprovalRefs],
+        userApprovalRefs: approval ? [approval.approvalId] : [...request.userApprovalRefs],
         createdAt: now,
         updatedAt: now,
       };
@@ -510,7 +499,121 @@ export class WorkflowService {
           access ? rootId => access.ownerPresence(rootId) : null);
       }
       return clone(root);
+      });
     });
+  }
+
+  /** Internal host composition boundary, not an advertised tool. Existing decisions are located without refs. */
+  prepareRootApproval(action: RootApprovalAction, rawRequest: unknown, access: RootAccess): ApiResultV1<RootApprovalPreparation | null> {
+    return this.attempt(() => this.store.withWorkflowTransaction(() => {
+      const context = this.rootApprovalContext(action, rawRequest, access);
+      if (!context) return null;
+      const approval = this.lookupRootApproval(context.scope, context.references);
+      const pending: PendingRootApproval = Object.freeze({ scope: Object.freeze(context.scope), scopeDigest: convergenceDigest(context.scope),
+        rootRevision: context.root.revision, request: clone(context.request),
+        message: rootApprovalMessage(context.scope, context.root, context.replacement) });
+      this.pendingRootApprovals.add(pending);
+      return { pending, approvalId: approval?.approvalId ?? null };
+    }));
+  }
+
+  /** Records the observed decision in its own commit, so later mutation failure never consumes that decision. */
+  recordRootApproval(pending: PendingRootApproval, source: RootApprovalRecord["source"], access: RootAccess,
+    signal: AbortSignal): ApiResultV1<RootApprovalRecord> {
+    return this.attempt(() => this.store.withWorkflowTransaction(() => {
+      this.assertRootApprovalPending(pending, access, signal, false);
+      if (source.kind !== "mcp-form" || !source.connectionId || !source.requestId) throw rootApprovalFailure("USER_APPROVAL_SOURCE_INVALID");
+      const record = this.store.insertRootApproval({ approvalId: `approval-${randomUUID()}`, scope: clone(pending.scope), scopeDigest: pending.scopeDigest,
+        source: clone(source), createdAt: new Date(this.store.currentTimeMilliseconds()).toISOString(), revokedAt: null });
+      if (signal.aborted) throw rootApprovalFailure("USER_APPROVAL_CANCELLED", "INVALID_TRANSITION");
+      return record;
+    }));
+  }
+
+  executePreparedRootOperation(pending: PendingRootApproval, access: RootAccess, signal: AbortSignal): ApiResultV1<RootOperationResult> {
+    return this.attempt(() => this.store.withWorkflowTransaction(() => {
+      this.assertRootApprovalPending(pending, access, signal, true);
+      const result: RootOperationResult = pending.scope.action === "replace-root"
+        ? unwrapResult(this.openConvergenceRoot(pending.request, access)) : unwrapResult(this.releaseConvergenceRoot(pending.request, access));
+      if (signal.aborted) throw rootApprovalFailure("USER_APPROVAL_CANCELLED", "INVALID_TRANSITION");
+      return result;
+    }));
+  }
+
+  private assertRootApprovalPending(pending: PendingRootApproval, access: RootAccess, signal: AbortSignal, checkRevision: boolean): void {
+    if (signal.aborted) throw rootApprovalFailure("USER_APPROVAL_CANCELLED", "INVALID_TRANSITION");
+    if (!this.pendingRootApprovals.has(pending)) throw rootApprovalFailure("USER_APPROVAL_PENDING_UNKNOWN");
+    const context = this.rootApprovalContext(pending.scope.action, pending.request, access, false);
+    if (!context || convergenceDigest(context.scope) !== pending.scopeDigest) throw rootApprovalFailure("USER_APPROVAL_SCOPE_CHANGED");
+    if (checkRevision && context.root.revision !== pending.rootRevision) {
+      throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.expectedRevisionMatchConvergenceRoot", {}), {
+        expectedRevision: pending.rootRevision, actualRevision: context.root.revision,
+      });
+    }
+  }
+
+  private lookupRootApproval(scope: RootApprovalScope, references: string[]): RootApprovalRecord | null {
+    const digest = convergenceDigest(scope);
+    const valid = (record: RootApprovalRecord | null): record is RootApprovalRecord => Boolean(record && record.revokedAt === null
+      && record.source.kind === "mcp-form" && record.scopeDigest === digest && convergenceDigest(record.scope) === digest);
+    if (references.some(reference => typeof reference !== "string" || !reference.trim()) || new Set(references).size !== references.length) {
+      throw rootApprovalFailure("USER_APPROVAL_REFERENCE_INVALID");
+    }
+    if (references.length === 0) {
+      const record = this.store.findRootApproval(digest);
+      return valid(record) ? record : null;
+    }
+    const records = references.map(reference => this.store.getRootApproval(reference));
+    if (records.some(record => !valid(record))) throw rootApprovalFailure("USER_APPROVAL_REFERENCE_UNBOUND");
+    return records[0]!;
+  }
+
+  private rootApprovalContext(action: RootApprovalAction, rawRequest: unknown, access: RootAccess | null, checkGates = true) {
+    if (action === "replace-root") {
+      const request = this.openRootRequest(rawRequest);
+      this.validateWorkUnitGraph(request.taskEnvelope);
+      this.assertConvergenceFrame(request.frame);
+      if (!request.taskEnvelope.orchestration.requested || !request.taskEnvelope.orchestration.mcpAvailable) {
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.convergenceRootsRequireMCPBacked", {}));
+      }
+      if (!request.parentRootId) return null;
+      const root = this.requireConvergenceSnapshot(request.parentRootId).root;
+      if (checkGates && access?.ownedByOtherSession(root.rootId)) {
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.replaceRootNotOwned", { rootId: root.rootId }),
+          { field: "parentRootId", reason: "ROOT_NOT_OWNED", rootId: root.rootId });
+      }
+      if (checkGates && !["needs-review", "needs-user"].includes(root.state)) {
+        throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.gatedConvergenceRootReplaced", {}),
+          { parentRootId: root.rootId, parentState: root.state });
+      }
+      return { root, request, references: request.userApprovalRefs, replacement: request,
+        scope: rootApprovalScope(action, root, access?.actorId ?? null, request) };
+    }
+    const request = releaseRequest(rawRequest);
+    const root = this.requireConvergenceSnapshot(request.rootId).root;
+    if (checkGates && request.expectedRevision !== root.revision) {
+      throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.expectedRevisionMatchConvergenceRoot", {}),
+        { expectedRevision: request.expectedRevision, actualRevision: root.revision });
+    }
+    if (checkGates && ["completed", "abandoned"].includes(root.state)) {
+      throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.releaseRootNotActive", { rootId: root.rootId, state: root.state }),
+        { reason: "ROOT_NOT_ACTIVE", rootId: root.rootId });
+    }
+    if (checkGates && access?.ownsRoot(root.rootId)) return null;
+    if (checkGates && access) {
+      const presence = access.ownerPresence(root.rootId);
+      if (presence.unavailable) throw new WorkflowContractError("MCP_UNAVAILABLE", msg("workflow.service.releaseRootPresenceUnavailable", { rootId: root.rootId }),
+        { reason: "OWNER_PRESENCE_UNAVAILABLE", rootId: root.rootId, cause: presence.unavailable });
+      if (presence.state === "online") throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.releaseRootOwnerOnline", { rootId: root.rootId }),
+        { reason: "OWNER_SESSION_ONLINE", rootId: root.rootId, ownerPresence: presence });
+    }
+    return { root, request, references: request.userApprovalRefs, replacement: undefined,
+      scope: rootApprovalScope(action, root, access?.actorId ?? null) };
+  }
+
+  private openRootRequest(rawRequest: unknown) {
+    const request = asRecord(rawRequest);
+    return this.validator.openConvergenceRootRequest(Object.hasOwn(request, "userApprovalRefs") ? rawRequest : { ...request, userApprovalRefs: [] });
   }
 
   claimWorkflowAttempt(rawProposal: unknown, requireTrustedExecutionContext = false,
@@ -914,6 +1017,7 @@ export class WorkflowService {
         }
         const owned = access.ownsRoot(root.rootId);
         let presence: RootOwnerPresenceV1 | null = null;
+        let approval: RootApprovalRecord | null = null;
         if (!owned) {
           presence = access.ownerPresence(root.rootId);
           if (presence.unavailable) {
@@ -924,7 +1028,8 @@ export class WorkflowService {
             throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.releaseRootOwnerOnline", { rootId: root.rootId }),
               { reason: "OWNER_SESSION_ONLINE", rootId: root.rootId, ownerPresence: presence });
           }
-          if (request.userApprovalRefs.length === 0) {
+          approval = this.lookupRootApproval(rootApprovalScope("release-root", root, access.actorId), request.userApprovalRefs);
+          if (!approval) {
             throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.releaseRootApprovalRequired", { rootId: root.rootId }),
               { reason: "USER_APPROVAL_REQUIRED", field: "userApprovalRefs", rootId: root.rootId, ownerPresence: presence });
           }
@@ -941,7 +1046,7 @@ export class WorkflowService {
           ownerPresence: presence?.state ?? null,
           ...(presence ? { presenceObservedAt: presence.observedAt } : {}),
           ownerActors: [...new Set(presence?.sessions.map(session => session.actorId) ?? [])],
-          userApprovalRefs: [...request.userApprovalRefs],
+          userApprovalRefs: approval ? [approval.approvalId] : [...request.userApprovalRefs],
           reason: request.reason,
           closedRunId: running?.runId ?? null,
         };

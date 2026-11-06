@@ -358,7 +358,7 @@ describe("SqliteWorkflowStore", () => {
 
     const migrated = new DatabaseSync(databasePath);
     try {
-      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(6);
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(7);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM plugin_update_state").get() as { count: number }).count).toBe(1);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'execution_observation_claims'").get() as { count: number }).count).toBe(1);
     } finally {
@@ -435,7 +435,7 @@ describe("SqliteWorkflowStore", () => {
 
     const migrated = new DatabaseSync(databasePath);
     try {
-      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(6);
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(7);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM convergence_roots").get() as { count: number }).count).toBe(0);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM workflow_attempt_links").get() as { count: number }).count).toBe(0);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'execution_observation_claims'").get() as { count: number }).count).toBe(1);

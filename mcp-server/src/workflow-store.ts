@@ -20,6 +20,7 @@ import {
 } from "./convergence-logic.js";
 
 import type { CallerExecution } from "./caller-identity.js";
+import { rootApprovalFailure, type RootApprovalRecord } from "./root-approval.js";
 
 export const PLAN_SIGNING_KEY = "plan-signing-key";
 
@@ -58,6 +59,10 @@ export interface CallAdmission {
 export interface WorkflowStore {
   /** UTC milliseconds from this store's clock provider; failures must not fall back to another clock. */
   currentTimeMilliseconds(): number;
+  getRootApproval(approvalId: string): RootApprovalRecord | null;
+  findRootApproval(scopeDigest: string): RootApprovalRecord | null;
+  insertRootApproval(record: RootApprovalRecord): RootApprovalRecord;
+  revokeRootApproval(approvalId: string, revokedAt: string): boolean;
   getOrCreateSecret(name: string, create: () => string): string;
   claimExecutionObservation(observationId: string, consumedAt: string): boolean;
   /** Replaces an unclaimed row with the same key; rows older than a day are pruned on write. */
@@ -116,8 +121,38 @@ export class InMemoryWorkflowStore implements WorkflowStore {
   private identities = new Map<string, StoredIdentity>();
   private guardedRuns = new Map<string, { rootId: string; leaseId: string }>();
   private runSequence = 0;
+  private rootApprovals = new Map<string, RootApprovalRecord>();
 
   currentTimeMilliseconds(): number { return Date.now(); }
+
+  getRootApproval(approvalId: string): RootApprovalRecord | null {
+    const record = this.rootApprovals.get(approvalId);
+    return record ? clone(record) : null;
+  }
+
+  findRootApproval(scopeDigest: string): RootApprovalRecord | null {
+    const record = [...this.rootApprovals.values()].find(record => record.scopeDigest === scopeDigest && record.revokedAt === null);
+    return record ? clone(record) : null;
+  }
+
+  insertRootApproval(record: RootApprovalRecord): RootApprovalRecord {
+    const existing = [...this.rootApprovals.values()].find(prior => prior.source.connectionId === record.source.connectionId
+      && prior.source.requestId === record.source.requestId);
+    if (existing) {
+      if (existing.scopeDigest !== record.scopeDigest) throw rootApprovalFailure("USER_APPROVAL_SOURCE_CONFLICT");
+      return clone(existing);
+    }
+    if (this.rootApprovals.has(record.approvalId)) throw rootApprovalFailure("USER_APPROVAL_ID_CONFLICT");
+    this.rootApprovals.set(record.approvalId, clone(record));
+    return clone(record);
+  }
+
+  revokeRootApproval(approvalId: string, revokedAt: string): boolean {
+    const record = this.rootApprovals.get(approvalId);
+    if (!record || record.revokedAt !== null) return false;
+    record.revokedAt = revokedAt;
+    return true;
+  }
 
   getOrCreateSecret(name: string, create: () => string): string {
     const existing = this.secrets.get(name);
@@ -251,6 +286,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
       identities: new Map(clone([...this.identities])),
       guardedRuns: new Map(clone([...this.guardedRuns])),
       runSequence: this.runSequence,
+      rootApprovals: new Map(clone([...this.rootApprovals])),
     };
     try {
       const result = operation();
@@ -267,6 +303,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
       this.identities = previous.identities;
       this.guardedRuns = previous.guardedRuns;
       this.runSequence = previous.runSequence;
+      this.rootApprovals = previous.rootApprovals;
       throw cause;
     }
   }

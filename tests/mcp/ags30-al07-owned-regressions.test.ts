@@ -152,7 +152,7 @@ describe("AGS30 AL07 owned regressions", () => {
       return exec.call(this, sql);
     });
     const first = keep(new SqliteWorkflowStore(filename)); intercept.mockRestore();
-    expect(competitorOpened).toBe(true); expect(first.getSchemaVersion()).toBe(6); expect(first.getRun("preserved")?.runId).toBe("preserved");
+    expect(competitorOpened).toBe(true); expect(first.getSchemaVersion()).toBe(7); expect(first.getRun("preserved")?.runId).toBe("preserved");
   });
   it("AGS-D-0060 (3.2.0): a lease past its legacy expiresAt still starts after the writer lock", () => {
     let clock = 100; vi.spyOn(Date, "now").mockImplementation(() => clock);
