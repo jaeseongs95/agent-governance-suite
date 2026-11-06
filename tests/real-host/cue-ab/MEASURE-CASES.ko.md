@@ -1,0 +1,24 @@
+# Q32 source hook 수집기 사례
+
+기준은 d2ffc9af54cd1cb3f7a85061a3e7788287863654다. f73c54d0과의 차이는 claude-stream.mjs 하나이며 제품 소스는 같다. 소유 변경은 measure-hooks.mjs와 이 문서뿐이다. 새 runner·서비스·모델·플러그인 설치·Windows bash 설치는 하지 않는다. 제품 A/B 생성·측정은 Linux D15→D36 이후 별도 슬롯이며 아래 fixture 판별과 구분한다.
+
+공개 경계는 기존 `node tests/real-host/cue-ab/measure-hooks.mjs <claude|codex> <pluginRoot> <outFile>`다. source hook의 자체 합성 입력/출력만 다룬다. native callback, 모델 입력·토큰·실제 스킬 선택·행동·압축 효과를 증명하지 않는다. 기존 `.length`의 글자수 단위는 UTF-16 code unit이며 Unicode code point·UTF-8 bytes와 구분한다.
+
+현재 원 경로는 stdout을 UTF-8 문자열로 받은 뒤 길이만 저장하고 버린다. 따라서 bytes·원문 hash·목록 위치·공통 payload 비교는 재구성할 수 없다. locale를 child env에서 삭제하면서 결과에는 삭제 전 값을 적는다. exit=null/ENOENT·nonzero·잘못된 JSON도 전체 프로세스 exit0으로 보고할 수 있다. 이 실패를 제품 source가 짧다는 근거로 쓰지 않는다.
+
+Claude 현재 manifest는 모든 command가 `node`, args가 별도 배열이다. 따라서 현재 배포물에서 whole command 문자열을 executable로 쓰는 경로 오류는 발견되지 않았다. 임의 whole-command 형식을 새로 지원하지 않는다. Codex는 기존 Linux bash 경로만 사용한다. Windows TEST에는 bash가 PATH에 없으므로 Codex 측정을 실행하지 않았다.
+
+| 사례 | 입력·선행조건 | 절차·독립 oracle | 기대·판정 | 실제 |
+| --- | --- | --- | --- | --- |
+| M01 UTF-8 보존 | 실제 manifest와 같은 command=node/args 배열인 자체 hook fixture. stdout JSON additionalContext는 `가🙂` | startup/resume/지원 compact와 기존 7개 user-input을 실행. 원 stdout 파일을 JSON으로 직접 읽고 fixture 상수와 대조. context는 UTF-16 3, code point 2, UTF-8 7 bytes다. raw 파일 bytes/hash를 표준 sha256sum과 대조 | 모든 실제 invocation exit0, context 원문·hash·byte count를 보존. stdout bytes는 원파일 크기와 일치. 실패를 0글자 성공으로 바꾸면 FAIL | NOT_RUN |
+| M02 locale | fixture가 child의 AGENT_GOVERNANCE_LOCALE 값도 stdout에 기록. ko/en/미설정 각각 별도 출력 경로 | 호출 env와 보존된 child stdout locale 및 결과 locale를 대조 | 실제 전달한 값이 동일. 미설정은 null/default로 명시하고 effective host locale로 확대하지 않음 | NOT_RUN |
+| M03 spawn 실패 | 같은 fixture의 executable을 존재하지 않는 절대경로로 지정 | 기존 collector 그대로 실행. row exit/error와 collector 실제 exit를 대조 | ENOENT/exit=null 보존, collector nonzero. 0글자/exit0으로 성공 처리하면 FAIL | NOT_RUN |
+| M04 child 실패 | fixture는 context를 출력한 뒤 exit7 | row stdout 원문/bytes/hash 및 native exit와 collector exit를 대조 | partial source 출력은 보존하되 row7/collector nonzero | NOT_RUN |
+| M05 JSON/빈 출력 | 잘못된 JSON 또는 UTF-8이 아닌 자체 stdout bytes; 별도 fixture는 정상 exit0/빈 stdout | raw byte 파일과 독립 fixture 상수 대조 | 잘못된 JSON은 nonzero+parse 상태, 원 bytes 보존. 정상 빈 출력은 NO_OUTPUT/0이며 오류와 구분 | NOT_RUN |
+| M06 증거 보존 | 이미 사용한 outFile/출력 디렉터리 | 같은 경로로 한 번 더 실행 | 원 근거를 덮어쓰지 않고 거부. 재실행은 새로운 출력 경로만 사용 | NOT_RUN |
+| P01 phase3 A/B | exact d2ffc9af archive A/B, 동일 lock hash의 기존 deps, Node24 exact, Linux 모델/무거운 시험 슬롯 해제 | 기존 phase3-control로 A의 3 source만 변환하고 receipt/hash 보존. A/B 모두 같은 공식 build·claude:build. 공통 skill/tool bytes 및 제품 source diff를 대조 | 변환 receipt의 3 source 외 공통 source 변경0. generated diff는 실제 build로만 생성. 다른 수리가 달라지면 인과 측정 중단 | NOT_RUN, 슬롯 대기 |
+| P02 source 출력량 | P01의 두 빌드, 같은 explicit locale, 기존 measure-hooks | 각 host startup/user-input/지원 compact의 출력 파일 bytes·UTF-16/code point·목록 위치·공통 payload 비교 | 원 source 출력 차이만 보고. 미지원 이벤트/실패/누락을 0이나 성공으로 세지 않음. 모델 토큰·도달의 증명이 아님 | NOT_RUN |
+
+Windows 선행 관측은 c48b33e02058989356b3ddcdcc0c07d10d79490f76127f12와 8ea71d79eb0264c24db081d3e14e32993a14a266281143cd, 둘 다 exit0이다. Node C:/Program Files/nodejs/node.exe v24.22.2, SHA256 1c331340fa6cac5e4294725959070a143fa0507195a78ad77eed7943f719aac9, free memory 3963616 KiB, disk 51148963840 bytes, 선택한 node/git/bash/pnpm/모델 프로세스 metadata0이었다. Administrator와 부모 ACL은 관측했으나 실제 쓰기 probe는 하지 않았다. 기존 repo/repo2/repo3/v380-green1-01a14016/v380-host-01a14016의 node_modules 존재와 pnpm-lock SHA256 40aad25b371d6c6c2a08aed5f9e97b721fb528ecedc80617aac7cebaaa8c577a는 후보와 일치했다. Windows 빌드/제품 hook 측정은 0이며 이 조건을 Linux 실행 환경으로 전용하지 않는다.
+
+fixture RED/GREEN은 Linux TEST의 자체 source fixture에서만 수행하고 명령·후보/hash·원 exit·실제 stdout/결과 참조를 아래에 추가한다. fixture 실행에 모델·AGS 상태·외부 MCP는 필요 없다. 로컬에서는 syntax/lint/diff만 확인한다. 실제 제품 A/B 결과가 없으면 P01/P02는 계속 NOT_RUN이다.
