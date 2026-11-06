@@ -54,6 +54,10 @@ test("a field named as one example among others, or as an explicit branch, passe
     "## 화면일 때\n\n- 기존 컴포넌트를 재사용하고 렌더링을 정리한다.",
     "구현, 반복 실패 원인 분석, 릴리스 승인에는 사용하지 않는다.",
     "코드 작성 단계에는 `ponytail`을 먼저 호출한다.",
+    "문서를 검토하며, 코드 작성 단계에는 `ponytail`을 먼저 호출한다.",
+    "예를 들어 코드 변경을 검토한다.",
+    "결과물(`코드`, 문서, 영상)의 근거를 확인한다.",
+    "원문 `skills/code-review/SKILL.md`와 `node scripts/check-domain-neutral-wording.mjs`를 읽는다.",
     "명령의 종료 코드 0만으로 동작을 인정하지 않는다.",
   ]) assert.deepEqual(findFieldWording(sentence), [], sentence);
 });
@@ -69,6 +73,27 @@ test("a sentence that ties the work to one field is caught, even inside an exclu
     ["코드 작업에만 쓰고 그 밖의 작업에는 쓰지 않는다.", "코드"],
     ["구현자와 분리된 검토자로서 판정하고, 승인 결정을 대신하지 않는다.", "구현"],
   ]) assert.ok(findFieldWording(sentence).some((finding) => finding.term === term), `${term}: ${sentence}`);
+});
+
+test("a field-specific skill ID exempts only the clause that routes work to it", () => {
+  for (const sentence of [
+    "코드 변경에만 쓰며 필요하면 `code-review`를 호출한다.",
+    "코드 변경의 근거를 대조하며, 필요하면 `code-review`를 호출한다.",
+  ]) assert.ok(findFieldWording(sentence).some((finding) => finding.term === "코드"), sentence);
+});
+
+test("an example lead exempts its clause, not a later field-limited clause", () => {
+  for (const sentence of [
+    "예를 들어 영상을 검토하며, 코드 변경에만 적용한다.",
+    "예를 들어 영상을 검토하며, 코드 변경의 근거를 대조한다.",
+  ]) assert.ok(findFieldWording(sentence).some((finding) => finding.term === "코드"), sentence);
+});
+
+test("inline code markup cannot hide a field word that limits the skill", () => {
+  for (const [sentence, term] of [
+    ["Use only for `code` changes.", "code"],
+    ["`코드` 변경에만 사용한다.", "코드"],
+  ]) assert.ok(findFieldWording(sentence).some((finding) => finding.term === term), sentence);
 });
 
 test("every skill is classified as general or field-specific, and the code-only skills are field-specific", () => {
