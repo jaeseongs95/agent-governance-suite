@@ -154,9 +154,13 @@ test("AGS38 Windows startup discriminators retain original 10s child deadlines",
         const input = Buffer.from(JSON.stringify({ schemaVersion: "1.0.0", workspaceRoot: path.join(root, "tests/workspace-convention-profiler/fixtures/python"),
           taskObjective: text, targetPaths: ["src"], resolvedInstructionRefs: [], knownConstraints: [],
           evidenceLimits: { maxFiles: 100, maxBytesPerFile: 100000, excludedPatterns: [] } }));
+        const ascii = input.toString("utf8").replace(/[^\x00-\x7f]/g, character => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`);
+        const reference = await probe("HR16-ASCII", path.join(root, distribution, "workspace-convention-profiler/scripts/profile-workspace.mjs"), ascii, environment);
         const result = await probe("HR16", path.join(root, distribution, "workspace-convention-profiler/scripts/profile-workspace.mjs"),
           input, environment, input.indexOf(Buffer.from(text)) + 1);
         assert.equal(JSON.parse(result.stdout).verdict, "PASS");
+        assert.equal(JSON.parse(result.stdout).profileFingerprint, JSON.parse(reference.stdout).profileFingerprint,
+          "split UTF-8 must preserve the same profile as ASCII escapes");
         assert.ok(result.stages.some(stage => stage.stage === "stdin-async" && stage.event === "eof"));
         assert.ok(result.stages.some(stage => stage.stage === "subprocess-sync" && stage.event === "complete"));
       });
