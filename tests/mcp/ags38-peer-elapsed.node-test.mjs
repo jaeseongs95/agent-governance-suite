@@ -49,9 +49,12 @@ function launch(args, env) {
         const event = JSON.parse(line.slice(marker.length));
         events.push(event);
         for (const waiter of waiters.splice(0)) waiter();
-      } else if (line.startsWith("[agent-governance-suite] peer-hook-failure ")) {
-        const failure = JSON.parse(line.slice(line.indexOf("{")));
-        productFailures.push({ phase: failure.phase, reason: failure.reason, step: failure.step ?? null });
+      } else if (line.startsWith("{")) {
+        const failure = JSON.parse(line);
+        // D0023 product diagnostics are JSON lines; identify the producer and event, never a retired text prefix.
+        if (failure.component === "session-message-hook" && failure.event === "peer-hook-failure") {
+          productFailures.push({ phase: failure.phase, reason: failure.reason, step: failure.step ?? null });
+        }
       }
     }
   });
@@ -164,6 +167,7 @@ test("PB06: actual shared CLI expires at its original 6500ms budget before claim
     assert.equal(cli.events.filter(event => event.phase === "stdin-return").length, 1);
     assert.ok(cli.events.find(event => event.phase === "stdin-return").nowMs >= DEADLINE_MS);
     assert.deepEqual(cli.productFailures.map(failure => failure.reason), ["HOOK_BUDGET_EXPIRED"]);
+    assert.equal(cli.productFailures[0].phase, "options");
     assert.equal(cli.summary().stdoutBytes, 0);
     assert.deepEqual(snapshot(database), before);
   });
