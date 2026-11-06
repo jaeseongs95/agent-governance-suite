@@ -53,7 +53,7 @@ export interface MessageParams {
   "hooks.checkpointCue.notice": Record<string, never>;
   "hooks.checkpointCue.resume": Record<string, never>;
   "hooks.checkpointCue.save": Record<string, never>;
-  "hooks.checkpointCue.skills": { "targets": NestedMessage | number | string; };
+  "hooks.checkpointCue.skills": Record<string, never>;
   "hooks.checkpointCue.status": { "state": string; };
   "hooks.editGate.criterionPlaceholder": Record<string, never>;
   "hooks.editGate.denied": { "limit": number; "paths": NestedMessage | number | string; "earlier": number; "example": NestedMessage | number | string; };
@@ -557,6 +557,7 @@ export interface MessageParams {
   "schema.updateSessionStatusRequestV1.properties.role.description": Record<string, never>;
   "instructions.intake.frame": { "intake": NestedMessage | number | string; };
   "instructions.intake.pointer": { "path": NestedMessage | number | string; };
+  "instructions.intake.skills": { "targets": NestedMessage | number | string; };
   "instructions.sessionMessage.guide": Record<string, never>;
   "continuity.binding.rootOwnedElsewhere": { "rootId": NestedMessage | number | string; };
   "continuity.binding.stale": Record<string, never>;

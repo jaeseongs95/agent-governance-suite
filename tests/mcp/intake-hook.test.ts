@@ -6,7 +6,11 @@ import { describe, expect, it } from "vitest";
 import { resolveHostLocale } from "../../mcp-server/src/i18n.js";
 import { intakeHookOutput } from "../../mcp-server/src/intake-hook.js";
 import { skillIntakeServerInstructions } from "../../mcp-server/src/server.js";
-import { skillIntakePointer, skillIntakeText } from "../../mcp-server/src/skill-intake.js";
+import { skillIntakePointer, skillIntakeText, skillTargetsContext } from "../../mcp-server/src/skill-intake.js";
+
+// AGS3-D-0032 candidate: a context start carries the pointer and the installed skill targets that each message's cue
+// points at, so the list is not repeated with every message.
+const contextStart = (locale: "ko" | "en") => [skillIntakePointer(locale), skillTargetsContext(locale)].join(String.fromCharCode(10));
 
 // agy 1.4.12 connects the AGS MCP server and lists its tools, but does not show the server instructions to the model
 // (Linux test server, 2026-11-04: quoting the instructions frame without tools gave NONE 2/2, naming plan_workflow and
@@ -41,10 +45,10 @@ describe("shared context-start intake", () => {
     }
   });
 
-  it.each(["codex", "antigravity", "claude-code"])("the %s adapter gets the pointer at every session start and nowhere else", (host) => {
+  it.each(["codex", "antigravity", "claude-code"])("the %s adapter gets the pointer and skill targets at every session start and nowhere else", (host) => {
     for (const source of SOURCES) {
       expect(intakeHookOutput({ hook_event_name: "SessionStart", source, session_id: `intake-${host}`, conversationId: `intake-${host}` }, host, "ko"))
-        .toEqual({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: skillIntakePointer("ko") } });
+        .toEqual({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: contextStart("ko") } });
     }
     for (const input of [
       { hook_event_name: "UserPromptSubmit", session_id: "s", prompt: "x" },
@@ -54,7 +58,7 @@ describe("shared context-start intake", () => {
     ]) expect(intakeHookOutput(input, host, "ko")).toEqual({});
   });
 
-  it("Codex registers it for every session start, compaction included, with a context limit that holds the pointer", () => {
+  it("Codex registers it for every session start, compaction included, with a context limit that holds the pointer and targets", () => {
     const groups = (JSON.parse(readFileSync(path.join(root, "hooks", "hooks.json"), "utf8")) as {
       hooks: { SessionStart: { matcher?: string; hooks: { command: string; additionalContextLimit?: number }[] }[] };
     }).hooks.SessionStart;
@@ -62,7 +66,7 @@ describe("shared context-start intake", () => {
     expect(group).toBeDefined();
     for (const source of SOURCES) expect(new RegExp(group!.matcher!, "u").test(source)).toBe(true);
     const limit = group!.hooks[0]!.additionalContextLimit ?? 0;
-    for (const locale of ["ko", "en"] as const) expect(limit).toBeGreaterThanOrEqual(skillIntakePointer(locale).length);
+    for (const locale of ["ko", "en"] as const) expect(limit).toBeGreaterThanOrEqual(contextStart(locale).length);
   });
 
   // agy has no compaction hook event, and PreInvocation's initialNumSteps counts every step and does not drop at
@@ -89,7 +93,7 @@ describe("shared context-start intake", () => {
       intakeHook: (input: Record<string, unknown>, host: string) => intakeHookOutput(input, host, resolveHostLocale().locale),
     };
     expect(await executeAntigravityHookEvent({ conversationId: "intake-agy-turn", invocationNum: 0, initialNumSteps: 18 }, "PreInvocation", undefined, options))
-      .toEqual({ injectSteps: [{ ephemeralMessage: skillIntakePointer(resolveHostLocale().locale) }, { ephemeralMessage: "TURN-CUE" }] });
+      .toEqual({ injectSteps: [{ ephemeralMessage: contextStart(resolveHostLocale().locale) }, { ephemeralMessage: "TURN-CUE" }] });
     for (const [event, input] of [
       ["PreInvocation", { conversationId: "intake-agy-turn", invocationNum: 1, initialNumSteps: 21 }],
       ["PreInvocation", { conversationId: "intake-agy-turn" }],

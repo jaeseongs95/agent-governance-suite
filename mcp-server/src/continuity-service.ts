@@ -869,7 +869,8 @@ export class ContinuityService implements ContinuityGateway {
       if (missingOnly && snapshot) return null;
       return [
         msg("hooks.checkpointCue.status", { state: missingOnly ? "missing" : snapshot ? "saved" : "none" }),
-        msg("hooks.checkpointCue.skills", { targets: installedSkillTargets() }),
+        // The targets list itself travels once per context start (intake hook); the cue only points at it.
+        msg("hooks.checkpointCue.skills", {}),
         msg("hooks.checkpointCue.save", {}),
         msg("hooks.checkpointCue.resume", {}),
         msg("hooks.checkpointCue.notice", {}),

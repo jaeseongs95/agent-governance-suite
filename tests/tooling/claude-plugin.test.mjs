@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { matchesGovernanceSourceSuccessor, matchesSkillPolicyWordingSuccessorBytes, readHistoricalSource } from "../../scripts/check-skill-context-optimization.mjs";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -214,6 +215,16 @@ describe("generated Claude plugin", () => {
     await writeFile(hook, launcher);
     await writeFile(path.join(directory, "skills", "orchestrator", "SKILL.md"), await readFile(path.join(root, "skills", "orchestrator", "SKILL.md")));
     await writeFile(path.join(directory, "skills", "orchestrator", "references", "intake.md"), current);
+    // AGS3-D-0032 candidate: the launcher adds the installed skill targets from the shared intake-hook bundle.
+    await mkdir(path.join(directory, "mcp-server", "dist"), { recursive: true });
+    await writeFile(path.join(directory, "mcp-server", "dist", "intake-hook.mjs"), await readFile(path.join(root, "mcp-server", "dist", "intake-hook.mjs")));
+    for (const entry of await readdir(path.join(root, "skills"), { withFileTypes: true })) {
+      const classification = path.join(root, "skills", entry.name, "classification.json");
+      if (!entry.isDirectory() || !existsSync(classification)) continue;
+      await mkdir(path.join(directory, "skills", entry.name), { recursive: true });
+      await writeFile(path.join(directory, "skills", entry.name, "classification.json"), await readFile(classification));
+    }
+    const { skillTargetsContext } = await import(pathToFileURL(path.join(root, "mcp-server", "dist", "intake-hook.mjs")).href);
     const hostEnvironment = { ...process.env };
     delete hostEnvironment.AGENT_GOVERNANCE_LOCALE;
     const invoke = (input, env = hostEnvironment) => spawnSync(process.execPath, [hook], { input: JSON.stringify(input), encoding: "utf8", env });
@@ -222,13 +233,13 @@ describe("generated Claude plugin", () => {
     expect(start.stderr).toBe("");
     const context = JSON.parse(start.stdout).hookSpecificOutput;
     expect(context.hookEventName).toBe("SessionStart");
-    expect(context.additionalContext).toBe("Claude Code 호출: MCP 서버 instructions의 공통 접수 기준을 따르고, 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.");
+    expect(context.additionalContext).toBe(`Claude Code 호출: MCP 서버 instructions의 공통 접수 기준을 따르고, 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.\n${skillTargetsContext("ko")}`);
     expect(context.additionalContext).not.toContain(intake);
     expect(context.additionalContext).not.toContain("fixture-source-revision");
     const english = invoke({ hook_event_name: "SessionStart", source: "startup" }, { ...hostEnvironment, AGENT_GOVERNANCE_LOCALE: "en" });
     expect(english.status).toBe(0);
     expect(english.stderr).toBe("");
-    expect(JSON.parse(english.stdout).hookSpecificOutput.additionalContext).toBe("Claude Code invocation: follow the common intake criteria in the MCP server instructions, and actually invoke each selected installed skill with the Skill tool or the /agent-governance-suite:<skill-name> command.");
+    expect(JSON.parse(english.stdout).hookSpecificOutput.additionalContext).toBe(`Claude Code invocation: follow the common intake criteria in the MCP server instructions, and actually invoke each selected installed skill with the Skill tool or the /agent-governance-suite:<skill-name> command.\n${skillTargetsContext("en")}`);
     for (const prompt of ["git rebase랑 merge 차이가 뭐예요? 간단히 설명해 주세요.", "안녕하세요!", "change.diff 파일에 있는 변경 사항을 리뷰해 주세요."]) {
       const result = invoke({ hook_event_name: "UserPromptSubmit", prompt });
       expect(result.status).toBe(0);

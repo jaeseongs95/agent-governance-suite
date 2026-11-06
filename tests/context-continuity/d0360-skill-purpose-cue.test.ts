@@ -8,13 +8,14 @@ import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
-import { installedSkillTargets } from "../../mcp-server/src/skill-intake.js";
+import { intakeHookOutput } from "../../mcp-server/src/intake-hook.js";
+import { installedSkillTargets, skillTargetsContext } from "../../mcp-server/src/skill-intake.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
 // Skills are split by purpose. A skill chosen by the nature of the problem (CS, tests, repeated failures) went unused
 // because nothing at the message boundary matched the message against those purposes, and a skill called on an
-// earlier turn kept applying to later turns. The per-message cue carries each installed skill's targets and limits an
-// earlier skill to the judgment it was called for.
+// earlier turn kept applying to later turns. Each installed skill's targets and the rule limiting an earlier skill to
+// the judgment it was called for reach the agent at every context start; each message's cue points at them.
 const session = "d0360-skill-purpose";
 const stores = new Set<SqliteContinuityStore>();
 const directories: string[] = [];
@@ -47,8 +48,10 @@ function skillsDirectory(skills: Record<string, unknown>) {
 }
 
 describe("per-message skill purpose cue", () => {
-  it("lists the purpose of the skills chosen by the nature of the problem, from the installed classification", () => {
-    const text = cue();
+  // AGS3-D-0032 candidate: the list and the matching rules travel once per context start (intake hook), and the
+  // per-message cue keeps one line that points at them.
+  it("lists the purpose of the skills chosen by the nature of the problem, from the installed classification, at context start", () => {
+    const text = skillTargetsContext("ko");
     // Expected lines written from skills/*/classification.json by hand, not by the function under test.
     expect(text).toContain("- cs-engineering: concurrency, database, messaging, algorithms, resource-lifetime, performance");
     expect(text).toContain("- test-engineering: tests, regression-tests");
@@ -56,13 +59,22 @@ describe("per-message skill purpose cue", () => {
     expect(text).toContain("- ponytail: code, libraries, dependencies");
     // The retired skill is not offered.
     expect(text).not.toContain("context-continuity");
+    // Every context start carries it, after the intake pointer.
+    const start = intakeHookOutput({ hook_event_name: "SessionStart", source: "compact", session_id: session }, "codex", "ko") as
+      { hookSpecificOutput: { additionalContext: string } };
+    expect(start.hookSpecificOutput.additionalContext.endsWith(`\n${text}`)).toBe(true);
+    // The per-message cue points at the list instead of repeating it.
+    expect(cue()).not.toContain("- ponytail:");
+    expect(cue()).toContain("맥락 시작에 받은 AGS 스킬별 대상 목록과 대조하고");
+    expect(cue({ AGENT_GOVERNANCE_LOCALE: "en" })).toContain("against the AGS skill targets given at context start");
   });
 
   it("asks to match every message, questions included, and to call the matching skills now", () => {
     const ko = cue();
-    expect(ko).toContain("스킬은 목적별로 나뉘어 있다.");
+    expect(skillTargetsContext("ko")).toContain("스킬은 목적별로 나뉘어 있다. 사용자 메시지마다");
     expect(ko).toContain("맞는 스킬은 그 판단·행동 전에 지금 호출한다(질문·확인 요청도 포함한다)");
     const en = cue({ AGENT_GOVERNANCE_LOCALE: "en" });
+    expect(skillTargetsContext("en")).toContain("Skills are split by purpose. For every user message");
     expect(en).toContain("call every matching skill now, before that judgment or action (questions and check requests included)");
     // The old notice told the agent to add nothing for a question; a question can still need a skill.
     expect(ko).not.toContain("질문·인사·진행 확인");
@@ -70,11 +82,11 @@ describe("per-message skill purpose cue", () => {
   });
 
   it("limits a skill called on an earlier turn to the judgment it was called for and carries the choice to subagents", () => {
-    const ko = cue();
+    const ko = skillTargetsContext("ko");
     expect(ko).toContain("앞서 호출한 스킬의 지침은 그때의 판단·행동에만 적용된다.");
     expect(ko).toContain("이번 목적에 맞지 않는 이전 스킬 지침은 적용하지 않는다.");
     expect(ko).toContain("독립적으로 완료·검증할 수 있는 일이 있으면 직접 하기 전에 서브에이전트 위임을 검토한다. 맡길 때는 지시문에 목표·범위·금지 구역·쓰기 소유, 고른 스킬과 완료·검증 기준을 적고, 빌드 감시·진행 폴링 같은 대기는 맡기지 않는다.");
-    const en = cue({ AGENT_GOVERNANCE_LOCALE: "en" });
+    const en = skillTargetsContext("en");
     expect(en).toContain("A skill called earlier applies only to the judgment or action it was called for");
     expect(en).toContain("When some work can be completed and verified on its own, consider delegating it to a subagent before doing it yourself. When delegating, write the goal, scope, forbidden areas, write ownership, the chosen skills and the completion and verification criteria in the brief, and do not hand off waiting such as watching a build or polling progress.");
   });

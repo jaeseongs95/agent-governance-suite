@@ -27,8 +27,16 @@ export function skillIntakePointer(locale: SupportedLocale): string {
 }
 
 /**
+ * The skill targets for a context start (AGS3-D-0032 candidate): the per-message cue only points at this list, so the
+ * list and the rules for matching a message against it travel once per context start, with the intake pointer.
+ */
+export function skillTargetsContext(locale: SupportedLocale): string {
+  return render(msg("instructions.intake.skills", { targets: installedSkillTargets() }), locale);
+}
+
+/**
  * One line per installed skill with the targets its classification.json declares ("name: target, target"). The
- * per-message cue carries it so the purpose of each message is matched against the skills split by purpose, not only
+ * context-start text carries it so the purpose of each message is matched against the skills split by purpose, not only
  * against the few skills the intake names by action. Derived from the installed files, so it never lists a skill that
  * is not installed or misses one that is.
  */
