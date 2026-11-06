@@ -927,7 +927,10 @@ describe("host attestation configuration", () => {
     expect(modelClassForGeminiModel("pro")).toBe("deep");
     expect(modelClassForGeminiModel("ultra")).toBe("frontier");
     expect(modelClassForGeminiModel("unknown-gemini")).toBeNull();
+    expect(geminiExecutionAdapter.modelClassForModel("gpt-6-astra")).toBe("frontier");
+    expect(geminiExecutionAdapter.modelClassForModel("claude-opus-5")).toBe("deep");
     expect(modelClassForGeminiModel("gpt-6-astra")).toBeNull();
+    expect(modelClassForGeminiModel("claude-opus-5")).toBeNull();
   });
 
   it("maps Claude model families to the routing preset classes", () => {
@@ -945,7 +948,10 @@ describe("host attestation configuration", () => {
     expect(modelClassForClaudeModel("claude-opusx")).toBeNull();
     expect(modelClassForClaudeModel("xclaude-opus-5")).toBeNull();
     expect(modelClassForClaudeModel("claude-instant-1")).toBeNull();
+    expect(claudeCodeExecutionAdapter.modelClassForModel("gpt-6-astra")).toBe("frontier");
+    expect(claudeCodeExecutionAdapter.modelClassForModel("gemini-2.5-pro")).toBe("deep");
     expect(modelClassForClaudeModel("gpt-6-astra")).toBeNull();
+    expect(modelClassForClaudeModel("gemini-2.5-pro")).toBeNull();
   });
 
   it("attests the lower effort when the hook and the transcript message disagree", () => {
