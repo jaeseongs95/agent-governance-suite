@@ -15,7 +15,7 @@ vi.mock("node:child_process", async original => ({...await original<typeof impor
   execFile: (file: string, args: string[], _options: unknown, callback: (error: Error | null, stdout: string) => void) => {
     host.rawCalls.push({file, args});
     if (file === "codex" && host.nativeMissing) {callback(Object.assign(new Error("spawn codex ENOENT"), {code: "ENOENT"}), ""); return;}
-    const key = file === process.execPath && args[0] === host.launcher ? ["codex", ...args.slice(1)].join(" ") : [file, ...args].join(" "); host.calls.push(key);
+    const key = file === host.launcher ? ["codex", ...args].join(" ") : [file, ...args].join(" "); host.calls.push(key);
     callback(host.failed || !(key in host.outputs) ? new Error("PRIVATE_HOST_CAUSE") : null, host.outputs[key] ?? "");
   }}));
 const directories: string[] = [];
@@ -60,6 +60,19 @@ const unavailable = (inventory: Awaited<ReturnType<RuntimeSkillClassificationGat
   expect(inventory.discovery.status).toBe("UNAVAILABLE");
   expect(inventory.issues).toContainEqual({skillId: null, code: "HOST_DISCOVERY_UNAVAILABLE", field: "hostDiscovery"});
 };
+
+async function windowsNpmFixture(npm: string, mutation = "") {
+  const packageRoot = path.join(npm, "node_modules/@openai/codex");
+  const nativeRoot = path.join(packageRoot, "node_modules/@openai/codex-win32-x64");
+  const executable = path.join(nativeRoot, "vendor/x86_64-pc-windows-msvc/bin/codex.exe");
+  await mkdir(path.join(packageRoot, "bin"), {recursive: true}); await mkdir(path.dirname(executable), {recursive: true});
+  await writeFile(path.join(npm, "codex.cmd"), "@node %~dp0/node_modules/@openai/codex/bin/codex.js %*\n");
+  await writeFile(path.join(packageRoot, "package.json"), JSON.stringify({name: mutation === "wrong-package" ? "unverified-package" : "@openai/codex", version: "0.166.0", bin: {codex: mutation === "wrong-bin" ? "other.js" : "bin/codex.js"}}));
+  await writeFile(path.join(packageRoot, "bin/codex.js"), "// Public launcher fixture; no model or auth.\n");
+  await writeFile(path.join(nativeRoot, "package.json"), JSON.stringify({name: "@openai/codex", version: "0.166.0-win32-x64"}));
+  if (mutation !== "missing") await writeFile(executable, "public-native-fixture");
+  return executable;
+}
 
 describe("D0013 current native installation and running root binding", () => {
   for (const kind of ["codex", "antigravity"] as const) {
@@ -108,38 +121,28 @@ describe("D0013 current native installation and running root binding", () => {
     const f = await fixture("codex"); vi.stubEnv("AGENT_GOVERNANCE_HOST_ATTESTATION", "unverified-host");
     unavailable(await gateway(f.root).inventory()); expect(host.calls).toEqual([]);
   });
-  it.skipIf(process.platform !== "win32")("Windows npm shim ENOENT uses the verified official Node launcher and exact public arguments", async () => {
+  it.skipIf(process.platform !== "win32")("Windows npm shim ENOENT uses the verified official native executable and exact public arguments", async () => {
     const f = await fixture("codex"); const npm = path.join(f.home, "npm");
-    host.launcher = path.join(npm, "node_modules/@openai/codex/bin/codex.js");
-    await mkdir(path.dirname(host.launcher), {recursive: true});
-    await writeFile(path.join(npm, "codex.cmd"), "@node %~dp0/node_modules/@openai/codex/bin/codex.js %*\n");
-    await writeFile(path.join(npm, "node_modules/@openai/codex/package.json"), JSON.stringify({name: "@openai/codex", version: "0.166.0", bin: {codex: "bin/codex.js"}}));
-    await writeFile(host.launcher, "// Public CLI fixture; no model or auth.\n");
+    host.launcher = await windowsNpmFixture(npm);
     vi.stubEnv("PATH", npm); host.nativeMissing = true;
     expect((await gateway(f.root).inventory()).discovery).toMatchObject({status: "COMPLETE", scope: "host"});
-    expect(host.rawCalls.filter(call => call.file === process.execPath)).toEqual([
-      {file: process.execPath, args: [host.launcher, "--version"]},
-      {file: process.execPath, args: [host.launcher, "plugin", "list", "--json"]},
-      {file: process.execPath, args: [host.launcher, "plugin", "marketplace", "list", "--json"]},
+    expect(host.rawCalls.filter(call => call.file === host.launcher)).toEqual([
+      {file: host.launcher, args: ["--version"]},
+      {file: host.launcher, args: ["plugin", "list", "--json"]},
+      {file: host.launcher, args: ["plugin", "marketplace", "list", "--json"]},
     ]);
+    expect(host.rawCalls.some(call => call.file === process.execPath)).toBe(false);
     expect(host.rawCalls.filter(call => call.file === "codex")).toHaveLength(1);
   });
   it.skipIf(process.platform !== "win32").each(["missing", "wrong-package", "wrong-bin", "duplicate"])("Windows shim ENOENT keeps %s official launcher unavailable", async mutation => {
     const f = await fixture("codex"); const npm = path.join(f.home, "npm");
-    host.launcher = path.join(npm, "node_modules/@openai/codex/bin/codex.js");
-    await mkdir(path.dirname(host.launcher), {recursive: true});
-    await writeFile(path.join(npm, "codex.cmd"), "@node %~dp0/node_modules/@openai/codex/bin/codex.js %*\n");
-    await writeFile(path.join(npm, "node_modules/@openai/codex/package.json"), JSON.stringify({name: mutation === "wrong-package" ? "unverified-package" : "@openai/codex", version: "0.166.0", bin: {codex: mutation === "wrong-bin" ? "other.js" : "bin/codex.js"}}));
-    if (mutation !== "missing") await writeFile(host.launcher, "// Public fixture\n");
+    host.launcher = await windowsNpmFixture(npm, mutation);
     let commandPath = npm;
     if (mutation === "duplicate") {
-      const second = path.join(f.home, "npm-other"); await mkdir(path.join(second, "node_modules/@openai/codex/bin"), {recursive: true});
-      await copyFile(path.join(npm, "codex.cmd"), path.join(second, "codex.cmd"));
-      await copyFile(path.join(npm, "node_modules/@openai/codex/package.json"), path.join(second, "node_modules/@openai/codex/package.json"));
-      await copyFile(host.launcher, path.join(second, "node_modules/@openai/codex/bin/codex.js")); commandPath += path.delimiter + second;
+      const second = path.join(f.home, "npm-other"); await windowsNpmFixture(second); commandPath += path.delimiter + second;
     }
     vi.stubEnv("PATH", commandPath); host.nativeMissing = true;
-    unavailable(await gateway(f.root).inventory()); expect(host.rawCalls.some(call => call.file === process.execPath)).toBe(false);
+    unavailable(await gateway(f.root).inventory()); expect(host.rawCalls.some(call => call.file === process.execPath || call.file === host.launcher)).toBe(false);
   });
   it.skipIf(process.platform === "win32")("TEST Linux public CLI fixture crosses actual execFile boundary without shell or model turn", async () => {
     const f = await fixture("codex"); const fixtureRoot = path.dirname(fileURLToPath(new URL("./fixtures/ags38-host-discovery/cli.mjs", import.meta.url)));
