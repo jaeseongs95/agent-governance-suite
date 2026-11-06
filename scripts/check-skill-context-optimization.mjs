@@ -7,23 +7,77 @@ import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-// Output named only by full commit SHAs (`show <sha>:<path>`, `diff --name-only <sha> <sha> -- <path>`) cannot change,
-// so it is kept for the process, across module reloads (vi.resetModules). The cache belongs to the execFileSync in use,
-// so a mocked child_process sees every call. Working-tree and index reads (`diff <sha> --`, `ls-files`) always run.
+// Output named only by full commit SHAs (`show <sha>:<path>`, `diff --name-only --no-renames -z <sha> <sha>`) cannot
+// change, so it is kept for the process, across module reloads (vi.resetModules). The cache belongs to the execFileSync
+// in use, so a mocked child_process sees every call. Working-tree and index reads (`diff <sha> --`, `ls-files`) always run.
 const COMMIT = /^[0-9a-f]{40}$/u;
 const IMMUTABLE_GIT = Symbol.for("ags.check-skill-context-optimization.immutable-git");
+const GIT_OPTIONS = Object.freeze({ maxBuffer: 20 * 1024 * 1024 });
+// Executable skill scripts are never read from history; prefetching skips them as well.
+const EXECUTABLE_SCRIPT = /^skills\/[^/]+\/scripts\/.+\.(?:mjs|py)$/u;
 
 function git(...args) {
-  const run = () => execFileSync("git", ["-C", ROOT, ...args], { maxBuffer: 20 * 1024 * 1024 });
-  const immutable = (args.length === 2 && args[0] === "show" && /^[0-9a-f]{40}:/u.test(args[1]))
-    || (args.length === 6 && args[0] === "diff" && args[1] === "--name-only" && COMMIT.test(args[2]) && COMMIT.test(args[3]) && args[4] === "--");
+  const run = () => execFileSync("git", ["-C", ROOT, ...args], GIT_OPTIONS);
+  const show = args.length === 2 && args[0] === "show" && /^[0-9a-f]{40}:/u.test(args[1]);
+  const immutable = show
+    || (args.length === 6 && args[0] === "diff" && args[1] === "--name-only" && args[2] === "--no-renames" && args[3] === "-z" && COMMIT.test(args[4]) && COMMIT.test(args[5]));
   if (!immutable) return run();
   const caches = (globalThis[IMMUTABLE_GIT] ??= new WeakMap());
   if (!caches.has(execFileSync)) caches.set(execFileSync, new Map());
   const cache = caches.get(execFileSync);
   const key = JSON.stringify([ROOT, ...args]);
+  if (show && !cache.has(key)) prefetchHistory(cache, args[1].slice(0, 40), args[1].slice(41).split("/")[0]);
   if (!cache.has(key)) cache.set(key, run());
   return Buffer.from(cache.get(key));
+}
+
+/**
+ * Fills the immutable cache with every blob under `top` at `revision` in two processes (`ls-tree`, `cat-file --batch`)
+ * instead of one `git show` per path. A path the listing does not yield (missing at the revision, an executable script,
+ * a name cat-file cannot take on one line) stays uncached and is read by `git show`, which also reports its own error.
+ * ponytail: reads the whole `top` tree once per revision, a few MB here; narrow the listing if that tree grows large.
+ */
+function prefetchHistory(cache, revision, top) {
+  const marker = JSON.stringify([ROOT, "prefetched", revision, top]);
+  if (cache.has(marker)) return;
+  cache.set(marker, Buffer.alloc(0));
+  let listing;
+  // A listing failure only skips the prefetch: each read then runs `git show` and fails with git's own message.
+  try { listing = execFileSync("git", ["-C", ROOT, "ls-tree", "-r", "-z", revision, "--", top], GIT_OPTIONS).toString("utf8"); }
+  catch { return; }
+  const pending = [];
+  for (const entry of listing.split("\0").filter(Boolean)) {
+    const tab = entry.indexOf("\t");
+    const [, type, oid] = entry.slice(0, tab).split(" ");
+    const path = entry.slice(tab + 1);
+    if (type !== "blob" || EXECUTABLE_SCRIPT.test(path) || /[\r\n]/u.test(path)) continue;
+    const key = JSON.stringify([ROOT, "show", `${revision}:${path}`]);
+    const blob = JSON.stringify([ROOT, "blob", oid]);
+    if (cache.has(blob)) cache.set(key, cache.get(blob));
+    else pending.push({ key, blob, oid, spec: `${revision}:${path}` });
+  }
+  if (!pending.length) return;
+  const output = execFileSync("git", ["-C", ROOT, "cat-file", "--batch"], { ...GIT_OPTIONS, input: pending.map(item => `${item.spec}\n`).join("") });
+  let offset = 0;
+  for (const item of pending) {
+    const end = output.indexOf(10, offset);
+    if (end < 0) throw new Error(`git cat-file --batch output ended before ${item.spec}`);
+    const header = output.subarray(offset, end).toString("utf8");
+    offset = end + 1;
+    if (header === `${item.spec} missing` || header === `${item.spec} ambiguous`) continue;
+    const match = /^([0-9a-f]{40,64}) blob (\d+)$/u.exec(header);
+    if (!match || match[1] !== item.oid) throw new Error(`Unexpected git cat-file --batch header for ${item.spec}: ${header}`);
+    const bytes = Buffer.from(output.subarray(offset, offset + Number(match[2])));
+    offset += bytes.length + 1;
+    cache.set(item.blob, bytes);
+    cache.set(item.key, bytes);
+  }
+}
+
+/** Whether a path or directory differs between two commits: one cached listing per commit pair. */
+function changedBetween(from, to, path) {
+  return git("diff", "--name-only", "--no-renames", "-z", from, to).toString("utf8").split("\0")
+    .some(entry => entry === path || entry.startsWith(`${path}/`));
 }
 // Reviewed guidance successors: these exact bytes stand for their predecessor at `revision`, so every existing pin
 // keeps checking the same chain. Altered bytes are never projected.
@@ -133,7 +187,7 @@ function projectRetiredChanges(base, paths) {
     if (!Object.hasOwn(RETIRED_SKILLS.hashes, relative)) return true;
     try { readFileBytes(join(ROOT, relative)); return true; }
     catch (error) { if (error?.code !== "ENOENT") throw error; }
-    return git("diff", "--name-only", base, RETIRED_SKILLS.revision, "--", relative).toString("utf8").trim() !== "";
+    return changedBetween(base, RETIRED_SKILLS.revision, relative);
   });
 }
 
@@ -1142,7 +1196,7 @@ function historicalChanges(paths) {
     let bytes;
     try { bytes = readFileSync(join(ROOT, ...path.split("/"))); } catch { return true; }
     if (!matchesSkillPolicyWordingSuccessor(path, bytes)) return true;
-    return git("diff", "--name-only", BASELINE, SKILL_POLICY_WORDING_SUCCESSOR.baselineRevision, "--", path).toString("utf8").trim() !== "";
+    return changedBetween(BASELINE, SKILL_POLICY_WORDING_SUCCESSOR.baselineRevision, path);
   });
 }
 

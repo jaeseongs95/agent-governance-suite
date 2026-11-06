@@ -9,6 +9,10 @@ import { loadSkillInventory } from "../../mcp-server/src/skill-classification/in
 import { checkSkillContextOptimization, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, matchesSkillPolicyWordingSuccessorBytes, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
 import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin } from "../../scripts/check-skill-context-optimization.mjs";
 
+// The checker prefetches history with `ls-tree` + `cat-file --batch`; a path left out of the listing is read by
+// `git show`, so a test that intercepts `git show` for a path also drops it from the listing.
+const unlisted = (listing, relative) => Buffer.from(listing.toString("utf8").split("\0").filter(entry => !entry.endsWith(`\t${relative}`)).join("\0"));
+
 describe("skill context optimization", () => {
   it("pins context and contract bytes without executable fingerprints", () => {
     const report = checkSkillContextOptimization();
@@ -98,6 +102,7 @@ describe("skill context optimization", () => {
     const relative = "skills/context-continuity/SKILL.md";
     vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
       const output = execFileSync(file, args, options);
+      if (file === "git" && args.includes("ls-tree")) return unlisted(output, relative);
       if (file === "git" && args.at(-2) === "show" && args.at(-1) === `e6e313864a4fe1be15ac2b199fb56284dbc327a9:${relative}`) {
         const altered = Buffer.from(output); altered[altered.length - 1] ^= 1; return altered;
       }
@@ -182,17 +187,25 @@ describe("skill context optimization", () => {
 
   it("does not read executable script history", async () => {
     const { execFileSync } = await import("node:child_process");
+    const executable = /:skills\/[^/]+\/scripts\/.+\.(?:mjs|py)$/u;
     let executableReads = 0;
+    let batchedReads = 0;
     vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
-      if (file === "git" && args.at(-2) === "show" && /:skills\/[^/]+\/scripts\/.+\.(?:mjs|py)$/u.test(args.at(-1))) {
+      if (file === "git" && args.at(-2) === "show" && executable.test(args.at(-1))) {
         executableReads += 1;
         throw new Error("SYNTHETIC_EXECUTABLE_HISTORY_UNAVAILABLE");
+      }
+      if (file === "git" && args.includes("cat-file")) {
+        const specs = String(options?.input ?? "").split("\n").filter(Boolean);
+        batchedReads += specs.length;
+        executableReads += specs.filter(spec => executable.test(spec)).length;
       }
       return execFileSync(file, args, options);
     } }));
     try {
       vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
       expect(checker.checkSkillContextOptimization()).toMatchObject({ pass: true, errors: [] });
+      expect(batchedReads).toBeGreaterThan(0);
       expect(executableReads).toBe(0);
     } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
   });
@@ -201,6 +214,7 @@ describe("skill context optimization", () => {
     const { execFileSync } = await import("node:child_process");
     vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
       if (file === "git" && args.at(-2) === "show" && args.at(-1) === "7bc7753012227938be2a46f68bf3e29d29d5ef34:skills/context-continuity/SKILL.md") throw new Error("SYNTHETIC_CONTEXT_HISTORY_MISSING");
+      if (file === "git" && args.includes("ls-tree")) return unlisted(execFileSync(file, args, options), "skills/context-continuity/SKILL.md");
       return execFileSync(file, args, options);
     } }));
     try {
