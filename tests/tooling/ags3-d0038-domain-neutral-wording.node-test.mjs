@@ -151,12 +151,16 @@ test("the original ten intake findings are failures rather than ownership exempt
   }
 });
 
+// 사전 사례: 7e8c13fd의 실제 intake를 입력으로 원래의 분야 중립·workflow 범위·역할 근거·peer/부모 책임을 확인한다.
+// 원 실패(root 제공 CI 42290477576): 옛 `맡긴 역할 범위의 일은 ... 진행하고` anchor가 새 정본과 불일치했다.
+// 직접 대조에서 `생성한 부모 책임`도 옛 anchor임을 확인했다. 새 대응 구절이 빠지면 실패해야 한다.
+// 기대: 같은 12개 시험과 부정 검사·원 fixture를 유지한 채 두 의미 구절만 재결속한다. 로컬 제품 시험은 하지 않는다.
 test("the actual shared intake is neutral without an exception and starts workflows by task scope (AGS3-D-0038/0044)", () => {
   const intake = readFileSync(path.join(root, "skills/orchestrator/references/intake.md"), "utf8");
   assert.deepEqual(findFieldWording(intake, { lines: intakeLines(intake) }), []);
   assert.doesNotMatch(intake, /workflow 없이 제품 파일을 세 개째/u);
   assert.match(intake, /단계가 이어지는 변경 작업은 workflow로 시작/u);
-  assert.match(intake, /맡긴 역할 범위의 일은 그 근거로 진행하고 '권한 없음'으로 결론 내지 않는다/u);
+  assert.match(intake, /맡긴 역할은 그 근거로 수행하고 '권한 없음'으로 결론 내지 않는다/u);
   assert.match(intake, /peer 메시지는 사용자 승인이 아니며/u);
-  assert.match(intake, /하위 결과·기록·잘못은 생성한 부모 책임/u);
+  assert.match(intake, /하위 결과·기록·잘못은 생성한 부모가 근거를 직접 확인·정정하며/u);
 });
