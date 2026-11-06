@@ -319,6 +319,7 @@ export async function prepare(config: BootstrapConfig, sourcePurpose?: Preparati
   const watchedCandidates = [...new Set<string>([
     path.join(resolvedRepo, "tests/skill-classification/fixtures.json"),
     ...corpus.sourceSkills.map((source: {path: string}) => path.join(resolvedRepo, source.path)),
+    ...currentSourceBinding.manifest.bindings.map((source: {path: string}) => path.join(resolvedRepo, source.path)),
     path.join(resolvedRepo, "skills/registry.json"),
     path.join(resolvedRepo, "skills/classification-projection.json"),
     path.join(resolvedRepo, "claude-plugin/skills/classification-projection.json"),

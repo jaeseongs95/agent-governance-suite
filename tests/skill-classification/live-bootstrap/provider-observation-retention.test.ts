@@ -1,4 +1,4 @@
-import {cp, mkdir, mkdtemp, readFile, rm, symlink, unlink, writeFile} from "node:fs/promises";
+import {cp, mkdir, mkdtemp, readFile, readdir, rm, symlink, unlink, writeFile} from "node:fs/promises";
 import {createHash} from "node:crypto";
 import os from "node:os";
 import path from "node:path";
@@ -90,7 +90,13 @@ describe("prepared evaluation provider observation retention", () => {
       expect(sends).toBe(0);
     } finally {await preserveAndRemove(root);}
   });
-  it("PRS-03 rejects changed current bytes and restored retired sources before environment access", async () => {
+  // PRS-03-cache: after valid preparation, restore only retired classification.json through a directory link.
+  // Preconditions: no SKILL.md, unchanged directory-only inventory key; input is the same scoped config.
+  // Procedure: run warm, then through a new repo alias with no preparation cache entry.
+  // Oracle: both reject ORACLE_SOURCE_MISMATCH before environment/transport access; any acceptance fails.
+  // Actions/TEST command: pnpm exec vitest run tests/skill-classification/live-bootstrap/provider-observation-retention.test.ts
+  // Actual product result: NOT_RUN locally; local product execution is prohibited.
+  it("PRS-03 rejects changed bytes and restored retired metadata with warm and cold preparation", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ags-provider-retention-"));
     const copiedRepo = path.join(root, "source-copy");
     const dependencyLink = path.join(copiedRepo, "node_modules");
@@ -124,6 +130,36 @@ describe("prepared evaluation provider observation retention", () => {
           if (original === null) await rm(path.dirname(file), {recursive: true, force: true});
           else await writeFile(file, original);
         }
+      }
+      await api.prepare(first.config, PROVIDER_RETENTION_PURPOSE);
+      const skillDirs = async () => (await readdir(path.join(copiedRepo, "skills"), {withFileTypes: true}))
+        .filter(entry => entry.isDirectory()).map(entry => entry.name).sort();
+      const beforeDirs = await skillDirs();
+      const retiredSource = path.join(copiedRepo, "skills/codex-token-usage-analyzer");
+      const metadataTarget = path.join(root, "retired-metadata");
+      const coldRepo = path.join(root, "cold-source-copy");
+      await mkdir(metadataTarget);
+      await writeFile(path.join(metadataTarget, "classification.json"), "{}\n");
+      await symlink(metadataTarget, retiredSource, process.platform === "win32" ? "junction" : "dir");
+      let coldLinked = false;
+      try {
+        expect(await skillDirs()).toEqual(beforeDirs);
+        await expect(readFile(path.join(retiredSource, "SKILL.md"))).rejects.toMatchObject({code: "ENOENT"});
+        expect(await readFile(path.join(retiredSource, "classification.json"), "utf8")).toBe("{}\n");
+        // A distinct resolved repo path has no cache entry, while reading the exact same source bytes.
+        await symlink(copiedRepo, coldRepo, process.platform === "win32" ? "junction" : "dir");
+        coldLinked = true;
+        for (const config of [first.config, {...first.config, repo: coldRepo}]) {
+          let environmentReads = 0, sends = 0;
+          await expect(api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, executionKind: "offline-mock",
+            env: new Proxy({}, {get() {environmentReads++; throw new Error("FORBIDDEN_ENVIRONMENT");}}),
+            fetcher: async () => {sends++; throw new Error("FORBIDDEN_DISPATCH");}})).rejects.toThrow("ORACLE_SOURCE_MISMATCH");
+          expect(environmentReads).toBe(0);
+          expect(sends).toBe(0);
+        }
+      } finally {
+        if (coldLinked) await unlink(coldRepo);
+        await unlink(retiredSource);
       }
     } finally {
       if (linked) await unlink(dependencyLink);
