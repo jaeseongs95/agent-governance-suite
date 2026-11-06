@@ -16,7 +16,7 @@ const manifest = z.object({name: z.string().min(1), version: z.string().min(1)})
 function hostCommand(file: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(file, args, {encoding: "utf8", timeout: 5000, maxBuffer: 1024 * 1024, windowsHide: true},
-      (error, stdout) => {if (error || Buffer.byteLength(stdout) > 1024 * 1024) reject(new Error("HOST_SKILL_LIST_FAILED")); else resolve(stdout);});
+      (error, stdout) => {if (error || Buffer.byteLength(stdout) > 1024 * 1024) reject(Object.assign(new Error("HOST_SKILL_LIST_FAILED"), {code: error?.code})); else resolve(stdout);});
   });
 }
 
