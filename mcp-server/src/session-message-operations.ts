@@ -213,7 +213,8 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
         typeof payload.sourceReceiptId === "string" ? payload.sourceReceiptId : "", wakeObserver, undefined, {
           ...(maxMessages === undefined ? {} : { maxMessages }), ...(maxBodyChars === undefined ? {} : { maxBodyChars }) });
       // retired marks a verified arrival of an attempt the liveness rule already retired; it authorizes no claim.
-      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null, ...(result.retired ? { retired: true } : {}) };
+      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null, ...(result.retired ? { retired: true } : {}),
+        ...(result.rejectionReason ? { rejectionReason: result.rejectionReason } : {}) };
     }
     case "observe-native-input": {
       const target = identity(payload.target);

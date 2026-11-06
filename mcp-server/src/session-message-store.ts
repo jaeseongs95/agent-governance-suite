@@ -1410,19 +1410,20 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
    * An unknown or pruned marker authorizes nothing (I1).
    */
   claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = AUTHORITY_NOW, limits: ClaimLimits = {}): {
-    recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null; retired?: true; observedNow?: true;
+    recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null; retired?: true; observedNow?: true; rejectionReason?: string;
   } {
     boundedIdentity(target);
     const rejected = { recognized: false, messages: [], binding: null };
-    if (!isWakeHookObservation(observation, target) || !reader) return rejected;
+    if (!isWakeHookObservation(observation, target)) return { ...rejected, rejectionReason: "WAKE_OBSERVATION_INVALID" };
+    if (!reader) return { ...rejected, rejectionReason: "WAKE_READER_UNAVAILABLE" };
     const digests = [...new Set(observation.wakeCandidates!.map(nonceDigest))];
     if (!this.inTransaction) return this.transaction(() => this.claimHostWake(target, observation, receiptId, reader, nowMs, limits));
     nowMs = this.time(nowMs);
     return this.transaction(() => {
-      if (!reader.verifyObservation(target, observation, receiptId, nowMs)) return rejected;
+      if (!reader.verifyObservation(target, observation, receiptId, nowMs)) return { ...rejected, rejectionReason: "WAKE_RECEIPT_REJECTED" };
       const found = digests.map((digest) => this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?")
         .get(digest, target.host, target.sessionId) as Record<string, unknown> | undefined);
-      if (found.some((row) => !row)) return rejected;
+      if (found.some((row) => !row)) return { ...rejected, rejectionReason: "WAKE_NONCE_UNKNOWN" };
       const rows = found as Array<Record<string, unknown>>;
       const now = iso(nowMs);
       const presence = this.presence(target, nowMs);
@@ -1436,7 +1437,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
           .run(now, String(row.nonce_digest));
       }
       const live = rows.filter(current);
-      if (live.length === 0) return allEnded ? { ...rejected, retired: true } : rejected;
+      if (live.length === 0) return { ...rejected, rejectionReason: "WAKE_GENERATION_NOT_CURRENT", ...(allEnded ? { retired: true as const } : {}) };
       const messages = this.claimLocked(target, nowMs, limits);
       // Only an attempt that was still in flight is a new observation; a repeated marker claims bodies but refreshes nothing.
       const observedNow = live.some((row) => !ended(row));
