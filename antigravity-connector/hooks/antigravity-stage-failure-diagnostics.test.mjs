@@ -12,11 +12,12 @@ it("records each failed advisory stage and still fails open", async () => {
   const output = await executeAntigravityHookEvent({ conversationId: "stage-failure-session", workspacePaths: [os.tmpdir()] }, "PreInvocation", "", {
     stageRunner: async () => { throw failure(); },
     writeStderr: line => lines.push(line),
+    // The record-only board hook is outside this advisory-stage fixture; never launch it against shared state.
+    spawnSync: () => ({ status: 0 }),
   });
   expect(output).toEqual({});
   expect(lines.every(line => line.startsWith("[agent-governance-suite] antigravity-stage-failure "))).toBe(true);
-  // PreInvocation runs only the session-message stage: the 3.0 board removed every agy board stage
-  // (docs/ags30-session-board-design.md, D7: agy has no prompt observation for the board hook).
+  // Only the injected session-message stage fails; the separate board record succeeds above.
   expect(parse(lines)).toEqual([{ stage: "session-message", code: "EACCES" }]);
   expect(lines.join("")).not.toContain("PRIVATE");
 });
