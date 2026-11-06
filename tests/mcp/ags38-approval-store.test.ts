@@ -1,6 +1,6 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { DatabaseSync } from "node:sqlite";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -79,10 +79,13 @@ describe("D0008 workflow database persistence and competing connections", () => 
   });
   it("AP-S05 commits identity backfill on ROOT_CONFLICT while preserving root JSON and revision", () => {
     const f = fixture();
+    // A legacy row can be backfilled only from a surface that is actually observable, not an absent inferred path.
+    writeFileSync(path.join(f.directory, "target.ts"), "approved target fixture\n");
     const before = f.current();
     const database = new DatabaseSync(f.databasePath);
     try {
       database.exec("DELETE FROM convergence_root_identities;");
+      expect(f.store.activeRootIdentities().find(active => active.root.rootId === f.root.rootId)).toMatchObject({ resolved: true });
       const blocked = f.service.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null,
         taskEnvelope: { ...f.root.taskEnvelope, taskId: "conflicting-request" }, frame: f.root.frame, userApprovalRefs: [] });
       expect(blocked.error?.code).toBe("ROOT_CONFLICT");
@@ -92,6 +95,8 @@ describe("D0008 workflow database persistence and competing connections", () => 
   });
   it("AP-S06 preserves identity observations when an approved replacement conflicts with another active root", () => {
     const f = fixture();
+    writeFileSync(path.join(f.directory, "target.ts"), "approved target fixture\n");
+    writeFileSync(path.join(f.directory, "other.ts"), "other observable target fixture\n");
     f.gate();
     const task = { ...f.root.taskEnvelope, taskId: "other-root", scope: { included: ["other.ts"], excluded: [] },
       workUnits: [{ ...f.root.taskEnvelope.workUnits[0]!, writeTargets: ["other.ts"] }] };
@@ -105,6 +110,7 @@ describe("D0008 workflow database persistence and competing connections", () => 
     const database = new DatabaseSync(f.databasePath);
     try {
       database.exec("DELETE FROM convergence_root_identities;");
+      expect(f.store.activeRootIdentities().every(active => active.resolved)).toBe(true);
       const result = f.service.executePreparedRootOperation(pending, f.access, new AbortController().signal);
       expect(result.error?.code).toBe("ROOT_CONFLICT");
       expect(f.current()).toEqual(before);
