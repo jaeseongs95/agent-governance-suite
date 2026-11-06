@@ -203,7 +203,7 @@ describe("generated Claude plugin", () => {
         // Its r34 assertions read hash-bound historical sources at the r35 ancestor.
         // Exempt only that exact anchor Map, not the rest of this file or other tests.
         expect(createHash("sha256").update(text).digest("hex"), file).toBe("dcef5ce8744555632bc342628921c58b31ab86b48201ec5612762c1a6abce1ee");
-        const historicalAnchors = text.match(/  const anchors = new Map\(\[\n[\s\S]*?\n  \]\);/u);
+        const historicalAnchors = text.match(/ {2}const anchors = new Map\(\[\n[\s\S]*?\n {2}\]\);/u);
         expect(historicalAnchors, file).not.toBeNull();
         text = text.replace(historicalAnchors[0], "");
       }
