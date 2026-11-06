@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "test-engineering-cli-source-binding-r33",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "d2ffc9af54cd1cb3f7a85061a3e7788287863654",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.native-procedure-source-successor.json",
+    "bytes": 3373,
+    "digest": "sha256:4009ff57230ff7587bb4e4053b36f26328b7119708fe40dec301a0d6544e1d08"
+  },
+  "sourceChangeRefs": [
+    {
+      "defectIds": [
+        "AGS3-D-0036"
+      ],
+      "observation": "Only four CLI example comments were added; original native failures remain unchanged."
+    }
+  ],
+  "bindings": [
+    {
+      "path": "skills/test-engineering/classification.json",
+      "previousDigest": "sha256:b82827922ae2990887ed35b34e9c26c4668a367e05bc90dc5b5d46e9cecf036a",
+      "digest": "sha256:1f0fd5742354b7d23d8656b34618786ff7502e08e4871595c08633df8c477d8c",
+      "bytes": 1746
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "previousDigest": "sha256:5dd09730e500965b8f64ef3cfde867b2231934dddbe0a454aa11c431a1723bd6",
+      "digest": "sha256:2541f44e4683adec7ca7037e088943bc01da17e6f6cca844be22a992d64a076b",
+      "bytes": 4855
+    }
+  ],
+  "spanPreservation": {
+    "changedSpans": [],
+    "comparedSpans": 6,
+    "spans": [
+      {
+        "skillId": "test-engineering",
+        "group": "applicability",
+        "index": 0,
+        "path": "skills/test-engineering/SKILL.md",
+        "selectedBytes": 231,
+        "selectedDigest": "sha256:bfbe777e2c860d2c255ce223553a8cdda347d631f8788351b4aebdf256ca697c",
+        "previousSelectedDigest": "sha256:bfbe777e2c860d2c255ce223553a8cdda347d631f8788351b4aebdf256ca697c"
+      },
+      {
+        "skillId": "test-engineering",
+        "group": "applicability",
+        "index": 1,
+        "path": "skills/test-engineering/SKILL.md",
+        "selectedBytes": 69,
+        "selectedDigest": "sha256:2d778cb6da5df8a9b21a56ec73ca65a6155e3f71b2a7f9e79b65989bdc2795c4",
+        "previousSelectedDigest": "sha256:2d778cb6da5df8a9b21a56ec73ca65a6155e3f71b2a7f9e79b65989bdc2795c4"
+      },
+      {
+        "skillId": "test-engineering",
+        "group": "applicability",
+        "index": 2,
+        "path": "skills/test-engineering/SKILL.md",
+        "selectedBytes": 89,
+        "selectedDigest": "sha256:07692c22e673633f35ef88ff449a81e96acc9871de14e7981e884358d71ceb4e",
+        "previousSelectedDigest": "sha256:07692c22e673633f35ef88ff449a81e96acc9871de14e7981e884358d71ceb4e"
+      },
+      {
+        "skillId": "test-engineering",
+        "group": "applicability",
+        "index": 3,
+        "path": "skills/test-engineering/SKILL.md",
+        "selectedBytes": 116,
+        "selectedDigest": "sha256:fd6a2ff95a20ac074f8b1a0677ad9ec299c6a7e145c619a4a370ac9ecde0a285",
+        "previousSelectedDigest": "sha256:fd6a2ff95a20ac074f8b1a0677ad9ec299c6a7e145c619a4a370ac9ecde0a285"
+      },
+      {
+        "skillId": "test-engineering",
+        "group": "exclusions",
+        "index": 0,
+        "path": "skills/test-engineering/SKILL.md",
+        "selectedBytes": 107,
+        "selectedDigest": "sha256:5ff946f61997e65c4d0d8be1cf06b0bfbc9e34e0aa8554f2b0487508d9bf3546",
+        "previousSelectedDigest": "sha256:5ff946f61997e65c4d0d8be1cf06b0bfbc9e34e0aa8554f2b0487508d9bf3546"
+      },
+      {
+        "skillId": "test-engineering",
+        "group": "exclusions",
+        "index": 1,
+        "path": "skills/test-engineering/SKILL.md",
+        "selectedBytes": 195,
+        "selectedDigest": "sha256:d4a39e506ceee73881750e3ad14f2bd4232475bebc0f23f961d5ca7107567336",
+        "previousSelectedDigest": "sha256:d4a39e506ceee73881750e3ad14f2bd4232475bebc0f23f961d5ca7107567336"
+      }
+    ]
+  },
+  "fixtureFileRewritten": false,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN"
+}
