@@ -2,7 +2,7 @@
 
 이 경로는 `plugin-run.mjs` → 기존 Claude/Codex stream driver의 native-plugin 분기다. 설치·전역 설정·모델 실행은 root 담당이며 여기에는 installer가 없다. 기존 source-composition 경로(`isolated-run.mjs`, trial-preflight helper)와 legacy wrappers는 보존한다. 새 경로는 receipt 파일을 기다리지 않는다. 아직 실제 native/model/fake/prepare/execute는 전부 NOT_RUN이다.
 
-Claude는 공식 `--plugin-dir <candidate/claude-plugin>`로 후보를 로드한다. 후보의 plugin namespace·hook matcher·MCP descriptor·skills bytes를 그대로 쓴다. 수동 MCP 이름, inline settings, strict MCP source composition, matcher 치환을 하지 않는다. Codex는 root가 공식 TEST 경로로 설치한 후보를 기존 로그인으로 로드한다. driver에는 hooks/MCP/plugins `-c` override가 없다. root는 설치 전 기존 plugin 목록·상태를 보존하고 기존 가이드의 정확한 설치·후보 cache 확인·원복 명령을 실행한다. PC 설치/전역 설정·인증파일 열람·복사·재로그인 요구는 하지 않는다.
+Claude는 공식 `--plugin-dir <candidate/claude-plugin>`로 후보를 로드한다. 후보의 plugin namespace·hook matcher·MCP descriptor·skills bytes를 그대로 쓴다. 수동 MCP 이름, inline settings, strict MCP source composition, matcher 치환을 하지 않는다. root가 승인한 TEST 전체권한과 시험 가이드6.2에 따라 이 실행에만 `--permission-mode bypassPermissions`를 쓴다. MCP 허용 UI가 없는 stream driver에서 정상 도구 호출이 permission 요청으로 차단되지 않게 하는 실행 인자이며, PC/사용자 설정은 바꾸지 않는다. Codex는 root가 공식 TEST 경로로 설치한 후보를 기존 로그인으로 로드한다. driver에는 hooks/MCP/plugins `-c` override가 없다. TEST 0.166.0에서 help parse가 성공한 `codex --dangerously-bypass-hook-trust app-server --listen stdio://`를 이 child 실행에만 사용하며 hook trust 설정을 영구 변경하지 않는다. root는 설치 전 기존 plugin 목록·상태를 보존하고 기존 가이드의 정확한 설치·후보 cache 확인·원복 명령을 실행한다. PC 설치/전역 설정·인증파일 열람·복사·재로그인 요구는 하지 않는다.
 
 ## 핀과 명령
 
@@ -52,6 +52,8 @@ spec은 기존 `{candidateSha,timeoutSec,turns:[{id,prompt,compactAfter?}],files
 | 의미 판정 | transport-summary semanticResult=NOT_EVALUATED, callback 횟수 기본값 null | ISOLATED.md의 B1~B9/code/noncode/negative-control 사전 rubric과 실제 산출물 |
 
 Codex의 선택된 plugin 선언/MCP가 없거나 준비되지 않았으면 native binding 실패로 중단한다. 전체 effective hook/skill/config 목록·완전 격리·다른 plugin 부재는 주장하지 않는다. Claude init에 metadata가 없다고 존재하지 않는 API나 root receipt를 기다리지 않는다. 자기 callback·실제 admission·cue/model 행동이 관측되지 않으면 해당 요구는 미확인/실패다. 원 raw stream은 이 run의 자기 child 출력만 수집하며 account/auth/login notification 및 control 응답 전체는 저장하지 않는다.
+
+TEST 0.166.0 생성 schema의 HookMetadata.pluginId는 실제로 존재하지만 optional string|null이다. 값이 있으면 exact ID로 선택하고, 없으면 pin의 정확한 pluginRoot 또는 pluginRoot/hooks/hooks.json sourcePath만 대체 결속으로 허용한다. 부분문자열·다른 root의 이름 일치로 선택하지 않는다. MCP pluginId/runtimeStatus도 optional/null이며, 해당 ID의 실제 선택된 server가 connected이고 start_workflow tool을 제공해야 준비로 센다. null/누락·toolsError는 unknown/실패로 기록한다. 이 판정은 자기 후보의 선택된 native 상태에 한정한다. 스키마 조회 `7b9f05b152cf4f0f5b158ce0c4101a22816b27a3672ef645` exit0/pageSHA256 `688eaf0983e445c0b58972a43e0e8895c7844ef4be50f730f59ac1a98333f557`; TEST version/help 조회 `304945263528f81d16e5dd1ee76123015483758a0fa27321` exit0/pageSHA256 `2cc43c249ba85cd7b6ff69b80fd5a1a0144a2869faf99755eb15c000e3e173ed`. 두 조회는 생성 schema/CLI help 읽기이며 app-server·모델 시작은 0이다.
 
 기존 TEST 사용자·native plugin 이름의 DB/shared state를 공유할 수 있다. root는 실제 공유 범위·기존 plugin 전후 목록·자기 DB 경로 관측을 기록해야 한다. fresh workspace/session은 DB 전체가 새롭다는 뜻이 아니다. 공유 state가 남은 비교를 cold-start·arm별 완전격리·plugin loader 전체 검증이라고 보고하지 않는다. 동시 모델 대화는 1개로 제한한다. 원복은 root가 설치 전 목록과 정확한 TEST 후보 ID를 기준으로 하고, 하네스가 기존 설치를 삭제하거나 전체 config를 복원하지 않는다.
 

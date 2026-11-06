@@ -64,7 +64,7 @@ try {
     if (result.code !== 0 || result.signal) throw new Error("Fixture preparation failed");
   }
   const args = host === "codex" ? [runDir, repo, String(timeoutSec), model, effort]
-    : [runDir, repo, String(timeoutSec), "--session-id", randomUUID(), "--model", model, "--effort", effort, "--plugin-dir", pluginRoot, "--permission-mode", "acceptEdits"];
+    : [runDir, repo, String(timeoutSec), "--session-id", randomUUID(), "--model", model, "--effort", effort, "--plugin-dir", pluginRoot, "--permission-mode", "bypassPermissions"];
   if (mode === "prepare") console.log(JSON.stringify({ state: "PREPARED_NOT_EXECUTED", host, runDir }));
   else {
     attempted = true;
