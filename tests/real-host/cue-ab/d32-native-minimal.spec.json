@@ -1,0 +1,14 @@
+{
+  "timeoutSec": 180,
+  "turns": [
+    {
+      "id": "d32-t1-fix-before-compact",
+      "prompt": "src/discount.mjs 의 applyDiscount 에 할인율을 100 보다 크게 주면 합계가 음수로 나와. 합계는 0원 밑으로 내려가면 안 돼. 고쳐줘.",
+      "compactAfter": true
+    },
+    {
+      "id": "d32-t4-diagnose-after-compact",
+      "prompt": "`node build.mjs` 가 또 똑같은 오류로 실패했어. NOTES.md 에 지난 두 번의 기록이 있어. 아직 아무것도 고치지 말고, 왜 계속 같은 곳에서 실패하는지 원인을 밝혀줘. 다음에 무엇을 확인하면 원인 후보가 가려지는지도 같이 알려줘."
+    }
+  ]
+}
