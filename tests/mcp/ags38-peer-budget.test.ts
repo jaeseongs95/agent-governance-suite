@@ -3,7 +3,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const f = vi.hoisted(() => ({ now: 100, request: vi.fn(), open: vi.fn(), record: vi.fn(), verify: vi.fn(), close: vi.fn() }));
 vi.mock("node:perf_hooks", () => ({ performance: { now: () => f.now } }));
-vi.mock("../../mcp-server/src/session-message-client.js", () => ({ sessionMessageRequest: f.request }));
+vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
+  ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
+}));
 vi.mock("../../mcp-server/src/trust-store.js", () => ({ TrustStore: class {
   constructor() { f.open(); }
   recordInputSource() { return f.record(); }

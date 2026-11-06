@@ -4,7 +4,9 @@ import path from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const f = vi.hoisted(() => ({ request: vi.fn(), wake: vi.fn(), record: vi.fn(), verify: vi.fn(), close: vi.fn() }));
-vi.mock("../../mcp-server/src/session-message-client.js", () => ({ sessionMessageRequest: f.request }));
+vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
+  ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
+}));
 vi.mock("../../mcp-server/src/session-message-wake-port.js", async (original) => ({
   ...await original<typeof import("../../mcp-server/src/session-message-wake-port.js")>(), recordWakeHookObservation: f.wake,
 }));
