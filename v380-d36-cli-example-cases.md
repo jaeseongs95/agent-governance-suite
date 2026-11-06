@@ -27,10 +27,10 @@ node skills/test-engineering/scripts/run.mjs check-proof --root /absolute/artifa
 | --- | --- | --- | --- | --- |
 | D36-B01 의미 보존 | 현재 SKILL 원문과 선택B 후보 | CLI fence 밖 원문과 기존 명령 두 개를 기준 commit과 비교 | 규범·2항·경고·CLI 인자 동일, 예시 주석 네 줄만 추가 | 정적 대조 PASS; 행동 효과 NOT_RUN |
 | D36-B02 평가 입력 보존 | 원 NP05 spec SHA256 `c69c10a9c12b594953c9abf32e40a90e2e2adbcc05bedca730c3d5654d47edc8` | 새 spec의 단일 turn과 원 첫 turn을 깊은 비교, files 전체를 비교 | T2 id/prompt/compactAfter와 12개 파일 경로·내용 동일, 새 절차·스킬명·정답 힌트 0, T4 turn 없음 | 정적 대조 PASS; 모델 NOT_RUN |
-| D36-B03 환경 사전 차단 | root의 공식 후속 bundle exact SHA, 새 runDir, Node 절대경로, CLI2.1.316 | 모델 child 생성 전 source HEAD/spec hash·fresh RUN·Node 절대 실행파일/정확 버전·PATH 선택·CLI 버전을 확인 | 실패 시 모델 시작 0. launcher/runner Node 확인과 실제 시험/MCP child Node 관측을 별도 기록 | NOT_RUN |
-| D36-B04 실제 선작성 | 새 Claude 세션에서 원 T2 prompt 한 번, opus/high | 실제 skill 제공→최초 plan 저장 성공→그 plan의 check-plan 성공→첫 시험 Write/Edit를 native 순번·tool ID로 결속 | plan/check-plan이 첫 시험 구현보다 앞섬. mtime·최종 파일 존재·사후 보완은 대체 근거가 아님 | NOT_RUN |
-| D36-B05 동일 시험 쌍 | 원 fixed/before source, 새 시험과 계획 | 같은 시험 bytes·case/input/expect·argv·설정·필터로 before/fixed를 실행한 receipt와 실제 사례별 결과 비교 | before의 목표 assertion RED와 fixed GREEN. 시험 hash나 개수만으로 동일쌍 인정하지 않음. skip/조기종료/집합 차이를 보존 | NOT_RUN |
-| D36-B06 작업 경계·보고 | regression/ 안의 허용 작업, 원본 src·before 불변 | native 쓰기·셸 부작용과 파일 hash를 대조하고 최초 실패·UNKNOWN을 보존 | 범위 밖 /tmp 쓰기·원본 되돌리기 없음. 자동 hook/DB 미관측을 전면 무쓰기로 보고하지 않음 | NOT_RUN |
+| D36-B03 환경 사전 차단 | root의 공식 후속 bundle exact SHA, 새 runDir, Node 절대경로, CLI2.1.316 | 모델 child 생성 전 source HEAD/spec hash·fresh RUN·Node 절대 실행파일/정확 버전·PATH 선택·CLI 버전을 확인 | 실패 시 모델 시작 0. launcher/runner Node 확인과 실제 시험/MCP child Node 관측을 별도 기록 | b2a1ec6c launcher guard 관측 PASS; child 역할 결속 UNKNOWN |
+| D36-B04 실제 선작성 | 새 Claude 세션에서 원 T2 prompt 한 번, opus/high | 실제 skill 제공→최초 plan 저장 성공→그 plan의 check-plan 성공→첫 시험 Write/Edit를 native 순번·tool ID로 결속 | plan/check-plan이 첫 시험 구현보다 앞섬. mtime·최종 파일 존재·사후 보완은 대체 근거가 아님 | b2a1ec6c 순서 관측 PASS |
+| D36-B05 동일 시험 쌍 | 원 fixed/before source, 새 시험과 계획 | 같은 시험 bytes·case/input/expect·argv·설정·필터로 before/fixed를 실행한 receipt와 실제 사례별 결과 비교 | before의 목표 assertion RED와 fixed GREEN. 시험 hash나 개수만으로 동일쌍 인정하지 않음. skip/조기종료/집합 차이를 보존 | 같은 bytes/argv/3 subtest 확인; RED의 뒤 101% assertion 미도달 한계 보존 |
+| D36-B06 작업 경계·보고 | regression/ 안의 허용 작업, 원본 src·before 불변 | native 쓰기·셸 부작용과 파일 hash를 대조하고 최초 실패·UNKNOWN을 보존 | 범위 밖 /tmp 쓰기·원본 되돌리기 없음. 자동 hook/DB 미관측을 전면 무쓰기로 보고하지 않음 | 명령상 범위 관측 충족; 자동 효과 UNKNOWN |
 
 ## 기존 runner를 쓰는 한 턴 준비
 
@@ -71,3 +71,11 @@ Node 경로는 root의 깨끗한 기존 `codex-native-a254-run.sh`에 있는 abs
 준비 사례/spec은 `37ae84da`로 먼저 커밋·즉시 push한 다음 ponytail 구현으로 위 CLI 주석 네 줄만 적용했다. 네 줄이 각각 정확히 한 번 추가됐는지 확인하고 제거한 결과를 기준 commit의 원문 Buffer와 비교해 완전히 일치함을 확인했다. 후보 코드 블록도 이 문서의 사전 후보와 일치한다. 따라서 규범·2항·경고 목록·기존 명령 두 개 및 인자는 그대로다. 단일 turn·fixture 동일성도 다시 확인했으며 `git diff --check`는 exit0이었다. 새 validator/wrapper/권한 계층·제품 로컬시험·원격 제품시험·모델 실행은 추가하지 않았다.
 
 source SKILL의 이전 SHA256은 `5dd09730e500965b8f64ef3cfde867b2231934dddbe0a454aa11c431a1723bd6`, 후보는 `2541f44e4683adec7ca7037e088943bc01da17e6f6cca844be22a992d64a076b`다. source-lock·현재 source-binding의 전체 source hash·Claude/en 생성본 등 이 변경을 소비하는 결속 갱신은 root에게 전달했다. 이 작업에서 pin이나 생성본을 직접 수정하지 않았으므로 공식 refresh/build와 후속 exact bundle 소비·Node24/CLI 환경 확인은 아직 남는다. 정적 준비 통과를 실제 이행 PASS로 바꾸지 않는다.
+
+## b2a1ec6c 실제 한 턴 회수
+
+위 NOT_RUN과 공식 refresh 대기는 준비 시점의 기록이다. 후속 root가 r33·공식 build/claude/en 생성물을 통합한 `b2a1ec6c4e6af1e173b66ae98052add54c740b83`을 배정한 뒤 원 spec으로 한 세션·한 턴만 실행했다. 전체 회수와 원 AC·입력·영수증·미확인 경계는 [독립 검토용 깨끗한 업무 보고서](v380-d36-native-result.ko.md)에 기록했다.
+
+관측 순서는 L89 plan 저장과 check-plan 실행→L90 READY→L92 첫 시험 Write→L98 같은 argv의 실제 before RED/fixed GREEN→L126 proof/check-proof CONSISTENT다. 계획 전 L18~82 Bash 9회는 실제 명령 대조에서 읽기·버전·CLI 탐색이며 이름 있는 작업 파일 쓰기 명령은 없었다. 자동 hook/cache/DB 효과까지 무쓰기라는 뜻은 아니다. 양쪽은 같은 시험 bytes·3 subtest 집합·argv를 사용했고 RED 2 FAIL/1 PASS, GREEN 3 PASS였다. 첫 subtest의 150% 할인 assertion이 RED에서 실패해 뒤의 101% 할인 assertion은 미도달했다. 수치는 개수나 순번이 아니며 이 입력 도달 한계를 개수·hash·CONSISTENT로 덮지 않는다. 원 사전 문구를 사후에 모든 하위 assertion의 RED 도달 의무로 바꾸지도 않는다.
+
+최초 Node 절대경로·PATH·execPath/버전은 v24.22.1, 실제 CLI는2.1.316이었고 turn111.356초·runnerExit0으로 종료했다. 알려진 자기 PID·Zombie·PGID 없음, operator /proc 없음·lock free, source/plugin609파일 전후 일치와 초기12파일 불변을 직접 확인했다. 모델 추가·재시도·T4·설치0이다. 실제 MCP child와 시험 child 역할별 Node attestation·effective high·cue/admission·자동 DB 효과·group 밖 자손은 미확인 경계로 남긴다. 선작성의 관측 이행을 문구의 인과 효과·D36 전체 수용·3.8 전체 PASS로 확대하지 않는다.
