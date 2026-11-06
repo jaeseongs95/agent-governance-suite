@@ -1330,6 +1330,6 @@ it("serializes both frozen r27 branches after parent accountability without rewr
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
   }
-  expect(currentSourceBinding.manifest.revision).toBe(integrated.revision);
+  expect(currentSourceBinding.manifest).toMatchObject({revision: integrated.revision});
   expect(currentSourceBinding.digest).toBe(hash(integratedBytes));
 });
