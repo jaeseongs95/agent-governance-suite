@@ -469,7 +469,7 @@ def validate_routing_presets() -> None:
     require(set(document.get("model_class_order", [])) == {"lightweight", "general", "deep", "frontier"},
             "routing model classes differ from the required set")
     effort_order = document.get("effort_order")
-    require(effort_order == ["low", "medium", "high", "xhigh", "max", "ultra"],
+    require(effort_order == ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"],
             "routing effort order is invalid")
 
     invariants = document.get("invariants")

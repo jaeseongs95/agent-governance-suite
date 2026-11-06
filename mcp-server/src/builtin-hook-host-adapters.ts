@@ -15,6 +15,7 @@ import { canonicalJson } from "./convergence-logic.js";
 import type { CallerExecution } from "./caller-identity.js";
 import { observeClaudeExecution, readSessionModel, sessionModelDirectory } from "./host-attestation-hook.js";
 import { resolveWorkflowDatabasePath } from "./runtime-config.js";
+import { shellEditTargets } from "./shell-edit-targets.js";
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -130,7 +131,12 @@ function adaptInferredRootHookInput(input: Record<string, unknown>, host: string
 function adaptCodexHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
   const adapted = adaptInferredRootHookInput(input, host, "CODEX");
   // apply_patch is Codex's file edit; its patch text is tool_input.command (Codex hooks, PreToolUse).
-  setEditTargets(adapted, input, (tool, toolInput) => tool === "apply_patch" ? applyPatchTargets(toolInput.command) : null);
+  setEditTargets(adapted, input, (tool, toolInput) => {
+    if (tool === "apply_patch") return applyPatchTargets(toolInput.command);
+    if (tool !== "exec_command" && tool !== "shell_command" && tool !== "shell") return null;
+    const dialect = /(?:powershell|pwsh)(?:\.exe)?$/iu.test(text(toolInput.shell)) || (!toolInput.shell && process.platform === "win32") ? "powershell" : "posix";
+    return shellEditTargets(toolInput.cmd ?? toolInput.command, dialect);
+  });
   // Codex Stop reports a turn its Stop hook already continued; a second continuation could loop without a host limit.
   if (adapted.observation.kind === "turn-end" && adapted.lifecycle === "none" && input.stop_hook_active === true) adapted.observation.stopHookActive = true;
   if (adapted.observation.actor.role !== "root") return adapted;
@@ -202,7 +208,10 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
     role: "indeterminate", basis: "unavailable", reasonCode: "CLAUDE_NATIVE_EVENT_UNRECOGNIZED",
   };
   const adapted = adaptBuiltinHookInput(input, host, actor);
-  setEditTargets(adapted, input, (tool, toolInput) => CLAUDE_EDIT_TOOLS.has(tool) ? [tool === "NotebookEdit" ? toolInput.notebook_path : toolInput.file_path] : null);
+  setEditTargets(adapted, input, (tool, toolInput) => {
+    if (CLAUDE_EDIT_TOOLS.has(tool)) return [tool === "NotebookEdit" ? toolInput.notebook_path : toolInput.file_path];
+    return tool === "Bash" || tool === "PowerShell" ? shellEditTargets(toolInput.command, tool === "PowerShell" ? "powershell" : "posix") : null;
+  });
   const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown" || adapted.continuityAction !== undefined;
   if (!knownEvent) return adapted;
   if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CLAUDE_NATIVE_SESSION_ID_INVALID";
@@ -293,7 +302,10 @@ function adaptAntigravityHookInput(input: Record<string, unknown>, host: string)
   // The runner maps the file tools to Write, Edit and MultiEdit and passes their arguments. agy 1.4.12 CLI hook input
   // (test server capture): write_file and edit_file name the file in Path. write_to_file, replace_file_content and
   // multi_replace_file_content (agy hooks docs) name it in TargetFile.
-  setEditTargets(adapted, input, (tool, toolInput) => ANTIGRAVITY_EDIT_TOOLS.has(tool) ? [toolInput.TargetFile ?? toolInput.Path] : null);
+  setEditTargets(adapted, input, (tool, toolInput) => {
+    if (ANTIGRAVITY_EDIT_TOOLS.has(tool)) return [toolInput.TargetFile ?? toolInput.Path];
+    return tool === "Bash" || tool === "PowerShell" ? shellEditTargets(toolInput.CommandLine ?? toolInput.command, tool === "PowerShell" ? "powershell" : "posix") : null;
+  });
   const { observation } = adapted;
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && !observation.callId) {
     // agy gives the hook no call ID. The key holds what the host writes on both sides (conversation, tool, arguments)

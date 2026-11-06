@@ -13,7 +13,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const COMMIT = /^[0-9a-f]{40}$/u;
 const IMMUTABLE_GIT = Symbol.for("ags.check-skill-context-optimization.immutable-git");
 const GIT_OPTIONS = Object.freeze({ maxBuffer: 20 * 1024 * 1024 });
-// Executable skill scripts are never read from history; prefetching skips them as well.
+// Executable skill scripts are outside the initial-context contract. Their complete
+// bytes (including new scripts) remain checked by source-lock, not manual successor pins.
 const EXECUTABLE_SCRIPT = /^skills\/[^/]+\/scripts\/.+\.(?:mjs|py)$/u;
 
 function git(...args) {
@@ -546,26 +547,13 @@ export function checkSpecialistBehaviorSources() {
   };
 }
 
-// i18n 2단계(docs/i18n-design.md 6): 이 고정 스크립트들은 출력 문장만 카탈로그 키로 옮겼다. 검토한 i18n 바이트는
-// 직전 고정 digest로 대응시켜 기존 사슬을 그대로 검사한다. 실행 바이트의 과거 내용은 읽지 않는다.
-const SCRIPT_I18N_SUCCESSOR = Object.freeze({
-  revision: "skill-script-i18n-r01",
-  authorityEffect: "none",
-  hashes: {
-    "skills/evaluation-validity-auditor/scripts/core.mjs": ["3a917987e413a3ae7d312e10c66901e76632de92614576fac70b44156720dd5f", "66e87c01b58de6721ca8a4cef24b519aad5d1dec6bb63c295b8ab9e247f037ef"],
-    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["365e0a4a15b1bbf8e521cf7f2e603718276335d5ae258960b9dd7fd9a25dbc3a", "93c4f5dafe50c4718b6cd2898a872106e26d394ad4fc43a5635568f6a77d6bc5"],
-    "skills/recovery-strategy-selector/scripts/core.mjs": ["b378eca94a05a5008e27f60d582e3d167c243dfb4602c663a0eef22e75254625", "c74dca9a4b0e1ad010f64cbd4e5770bdfd58d5cd1474af4569d39aba625ad82a"],
-  },
-});
-
-// 3.6.0: an approval whose evidence states no expiresAt does not expire. Reviewed bytes stand for the exact
-// predecessor by digest, newest first; executable history is not read.
+// 3.6.0: the approval schema successor retains its exact predecessor binding.
+// Executable provenance belongs to source-lock, independently of this context-only check.
 const APPROVAL_EXPIRY_SUCCESSOR = Object.freeze({
   revision: "mutation-risk-preflight-approval-expiry-optional",
   authorityEffect: "none",
   hashes: {
     "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json": ["6e0e6d58bd0ca772633f37c02fe6e109da2a5a03a8a382406c3e08a0ac53473a", "761c3185090df53f2f73c12dea07e368964661a730a7ef7c61f9bd5bf52416fe"],
-    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["93c4f5dafe50c4718b6cd2898a872106e26d394ad4fc43a5635568f6a77d6bc5", "d79381c7888c91f452642e343f5603e7851eef9b874c4455c890d0a53ab3d8ca"],
   },
 });
 // 3.8.0 (AGS3-D-0030): the board store declares the session role column and setSummary's optional role.
@@ -576,7 +564,7 @@ const SESSION_ROLE_SUCCESSOR = Object.freeze({
     "skills/session-board/scripts/board-store.d.mts": ["df77f6a8d0ce1e576782c394ad6b78261003de23f32a03e9b6a4ef05de762bc0", "87c8cbd745da273bee3bb9419b487173841d29f9f0bf83fe002f1d2ebd2ae1fe"],
   },
 });
-const DIGEST_SUCCESSORS = Object.freeze([SESSION_ROLE_SUCCESSOR, APPROVAL_EXPIRY_SUCCESSOR, SCRIPT_I18N_SUCCESSOR]);
+const DIGEST_SUCCESSORS = Object.freeze([SESSION_ROLE_SUCCESSOR, APPROVAL_EXPIRY_SUCCESSOR]);
 
 /** The digest pinned checks compare: reviewed bytes stand for the exact predecessor they replaced. */
 export function pinnedDigest(path, bytes) {
@@ -746,7 +734,6 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     // D0336 reviewed source: worker independence that v1 cannot observe is BLOCKED, not PASS.
     "skills/evaluation-validity-auditor/references/audit-protocol.md": "cb31b803db1debadc5292edc7906b5c0654b95ffcdc5e511545687fa74080f37",
     "skills/evaluation-validity-auditor/references/entry-details.md": "3788c88d6522139cdbd18c34a2386b0706d0ecf3fe47f51824708c01e289b184",
-    "skills/evaluation-validity-auditor/scripts/core.mjs": "3a917987e413a3ae7d312e10c66901e76632de92614576fac70b44156720dd5f",
     "skills/independent-audit-gate/SKILL.md": "26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29",
     "skills/independent-audit-gate/classification.json": "80a4192630678554a8dc2c05221228abcfcaee73ec12ebf54d739fbd03883576",
     "skills/independent-audit-gate/references/audit-protocol.md": "0fc4cb86a3c68cef24c69487e9088bd8c5e07a6f2bff7a120211881d3540c30d",
@@ -767,7 +754,6 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json": "ef19894512527f8dfac6b4acff6d6cb347b6a2183b140260ae8426e0183ae241",
     "skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json": "684d92828e97be4763d7c8ace6250288b8df0b450f23b89f5b65842da7278d8e",
     "skills/recovery-strategy-selector/references/selection-protocol.md": "5d9d8070948ef8ec4ce0c1cf16de179586ce96dc660e1ce3b6a214ae4dbe8f7c",
-    "skills/recovery-strategy-selector/scripts/core.mjs": "b378eca94a05a5008e27f60d582e3d167c243dfb4602c663a0eef22e75254625",
     // AGS 3.0 session board redesign (docs/ags30-session-board-design.md); historical baselines stay frozen.
     "skills/session-board/references/entry-details.md": "1db28dc5c1ea4319e3c61f24270e3a5d52fe7e4acd00b7b5ad025a9131ffe778",
     "skills/session-board/scripts/board-store.d.mts": "df77f6a8d0ce1e576782c394ad6b78261003de23f32a03e9b6a4ef05de762bc0",
@@ -967,10 +953,6 @@ const PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR = Object.freeze({
       "973da35b3d3080878c746bf32563764a6d7c580dc7912ab040edd68123086d19",
       "6b9534f7a9db0f7210a9a16c5bd9c930bbd458a4ce2aeb05547dc959ac5259a8"
     ],
-    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": [
-      "9ff002852bc34338ed94fdf0e9c5060cdb92f602961d2a959237d365ffeae40c",
-      "31b4b4cece61b5609972202aebd90235d95c78b05aaa9b439bbf26ecfdb55557"
-    ]
   },
 });
 
@@ -992,7 +974,6 @@ const PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR = Object.freeze({
     "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json": ["978288d69583b0f39f7412d3140d57537804de3bc2703060994bc9a7b472d064", "6e0e6d58bd0ca772633f37c02fe6e109da2a5a03a8a382406c3e08a0ac53473a"],
     "skills/mutation-risk-preflight/integration/skill-descriptor.json": ["e7905d5b63cfb2536b96c70047ad5231951ccccf4b06adc29a18d8531eeb673a", "1e4f8dbc7e7d61a711ab884fb459389e4ef82b11c58765faa0f490d147cb7c58"],
     "skills/mutation-risk-preflight/references/recovery-requirements.md": ["6b9534f7a9db0f7210a9a16c5bd9c930bbd458a4ce2aeb05547dc959ac5259a8", "eea0b3129263b17d12d7f05ecd823b6882ca35cc6211e5613431b429875e3842"],
-    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["31b4b4cece61b5609972202aebd90235d95c78b05aaa9b439bbf26ecfdb55557", "f095e57681872a6d819cf463e7518255e9e878af3103aa0d2f6d51e0023a01fe"],
   },
 });
 
@@ -1010,7 +991,6 @@ const PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR = Object.freeze({
   hashes: {
     "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json": ["b8a4e1ca5f5e203639545d27cc190421d91d132569cec70f5b579d39337b7331", "011e06daac326d162351f06701d461ae3bedbeda37b2003b8e518c28c065884d"],
     "skills/mutation-risk-preflight/references/entry-details.md": ["b9d8952a60a92f7e0ef98c9d90f076dddfc9bedcbd8a0e3af0b02d1dd50bffd4", "027c08a08a559af62f945c00dab640e79deb88d6d9afe2042d1271d6ddd04f54"],
-    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["f095e57681872a6d819cf463e7518255e9e878af3103aa0d2f6d51e0023a01fe", "365e0a4a15b1bbf8e521cf7f2e603718276335d5ae258960b9dd7fd9a25dbc3a"],
   },
 });
 
@@ -1198,64 +1178,6 @@ function matchesSkillPolicyWordingSuccessor(path, bytes) {
   return Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === SKILL_POLICY_WORDING_SUCCESSOR.hashes[path];
 }
-
-// 문맥 검사는 실행 바이트를 판정하지 않는다. 기존 허용 경로를 보존하고, i18n 2단계에서 출력 문장만 카탈로그로 옮긴 스크립트를 더한다.
-const IMPLEMENTATION_PATHS = new Set([
-  "skills/acceptance-evidence-validator/scripts/check-repository.mjs",
-  "skills/acceptance-evidence-validator/scripts/core.mjs",
-  "skills/acceptance-evidence-validator/scripts/io.mjs",
-  "skills/acceptance-evidence-validator/scripts/schema-validation.mjs",
-  "skills/acceptance-evidence-validator/scripts/validate-report.mjs",
-  "skills/blocker-diagnostician/scripts/check-repository.mjs",
-  "skills/blocker-diagnostician/scripts/cli.mjs",
-  "skills/blocker-diagnostician/scripts/core.mjs",
-  "skills/blocker-diagnostician/scripts/io.mjs",
-  "skills/blocker-diagnostician/scripts/validate-report.mjs",
-  "skills/change-scope-guardian/scripts/compile-schemas.mjs",
-  "skills/change-scope-guardian/scripts/lib.mjs",
-  "skills/change-scope-guardian/scripts/schema-validator.mjs",
-  "skills/change-scope-guardian/scripts/validate-report.mjs",
-  "skills/codex-token-usage-analyzer/scripts/cli.mjs",
-  "skills/codex-token-usage-analyzer/scripts/core.mjs",
-  "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs",
-  "skills/coordinate-subagents/scripts/model-catalog-adapter.mjs",
-  "skills/coordinate-subagents/scripts/model-routing.mjs",
-  "skills/cs-engineering/scripts/core.mjs",
-  "skills/evaluation-validity-auditor/scripts/check-repository.mjs",
-  "skills/evaluation-validity-auditor/scripts/cli.mjs",
-  "skills/evaluation-validity-auditor/scripts/io.mjs",
-  "skills/evaluation-validity-auditor/scripts/validate-report.mjs",
-  "skills/independent-audit-gate/scripts/validate_skill.py",
-  "skills/independent-deliberation-panel/scripts/run_evals.py",
-  "skills/independent-deliberation-panel/scripts/validate_decision_record.py",
-  "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
-  "skills/iteration-frame-auditor/scripts/core.mjs",
-  "skills/iteration-frame-auditor/scripts/digest-request.mjs",
-  "skills/iteration-frame-auditor/scripts/io.mjs",
-  "skills/iteration-frame-auditor/scripts/validate-review.mjs",
-  "skills/korean-prose-editor/scripts/finalizer-core.mjs",
-  "skills/korean-prose-editor/scripts/lib.mjs",
-  "skills/korean-prose-editor/scripts/protected-spans.mjs",
-  "skills/korean-prose-editor/scripts/provider-plan.mjs",
-  "skills/korean-prose-editor/scripts/source-units.mjs",
-  "skills/model-effort-advisor/scripts/support-guard.mjs",
-  "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
-  "skills/mutation-risk-preflight/scripts/schema-validation.mjs",
-  "skills/mutation-risk-preflight/scripts/validate-skill.mjs",
-  "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
-  "skills/orchestrator/scripts/collaboration-decision.mjs",
-  "skills/orchestrator/scripts/query-registry.mjs",
-  "skills/orchestrator/scripts/validate-collaboration-decision.mjs",
-  "skills/recovery-strategy-selector/scripts/io.mjs",
-  "skills/recovery-strategy-selector/scripts/schema-validation.mjs",
-  "skills/session-board/scripts/board-store.mjs",
-  "skills/software-security-auditor/scripts/cli.mjs",
-  "skills/task-contract/scripts/validate-task-contract.mjs",
-  "skills/workspace-convention-profiler/scripts/profile-workspace.mjs",
-  "skills/workspace-convention-profiler/scripts/schema-validation.mjs",
-  "skills/workspace-convention-profiler/scripts/validate-profile.mjs",
-  "skills/workspace-convention-profiler/scripts/validate-skill.mjs",
-]);
 
 // D0352: 현재 인계·진단 지침만 정확히 결속하고 원 최적화·정책 기준은 보존한다.
 const LIVE_HOST_GUIDANCE_SUCCESSOR = Object.freeze({
@@ -1641,7 +1563,6 @@ export function checkSkillContextOptimization() {
       if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     }
     for (const currentPath of Object.keys(PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
-    for (const implementationPath of IMPLEMENTATION_PATHS) if (implementationPath.startsWith(`skills/${skillId}/`)) allowed.add(implementationPath);
     for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(GOVERNANCE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     // A reference first changed by a reviewed guidance successor is allowed only while it holds that successor's bytes.
@@ -1692,7 +1613,7 @@ export function checkSkillContextOptimization() {
     const changed = projectRetiredChanges(BASELINE, git("diff", "--name-only", BASELINE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean));
     changed.push(...git("ls-files", "--others", "--exclude-standard", "--", `skills/${skillId}`)
       .toString("utf8").trim().split(/\r?\n/u).filter(Boolean));
-    const unexpected = historicalChanges([...new Set(changed)]).filter((path) => !allowed.has(path));
+    const unexpected = historicalChanges([...new Set(changed)].filter(path => !EXECUTABLE_SCRIPT.test(path))).filter((path) => !allowed.has(path));
     if (unexpected.length) errors.push(`${skillId}: unexpected skill-owned changes: ${unexpected.join(", ")}`);
 
     baselineBytes += baseline.length;
@@ -1723,7 +1644,6 @@ export function checkSkillContextOptimization() {
     currentPreflightPlatformEventsSuccessors: [PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR],
     currentPreflightExpiryRemovalSuccessors: [PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR],
     currentPreflightAdditiveSourceSuccessors: [PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR],
-    currentScriptI18nSuccessors: [SCRIPT_I18N_SUCCESSOR],
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
     reviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R1],

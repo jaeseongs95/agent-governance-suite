@@ -218,7 +218,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       minimumReasoningEffort: null,
       supportedEfforts: ["low", "medium", "high", "xhigh", "max", "ultra"],
       aliasUsed: false,
-      policyRevision: "2026-10-24.r02",
+      policyRevision: "2026-11-07.r03",
       provenance: "codex:rollout-turn-context",
     });
 
@@ -242,7 +242,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       resolvedModel: "opus",
       modelClass: "deep",
       aliasUsed: true,
-      policyRevision: "2026-10-24.r02",
+      policyRevision: "2026-11-07.r03",
       provenance: "claude-code:transcript-tool-use",
     });
 
@@ -258,7 +258,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       resolvedModel: "flash-lite",
       modelClass: "lightweight",
       aliasUsed: true,
-      policyRevision: "2026-10-24.r02",
+      policyRevision: "2026-11-07.r03",
       provenance: "gemini:wrapper",
     });
 

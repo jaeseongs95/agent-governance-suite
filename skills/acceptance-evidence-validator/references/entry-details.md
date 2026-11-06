@@ -14,7 +14,7 @@ node scripts/validate-report.mjs --request request.json --request-artifact reque
 ## 절차
 
 1. commit, diff, artifact 또는 관측 상태의 식별자와 digest를 고정한다.
-2. `acceptanceCriteria` 순서로 `AC-001` 형식의 ID를 부여한다.
+2. 각 `acceptanceCriteria` 원문 UTF-8의 SHA-256 앞 12 hex에 `AC-`를 붙여 내용 ID를 만든다. 정렬·trim으로 원문을 바꾸지 않는다. 이전 위치 ID 근거는 동결된 원문↔ID의 `criterionBindings`로 이관하며, 결속표가 없으면 충족으로 사용하지 않고 `BLOCKED` 한계를 남긴다. 상세 이관 규칙은 evidence protocol을 따른다.
 3. 각 evidence가 한 개 이상의 유효한 기준 ID와 현재 대상 digest를 가리키는지 확인한다.
 4. 검증되고 현재 대상에 맞는 반증이 있으면 `unsatisfied`, 지지 근거가 있으면 `satisfied`로 둔다.
 5. 근거가 없거나 stale하면 `insufficient-evidence`로 둔다. `not-applicable`은 현재 대상에서 검증된 authority evidence가 해당 기준과 `TaskEnvelope.scope.excluded` 또는 `authorization.prohibitedActions`의 실제 항목을 함께 가리키고, 기준 ID와 대상 digest를 포함한 canonical evidence digest가 일치할 때만 허용한다.

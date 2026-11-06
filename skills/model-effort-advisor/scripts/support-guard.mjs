@@ -3,10 +3,9 @@ import { pathToFileURL } from "node:url";
 import { hostText } from "../../../runtime/i18n.mjs";
 import { Ajv2020 } from "../../../runtime/schema-validation.mjs";
 
-const classes = ["lightweight", "general", "deep", "frontier"];
-const efforts = ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"];
+import { MODEL_CLASS as classes, REASONING_EFFORT as efforts, modelPolicySchema } from "../../../runtime/model-policy.mjs";
 const schema = JSON.parse(readFileSync(new URL("../contracts/model-effort-advice.v1.schema.json", import.meta.url), "utf8"));
-const validate = new Ajv2020({ allErrors: true, strict: false }).compile(schema);
+const validate = new Ajv2020({ allErrors: true, strict: false }).addSchema(modelPolicySchema).compile(schema);
 const text = (value) => typeof value === "string" && value.trim().length > 0;
 const within = (value, min, max, order) => order.indexOf(value) >= order.indexOf(min) && order.indexOf(value) <= order.indexOf(max);
 

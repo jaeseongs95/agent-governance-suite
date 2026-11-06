@@ -281,7 +281,7 @@ test('I2: a verified late arrival of an ended old-birth marker is recorded witho
   const ended = attemptRow(f.store, old); const current = attemptRow(f.store, next);
   const messages = f.store.database.prepare('SELECT * FROM messages').all();
   const result = hostClaim(f, observe(f, old, f.now + 13), f.now + 14);
-  assert.deepEqual(result, { recognized: false, messages: [], binding: null, retired: true });
+  assert.deepEqual(result, { recognized: false, messages: [], binding: null, retired: true, rejectionReason: "WAKE_GENERATION_NOT_CURRENT" });
   const late = attemptRow(f.store, old);
   assert.equal(late.late_observed_at, iso(f.now + 14));
   assert.deepEqual(without(late, ['late_observed_at']), without(ended, ['late_observed_at']));
@@ -319,7 +319,7 @@ test('I1: an ended marker cannot be laundered by forged provenance or a mixed un
   const observed = observe(f, old, f.now + 13);
   assert.equal(hostClaim(f, { ...observed, sourceReceiptId: 'source-forged' }, f.now + 14).recognized, false);
   const mixed = observe(f, old, f.now + 15, [old.nonce, 'unregistered-nonce-abcdefghijklmnop']);
-  assert.deepEqual(hostClaim(f, mixed, f.now + 16), { recognized: false, messages: [], binding: null });
+  assert.deepEqual(hostClaim(f, mixed, f.now + 16), { recognized: false, messages: [], binding: null, rejectionReason: "WAKE_NONCE_UNKNOWN" });
   assert.deepEqual(attemptRow(f.store, old), ended);
   assert.equal(f.store.pendingCount(target, f.now + 17), 1);
 });

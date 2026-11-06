@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/model-policy.v1.schema.json",
+  "title": "Shared model routing policy",
+  "$defs": {
+    "modelClass": {
+      "enum": [
+        "lightweight",
+        "general",
+        "deep",
+        "frontier"
+      ]
+    },
+    "reasoningEffort": {
+      "enum": [
+        "none",
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra"
+      ]
+    },
+    "highRiskModelClass": {
+      "const": "general"
+    },
+    "highRiskReasoningEffort": {
+      "const": "high"
+    }
+  }
+}

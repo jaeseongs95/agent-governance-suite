@@ -14,7 +14,15 @@ process.env.AGENT_GOVERNANCE_LOCALE = "en";
 
 const testRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)));
 const root = path.resolve(testRoot, "..", "..", "skills", "acceptance-evidence-validator");
-const fixture = async (name) => JSON.parse(await readFile(path.join(testRoot, "fixtures", `${name}.json`), "utf8"));
+const fixture = async (name) => {
+  const input = JSON.parse(await readFile(path.join(testRoot, "fixtures", `${name}.json`), "utf8"));
+  // Frozen legacy fixtures carry an explicit statement table when their evidence is migrated.
+  input.criterionBindings = input.taskEnvelope.acceptanceCriteria.map((statement, index) => ({
+    criterionId: `AC-${String(index + 1).padStart(3, "0")}`, statement
+  }));
+  return input;
+};
+const contentId = (statement) => `AC-${createHash("sha256").update(statement, "utf8").digest("hex").slice(0, 12)}`;
 const requestArtifact = (request) => ({
   artifactId: `acceptance-request:${request.taskEnvelope.taskId}`,
   schemaId: "https://agent-governance-skills.local/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
@@ -27,7 +35,7 @@ test("normal: every criterion has current verified evidence", async () => {
   const input = await fixture("passing");
   const report = analyzeAcceptance(input);
   assert.equal(report.verdict, "PASS");
-  assert.deepEqual(report.criteria.map((item) => item.criterionId), ["AC-001", "AC-002"]);
+  assert.deepEqual(report.criteria.map((item) => item.criterionId), input.taskEnvelope.acceptanceCriteria.map(contentId));
   assert.deepEqual(validateReport(validation(input, report)), []);
 });
 
@@ -169,7 +177,7 @@ test("JSON CLI reads a Windows-style path argument", async () => {
   const file = path.join(testRoot, "fixtures", "passing.json");
   const run = spawnSync(process.execPath, [path.join(root, "scripts", "cli.mjs"), "--input", file], { encoding: "utf8" });
   assert.equal(run.status, 0, run.stderr || run.stdout);
-  assert.equal(JSON.parse(run.stdout).verdict, "PASS");
+  assert.equal(JSON.parse(run.stdout).verdict, "BLOCKED");
 });
 
 test("JSON CLI reads stdin and writes only JSON", async () => {

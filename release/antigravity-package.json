@@ -1,5 +1,6 @@
 {
   "paths": [
+    "plugin.json",
     ".gemini-plugin",
     "hooks.json",
     "mcp_config.json",

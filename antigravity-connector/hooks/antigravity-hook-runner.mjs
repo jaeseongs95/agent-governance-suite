@@ -41,7 +41,8 @@ export const NON_CONTINUABLE_STOP_REASONS = new Set([
   "TERMINAL_CUSTOM_HOOK",
 ]);
 
-const PHASE_EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
+// Shells reach the adapter too; it admits only directly observable literal write paths to the edit gate.
+const PHASE_EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit", "Bash", "PowerShell"]);
 const CONTINUITY_BOUND_TOOLS = new Set([
   "open_convergence_root",
   "checkpoint_context",

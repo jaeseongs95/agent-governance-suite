@@ -126,7 +126,11 @@ describe("codex-token-usage-analyzer integration", () => {
     expect(JSON.stringify(result)).not.toContain("RAW-CONVERSATION-MUST-NOT-LEAK");
   });
 
-  it.each(["PASS", "PARTIAL"])("records and finalizes a no-Markdown %s workflow", async (verdict) => {
+  it.each([
+    { scenario: "complete", verdict: "PASS", partialReasons: [] },
+    { scenario: "corrupt-row", verdict: "PARTIAL", partialReasons: ["손상되거나 객체가 아닌 JSONL 행"] },
+    { scenario: "missing-usage", verdict: "PARTIAL", partialReasons: ["token_count 미관측"] },
+  ])("records and finalizes an unmodified no-Markdown $scenario provider result", async ({ scenario, verdict, partialReasons }) => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "suite-token-workflow-"));
     temporaryDirectories.push(directory);
     const sessionsRoot = path.join(directory, "sessions");
@@ -137,18 +141,30 @@ describe("codex-token-usage-analyzer integration", () => {
       { timestamp: "2026-01-01T00:00:00Z", type: "turn_context", payload: { turn_id: "turn-1", model: "gpt-test", effort: "high" } },
       { timestamp: "2026-01-01T00:00:01Z", type: "token_usage_record", payload: { thread_id: threadId, turn_id: "turn-1", response_id: "response-1", usage, turn_token_usage: usage, thread_token_usage: usage } }
     ];
-    await writeFile(path.join(sessionsRoot, "session.jsonl"), `${rows.map(JSON.stringify).join("\n")}\n`, "utf8");
+    const inputRows = scenario === "missing-usage" ? rows.slice(0, 2) : rows;
+    const input = `${inputRows.map(JSON.stringify).join("\n")}\n${scenario === "corrupt-row" ? "{truncated-json\n" : ""}`;
+    await writeFile(path.join(sessionsRoot, "session.jsonl"), input, "utf8");
     const execution = await execute(
       { schemaVersion: "1.0.0", target: threadId },
       { locations: { root: directory, sessionsRoot, indexFile: path.join(directory, "missing") } }
     );
-    const providerResult = structuredClone(execution.result);
-    providerResult.output.verdict = verdict;
-    providerResult.artifacts[0].digest = digest(providerResult.output);
+    expect(execution.exitCode).toBe(0);
+    const providerResult = execution.result;
+    expect(providerResult.output.verdict).toBe(verdict);
+    expect(providerResult.output.partialReasons).toEqual(partialReasons);
+    if (scenario === "missing-usage") {
+      expect(providerResult.output.counts.observedThreads).toBe(0);
+      expect(providerResult.output.totals.input_tokens).toBeNull();
+    } else {
+      expect(providerResult.output.counts.observedThreads).toBe(1);
+      expect(providerResult.output.totals).toMatchObject({ input_tokens: 10, cached_input_tokens: 3, output_tokens: 2, total_tokens: 12 });
+    }
+    expect(providerResult.artifacts[0].digest).toBe(digest(providerResult.output));
+    const produced = JSON.stringify(providerResult);
     expect(providerResult.artifacts.map((artifact) => artifact.artifactId)).toEqual(["token-usage-report"]);
 
     const service = new WorkflowService(new FileSkillRegistry(path.join(root, "skills", "registry.json"), new ContractValidator()));
-    const plan = service.planWorkflow(workflowTask(`token-workflow-${verdict.toLowerCase()}`));
+    const plan = service.planWorkflow(workflowTask(`token-workflow-${scenario}`));
     expect(plan.ok, plan.error?.message).toBe(true);
     expect(plan.data.stages[0].requiredArtifacts).toEqual(["token-usage-report"]);
     const receipt = service.startWorkflow(plan.data);
@@ -159,6 +175,7 @@ describe("codex-token-usage-analyzer integration", () => {
       ok: true,
       data: { state: "passed" }
     });
+    expect(JSON.stringify(providerResult)).toBe(produced);
   });
 
   it("is selected only by its registered capability", () => {

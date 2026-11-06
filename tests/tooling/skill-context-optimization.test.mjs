@@ -114,28 +114,6 @@ describe("skill context optimization", () => {
     } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
   });
 
-  it.each([
-    ["skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs", "preflight expiry-removal successor bytes differ"],
-    ["skills/evaluation-validity-auditor/scripts/core.mjs", "governance source successor bytes differ"],
-    ["skills/recovery-strategy-selector/scripts/core.mjs", "governance source successor bytes differ"],
-  ])("binds the reviewed i18n script bytes exactly: %s", async (relative, message) => {
-    expect(checkSkillContextOptimization().currentScriptI18nSuccessors[0].hashes[relative]).toHaveLength(2);
-    vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
-      const bytes = readFileSync(file, ...args);
-      if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) {
-        const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
-      }
-      return bytes;
-    } }));
-    try {
-      vi.resetModules();
-      const checker = await import("../../scripts/check-skill-context-optimization.mjs");
-      const report = checker.checkSkillContextOptimization();
-      expect(report.pass).toBe(false);
-      expect(report.errors).toContain(`${message}: ${relative}`);
-    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
-  });
-
   it("rejects altered contract evidence", async () => {
     const relative = "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json";
     vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
@@ -155,6 +133,10 @@ describe("skill context optimization", () => {
   });
 
   it.each([
+    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+    "skills/evaluation-validity-auditor/scripts/core.mjs",
+    "skills/evaluation-validity-auditor/scripts/runtime-smoke.mjs",
+    "skills/recovery-strategy-selector/scripts/core.mjs",
     "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
     "skills/task-contract/scripts/validate-task-contract.mjs",
     "skills/model-effort-advisor/scripts/support-guard.mjs",
@@ -162,6 +144,10 @@ describe("skill context optimization", () => {
   ])("accepts an ordinary code-only edit while source-lock still detects it: %s", async relative => {
     const fs = await import("node:fs");
     const promises = await import("node:fs/promises");
+    const { computeDirectoryChecksum } = await import("../../scripts/lib.mjs");
+    const owner = relative.split("/")[1];
+    const directory = fileURLToPath(new URL(`../../skills/${owner}`, import.meta.url));
+    const originalChecksum = await computeDirectoryChecksum(directory);
     const changed = value => typeof value === "string" ? `${value}\n// D0358: 코드 동작과 문맥을 바꾸지 않는 주석\n` : Buffer.concat([value, Buffer.from("\n// D0358: 코드 동작과 문맥을 바꾸지 않는 주석\n")]);
     const matches = file => String(file).replaceAll("\\", "/").endsWith(`/${relative}`);
     vi.doMock("node:fs", () => ({ ...fs, readFileSync: (file, ...args) => {
@@ -177,13 +163,40 @@ describe("skill context optimization", () => {
       expect(report).toMatchObject({ pass: true, errors: [] });
       expect(checker.readHistoricalSource(relative)).toEqual(changed(fs.readFileSync(new URL(`../../${relative}`, import.meta.url))));
       expect(report).toMatchObject({ scope: "skill-context-only", authorityEffect: "none" });
+      const modifiedChecksum = await (await import("../../scripts/lib.mjs")).computeDirectoryChecksum(directory);
+      expect(modifiedChecksum).not.toBe(originalChecksum);
       const { verifySourceLockOffline } = await import("../../scripts/source-lock.mjs");
-      const owner = relative.split("/")[1];
-      expect((await verifySourceLockOffline()).some(error => error.startsWith(`integrated checksum mismatch for ${owner}:`))).toBe(true);
+      expect((await verifySourceLockOffline()).some(error => error.startsWith(`integrated checksum mismatch for ${owner}:`) && error.endsWith(`actual ${modifiedChecksum}`))).toBe(true);
     } finally {
       vi.doUnmock("node:fs"); vi.doUnmock("node:fs/promises"); vi.resetModules();
     }
   }, 30_000);
+
+  it.each([
+    "skills/evaluation-validity-auditor/scripts/new-runtime-probe.mjs",
+    "skills/evaluation-validity-auditor/references/unreviewed-policy.md",
+  ])("classifies new executable and context paths by their actual boundary: %s", async relative => {
+    const { execFileSync } = await import("node:child_process");
+    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
+      const output = execFileSync(file, args, options);
+      if (file === "git" && args.includes("ls-files") && args.includes("--others")
+        && ["skills", "skills/evaluation-validity-auditor"].includes(args.at(-1))) {
+        return Buffer.concat([output, Buffer.from(`${relative}\n`)]);
+      }
+      return output;
+    } }));
+    try {
+      vi.resetModules();
+      const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      if (relative.endsWith(".mjs")) expect(report).toMatchObject({ pass: true, errors: [] });
+      else {
+        expect(report.pass).toBe(false);
+        expect(report.errors).toContain(`specialist behavior unpinned context change: ${relative}`);
+        expect(report.errors).toContain(`evaluation-validity-auditor: unexpected skill-owned changes: ${relative}`);
+      }
+    } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
+  });
 
   it("does not read executable script history", async () => {
     const { execFileSync } = await import("node:child_process");

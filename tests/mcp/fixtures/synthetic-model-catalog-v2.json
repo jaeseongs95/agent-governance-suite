@@ -15,6 +15,8 @@
     "frontier"
   ],
   "effort_order": [
+    "none",
+    "minimal",
     "low",
     "medium",
     "high",
@@ -116,7 +118,8 @@
     "anthropic-claude-code": {
       "host": "claude-code",
       "catalog": {
-        "matching": "claude-family-or-exact",
+        "matching": "exact-only",
+        "profile_only_keys": ["haiku", "sonnet", "opus", "fable", "mythos", "mythos-preview"],
         "models": {
           "haiku": {
             "model_class": "lightweight",
@@ -141,7 +144,23 @@
           }
         },
         "aliases": {
-          "mythos-preview": "mythos"
+          "mythos-preview": "mythos",
+          "claude-haiku-4-5-20251001": "haiku",
+          "claude-haiku-5": "haiku",
+          "claude-sonnet-5": "sonnet",
+          "claude-sonnet-5-5": "sonnet",
+          "claude-opus-5": "opus",
+          "claude-fable-5-1": "fable",
+          "claude-3-5-sonnet-20241022": "sonnet",
+          "claude-3-opus-20240229": "opus",
+          "us.anthropic.claude-opus-5-v1:0": "opus",
+          "global.anthropic.claude-sonnet-5-v1:0": "sonnet",
+          "us-gov.anthropic.claude-3-5-sonnet-20240620-v1:0": "sonnet",
+          "anthropic.claude-3-haiku-20240307-v1:0": "haiku",
+          "claude-opus-5@20260101": "opus",
+          "claude-mythos-6": "mythos",
+          "claude-mythos-preview": "mythos",
+          "us.anthropic.claude-mythos-preview-v1:0": "mythos"
         }
       },
       "application": {
@@ -175,7 +194,8 @@
     "google-gemini": {
       "host": "gemini",
       "catalog": {
-        "matching": "gemini-family-or-exact",
+        "matching": "exact-only",
+        "profile_only_keys": ["flash-8b"],
         "models": {
           "flash-lite": {
             "model_class": "lightweight",
@@ -205,7 +225,17 @@
         },
         "aliases": {
           "flash_lite": "flash-lite",
-          "argon_pro": "argon"
+          "argon_pro": "argon",
+          "gemini-1.5-flash-8b": "flash-8b",
+          "gemini-2.5-flash-lite": "flash-lite",
+          "gemini-2.5-flash": "flash",
+          "gemini-3.8-flash": "flash",
+          "gemini-2.5-pro": "pro",
+          "gemini-3.8-pro": "pro",
+          "gemini-ultra": "ultra",
+          "models/gemini-2.5-flash": "flash",
+          "models/gemini-2.5-flash_lite": "flash-lite",
+          "models/gemini-4.0-argon_pro": "argon"
         }
       },
       "application": {
