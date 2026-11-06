@@ -12,6 +12,7 @@ import signal
 import subprocess
 import sys
 import tarfile
+import threading
 import time
 
 AGY = "/home/mcpops/.local/bin/agy"
@@ -94,6 +95,33 @@ def main(root):
         result["modelInvocations"] += 1
         started = time.monotonic()
         timed_out = False
+        observed_servers = {}
+        done = threading.Event()
+
+        def observe_children():
+            while not done.wait(.05):
+                pending = [child.pid]
+                visited = set()
+                while pending:
+                    pid = pending.pop()
+                    if pid in visited:
+                        continue
+                    visited.add(pid)
+                    proc = Path("/proc") / str(pid)
+                    try:
+                        # Walk only this test child's actual descendants. Never
+                        # inspect the global process list or another CLI's argv.
+                        pending.extend(int(p) for p in (proc / "task" / str(pid) / "children").read_text().split())
+                        args_bytes = (proc / "cmdline").read_bytes().split(b"\0")
+                        script = str(target / "mcp-server/dist/server.mjs")
+                        if script.encode() in args_bytes:
+                            birth = (proc / "stat").read_text().rsplit(")", 1)[1].split()[19]
+                            observed_servers[pid] = {"pid": pid, "birth": birth, "script": script}
+                    except (FileNotFoundError, ProcessLookupError):
+                        pass
+
+        observer = threading.Thread(target=observe_children, daemon=True)
+        observer.start()
         try:
             stdout, stderr = child.communicate(timeout=150)
         except subprocess.TimeoutExpired:
@@ -105,6 +133,8 @@ def main(root):
                 os.killpg(child.pid, signal.SIGKILL)
                 stdout, stderr = child.communicate(timeout=2)
         finally:
+            done.set()
+            observer.join(timeout=1)
             # Exact group started by this test; no process-name/global kill.
             for sig in (signal.SIGTERM, signal.SIGKILL):
                 try:
@@ -123,6 +153,11 @@ def main(root):
             group_remaining = True
         except ProcessLookupError:
             group_remaining = False
+        for row in observed_servers.values():
+            try:
+                row["remainingAfterGroupCleanup"] = (Path("/proc") / str(row["pid"]) / "stat").read_text().rsplit(")", 1)[1].split()[19] == row["birth"]
+            except FileNotFoundError:
+                row["remainingAfterGroupCleanup"] = False
         events = []
         parse_errors = 0
         for line in stdout.splitlines():
@@ -151,10 +186,11 @@ def main(root):
         data = {"pid": child.pid, "exit": child.returncode, "timedOut": timed_out, "seconds": round(time.monotonic() - started, 3),
                 "groupRemaining": group_remaining, "escapedDescendants": "NOT_OBSERVED", "stdoutSha256": hashlib.sha256(stdout).hexdigest(),
                 "stderrSha256": hashlib.sha256(stderr).hexdigest(), "parseErrors": parse_errors, "events": events,
+                "observedOwnedServers": list(observed_servers.values()), "wholeAcceptance": "REQUIRES_TOOL_OUTPUT_AND_CACHE_REVIEW",
                 "oneInventoryDone": len(terminal) == 1 and terminal[0].get("state") == "DONE"}
         write(label + ".native.json", data)
         cache(label)
-        if group_remaining or timed_out:
+        if group_remaining or timed_out or any(s["remainingAfterGroupCleanup"] for s in observed_servers.values()):
             raise RuntimeError(label + " native timeout/cleanup incomplete; no next model")
         return data
 
@@ -215,7 +251,8 @@ def main(root):
             write("result.json", result)
     print(json.dumps({"result": str(run / "result.json"), "failure": result.get("failure"), "models": result["modelInvocations"], "pluginRestored": result.get("pluginRestored")}, ensure_ascii=False))
     transport_failure = any(not c.get("native", {}).get("oneInventoryDone", False) for k, c in result["cases"].items() if k != "invalid")
-    return 1 if result.get("failure") or not result.get("pluginRestored") or transport_failure else 0
+    invalid_accepted = result["cases"].get("invalid", {}).get("exit") == 0
+    return 1 if result.get("failure") or not result.get("pluginRestored") or transport_failure or invalid_accepted else 0
 
 
 if __name__ == "__main__":
