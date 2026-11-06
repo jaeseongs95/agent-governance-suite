@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {mkdtemp, mkdir, writeFile, rm} from "node:fs/promises";
+import {mkdtemp, mkdir, readFile, writeFile, rm} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
@@ -7,13 +7,15 @@ import {build} from "esbuild";
 import {afterEach, describe, expect, it, vi} from "vitest";
 import {RuntimeSkillClassificationGateway} from "../../mcp-server/src/skill-classification/gateway.js";
 import {InMemoryClassificationBudget, SkillClassificationService} from "../../mcp-server/src/skill-classification/service.js";
+import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
 
-const host = vi.hoisted(() => ({output: "[]", error: false}));
-vi.mock("node:child_process", async importOriginal => ({...await importOriginal<typeof import("node:child_process")>(), execFile: (_file: string, _args: string[], _options: unknown, callback: (error: Error | null, stdout: string) => void) => {
+const host = vi.hoisted(() => ({output: "[]", error: false, calls: [] as {file: string; args: string[]}[]}));
+vi.mock("node:child_process", async importOriginal => ({...await importOriginal<typeof import("node:child_process")>(), execFile: (file: string, args: string[], _options: unknown, callback: (error: Error | null, stdout: string) => void) => {
+  host.calls.push({file, args});
   callback(host.error ? new Error("PRIVATE_HOST_CAUSE") : null, host.output);
 }}));
 const roots: string[] = [];
-afterEach(async () => {vi.unstubAllEnvs(); host.error = false; await Promise.all(roots.splice(0).map(root => rm(root, {recursive: true, force: true})));});
+afterEach(async () => {vi.unstubAllEnvs(); host.error = false; host.calls.length = 0; await Promise.all(roots.splice(0).map(root => rm(root, {recursive: true, force: true})));});
 
 async function fixture() {
   const root = await mkdtemp(path.join(tmpdir(), "ags38-core-boundary-")); roots.push(root);
@@ -23,8 +25,9 @@ async function fixture() {
   const content = "---\nname: neutral-review\ndescription: Review a fixed patch; exclude implementation.\nmetadata:\n  version: '1.0.0'\n---\nReview a fixed patch.\nExclude implementation.\n";
   await writeFile(path.join(dir, "SKILL.md"), content);
   const source = {path: "skills/neutral-review/SKILL.md", startLine: 8, endLine: 9, digest: `sha256:${createHash("sha256").update(content).digest("hex")}`};
-  await writeFile(path.join(dir, "classification.json"), JSON.stringify({schemaVersion: "1.0.0", taxonomyRevision: "1.0.0", actions: ["review"], targets: ["patch"], constraints: [], dependencies: [], applicability: [source], exclusions: [source]}));
+  await writeFile(path.join(dir, "classification.json"), JSON.stringify({schemaVersion: "1.0.0", taxonomyRevision: "1.0.0", actions: ["review"], targets: ["patch"], constraints: [], dependencies: [], capabilities: ["fixed-patch-review"], applicability: [source], exclusions: [source]}));
   await writeFile(path.join(root, "skills/registry.json"), JSON.stringify({schemaVersion: "2.0.0", skills: []}));
+  expect((await loadSkillInventory({root})).issues, "host cases require valid local inventory metadata").toEqual([]);
   const listed = (enabled = true, installPath = root, version = "1.0.0") => {host.output = JSON.stringify([{id: "neutral-plugin@fixture", version, enabled, scope: "user", installPath}]);};
   listed(); vi.stubEnv("AGENT_GOVERNANCE_HOST_ATTESTATION", "claude-code");
   const gateway = new RuntimeSkillClassificationGateway({root,
@@ -42,6 +45,7 @@ describe("AGS3 D0007 and D0013 core/host boundaries", () => {
   it("CB-02 observes installed skills through the default production gateway", async () => {
     const {gateway} = await fixture();
     expect(await gateway.inventory()).toMatchObject({discovery: {status: "COMPLETE", scope: "host"}, skills: [{skillId: "neutral-review", installed: true, enabled: true, hostSupported: true}]});
+    expect(host.calls).toEqual([{file: "claude", args: ["plugin", "list", "--json"]}]);
   });
   it("CB-03 and CB-06 preserve host disablement and detect changes without volatile revisions", async () => {
     const {gateway, listed} = await fixture(); const first = await gateway.inventory(); const second = await gateway.inventory();
@@ -56,9 +60,24 @@ describe("AGS3 D0007 and D0013 core/host boundaries", () => {
     const inventory = await gateway.inventory();
     expect(inventory.discovery.status).toBe("UNAVAILABLE"); expect(inventory.issues).toContainEqual({skillId: null, code: "HOST_DISCOVERY_UNAVAILABLE", field: "hostDiscovery"});
     expect(JSON.stringify(inventory)).not.toContain("PRIVATE_");
+    expect(host.calls).toHaveLength(kind === "unsupported" ? 0 : 1);
   });
   it.each(["path", "version"])("CB-05 rejects a changed installation %s", async kind => {
     const {gateway, root, listed} = await fixture(); listed(true, kind === "path" ? path.dirname(root) : root, kind === "version" ? "9.9.9" : "1.0.0");
     expect((await gateway.inventory()).discovery.status).toBe("UNAVAILABLE");
+  });
+  it("CB-13 keeps invalid local metadata unavailable even when the host lists the installation", async () => {
+    const {gateway, root} = await fixture();
+    const metadataPath = path.join(root, "skills/neutral-review/classification.json");
+    const metadata = JSON.parse(await readFile(metadataPath, "utf8")); delete metadata.capabilities;
+    await writeFile(metadataPath, JSON.stringify(metadata));
+    const inventory = await gateway.inventory();
+    expect(inventory.skills).toEqual([]);
+    expect(inventory.discovery.status).toBe("UNAVAILABLE");
+    expect(inventory.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({skillId: "neutral-review", code: "MISSING_CAPABILITY_OR_VERSION"}),
+      {skillId: null, code: "HOST_DISCOVERY_UNAVAILABLE", field: "hostDiscovery"},
+    ]));
+    expect(host.calls).toEqual([{file: "claude", args: ["plugin", "list", "--json"]}]);
   });
 });

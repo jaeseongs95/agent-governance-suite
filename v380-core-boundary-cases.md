@@ -53,3 +53,18 @@ RED는 이 사례 그대로 test-only SHA를 TEST에서 실행해 회수한다. 
 TEST 명령: `pnpm exec vitest run tests/mcp/ags38-core-boundary-shared.test.ts tests/coordinate-subagents/model-routing.test.mjs tests/mcp/model-policy-regression.test.ts tests/mcp/host-attestation.test.ts tests/mcp/model-capability-contract.test.ts`. 로컬 제품 시험은 실행하지 않는다.
 
 최종 catalog 책임 경계: `runtime/model-catalog-adapter.mjs`는 기존 catalog JSON의 정적 export만 한다. `createCatalogExecutionAdapters`는 선언 ID·alias를 native Map으로 컴파일하고 alias별 effort override와 capability 배열을 snapshot으로 보존한다. 이후 admission은 그 Map 조회만 사용한다. skill의 `model-catalog-adapter.mjs/.d.mts`는 최신 통합기준 `aee5a669`의 원본과 diff 0으로 복원했다. 공유 resolver 구현의 사본은 남기지 않았다. 변경한 `.mjs` 2개 구문 검사와 `git diff --check` exit 0. standalone/core 동작 및 tsc는 TEST 실행 대기(NOT_RUN).
+
+## CB02·CB03 fixture 원인 수리
+
+- 기준: root `b3a697c30f1890d54d6d52e897b8b666547551f0`, branch `codex/ags38-host-observer-fixture`.
+- 원격 증거: `/home/mcpops/ags-tests/ags38-01a14016-20261107/green1-core.log`, 조회 `04b005964f93f88cadfe6a803fcafe8acbe1c4b2d54cb307`의 CORE 구간에서 CB02·CB03은 `skills: []`, `discovery.status: UNAVAILABLE`로 실패했다. 같은 묶음의 acceptance 실패는 별도 담당 소유다.
+- 소스에서 확인한 경로: fixture는 registry에 스킬을 등록하지 않고 classification metadata에도 capabilities를 주지 않았다. `inventory.ts`는 registry 밖 스킬의 capabilities/version을 필수로 확인하므로 `MISSING_CAPABILITY_OR_VERSION`으로 제외한다. observer는 inventory issue가 있을 때 null을 반환한다. 제품 observer의 실패 폐쇄 동작을 느슨하게 만들 사유가 아니다.
+- 수리: fixture에 누락된 선언 capabilities를 복구하고, 모든 host 오류 사례 전에 실제 inventory loader로 fixture issue 0개를 확인한다. mock CLI가 실제 호출됐는지도 검사한다. 이전 음성 사례의 UNAVAILABLE만으로 CLI 오류 경계가 실행됐다고 판단하지 않는다.
+
+| 사례 | 공개경계·입력·전제 | 절차 | 기대·판정 | 실제 결과 |
+|---|---|---|---|---|
+| CB02/03 재검증 | 정상 metadata와 합성 host CLI 설치 기록 | loader precondition 확인 후 gateway inventory·disablement 조회 | loader issues 0개, CLI 실제 호출, 기존 COMPLETE/disablement oracle 유지 | NOT_RUN |
+| CB04 재검증 | 정상 metadata에서 CLI throw/잘못된 JSON/미지원 host만 변경 | gateway inventory 조회·CLI 호출 확인 | throw/JSON은 CLI 호출 후 UNAVAILABLE, 미지원 host는 CLI 호출 없이 UNAVAILABLE | NOT_RUN |
+| CB13 | 정상 fixture에서 capabilities만 제거 | gateway inventory 조회 | skills 비어 있음, MISSING_CAPABILITY_OR_VERSION 및 HOST_DISCOVERY_UNAVAILABLE 보존 | NOT_RUN |
+
+TEST 명령: `pnpm exec vitest run tests/mcp/ags38-core-boundary.test.ts`. 이 수정의 입력은 합성 CLI stdout이며 실제 Claude/Codex/agy 설치 관측 성공을 뜻하지 않는다. 실제 host 목록이 비었거나 임시 `--plugin-dir` 경로가 installed 목록에 없는 상태는 별도 제한으로 유지한다. 로컬 제품 시험은 실행하지 않는다.
