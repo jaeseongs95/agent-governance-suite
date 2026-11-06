@@ -83,9 +83,9 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     expect(text).toContain("reference-only policy는 유지한다");
     // 3.8.0 (AGS3-D-0032): the shared intake moved to references/intake.md, which every host gets at context start.
     const intake = instructions("references/intake.md");
-    expect(intake).toContain("분류는 오류 가능한 조언");
+    expect(intake).toContain("조언은 AGENT가 원문과 스킬 적용·제외 조건에 대조해");
     expect(intake).toContain("채택·교정·기각하고 최종 선택");
-    expect(intake).toContain("점수는 정답이나 실행 승인이 아니다");
+    expect(intake).toContain("점수는 정답·승인이 아니다");
     const classification = instructions("references/skill-classification.md");
     expect(classification).toContain("오류 가능한 분류 조언");
     expect(classification).toContain("점수나 분류 결과를 정답·실행 승인으로 취급하지 않는다");
@@ -94,12 +94,12 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     // 지침 전달만 검사하며 실제 호스트 행동·거부·재시도 검증을 대신하지 않는다.
     const intake = instructions("references/intake.md");
     const classification = instructions("references/skill-classification.md");
-    expect(intake).toContain("도구 노출만으로 지원 설정을 추정하지 않");
+    expect(intake).toContain("도구 노출로 설정을 추정하지 않으며");
     // 3.8.0 (AGS3-D-0031, formerly D-0034): a refused call is a blocked step under the shared blocked-step rule.
-    expect(intake).toContain("미확정·거부 때는 계약의 실패 처리를 따른다");
+    expect(intake).toContain("미확정·거부 시 계약의 실패 처리를 따른다");
     expect(intake).toContain("도구 실패·권한 거절");
-    expect(intake).toContain("막혀도 그 단계와 의존 단계만 보류하고");
-    expect(intake).toContain("남은 독립 작업을 계속하며");
+    expect(intake).toContain("대기는 해당 단계와 의존 단계만 보류하고");
+    expect(intake).toContain("독립 작업을 계속하며");
     for (const criterion of [
       "기존 승인된 설치 설정과 호스트 호출 경로에서 지원이 확인된 경우",
       "새 탐지 도구·호출 경로·설정 경로를 만들거나 분류를 원 작업의 필수 선행단계로 추가하지 않는다",
@@ -125,7 +125,7 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     const integration = text.split("## 결과 통합\n")[1]!.split("## MCP 도구 사용 계약")[0]!;
     const intake = instructions("references/intake.md").split("<!-- skill-intake:start -->")[1]!.split("<!-- skill-intake:end -->")[0]!;
     // 3.8.0 (AGS3-D-0031, formerly D-0034): the user-only sentence and the blocked-step sentence after it, which keeps independent work going.
-    const userOnlyBoundary = intake.match(/사용자만 할 수 있는[^.]+\.[^.]+\./u)?.[0];
+    const userOnlyBoundary = intake.match(/사용자만 할 승인·비밀값 입력·본인 조작은[^.]+\.[^.]+\./u)?.[0];
     expect(integration).toContain("해당 단계의 결과이며 사용자 요청 전체의 완료와 구분한다");
     expect(integration).toContain("분석·계획만 요청받았다면 후속 변경을 실행하지 않는다");
     expect(integration).toContain("사용자 요청에 구현·실행·검증이 포함되어 있고 이미 허용됐다면");
@@ -133,9 +133,9 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     expect(integration).toContain("그 작업과 필요한 검증까지 계속 수행");
     expect(integration).toContain("실행 가능한 후속 확인을 사용자에게 넘기지 않는다");
     expect(userOnlyBoundary).toBeDefined();
-    expect(userOnlyBoundary).toContain("승인·비밀값 입력·사용자 본인의 조작");
+    expect(userOnlyBoundary).toContain("승인·비밀값 입력·본인 조작");
     expect(userOnlyBoundary).toContain("사용자 몫·");
-    expect(userOnlyBoundary).toContain("남은 독립 작업을 계속하며");
+    expect(userOnlyBoundary).toContain("독립 작업을 계속하며");
     expect(integration).toContain("[공통 접수·선택 기준](intake.md#공통-접수선택-기준)");
     expect(integration).not.toContain(userOnlyBoundary!);
     expect(integration).toContain("필수 입력이나 gate 실패로 막힌 의존 단계는 실행하지 않으며");

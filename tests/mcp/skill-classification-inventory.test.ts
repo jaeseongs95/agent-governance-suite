@@ -160,7 +160,7 @@ describe("signed source evidence and selection context regression", () => {
   });
 
   it.each([
-    ["orchestrator", "하위 결과·기록·잘못은 생성한 부모 책임"],
+    ["orchestrator", "하위 결과·기록·잘못은 생성한 부모가"],
     ["software-security-auditor", "감사자는 새 재현 코드를 작성·실행하지 않고"],
     ["independent-audit-gate", "감사자는 기존 검증을 직접 실행할 수 있다"],
     ["session-board", "공유 checkout 수정 전에"],
@@ -195,9 +195,9 @@ describe("signed source evidence and selection context regression", () => {
 
   it.each([
     // 3.8.0: the intake block lives in references/intake.md, and its continuity paragraph opens with the per-message check.
-    ["orchestrator", "skills/orchestrator/references/intake.md", "새 사용자 메시지마다 교정, 새 결정·승인·금지, 추가 작업, 범위 변경이 생겼는지"],
-    ["orchestrator", "skills/orchestrator/references/intake.md", "- 코드 작성·수정·설계나 라이브러리·의존성 선택 단계에는"],
-    ["orchestrator", "skills/orchestrator/references/intake.md", "- 대규모 준비·검증, 대량 파일·데이터 처리, 장시간·동시 실행을 시작하기 전에는"],
+    ["orchestrator", "skills/orchestrator/references/intake.md", "새 사용자 메시지의 교정·결정·승인·금지·추가 작업·범위 변경"],
+    ["orchestrator", "skills/orchestrator/references/intake.md", "- 코드 작성·수정·설계·라이브러리·의존성 선택에는"],
+    ["orchestrator", "skills/orchestrator/references/intake.md", "- 대규모 준비·검증, 대량 처리, 장시간·동시 실행 전에는"],
     ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", "- `pre-execution`에서는"],
     ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", "- `post-execution`에서는"],
     ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", "저장소의 동결 평가에서는"],
@@ -218,7 +218,7 @@ describe("signed source evidence and selection context regression", () => {
 
   it("keeps the no-specialist reply clause separate from orchestration exclusions", async () => {
     const source = await readFile("skills/orchestrator/references/intake.md", "utf8");
-    const line = source.split("\n").find(text => text.startsWith("- 질문 답변, 설명, 인사"))!;
+    const line = source.split("\n").find(text => text.startsWith("- 질문·설명·인사"))!;
     expect(line).toBeTypeOf("string");
     const boundary = line.indexOf(". ");
     expect(boundary).toBeGreaterThan(2);

@@ -42,8 +42,9 @@ async function checkpointDescription(locale: SupportedLocale): Promise<string> {
 describe("native pilot procedure contracts (D31/D32/D36/D38)", () => {
   it.each(["ko", "en"] as const)("NP01 keeps read-only restrictions ahead of shared checkpoint instructions in %s", locale => {
     const intake = skillIntakeText(locale);
+    expect(intake).toContain("새 사용자 메시지의 교정·결정·승인·금지·추가 작업·범위 변경");
     expect(intake).toContain("읽기 전용·상태 쓰기 금지가 아니면 그 턴에");
-    expect(intake).toContain("`checkpoint_context`로 사용자 원문과 바뀐 남은 일을 저장한다");
+    expect(intake).toContain("`checkpoint_context`로 원문과 바뀐 남은 일을 저장한다");
     expect(serverInstructions(locale)).toContain(intake);
     expect(read("skills/blocker-diagnostician/references/entry-details.md")).toContain("외부 workflow 상태 쓰기에도 적용한다");
   });
