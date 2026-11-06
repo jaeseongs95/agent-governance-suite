@@ -1449,6 +1449,7 @@ it("PR-03 binds only the three approved AGS38 contract-documentation sources aft
 
 it("PR-04 rejects different successor bytes without changing any frozen source", () => {
   const copy = mkdtempSync(path.join(tmpdir(), "ags31-source-binding-"));
+  if (path.dirname(path.resolve(copy)) !== path.resolve(tmpdir()) || !path.basename(copy).startsWith("ags31-source-binding-")) throw new Error("TEMP_SCOPE_MISMATCH");
   try {
     for (const file of currentSourceBinding.files) {
       const relative = path.relative(root, file);
@@ -1461,7 +1462,6 @@ it("PR-04 rejects different successor bytes without changing any frozen source",
     writeFileSync(path.join(copy, "tests/skill-classification/fixtures.ags38-contract-docs-source-successor.json"), Buffer.concat([contractDocsBytes, Buffer.from("\n")]));
     expect(() => loadCurrentSourceBindings(copy)).toThrow("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
   } finally {
-    if (path.dirname(path.resolve(copy)) !== path.resolve(tmpdir()) || !path.basename(copy).startsWith("ags31-source-binding-")) throw new Error("TEMP_SCOPE_MISMATCH");
     rmSync(copy, {recursive: true, force: true});
   }
 });
