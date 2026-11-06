@@ -412,7 +412,7 @@ export function loadCurrentSourceBindings(repo: string) {
   }
   const intakeLengthPath = resolve(repo, "tests/skill-classification/fixtures.intake-length-source-successor.json");
   const intakeLengthBytes = readFileSync(intakeLengthPath);
-  if (hashBytes(intakeLengthBytes) !== "sha256:9a1bfca7884cbdc49c44f63b6a18f3e156e720145c216e7535b0292ca15c931a") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  if (hashBytes(intakeLengthBytes) !== "sha256:a101883563f23baf5b05ea336e7289670ea37b94850a807bad7bb58f2732d063") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
   const intakeLength = JSON.parse(intakeLengthBytes.toString("utf8")) as typeof successor;
   if (resolve(repo, intakeLength.frozenPredecessor.path) !== testEngineeringCliPath || testEngineeringCliBytes.length !== intakeLength.frozenPredecessor.bytes || hashBytes(testEngineeringCliBytes) !== intakeLength.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");

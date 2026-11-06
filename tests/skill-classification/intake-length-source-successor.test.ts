@@ -37,13 +37,13 @@ it("D32 IL01 retains the original over-budget intake and binds the selected shor
   const was = body(previous(entry)), now = body(readFileSync(path.join(root, entry)));
   expect([was.toString("utf8").length, was.length]).toEqual([5224, 11784]);
   expect(was.toString("utf8").length).toBeGreaterThan(4344); expect(was.length).toBeGreaterThan(9783);
-  expect([now.toString("utf8").length, now.length]).toEqual([4314, 9659]);
+  expect([now.toString("utf8").length, now.length]).toEqual([4315, 9662]);
   expect(now.toString("utf8").length).toBeLessThanOrEqual(4344); expect(now.length).toBeLessThanOrEqual(9783);
-  expect(hash(now)).toBe("sha256:b2dc49a7e2b07339a14c9e28acacf465a5824a106f9fe5c9b1362fdeab12e258");
+  expect(hash(now)).toBe("sha256:d9c13a3001e369f39e93690369b582fe5759a20069eb7ada5124dc194c5fb4a9");
 });
 
 it("D32 IL02-04 appends exact r34 bindings after frozen r33 and reselects only the thirteen intake clauses", async () => {
-  expect(hash(bytes)).toBe("sha256:9a1bfca7884cbdc49c44f63b6a18f3e156e720145c216e7535b0292ca15c931a");
+  expect(hash(bytes)).toBe("sha256:a101883563f23baf5b05ea336e7289670ea37b94850a807bad7bb58f2732d063");
   expect(manifest).toMatchObject({revision: "intake-length-source-binding-r34", sourceBaseRevision: "be0a71858068fce5696a11c902ae628512ac4ca9",
     fixtureFileRewritten: false, labelChanges: [], priceAndBudgetChanges: [], modelBehavior: "NOT_RUN"});
   execFileSync("git", ["merge-base", "--is-ancestor", manifest.sourceBaseRevision, "HEAD"], {cwd: root});
