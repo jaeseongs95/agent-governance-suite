@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
-import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +14,34 @@ import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, match
 const unlisted = (listing, relative) => Buffer.from(listing.toString("utf8").split("\0").filter(entry => !entry.endsWith(`\t${relative}`)).join("\0"));
 
 describe("skill context optimization", () => {
+  it("resolves context provenance in a single-branch clone without worker refs or borrowed objects", () => {
+    const source = fileURLToPath(new URL("../../", import.meta.url));
+    const temporary = mkdtempSync(path.join(tmpdir(), "ags-context-release-clone-"));
+    const clone = path.join(temporary, "release");
+    const env = { ...process.env };
+    for (const key of ["GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES"]) delete env[key];
+    const git = (cwd, ...args) => execFileSync("git", ["-C", cwd, ...args], { env, encoding: "utf8", timeout: 120_000 });
+    try {
+      const tip = git(source, "rev-parse", "HEAD").trim();
+      const copied = spawnSync("git", ["clone", "--single-branch", "--no-tags", "--no-local", source, clone], {
+        env, encoding: "utf8", windowsHide: true, timeout: 120_000,
+      });
+      expect(copied.status, `${copied.stdout}\n${copied.stderr}`).toBe(0);
+      expect(git(clone, "rev-parse", "HEAD").trim()).toBe(tip);
+      expect(git(clone, "rev-parse", "--is-shallow-repository").trim()).toBe("false");
+      expect(existsSync(path.join(clone, ".git/objects/info/alternates"))).toBe(false);
+      const refs = git(clone, "for-each-ref", "--format=%(objectname)").trim().split(/\r?\n/u).filter(Boolean);
+      expect(refs.length).toBeLessThanOrEqual(3); // Detached HEAD has none; a branch has local, remote, and remote HEAD.
+      expect(refs.every(sha => sha === tip)).toBe(true);
+      git(clone, "merge-base", "--is-ancestor", "c4121acbf1528a44ead7fd34f617afd7a25df814", "HEAD");
+      const checked = spawnSync(process.execPath, [path.join(clone, "scripts/check-skill-context-optimization.mjs")], {
+        cwd: clone, env, encoding: "utf8", windowsHide: true, timeout: 120_000,
+      });
+      expect(checked.status, `${checked.stdout}\n${checked.stderr}`).toBe(0);
+      expect(JSON.parse(checked.stdout)).toMatchObject({ pass: true, errors: [], scope: "skill-context-only" });
+    } finally { rmSync(temporary, { recursive: true, force: true }); }
+  }, 180_000);
+
   it("pins context and contract bytes without executable fingerprints", () => {
     const report = checkSkillContextOptimization();
     expect(report.contextContractPins).toHaveLength(1);

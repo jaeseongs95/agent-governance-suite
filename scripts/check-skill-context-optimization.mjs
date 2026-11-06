@@ -115,7 +115,8 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
   // These exact successors retain the preceding context oracle; the runtime declarations
   // are independently pinned below so a re-export cannot hide changes to its contract.
   Object.freeze({
-    revision: "586f6dcee12811536c84279dc658886ff3355da1",
+    // Root integration ancestor, not the byte-identical worker commit that is absent from clean release clones.
+    revision: "c4121acbf1528a44ead7fd34f617afd7a25df814",
     hashes: Object.freeze({
       "skills/acceptance-evidence-validator/classification.json": ["0f014b4abc19bfb98a78e9b736afd0785b59d97a6f24b8f5b3febced73880a8c", "4ce9af6edc26969b41c776135e591bc0674f5d366445207083baf73d2899aff7"],
       "skills/session-board/classification.json": ["7df8a0d55377d9315899955ccae63d9623113517fdd49e91adb6201d2c25442e", "858968497e4d721fb34328db0ac67b3d27c19d97fe7bf9837b4ccfc4f6653e8a"],
