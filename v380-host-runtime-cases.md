@@ -41,7 +41,7 @@
 
 각 명령을 순차 실행하고 SHA, 명령, 종료 코드, 원출력을 보존한다. 첫 실패는 제거하지 않는다. 새 관측 없는 동일 검사 반복 금지. 자식 timeout은 해당 사례 실패이며 다른 원인의 성공으로 덮지 않는다. 원인 확인 전 제품 코드 변경 금지.
 
-## 현재 판정
+## 최초 판정(Windows TEST 전)
 
 DiagnosisReport.v1 의미 판정: NEXT_TEST. 세 과거 episode의 환경 digest/원시 실패 출력은 아직 전달되지 않아 원인을 확정하지 않았다. source에서 확인된 동기 stdin·SQLite·Git 경계는 지연 가능 경계이며 과거 실패의 인과 증명은 아니다. 제품 수리는 없음.
 
@@ -62,3 +62,11 @@ DiagnosisReport.v1 의미 판정: NEXT_TEST. 세 과거 episode의 환경 digest
 HR16-SCOPE 사전 사례: 격리 Git 저장소 안 nested workspace를 프로파일한다. 외부 tracked 파일 수정 및 외부 untracked 파일 추가 후 nested dirtyState와 fingerprint는 clean 기준과 같아야 한다. 같은 repository root를 요청하면 dirty여야 한다. nested 내부 tracked 파일 수정 후에는 dirty 및 fingerprint 변경을 감지해야 한다. 전후 Git status는 같아야 한다(읽기 전용). 입력·절차는 새 `tests/tooling/ags38-host-runtime-git-scope.node-test.mjs`, 실행은 TEST의 `node --test tests/tooling/ags38-host-runtime-git-scope.node-test.mjs`. 수정 전 RED와 수정 후 GREEN은 원래 파일을 되돌리지 않고 별도 핀으로 실행한다. 현재 NOT_RUN.
 
 수리 불변조건: gitInfo의 소비자는 workspace의 vcsType/currentRef/dirtyState와 profileFingerprint의 currentRef/currentRevision/status뿐이다. branch·revision 조회는 유지하고 status만 요청 workspace의 `-- .` pathspec으로 제한한다. 요청 내부 변경 감지와 저장소 root 요청의 전체 상태 감지는 유지해야 한다. 원래10s 자식 제한은 유지한다.
+
+## 수리 전달 상태
+
+- 회귀 test-only 핀: `40511b5061a7ea2285a7b533e7fd1d093d861634`. 소스 변경 전 RED 실행 대상이며 실제 결과 NOT_RUN.
+- 제품 수리 핀: `ab7b8e6af4a09f55a0f08f9340536172d15a9532`. `skills/workspace-convention-profiler/scripts/profile-workspace.mjs:123`의 status argv에 `-- .`를 추가한 한 줄 변경. Git ref/revision과 자식 timeout은 변경하지 않았다.
+- source와 새 scope test의 로컬 `node --check`, `git diff --check` 종료 코드0. 로컬 제품시험·Docker·서버 직접 변경·생성물 수정은 수행하지 않았다.
+- GREEN 후보는 root 소유 Claude 생성물 재생성 후 핀을 고정하고 Windows TEST에서 scope 회귀와 기존 startup probe를 실행한다. 현재 NOT_RUN이며 SOURCE_FIXED 수용 또는 VERIFIED 판정을 하지 않는다.
+- 인과 범위: 새 Windows episode의 EOF 이후 repository-wide Git status 정체는 직접 관측·최소 수리했다. 최초 3.6.0 단발 episode와 OS cache/백신 내부 원인은 여전히 미확인이다. D0014/D0027은 이번 미재현으로 종료하지 않는다.
