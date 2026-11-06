@@ -182,12 +182,16 @@ for (const interrupt of [false, true]) {
         const attempted = await worker.phase("operation-attempt");
         assert.equal(attempted.attempts, 1);
         assert.ok(attempted.nowMs < 5500, "Fixture started after original claim deadline");
+        await worker.phase("writer-wait-enter");
         if (interrupt) assert.equal(worker.child.kill("SIGTERM"), true, "Owned OS termination was not sent");
         const result = await bounded(worker.closed, CHILD_TIMEOUT_MS + 1000, "request close");
         assert.equal(worker.events.filter(event => event.phase === "operation-attempt").length, 1);
+        assert.equal(worker.events.filter(event => event.phase === "writer-wait-enter").length, 1);
+        assert.equal(worker.events.some(event => event.phase === "writer-wait-return"), false);
         if (interrupt) {
           assert.ok(result.signal !== null || result.code !== 0, "OS termination became a successful client outcome");
           assert.equal(worker.events.some(event => event.phase === "request-failed" || event.phase === "request-complete"), false);
+          assert.equal(worker.events.some(event => event.phase === "writer-wait-failed"), false);
           t.diagnostic("PB08 evidence is OS child termination, not cooperative cancellation or Claude native cancellation");
         } else {
           worker.assertCleanExit();
@@ -195,6 +199,7 @@ for (const interrupt of [false, true]) {
           assert.equal(failed.length, 1);
           assert.equal(failed[0].reason, "MESSAGING_BUSY");
           assert.equal(failed[0].attempts, 1);
+          assert.equal(worker.events.filter(event => event.phase === "writer-wait-failed").length, 1);
           assert.ok(failed[0].nowMs <= CHILD_TIMEOUT_MS, "Busy operation outlived the unchanged host deadline");
           assert.equal(worker.events.filter(event => event.phase === "client-closed").length, 1);
         }

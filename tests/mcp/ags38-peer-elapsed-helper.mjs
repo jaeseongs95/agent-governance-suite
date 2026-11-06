@@ -2,6 +2,7 @@
 import { writeSync } from "node:fs";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
+import { DatabaseSync } from "node:sqlite";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.ts";
 import { sessionMessageRequest, closeSessionMessaging } from "../../mcp-server/src/session-message-client.ts";
 import { HOOK_COMMAND_BUDGET } from "../../mcp-server/src/session-message-hook.ts";
@@ -35,6 +36,17 @@ if (mode === "setup") {
   const deadline = HOOK_COMMAND_BUDGET.deadlineMonotonicMs - HOOK_COMMAND_BUDGET.postClaimReserveMs;
   if (performance.now() >= deadline) throw new Error("TEST helper startup exhausted original claim budget");
   let attempts = 0;
+  const exec = DatabaseSync.prototype.exec;
+  // Observe the actual writer call without changing its SQL, timeout, return or thrown error.
+  DatabaseSync.prototype.exec = function (...args) {
+    if (args[0] !== "BEGIN IMMEDIATE") return Reflect.apply(exec, this, args);
+    observe("writer-wait-enter");
+    try {
+      const result = Reflect.apply(exec, this, args);
+      observe("writer-wait-return");
+      return result;
+    } catch (error) { observe("writer-wait-failed"); throw error; }
+  };
   observe("request-ready", { deadlineMs: deadline });
   try {
     const result = await sessionMessageRequest("claim-turn-end", { target, maxMessages: 1, maxBodyChars: 4096 }, state, {
@@ -46,6 +58,7 @@ if (mode === "setup") {
   } catch (error) {
     observe("request-failed", { attempts, reason: producerFailureReason(error) ?? "UNCLASSIFIED_FAILURE" });
   } finally {
+    DatabaseSync.prototype.exec = exec;
     closeSessionMessaging(state);
     observe("client-closed");
   }
