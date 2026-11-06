@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
@@ -13,6 +13,8 @@ import presets from "../../skills/coordinate-subagents/references/model-routing-
 
 const efforts = ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"];
 const readJson = (relative: string) => JSON.parse(readFileSync(new URL(relative, import.meta.url), "utf8"));
+const policyPath = new URL("../../contracts/model-policy.v1.schema.json", import.meta.url);
+const modelPolicySchema = existsSync(policyPath) ? JSON.parse(readFileSync(policyPath, "utf8")) : null;
 const advice = readJson("../model-effort-advisor/behavior-cases.json").cases.find((entry: { output: { verdict: string } }) => entry.output.verdict === "ADEQUATE").output;
 
 function options(effort: string, highRisk = false, modelClass: string | null = "general") {
@@ -55,7 +57,10 @@ describe("AGS3-D-0009/0017/0018 shared model policy", () => {
     expect(resolveModelSelection(options(effort)).selection).toEqual({ model: "opaque-model", effort });
     const ajv = new Ajv2020({ strict: false });
     (addFormats as unknown as (ajv: Ajv2020) => void)(ajv);
+    if (modelPolicySchema) ajv.addSchema(modelPolicySchema);
     const validate = ajv.compile(readJson("../../contracts/execution-context.v1.schema.json"));
+    const requirement = ajv.compile(readJson("../../contracts/execution-requirement.v1.schema.json"));
+    expect(requirement({ policyId: "semantic-execution-assurance-v1", kind: "semantic", minimumModelClass: "general", minimumReasoningEffort: effort, observationRequired: true }), JSON.stringify(requirement.errors)).toBe(true);
     expect(validate({ schemaVersion: "1.0.0", model: "opaque-model", modelClass: "general", reasoningEffort: effort, source: "runtime", observedAt: "2026-11-07T00:00:00Z" }), JSON.stringify(validate.errors)).toBe(true);
     const result = guardModelSupport(advice, { currentSelection: { source: "runtime", provider: "opaque-provider", model: "opaque-model", reasoningEffort: effort },
       supportEvidence: { kind: "host-runtime", provider: "opaque-provider", locator: "fixture:observed", models: [{ id: "opaque-model", modelClass: "general", reasoningEfforts: efforts }] } });
@@ -73,7 +78,14 @@ describe("AGS3-D-0009/0017/0018 shared model policy", () => {
     expect(resolveModelSelection(input, weakened).delivery).toBe(delivery);
   });
 
+  it("keeps the standalone policy snapshot identical to its shared contract", () => {
+    expect(modelPolicySchema).not.toBeNull();
+    expect(readJson("../../skills/coordinate-subagents/references/model-routing-policy.schema.json")).toEqual(modelPolicySchema);
+  });
+
   it("makes execution floors consume the routing policy rather than another literal", () => {
+    expect(modelPolicySchema?.$defs.highRiskModelClass.const).toBe(presets.invariants.high_risk_minimum_model_class);
+    expect(modelPolicySchema?.$defs.highRiskReasoningEffort.const).toBe(presets.invariants.high_risk_minimum_effort);
     const source = readFileSync(fileURLToPath(new URL("../../mcp-server/src/workflow-service.ts", import.meta.url)), "utf8");
     expect(source).not.toMatch(/minimumModelClass:\s*highRisk\s*\?\s*"general"/u);
     expect(source).not.toMatch(/minimumReasoningEffort:\s*highRisk\s*\?\s*"high"/u);
