@@ -41,3 +41,14 @@
 - TEST red/green/native: NOT_RUN (root 배정).
 - test-only assertion 실패만 올바른 red이며 runner/환경 오류는 별도 기록한다.
 - 공개 hook 등록까지 확인해야 하므로 adapter-only green은 EG12 통과가 아니다.
+
+## 구현 및 정적 검사 기록
+
+- `shell-edit-targets.ts`의 제한된 lexical 관측을 호스트 adapter에서 호출하고 기존 `editTargets` 및 세 파일 관문을 재사용한다. 원본 파일 도구, continuity 서비스 및 child 정책은 수정하지 않았다.
+- Codex 기존 continuity matcher에 `exec_command|shell_command|shell`을 추가했다. AGY runner의 기존 phase 대상 집합에 canonical `Bash|PowerShell`만 추가했다. 다른 runner 정책은 변경하지 않았다.
+- 단순 output redirection과 명시적 PowerShell content writer의 named path만 관측한다. 인용 문자열·주석·POSIX heredoc 본문·동적 경로·null sink를 제품 경로로 만들지 않는다. 경로는 기존 adapter에서 cwd 기준 정규화하고 기존 관문에서 고유 파일 집계를 한다.
+- 제어 흐름·함수·eval/source·위치 변경이 있는 명령은 안전한 literal 경로 관측으로 간주하지 않는다. 외부 프로그램의 부작용, 임의 스크립트, alias·함수 재정의, glob, shell argv 배열은 미관측이다. 이는 문법상 예상 대상 관측이며 실제 write syscall 관측이 아니다. 원 AC 전체는 미충족이다.
+- workflow는 세 번째 제품 파일 전에 시작했다: `root-23545503-3110-4577-9b13-8c2bc10f27a9`, `run-task-d8fea06d-84b3-481f-b3e5-0a026edab787-263`. 추가 hooks/AGY 소유 배정 후 별도 범위 workflow: `root-99e8c4d3-5018-4d04-8fc2-031db64e18dc`, `run-task-c24589ac-b38e-4f41-9e4d-15560568288a-267`.
+- 로컬 정적 검사: Node `v24.19.0`; `node node_modules/typescript/bin/tsc --noEmit` exit 0; 수정 TS/runner 및 새 테스트에 `node node_modules/eslint/bin/eslint.js <해당 4개 파일>` exit 0; `node --check antigravity-connector/hooks/antigravity-hook-runner.mjs` exit 0; `git diff --check` exit 0. 최초 lint의 `no-useless-escape` 1건을 수정한 뒤 통과했다. 제품 동작 검증 결과가 아니다.
+- test-only SHA: `271d9bbd7f4e7832adc0d924c44f9b38d866bb8a`, 테스트 파일 SHA256 `a978cf4021ce9c5477131b04fd7d61397ae901056ad20f119b960492b3266350`. 후속 수정에서 테스트 파일은 변경하지 않는다.
+- TEST red/green, 기존 workflow 보존 suite, 실제 호스트 shell 시험, CI: NOT_RUN. root가 exact 후보로 실행해야 한다. 생성물·버전 변경은 root 소유이며 이 작업 사본에서 생성하지 않았다.
