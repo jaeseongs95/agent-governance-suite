@@ -222,7 +222,7 @@
       "version": "0.1.0",
       "versionSource": "version-file",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:4888b22bbd3557a4383f27e0f32234e62ff4ce4145722fb039bc81c4822b32b2",
+      "integratedChecksum": "sha256:fac72f784d442020d8925a4a670096cc61ed20396a6d6508ddb000aa2d118fc0",
       "checksumScope": "relative paths and normalized text bytes under skills/ui-ux-design"
     }
   ]

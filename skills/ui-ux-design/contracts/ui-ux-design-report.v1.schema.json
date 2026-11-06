@@ -63,7 +63,7 @@
         "required": ["id", "kind", "scope", "status", "environment", "evidenceRefs", "detail"],
         "properties": {
           "id": { "$ref": "#/$defs/text" },
-          "kind": { "enum": ["static", "visual", "interaction", "accessibility", "performance"] },
+          "kind": { "enum": ["audience", "static", "visual", "interaction", "accessibility", "performance"] },
           "scope": { "$ref": "#/$defs/text" },
           "status": { "enum": ["PASSED", "FAILED", "NOT_RUN", "NOT_APPLICABLE"] },
           "environment": { "anyOf": [{ "$ref": "#/$defs/text" }, { "type": "null" }] },
