@@ -1,5 +1,6 @@
 import {readFile, realpath} from "node:fs/promises";
 import {homedir} from "node:os";
+import {createRequire} from "node:module";
 import path from "node:path";
 import {z} from "zod";
 
@@ -12,7 +13,10 @@ const localSource = z.object({source: z.literal("local"), path: z.string().min(1
 const npmManifest = z.object({name: z.literal("@openai/codex"), version: z.literal("0.166.0"),
   bin: z.object({codex: z.literal("bin/codex.js")})}).passthrough();
 
-async function windowsNpmLauncher(): Promise<string | null> {
+async function windowsNpmExecutable(): Promise<string | null> {
+  if (process.arch !== "x64" && process.arch !== "arm64") return null;
+  const triple = process.arch === "x64" ? "x86_64-pc-windows-msvc" : "aarch64-pc-windows-msvc";
+  const platformPackage = `@openai/codex-win32-${process.arch}`;
   const matches = new Set<string>();
   for (const directory of (process.env.PATH ?? "").split(path.delimiter)) {
     const location = directory.replace(/^"|"$/gu, "");
@@ -25,23 +29,31 @@ async function windowsNpmLauncher(): Promise<string | null> {
       if (bytes.length > 64 * 1024 || !npmManifest.safeParse(JSON.parse(bytes.toString("utf8"))).success) continue;
       const launcher = await realpath(path.join(packageRoot, "bin/codex.js"));
       if (path.dirname(launcher) !== path.join(await realpath(packageRoot), "bin")) continue;
-      matches.add(launcher);
+      const nativeManifest = createRequire(launcher).resolve(`${platformPackage}/package.json`);
+      const nativeRoot = path.dirname(nativeManifest);
+      const nativeBytes = await readFile(nativeManifest);
+      if (nativeBytes.length > 64 * 1024) continue;
+      const native = z.object({name: z.literal("@openai/codex"), version: z.literal(`0.166.0-win32-${process.arch}`)}).passthrough();
+      if (!native.safeParse(JSON.parse(nativeBytes.toString("utf8"))).success) continue;
+      const executable = await realpath(path.join(nativeRoot, "vendor", triple, "bin/codex.exe"));
+      if (path.dirname(executable) !== path.join(await realpath(nativeRoot), "vendor", triple, "bin")) continue;
+      matches.add(executable);
     } catch { /* A missing/unverified public npm installation is not a launch candidate. */ }
   }
   return matches.size === 1 ? [...matches][0]! : null;
 }
 
-/** Preserve native executables. Only Windows ENOENT may use the verified official npm launcher. */
+/** Preserve native executables. Windows npm shims resolve to the official native binary, never a child-spawning wrapper. */
 export function createCodexInspectionCommand(command: (file: string, args: string[]) => Promise<string>) {
-  let launcher: string | null = null;
+  let executable: string | null = null;
   return async (args: string[]): Promise<string> => {
-    if (launcher) return command(process.execPath, [launcher, ...args]);
+    if (executable) return command(executable, args);
     try { return await command("codex", args); }
     catch (error) {
       if (process.platform !== "win32" || !(error instanceof Error) || !("code" in error) || error.code !== "ENOENT") throw error;
-      launcher = await windowsNpmLauncher();
-      if (!launcher) throw error;
-      return command(process.execPath, [launcher, ...args]);
+      executable = await windowsNpmExecutable();
+      if (!executable) throw error;
+      return command(executable, args);
     }
   };
 }
