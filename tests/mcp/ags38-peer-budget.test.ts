@@ -1,4 +1,7 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const f = vi.hoisted(() => ({ now: 100, request: vi.fn(), open: vi.fn(), record: vi.fn(), verify: vi.fn(), close: vi.fn() }));
@@ -38,7 +41,7 @@ it("PB01: claims once with its reserve, emits the body, closes and never acknowl
   expect(result.output).toContain(message.body);
   expect(f.request).toHaveBeenCalledTimes(1);
   expect(f.request.mock.calls[0]![0]).toBe("claim-turn-end");
-  expect(f.request.mock.calls[0]![3]).toMatchObject({ deadlineMonotonicMs: 800, noOperationReplay: true });
+  expect(f.request.mock.calls[0]![3]).toMatchObject({ deadlineMonotonicMs: 800, noOperationReplay: true, busyTimeoutMs: 0 });
   expect(f.close).toHaveBeenCalledTimes(1);
 });
 
@@ -78,4 +81,55 @@ it("PB05: querying time never throws and budgeted receipt operations share an ex
   expect(source).toContain("function assertHookBudget(");
   expect(source).toContain("function budgetedStep<");
   expect(source).not.toMatch(/^\s+remainingBudget\(budget/u);
+});
+
+it("PB10: a busy budgeted hook preserves its queue and the next boundary can claim without an ACK", async () => {
+  const actual = await vi.importActual<typeof import("../../mcp-server/src/session-message-client.js")>("../../mcp-server/src/session-message-client.js");
+  const directory = mkdtempSync(path.join(tmpdir(), "ags38-peer-budget-"));
+  const target = message.recipient;
+  let holder: DatabaseSync | undefined;
+  try {
+    const prepared = actual.runSessionMessageOperation<{ messageId: string }>("prepare", { target, sender: message.sender, body: message.body, ttlSeconds: 600 }, directory);
+    actual.runSessionMessageOperation("send", { sender: message.sender, messageId: prepared.messageId }, directory);
+    holder = new DatabaseSync(path.join(directory, "session-messages.sqlite3"));
+    const snapshot = () => holder!.prepare("SELECT delivery_attempts, claimed_at, claim_receipt, acknowledged_at FROM messages").all();
+    const before = snapshot();
+    const options: unknown[] = [];
+    f.request.mockImplementation((operation, payload, _directory, requestOptions) => {
+      options.push(requestOptions);
+      return actual.sessionMessageRequest(operation, payload, directory, requestOptions);
+    });
+    holder.exec("BEGIN IMMEDIATE");
+    const busy = await runSessionMessageHookOutcome("claude-code", input, undefined, { executionBudget: budget });
+    expect(busy).toMatchObject({ ok: false, output: "", failure: { producerReason: "MESSAGING_BUSY", step: "claim-turn-end" } });
+    expect(options).toHaveLength(1);
+    expect(options[0]).toMatchObject({ busyTimeoutMs: 0, deadlineMonotonicMs: 800 });
+    expect(snapshot()).toEqual(before);
+    holder.exec("ROLLBACK");
+    const next = await runSessionMessageHookOutcome("claude-code", input, undefined, { executionBudget: budget });
+    expect(next.ok).toBe(true);
+    expect(next.output).toContain(message.body);
+    expect(options).toHaveLength(2);
+    expect(snapshot()).toEqual([{ delivery_attempts: 1, claimed_at: expect.any(String), claim_receipt: expect.any(String), acknowledged_at: null }]);
+  } finally {
+    if (holder?.isTransaction) holder.exec("ROLLBACK");
+    holder?.close();
+    actual.closeSessionMessaging(directory);
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it("PB11: a hook's nonwaiting call does not leak into the next regular MCP request", async () => {
+  const actual = await vi.importActual<typeof import("../../mcp-server/src/session-message-client.js")>("../../mcp-server/src/session-message-client.js");
+  const directory = mkdtempSync(path.join(tmpdir(), "ags38-peer-budget-"));
+  const exec = vi.spyOn(DatabaseSync.prototype, "exec");
+  try {
+    // The hook is the option producer; reuse the same cached client connection as the regular caller.
+    f.request.mockImplementation((operation, payload, _directory, options) => actual.sessionMessageRequest(operation, payload, directory, options));
+    await runSessionMessageHookOutcome("claude-code", input, undefined, { executionBudget: budget });
+    expect(exec.mock.calls.filter(([sql]) => sql === "PRAGMA busy_timeout = 0;")).toHaveLength(1);
+    exec.mockClear();
+    await actual.sessionMessageRequest("pending", { target: message.recipient }, directory);
+    expect(exec.mock.calls.filter(([sql]) => sql === "PRAGMA busy_timeout = 5000;")).toHaveLength(1);
+  } finally { actual.closeSessionMessaging(directory); rmSync(directory, { recursive: true, force: true }); }
 });

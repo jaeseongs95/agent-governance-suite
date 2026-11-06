@@ -174,15 +174,17 @@ test("PB06: actual shared CLI expires at its original 6500ms budget before claim
   });
 });
 
-for (const interrupt of [false, true]) {
+for (const mode of ["request", "interrupt", "hook"]) {
+  const interrupt = mode === "interrupt";
   test(interrupt ? "PB08: OS termination of an owned blocked child leaves no claim or ACK"
+    : mode === "hook" ? "PB09: budgeted public hook preserves the original 1000ms reserve under a writer lock"
     : "PB07: actual SQLite writer lock fails busy and closes within the original 6500ms host budget without replay", { timeout: 25_000 }, async t => {
     await fixture(t, async ({ state, database, before, ownedLaunch }) => {
       const holder = new DatabaseSync(database);
       let primary;
       try {
         holder.exec("PRAGMA busy_timeout = 0; BEGIN IMMEDIATE;");
-        const worker = ownedLaunch(["--import", "tsx", helper, "request", state]);
+        const worker = ownedLaunch(["--import", "tsx", helper, mode === "hook" ? "hook" : "request", state]);
         worker.child.stdin.end();
         const attempted = await worker.phase("operation-attempt");
         assert.equal(attempted.attempts, 1);
@@ -207,7 +209,7 @@ for (const interrupt of [false, true]) {
           assert.equal(worker.events.filter(event => event.phase === "writer-wait-failed").length, 1);
           const closed = worker.events.filter(event => event.phase === "client-closed");
           assert.equal(closed.length, 1);
-          t.diagnostic(JSON.stringify({ claimDeadlineMs: 5500, originalHostDeadlineMs: DEADLINE_MS,
+          t.diagnostic(JSON.stringify({ claimDeadlineMs: 5500, originalHostDeadlineMs: DEADLINE_MS, postClaimReserveMs: 1000,
             claimDeadlineOverrunMs: Math.max(0, failed[0].nowMs - 5500),
             remainingHostBudgetAtClientCloseMs: DEADLINE_MS - closed[0].nowMs,
             postClaimReservePreserved: DEADLINE_MS - closed[0].nowMs >= 1000,
@@ -215,6 +217,12 @@ for (const interrupt of [false, true]) {
           assert.ok(failed[0].nowMs <= DEADLINE_MS, "Busy operation outlived the original 6500ms host deadline");
           assert.ok(closed[0].nowMs <= DEADLINE_MS, "Client cleanup outlived the original 6500ms host deadline");
           assert.ok(result.elapsedMs <= DEADLINE_MS, "Owned child close exceeded the original 6500ms host duration");
+          if (mode === "hook") {
+            assert.equal(failed[0].step, "claim-turn-end");
+            assert.equal(failed[0].outputBytes, 0);
+            assert.ok(failed[0].nowMs <= 5500, "Hook claim spent the post-claim reserve");
+            assert.ok(closed[0].nowMs <= 5500, "Hook client cleanup spent the post-claim reserve");
+          }
         }
         await worker.cleanup();
       } catch (error) { primary = error; }

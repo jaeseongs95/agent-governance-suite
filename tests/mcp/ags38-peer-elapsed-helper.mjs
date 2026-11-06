@@ -5,11 +5,11 @@ import { performance } from "node:perf_hooks";
 import { DatabaseSync } from "node:sqlite";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.ts";
 import { sessionMessageRequest, closeSessionMessaging } from "../../mcp-server/src/session-message-client.ts";
-import { HOOK_COMMAND_BUDGET } from "../../mcp-server/src/session-message-hook.ts";
+import { HOOK_COMMAND_BUDGET, runSessionMessageHookOutcome } from "../../mcp-server/src/session-message-hook.ts";
 import { producerFailureReason } from "../../mcp-server/src/failure-diagnostics.ts";
 
 const [mode, state] = process.argv.slice(2);
-if (!["setup", "request"].includes(mode) || !state || !path.isAbsolute(state)
+if (!["setup", "request", "hook"].includes(mode) || !state || !path.isAbsolute(state)
   || path.basename(state) !== "messaging" || !path.basename(path.dirname(state)).startsWith("ags38-peer-elapsed-")
   || process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR !== state) throw new Error("Invalid owned TEST arguments");
 const target = { host: "codex", sessionId: "ags38-peer-elapsed-recipient" };
@@ -49,12 +49,21 @@ if (mode === "setup") {
   };
   observe("request-ready", { deadlineMs: deadline });
   try {
+    if (mode === "hook") {
+      const outcome = await runSessionMessageHookOutcome("codex", JSON.stringify({ hook_event_name: "Stop", session_id: target.sessionId, agent_id: "" }), undefined, {
+        executionBudget: HOOK_COMMAND_BUDGET,
+        onClaimState: event => { if (event.phase === "request-attempted") { attempts += 1; observe("operation-attempt", { attempts }); } },
+      });
+      if (outcome.ok || outcome.output !== "") throw new Error("Locked hook did not fail open");
+      observe("request-failed", { attempts, reason: outcome.failure.producerReason ?? outcome.failure.reason, step: outcome.failure.step, outputBytes: Buffer.byteLength(outcome.output) });
+    } else {
     const result = await sessionMessageRequest("claim-turn-end", { target, maxMessages: 1, maxBodyChars: 4096 }, state, {
       totalTimeoutMs: 8000, deadlineMonotonicMs: deadline, noOperationReplay: true,
       onOperationWrite: () => { attempts += 1; observe("operation-attempt", { attempts }); },
     });
     observe("request-complete", { attempts, messages: result.messages.length });
     process.exitCode = 2; // A successful claim violates this fixture's held-writer precondition.
+    }
   } catch (error) {
     observe("request-failed", { attempts, reason: producerFailureReason(error) ?? "UNCLASSIFIED_FAILURE" });
   } finally {
