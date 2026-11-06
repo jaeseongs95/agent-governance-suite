@@ -1,1 +1,1 @@
-export * from "../../../runtime/collaboration-decision.d.mts";
+export * from "../../../runtime/collaboration-decision.mjs";

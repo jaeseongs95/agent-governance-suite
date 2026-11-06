@@ -1,1 +1,1 @@
-export * from "../../../runtime/provider-acceptance-semantics.d.mts";
+export * from "../../../runtime/provider-acceptance-semantics.mjs";
