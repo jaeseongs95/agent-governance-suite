@@ -49,6 +49,7 @@ async function fixture(kind: "codex" | "antigravity") {
     host.outputs["codex --version"] = "codex-cli 0.166.0\n";
     host.outputs["codex plugin list --json"] = JSON.stringify({installed: [{pluginId: "neutral-plugin@neutral-market", name: "neutral-plugin", marketplaceName: "neutral-market", version: "1.0.0", installed: true, enabled,
       source: {source: "local", path: source}, marketplaceSource: {sourceType: "local", source}}], available: []});
+    host.outputs["codex plugin list --marketplace neutral-market --json"] = host.outputs["codex plugin list --json"]!;
     host.outputs["codex plugin marketplace list --json"] = JSON.stringify({marketplaces: [{name: "neutral-market", root: source}]});
     host.outputs["agy --version"] = "1.5.2\n";
     host.outputs["agy plugin list"] = `Installed plugins:\n- neutral-plugin (${enabled ? "enabled" : "disabled"}, 1.0.0)\n    Source:     antigravity\n    Components: 1 skills, 1 MCP server, 2 hooks\n`;
@@ -81,7 +82,7 @@ describe("D0013 current native installation and running root binding", () => {
       expect(result.discovery).toMatchObject({status: "COMPLETE", scope: "host"});
       expect(result.discovery.sourceRef).toContain(`host:${kind}:installed-plugin:`);
       expect(result.skills).toMatchObject([{skillId: "neutral-review", installed: true, enabled: true, hostSupported: true}]);
-      expect(host.calls).toContain(kind === "codex" ? "codex plugin list --json" : "agy plugin list");
+      expect(host.calls).toContain(kind === "codex" ? "codex plugin list --marketplace neutral-market --json" : "agy plugin list");
     });
     it(`${kind}: re-queries disablement and keeps unchanged observation revisions stable`, async () => {
       const f = await fixture(kind); const g = gateway(f.root); const first = await g.inventory(); const second = await g.inventory();
@@ -109,6 +110,7 @@ describe("D0013 current native installation and running root binding", () => {
     if (mutation === "duplicate") raw.installed.push(raw.installed[0]);
     if (mutation === "wrong-marketplace") host.outputs["codex plugin marketplace list --json"] = JSON.stringify({marketplaces: []});
     host.outputs[key] = mutation === "malformed" ? "PRIVATE_INVALID_JSON" : JSON.stringify(raw);
+    host.outputs["codex plugin list --marketplace neutral-market --json"] = host.outputs[key]!;
     unavailable(await gateway(f.root).inventory());
   });
   it.each(["valid", "wrong-origin", "outside-market"])("codex: actual relative-child installation %s keeps source and running cache bound", async mutation => {
@@ -125,6 +127,7 @@ describe("D0013 current native installation and running root binding", () => {
     const root = path.join(f.home, ".codex/plugins/cache", row.marketplaceName, row.name, row.version);
     await packageTree(root, ".codex-plugin", row.name, row.version);
     host.outputs["codex plugin list --json"] = JSON.stringify({installed: [row], available: []});
+    host.outputs[`codex plugin list --marketplace ${row.marketplaceName} --json`] = host.outputs["codex plugin list --json"]!;
     host.outputs["codex plugin marketplace list --json"] = JSON.stringify({marketplaces: [{name: row.marketplaceName, root: f.source,
       marketplaceSource: {sourceType: "local", source: f.source}}]});
     const result = await gateway(root).inventory();
@@ -132,6 +135,12 @@ describe("D0013 current native installation and running root binding", () => {
       expect(result.discovery).toMatchObject({status: "COMPLETE", scope: "host"});
       expect(result.skills).toMatchObject([{installed: true, enabled: true, hostSupported: true}]);
     } else unavailable(result);
+  });
+  it("codex: queries only the running cache marketplace when global remote catalog listing is unavailable", async () => {
+    const f = await fixture("codex"); delete host.outputs["codex plugin list --json"];
+    expect((await gateway(f.root).inventory()).discovery).toMatchObject({status: "COMPLETE", scope: "host"});
+    expect(host.calls).not.toContain("codex plugin list --json");
+    expect(host.calls).toContain("codex plugin list --marketplace neutral-market --json");
   });
   it.each(["missing", "duplicate", "wrong-version", "wrong-count", "malformed"])("antigravity: rejects %s installation text", async mutation => {
     const f = await fixture("antigravity"); const key = "agy plugin list"; const original = host.outputs[key]!;
@@ -150,8 +159,8 @@ describe("D0013 current native installation and running root binding", () => {
     expect((await gateway(f.root).inventory()).discovery).toMatchObject({status: "COMPLETE", scope: "host"});
     expect(host.rawCalls.filter(call => call.file === host.launcher)).toEqual([
       {file: host.launcher, args: ["--version"]},
-      {file: host.launcher, args: ["plugin", "list", "--json"]},
       {file: host.launcher, args: ["plugin", "marketplace", "list", "--json"]},
+      {file: host.launcher, args: ["plugin", "list", "--marketplace", "neutral-market", "--json"]},
     ]);
     expect(host.rawCalls.some(call => call.file === process.execPath)).toBe(false);
     expect(host.rawCalls.filter(call => call.file === "codex")).toHaveLength(1);
@@ -181,6 +190,6 @@ describe("D0013 current native installation and running root binding", () => {
     const result = JSON.parse(output);
     expect(result.discovery).toMatchObject({status: "COMPLETE", scope: "host"});
     expect(result.inventory.skills).toMatchObject([{skillId: "neutral-review", installed: true, enabled: true, hostSupported: true}]);
-    expect((await readFile(path.join(f.home, "calls.jsonl"), "utf8")).trim().split("\n").map(line => JSON.parse(line))).toContainEqual(["plugin", "list", "--json"]);
+    expect((await readFile(path.join(f.home, "calls.jsonl"), "utf8")).trim().split("\n").map(line => JSON.parse(line))).toContainEqual(["plugin", "list", "--marketplace", "neutral-market", "--json"]);
   });
 });
