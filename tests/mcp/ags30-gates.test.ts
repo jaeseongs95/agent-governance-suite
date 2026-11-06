@@ -470,7 +470,7 @@ describe("workflow DB v6 migration", () => {
       expect(snapshot.root.state).toBe("open");
       const upgraded = new DatabaseSync(databasePath, { readOnly: true });
       try {
-        expect(upgraded.prepare("PRAGMA user_version").get()).toEqual({ user_version: 6 });
+        expect(upgraded.prepare("PRAGMA user_version").get()).toEqual({ user_version: 7 });
         expect(upgraded.prepare("SELECT name FROM sqlite_schema WHERE type = 'table' AND name = 'call_admissions'").get()).toEqual({ name: "call_admissions" });
       } finally { upgraded.close(); }
       // The table created by the same writer transaction serves the Claude admission path.
