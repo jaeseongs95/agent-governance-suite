@@ -76,7 +76,9 @@ describe("D0008 workflow database persistence and competing connections", () => 
     expect(second.store.getSchemaVersion()).toBe(7);
     expect(second.store.getConvergenceSnapshot(f.root.rootId)!.root).toEqual(rootBefore);
     expect(second.store.getOrCreateSecret("migration-fixture", () => "wrong-value")).toBe("fixture-value");
-    const pending = f.prepare(second.service).pending;
+    const pending = f.prepare(second.service, "release-root", { rootId: f.root.rootId,
+      expectedRevision: second.store.getConvergenceSnapshot(f.root.rootId)!.root.revision,
+      reason: "Approved release.", userApprovalRefs: [] }).pending;
     const saved = f.record(pending, second.service);
     second.store.close();
     const third = f.open();
