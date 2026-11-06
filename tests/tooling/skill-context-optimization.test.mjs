@@ -6,14 +6,179 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
-import { checkSkillContextOptimization, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, matchesSkillPolicyWordingSuccessorBytes, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
+import { checkSkillContextOptimization, checkRegistryContextCompatibility, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, matchesSkillPolicyWordingSuccessorBytes, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
 import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin } from "../../scripts/check-skill-context-optimization.mjs";
 
 // The checker prefetches history with `ls-tree` + `cat-file --batch`; a path left out of the listing is read by
 // `git show`, so a test that intercepts `git show` for a path also drops it from the listing.
 const unlisted = (listing, relative) => Buffer.from(listing.toString("utf8").split("\0").filter(entry => !entry.endsWith(`\t${relative}`)).join("\0"));
 
+// engineering-test-plan — user-requested purpose change, 2026-11-07.
+// Entry points: checkSkillContextOptimization / readHistoricalSource; existing Vitest component suite.
+// Preconditions: integrate the approved analyzer removal, pre-dispatch advisor sources and live registry first.
+// Inputs / procedure / expected result / pass-fail oracle:
+// PC-01: exact integrated sources -> public checker -> pass, frozen 20-skill totals unchanged; compare fixed literals.
+// PC-02: all 12 analyzer paths -> absence + history reads -> exact absence, nine non-executable historical pins.
+// PC-03: restore retired sources or an indexed path -> public checker -> fail naming each present/indexed source.
+// PC-04: alter the pinned retirement history -> public checker -> throw; never substitute current bytes.
+// PC-05: approved purpose-change bytes -> historical read -> exact predecessor projection, separate live report.
+// PC-06: one-byte drift or a missing approved live source -> public checker -> fail; no arbitrary historical fallback.
+// PC-07: restore the analyzer descriptor or alter advisor bindings/gate -> registry compatibility -> fail.
+// Scope: source integrity and historical replay, not native model selection, dispatch or semantic evaluation.
+// Actual results: NOT_RUN here; local product tests are prohibited. Coordinator runs TEST/Actions on integrated SHA.
+
 describe("skill context optimization", () => {
+  const removedAnalyzerSources = [
+    "skills/codex-token-usage-analyzer/LICENSE",
+    "skills/codex-token-usage-analyzer/SKILL.md",
+    "skills/codex-token-usage-analyzer/agents/openai.yaml",
+    "skills/codex-token-usage-analyzer/classification.json",
+    "skills/codex-token-usage-analyzer/contracts/token-usage-report-request.v1.schema.json",
+    "skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json",
+    "skills/codex-token-usage-analyzer/integration/provider-result.v1.schema.json",
+    "skills/codex-token-usage-analyzer/integration/skill-descriptor.json",
+    "skills/codex-token-usage-analyzer/references/entry-details.md",
+    "skills/codex-token-usage-analyzer/scripts/cli.mjs",
+    "skills/codex-token-usage-analyzer/scripts/core.mjs",
+    "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs",
+  ];
+  it("PC-02: validates the exact analyzer removal while preserving its non-executable historical context", () => {
+    const report = checkSkillContextOptimization();
+    expect(report).toMatchObject({ pass: true, errors: [] });
+    const retirement = report.retiredSkills.find(entry => entry.skillIds.includes("codex-token-usage-analyzer"));
+    expect(retirement.revision).toBe("14549a2e83fd9143cf8184bd71979db23fd43172");
+    expect([...Object.keys(retirement.hashes), ...retirement.removedExecutables].toSorted()).toEqual(removedAnalyzerSources.toSorted());
+    expect(Object.keys(retirement.hashes)).toHaveLength(9);
+    for (const relative of removedAnalyzerSources) expect(existsSync(new URL(`../../${relative}`, import.meta.url)), relative).toBe(false);
+    for (const [relative, expected] of Object.entries(retirement.hashes)) {
+      const previous = execFileSync("git", ["show", `${retirement.revision}:${relative}`], { cwd: fileURLToPath(new URL("../../", import.meta.url)) });
+      expect(createHash("sha256").update(previous).digest("hex"), relative).toBe(expected);
+      expect(readHistoricalSource(relative).length, relative).toBeGreaterThan(0);
+    }
+    expect(() => readHistoricalSource("skills/codex-token-usage-analyzer/unapproved.md")).toThrow();
+  });
+  it("PC-03: rejects every restored analyzer path, including executable sources", async () => {
+    const retirement = checkSkillContextOptimization().retiredSkills.find(entry => entry.skillIds.includes("codex-token-usage-analyzer"));
+    const history = new Map(Object.keys(retirement.hashes).map(relative => [relative,
+      execFileSync("git", ["show", `${retirement.revision}:${relative}`], { cwd: fileURLToPath(new URL("../../", import.meta.url)) }),
+    ]));
+    vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
+      const relative = removedAnalyzerSources.find(relative => String(file).replaceAll("\\", "/").endsWith(`/${relative}`));
+      if (relative) return Buffer.from(history.get(relative) ?? "restored executable\n");
+      return readFileSync(file, ...args);
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      for (const relative of removedAnalyzerSources) expect(report.errors).toContain(`retired skill source present: ${relative}`);
+    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
+  });
+  it("PC-03: rejects an analyzer path that remains indexed after its working-tree deletion", async () => {
+    const relative = "skills/codex-token-usage-analyzer/scripts/cli.mjs";
+    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
+      if (file === "git" && args.includes("ls-files") && !args.includes("--others") && args.at(-1) === "skills/codex-token-usage-analyzer") return Buffer.from(`${relative}\n`);
+      return execFileSync(file, args, options);
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors).toContain(`retired skill paths still tracked: ${relative}`);
+    } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
+  });
+  it("PC-04: rejects changed analyzer retirement history instead of treating absence as a pass", async () => {
+    const relative = "skills/codex-token-usage-analyzer/classification.json";
+    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
+      const output = execFileSync(file, args, options);
+      if (file === "git" && args.includes("ls-tree")) return unlisted(output, relative);
+      if (file === "git" && args.at(-2) === "show" && args.at(-1) === `14549a2e83fd9143cf8184bd71979db23fd43172:${relative}`) {
+        const altered = Buffer.from(output); altered[altered.length - 1] ^= 1; return altered;
+      }
+      return output;
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      expect(() => checker.checkSkillContextOptimization()).toThrow(`Retired skill history differs: ${relative}`);
+    } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
+  });
+  it("PC-01/05: labels the changed purpose separately and keeps the original optimization oracle", () => {
+    const report = checkSkillContextOptimization();
+    expect(report.currentPurposeChange).toMatchObject({
+      pass: true, errors: [], changeKind: "user-requested-purpose-change", historicalEvaluationScope: "predecessor-only",
+      validationScope: "exact-live-context-and-separate-historical-replay", modelBehaviorValidated: false, authorityEffect: "none",
+    });
+    expect(Object.keys(report.currentPurposeChange.hashes).toSorted()).toEqual([
+      "skills/coordinate-subagents/SKILL.md",
+      "skills/coordinate-subagents/classification.json",
+      "skills/coordinate-subagents/references/entry-details.md",
+      "skills/coordinate-subagents/references/model-routing.md",
+      "skills/model-effort-advisor/SKILL.md",
+      "skills/model-effort-advisor/agents/openai.yaml",
+      "skills/model-effort-advisor/classification.json",
+      "skills/model-effort-advisor/references/entry-details.md",
+      "skills/orchestrator/references/entry-details.md",
+    ]);
+    expect(Object.keys(report.currentPurposeChange.additions).toSorted()).toEqual([
+      "skills/model-effort-advisor/contracts/subagent-model-advice.v1.schema.json",
+      "skills/model-effort-advisor/contracts/subagent-model-request.v1.schema.json",
+      "skills/model-effort-advisor/scripts/advise.d.mts",
+    ]);
+    expect(report.totals).toMatchObject({ skillCount: 20, baselineBytes: 115679, candidateBytes: 47606, reducedBytes: 68073 });
+    for (const [relative, [before, after]] of Object.entries(report.currentPurposeChange.hashes)) {
+      const current = readFileSync(new URL(`../../${relative}`, import.meta.url));
+      const predecessor = execFileSync("git", ["show", `${report.currentPurposeChange.baselineRevision}:${relative}`], { cwd: fileURLToPath(new URL("../../", import.meta.url)) });
+      expect(createHash("sha256").update(predecessor).digest("hex"), relative).toBe(before);
+      expect(createHash("sha256").update(current).digest("hex"), relative).toBe(after);
+      expect(readHistoricalSource(relative).equals(current), relative).toBe(false);
+    }
+  });
+  it("PC-06: rejects one-byte drift in each changed or added live purpose source", async () => {
+    const transition = checkSkillContextOptimization().currentPurposeChange;
+    const relatives = [...Object.keys(transition.hashes), ...Object.keys(transition.additions)];
+    vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
+      const bytes = readFileSync(file, ...args);
+      if (relatives.some(relative => String(file).replaceAll("\\", "/").endsWith(`/${relative}`))) {
+        const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
+      }
+      return bytes;
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkPurposeChangeSources();
+      expect(report.pass).toBe(false);
+      for (const relative of relatives) expect(report.errors).toContain(`purpose change source bytes differ: ${relative}`);
+    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
+  });
+  it("PC-06: never replaces a missing live advisor entry with the old-purpose source", async () => {
+    const relative = "skills/model-effort-advisor/SKILL.md";
+    vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
+      if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) {
+        const error = new Error(`SYNTHETIC_LIVE_SOURCE_MISSING: ${relative}`); error.code = "ENOENT"; throw error;
+      }
+      return readFileSync(file, ...args);
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      expect(() => checker.readHistoricalSource(relative)).toThrow("SYNTHETIC_LIVE_SOURCE_MISSING");
+      expect(() => checker.checkSkillContextOptimization()).toThrow("SYNTHETIC_LIVE_SOURCE_MISSING");
+    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
+  });
+  it("PC-07: rejects analyzer registration and altered advisor bindings or authority", () => {
+    const registry = JSON.parse(readFileSync(new URL("../../skills/registry.json", import.meta.url), "utf8"));
+    expect(checkRegistryContextCompatibility(registry)).toEqual([]);
+    const restored = structuredClone(registry);
+    const historical = JSON.parse(readFileSync(new URL("../../scripts/fixtures/registry-contract.3.0.json", import.meta.url), "utf8"));
+    restored.skills.push(historical.skills.find(skill => skill.skillId === "codex-token-usage-analyzer"));
+    expect(checkRegistryContextCompatibility(restored)).toContain("retired skill registry descriptor present: codex-token-usage-analyzer");
+    for (const field of ["gate", "inputBindings"]) {
+      const altered = structuredClone(registry);
+      const provider = altered.skills.find(skill => skill.skillId === "model-effort-advisor").providers[0];
+      provider[field] = field === "gate" ? { kind: "completion", policy: "mandatory", validator: null } : [];
+      expect(checkRegistryContextCompatibility(altered), field).toContain("purpose change registry descriptor differs: model-effort-advisor");
+    }
+  });
+
   it("resolves context provenance in a single-branch clone without worker refs or borrowed objects", () => {
     const source = fileURLToPath(new URL("../../", import.meta.url));
     const temporary = mkdtempSync(path.join(tmpdir(), "ags-context-release-clone-"));

@@ -326,10 +326,97 @@ const RETIRED_SKILLS = Object.freeze({
   }),
 });
 
+// Explicit removal requested by the user. Keep the older retirement and optimization pins unchanged.
+// Executable source is absent too, but its history is outside this context-only evaluation.
+const RETIRED_TOKEN_ANALYZER = Object.freeze({
+  revision: "14549a2e83fd9143cf8184bd71979db23fd43172",
+  skillIds: Object.freeze(["codex-token-usage-analyzer"]),
+  hashes: Object.freeze({
+    "skills/codex-token-usage-analyzer/LICENSE": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+    "skills/codex-token-usage-analyzer/SKILL.md": "0de104afb13d2095c585ec64ca8a326dc8392f03749c70f0a21affab5e060e18",
+    "skills/codex-token-usage-analyzer/agents/openai.yaml": "c1fada1a8914ac00faafd91ebd3bf798c225ff402ce870b1b8150ba77b28a5b8",
+    "skills/codex-token-usage-analyzer/classification.json": "b9c2eca1a447e64000e57a8c25cd1faa279ad9487c6250b8fb44a15edba39082",
+    "skills/codex-token-usage-analyzer/contracts/token-usage-report-request.v1.schema.json": "e9d418c702b8f764e515a925f5511d6203c37d13d23c130e3b9df86472a838b4",
+    "skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json": "0a3306633ed0c192e6bfc3b269df0b35b4e2a72492c5fc1cd7dad7f5f0d37612",
+    "skills/codex-token-usage-analyzer/integration/provider-result.v1.schema.json": "0e8cc867092b27a8336acab857c32afada525ee06c4aa2f13ba0f1c981015d9f",
+    "skills/codex-token-usage-analyzer/integration/skill-descriptor.json": "e2364fee9ef778fdf66bbffb8bb5cb666b65aafb64be1d73b1b9561b381efa72",
+    "skills/codex-token-usage-analyzer/references/entry-details.md": "969fe68d7a60c1f16d84c04df9c9cdb691146b774390d39e7a6b030541c109af",
+  }),
+  removedExecutables: Object.freeze([
+    "skills/codex-token-usage-analyzer/scripts/cli.mjs",
+    "skills/codex-token-usage-analyzer/scripts/core.mjs",
+    "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs",
+  ]),
+});
+const RETIREMENTS = Object.freeze([RETIRED_SKILLS, RETIRED_TOKEN_ANALYZER]);
+const retiredPaths = retirement => [...Object.keys(retirement.hashes), ...(retirement.removedExecutables ?? [])];
+const retirementFor = relative => RETIREMENTS.find(retirement => retiredPaths(retirement).includes(relative));
+
+// This is an approved purpose change, not a semantics-preserving optimization successor.
+// Exact live sources are checked separately. Only the old evaluation reads their pinned predecessors.
+const PURPOSE_CHANGE_SUCCESSOR = Object.freeze({
+  revision: "subagent-model-selection-2026-11-07",
+  baselineRevision: "14549a2e83fd9143cf8184bd71979db23fd43172",
+  changeKind: "user-requested-purpose-change",
+  historicalEvaluationScope: "predecessor-only",
+  modelBehaviorValidated: false,
+  authorityEffect: "none",
+  hashes: Object.freeze({
+    "skills/coordinate-subagents/classification.json": Object.freeze(["bd2fd05d3e93cd4f4b08af021a0fa77ef3787b57550e17f75fbbe3ecdd629957", "c899d68736407ed7f351345eb620bc0167e15ae93a1c3aa0cf3b010ddd99ae5f"]),
+    "skills/coordinate-subagents/SKILL.md": Object.freeze(["9dfea8d94be467700ea4e8dac86a21040b57c1161ff46ddc0cf63cef97e305e7", "f5acb926234feda269ec7f0c5faa444fe31cc5f257ba854c505cd37fa4efe881"]),
+    "skills/coordinate-subagents/references/entry-details.md": Object.freeze(["266ceb4fb5d7d3c553ef85485c93ac87c4df1bf0df5e2219fd99cc9a146bf882", "0bca6a11311aedec9bb7c9d4583092ff246452a664686a51041d0c90c6a5b404"]),
+    "skills/coordinate-subagents/references/model-routing.md": Object.freeze(["49b0e564b80a52475670e850c8272f0c348626ef5d32e4746fd484a262023fe5", "92f50c1b7a3d9ac204baaa903f1a4589ad1c48cacb0f0cf2b4e7d14d13a7ac2e"]),
+    "skills/model-effort-advisor/SKILL.md": Object.freeze(["f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595", "f00d76acf5175d783011033825b0b2b5955735ceb74d9e7f2a2a7527b6dd60e7"]),
+    "skills/model-effort-advisor/agents/openai.yaml": Object.freeze(["64b36b7840823a5e389a97689c7e5baa3f598faa2ebec720b1d96271f07681fa", "a8cce4b59156031226c66091266badedade8eb0dd311293cc589b56334ca2226"]),
+    "skills/model-effort-advisor/classification.json": Object.freeze(["2794ab01288c3d531c49b31704ba565bb554b64fb59369946c39237237038faf", "1162ca73e8b205bd723c120b21f40051988d28a2946771e7851ca879b79304e3"]),
+    "skills/model-effort-advisor/references/entry-details.md": Object.freeze(["4fd8153834b5ab19ea12af67634e5ac8b06a5645f7cafc62c9fca2289d18368f", "3ac91a94b02ae8dc775702dfe611215106e2718bc1f3f922327655df34ef2b9d"]),
+    "skills/orchestrator/references/entry-details.md": Object.freeze(["abce8a5addf52b66c361561000a0f0db5c31f93fff9ad09a9fc8c2cc02988e41", "6fb72d35e4df7a7a35eaa003d98b846b9b84425c9274166a154ea02ec3b2578c"]),
+  }),
+  additions: Object.freeze({
+    "skills/model-effort-advisor/contracts/subagent-model-advice.v1.schema.json": "ab29e4885268bd43f7a1e49d8ea0cd4c306349b8176664ac443d3f54ca3a14fe",
+    "skills/model-effort-advisor/contracts/subagent-model-request.v1.schema.json": "49f78a3a6fb204dfcd6ca5b4000a62e731b28b7605370567d5f409f320b4a081",
+    "skills/model-effort-advisor/scripts/advise.d.mts": "32ee9c299181ec2d39d25649ef2958875c04842322939090c68318fb05541232",
+  }),
+  registryDescriptorSha256: "e7e00299584b37bfde8655b3a127593bc683e4b8fdf524fbd0293e162ac49c59",
+});
+
+function purposePredecessor(relative) {
+  const expected = PURPOSE_CHANGE_SUCCESSOR.hashes[relative][0];
+  const bytes = git("show", `${PURPOSE_CHANGE_SUCCESSOR.baselineRevision}:${relative}`);
+  if (contextDigest(bytes) !== expected) throw new Error(`Purpose change predecessor bytes differ: ${relative}`);
+  return bytes;
+}
+
+function matchesPurposeChange(relative, bytes) {
+  const expected = PURPOSE_CHANGE_SUCCESSOR.hashes[relative]?.[1] ?? PURPOSE_CHANGE_SUCCESSOR.additions[relative];
+  return expected !== undefined && contextDigest(bytes) === expected;
+}
+
+function beforePurposeChange(relative, bytes) {
+  return Object.hasOwn(PURPOSE_CHANGE_SUCCESSOR.hashes, relative) && matchesPurposeChange(relative, bytes)
+    ? purposePredecessor(relative) : bytes;
+}
+
+export function checkPurposeChangeSources() {
+  const errors = [];
+  for (const relative of [...Object.keys(PURPOSE_CHANGE_SUCCESSOR.hashes), ...Object.keys(PURPOSE_CHANGE_SUCCESSOR.additions)]) {
+    let bytes;
+    try { bytes = readFileBytes(join(ROOT, relative)); }
+    catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+      errors.push(`purpose change source missing: ${relative}`); continue;
+    }
+    if (!matchesPurposeChange(relative, bytes)) errors.push(`purpose change source bytes differ: ${relative}`);
+    if (Object.hasOwn(PURPOSE_CHANGE_SUCCESSOR.hashes, relative)) purposePredecessor(relative);
+  }
+  return { ...PURPOSE_CHANGE_SUCCESSOR, validationScope: "exact-live-context-and-separate-historical-replay", pass: errors.length === 0, errors };
+}
+
 /** The exact bytes a retired path had at its retirement revision. */
 function retiredBytes(relative) {
-  const bytes = git("show", `${RETIRED_SKILLS.revision}:${relative}`);
-  if (createHash("sha256").update(bytes).digest("hex") !== RETIRED_SKILLS.hashes[relative]) throw new Error(`Retired skill history differs: ${relative}`);
+  const retirement = retirementFor(relative);
+  const bytes = git("show", `${retirement.revision}:${relative}`);
+  if (createHash("sha256").update(bytes).digest("hex") !== retirement.hashes[relative]) throw new Error(`Retired skill history differs: ${relative}`);
   return bytes;
 }
 
@@ -337,7 +424,8 @@ function retiredBytes(relative) {
 function readTracked(path, relative) {
   try { return readFileBytes(path); }
   catch (error) {
-    if (error?.code !== "ENOENT" || !Object.hasOwn(RETIRED_SKILLS.hashes, relative)) throw error;
+    if (error?.code !== "ENOENT") throw error;
+    if (!retirementFor(relative)?.hashes[relative]) throw error;
     return retiredBytes(relative);
   }
 }
@@ -345,16 +433,22 @@ function readTracked(path, relative) {
 /** Skill directory names as the pinned checks see them: the tree's directories plus the retired skills. */
 function skillDirectoryNames() {
   const present = readdirSync(join(ROOT, "skills"), { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => entry.name);
-  return [...new Set([...present, ...RETIRED_SKILLS.skillIds])];
+  return [...new Set([...present, ...RETIREMENTS.flatMap(retirement => retirement.skillIds)])];
 }
 
-/** Drops a removed retired path a working-tree diff reports unless it already differed at the retirement revision. */
+/** Project only exact purpose-change bytes or an explicitly removed path onto its predecessor's change list. */
 function projectRetiredChanges(base, paths) {
   return paths.filter(relative => {
-    if (!Object.hasOwn(RETIRED_SKILLS.hashes, relative)) return true;
+    if (Object.hasOwn(PURPOSE_CHANGE_SUCCESSOR.hashes, relative) || Object.hasOwn(PURPOSE_CHANGE_SUCCESSOR.additions, relative)) {
+      try {
+        if (matchesPurposeChange(relative, readFileBytes(join(ROOT, relative)))) return changedBetween(base, PURPOSE_CHANGE_SUCCESSOR.baselineRevision, relative);
+      } catch (error) { if (error?.code !== "ENOENT") throw error; }
+    }
+    const retirement = retirementFor(relative);
+    if (!retirement) return true;
     try { readFileBytes(join(ROOT, relative)); return true; }
     catch (error) { if (error?.code !== "ENOENT") throw error; }
-    return changedBetween(base, RETIRED_SKILLS.revision, relative);
+    return changedBetween(base, retirement.revision, relative);
   });
 }
 
@@ -362,17 +456,19 @@ function projectRetiredChanges(base, paths) {
 function checkRetiredSkills() {
   const errors = [];
   const present = new Set(readdirSync(join(ROOT, "skills"), { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => entry.name));
-  const scopes = RETIRED_SKILLS.skillIds.map(skillId => `skills/${skillId}`);
-  for (const skillId of RETIRED_SKILLS.skillIds) if (present.has(skillId)) errors.push(`retired skill directory present: skills/${skillId}`);
-  for (const relative of Object.keys(RETIRED_SKILLS.hashes)) {
-    try { readFileBytes(join(ROOT, relative)); errors.push(`retired skill source present: ${relative}`); }
-    catch (error) { if (error?.code !== "ENOENT") throw error; }
-    retiredBytes(relative);
+  for (const retirement of RETIREMENTS) {
+    const scopes = retirement.skillIds.map(skillId => `skills/${skillId}`);
+    for (const skillId of retirement.skillIds) if (present.has(skillId)) errors.push(`retired skill directory present: skills/${skillId}`);
+    for (const relative of retiredPaths(retirement)) {
+      try { readFileBytes(join(ROOT, relative)); errors.push(`retired skill source present: ${relative}`); }
+      catch (error) { if (error?.code !== "ENOENT") throw error; }
+      if (Object.hasOwn(retirement.hashes, relative)) retiredBytes(relative);
+    }
+    const tracked = git("ls-files", "--", ...scopes).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
+    if (tracked.length) errors.push(`retired skill paths still tracked: ${tracked.join(", ")}`);
+    const historical = git("ls-tree", "-r", "--name-only", retirement.revision, "--", ...scopes).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
+    if (!sameSet(historical, retiredPaths(retirement))) errors.push("retired skill pins differ from its files at the retirement revision");
   }
-  const tracked = git("ls-files", "--", ...scopes).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
-  if (tracked.length) errors.push(`retired skill paths still tracked: ${tracked.join(", ")}`);
-  const historical = git("ls-tree", "-r", "--name-only", RETIRED_SKILLS.revision, "--", ...scopes).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
-  if (!sameSet(historical, Object.keys(RETIRED_SKILLS.hashes))) errors.push("retired skill pins differ from its files at the retirement revision");
   return errors;
 }
 
@@ -389,7 +485,7 @@ function beforeMultiWorkflowGuidance(relative, bytes) {
 /** Reads a file as the pinned checks see it: a reviewed guidance successor reads as its exact predecessor. */
 function readFileSync(path, encoding) {
   const relative = relativePath(ROOT, String(path)).replaceAll("\\", "/");
-  const projected = beforeMultiWorkflowGuidance(relative, readTracked(path, relative));
+  const projected = beforeMultiWorkflowGuidance(relative, beforePurposeChange(relative, readTracked(path, relative)));
   return encoding ? projected.toString(typeof encoding === "string" ? encoding : encoding.encoding) : projected;
 }
 const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
@@ -580,11 +676,10 @@ export function checkSpecialistBehaviorSources() {
   }
   // Cover the six entries outside the older 20-skill optimization too. New or
   // changed context is explicit; ordinary executable edits remain source-lock's responsibility.
-  const contextChanges = new Set([
-    ...projectRetiredChanges(SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision,
-      git("diff", "--name-only", SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, "--", "skills").toString("utf8").trim().split(/\r?\n/u)),
+  const contextChanges = new Set(projectRetiredChanges(SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, [
+    ...git("diff", "--name-only", SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, "--", "skills").toString("utf8").trim().split(/\r?\n/u),
     ...git("ls-files", "--others", "--exclude-standard", "--", "skills").toString("utf8").trim().split(/\r?\n/u),
-  ].filter(relative => /^skills\/[^/]+\/.+\.(?:md|ya?ml)$/iu.test(relative) || /^skills\/[^/]+\/classification\.json$/u.test(relative))
+  ]).filter(relative => /^skills\/[^/]+\/.+\.(?:md|ya?ml)$/iu.test(relative) || /^skills\/[^/]+\/classification\.json$/u.test(relative))
     .filter(relative => !POST_SNAPSHOT_SPECIALISTS.some(id => relative.startsWith(`skills/${id}/`))));
   // A successor of a file the baseline did not have (references/intake.md) never projects onto the baseline.
   const projectsToBaseline = relative => guidanceSuccessor(relative) !== undefined
@@ -1293,7 +1388,7 @@ export function readHistoricalSource(relative) {
 
 /** Test hook: whether the bytes are the reviewed skill policy wording successor. */
 export function matchesSkillPolicyWordingSuccessorBytes(path, bytes) {
-  bytes = beforeMultiWorkflowGuidance(path, bytes);
+  bytes = beforeMultiWorkflowGuidance(path, beforePurposeChange(path, bytes));
   return matchesSkillPolicyWordingSuccessor(path, bytes)
     || (Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path) && matchesPreflightPrivatePreparationChain(path, bytes));
 }
@@ -1489,10 +1584,17 @@ export function assertRegistryAuthority(registry) {
 }
 
 export function checkRegistryContextCompatibility(registry) {
-  // Explicit 3.0 contract: every descriptor and registry-level field remains
-  // independently reviewable, including authority, bindings and gate semantics.
+  // Preserve the 3.0 fixture. Apply only the explicitly approved live removal and purpose change;
+  // unrelated descriptors, order, authority, bindings and gate semantics still match exactly.
   const expected = JSON.parse(readFileSync(join(ROOT, "scripts/fixtures/registry-contract.3.0.json"), "utf8"));
-  const errors = isDeepStrictEqual(registry, expected) ? [] : ["registry differs from the 3.0 contract"];
+  expected.skills = expected.skills.filter(skill => skill.skillId !== "codex-token-usage-analyzer");
+  const advisor = registry.skills.filter(skill => skill.skillId === "model-effort-advisor");
+  const errors = [];
+  if (advisor.length === 1 && contextDigest(Buffer.from(JSON.stringify(advisor[0]))) === PURPOSE_CHANGE_SUCCESSOR.registryDescriptorSha256) {
+    expected.skills[expected.skills.findIndex(skill => skill.skillId === "model-effort-advisor")] = advisor[0];
+  } else errors.push("purpose change registry descriptor differs: model-effort-advisor");
+  if (registry.skills.some(skill => skill.skillId === "codex-token-usage-analyzer")) errors.push("retired skill registry descriptor present: codex-token-usage-analyzer");
+  if (!isDeepStrictEqual(registry, expected)) errors.push("registry differs from the 3.0 contract");
   try { assertRegistryAuthority(registry); }
   catch (error) {
     if (!(error instanceof RegistryAuthorityViolation)) throw error;
@@ -1502,8 +1604,9 @@ export function checkRegistryContextCompatibility(registry) {
 }
 
 export function checkSkillContextOptimization() {
+  const purposeChange = checkPurposeChangeSources();
   const behaviorSources = checkSpecialistBehaviorSources();
-  const errors = [...behaviorSources.errors, ...checkRetiredSkills()];
+  const errors = [...purposeChange.errors, ...behaviorSources.errors, ...checkRetiredSkills()];
   for (const currentPath of Object.keys(PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes)) {
     if (!matchesPreflightPlatformEventsChain(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight platform-events successor bytes differ: ${currentPath}`);
   }
@@ -1680,10 +1783,10 @@ export function checkSkillContextOptimization() {
       if (!matchesNode24ReadmeUpdate(skillId, baselineReadme, candidateReadme)) errors.push(`${skillId}: README.md differs beyond the Node 24 minimum update`);
       allowed.add(readmePath);
     }
-    const changed = projectRetiredChanges(BASELINE, git("diff", "--name-only", BASELINE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean));
+    const changed = git("diff", "--name-only", BASELINE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
     changed.push(...git("ls-files", "--others", "--exclude-standard", "--", `skills/${skillId}`)
       .toString("utf8").trim().split(/\r?\n/u).filter(Boolean));
-    const unexpected = historicalChanges([...new Set(changed)].filter(path => !EXECUTABLE_SCRIPT.test(path))).filter((path) => !allowed.has(path));
+    const unexpected = historicalChanges(projectRetiredChanges(BASELINE, [...new Set(changed)]).filter(path => !EXECUTABLE_SCRIPT.test(path))).filter((path) => !allowed.has(path));
     if (unexpected.length) errors.push(`${skillId}: unexpected skill-owned changes: ${unexpected.join(", ")}`);
 
     baselineBytes += baseline.length;
@@ -1708,7 +1811,8 @@ export function checkSkillContextOptimization() {
     baselineRevision: BASELINE,
     currentSpecialistBehaviorSuccessors: [SPECIALIST_BEHAVIOR_SUCCESSOR],
     currentSpecialistBehavior: behaviorSources,
-    retiredSkills: [RETIRED_SKILLS],
+    retiredSkills: RETIREMENTS,
+    currentPurposeChange: purposeChange,
     currentHostConsumptionSourceSuccessors: [HOST_CONSUMPTION_SOURCE_SUCCESSOR],
     currentPreflightPrivatePreparationSuccessors: [PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR],
     currentPreflightPlatformEventsSuccessors: [PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR],
