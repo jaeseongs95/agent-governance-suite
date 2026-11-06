@@ -23,9 +23,9 @@ afterEach(async () => {vi.unstubAllEnvs(); host.outputs = {}; host.calls = []; h
   host.nativeMissing = false; host.launcher = ""; host.rawCalls = [];
   await Promise.all(directories.splice(0).map(directory => rm(directory, {recursive: true, force: true})));});
 
-async function packageTree(root: string, manifest: ".codex-plugin" | ".gemini-plugin") {
+async function packageTree(root: string, manifest: ".codex-plugin" | ".gemini-plugin", name = "neutral-plugin", version = "1.0.0") {
   await mkdir(path.join(root, manifest), {recursive: true});
-  await writeFile(path.join(root, manifest, "plugin.json"), JSON.stringify({name: "neutral-plugin", version: "1.0.0", skills: "./skills/"}));
+  await writeFile(path.join(root, manifest, "plugin.json"), JSON.stringify({name, version, skills: "./skills/"}));
   const skill = path.join(root, "skills", "neutral-review"); await mkdir(skill, {recursive: true});
   const content = "---\nname: neutral-review\ndescription: Review a patch; exclude implementation.\nmetadata:\n  version: '1.0.0'\n---\nReview a fixed patch.\nExclude implementation.\n";
   await writeFile(path.join(skill, "SKILL.md"), content);
@@ -110,6 +110,28 @@ describe("D0013 current native installation and running root binding", () => {
     if (mutation === "wrong-marketplace") host.outputs["codex plugin marketplace list --json"] = JSON.stringify({marketplaces: []});
     host.outputs[key] = mutation === "malformed" ? "PRIVATE_INVALID_JSON" : JSON.stringify(raw);
     unavailable(await gateway(f.root).inventory());
+  });
+  it.each(["valid", "wrong-origin", "outside-market"])("codex: actual relative-child installation %s keeps source and running cache bound", async mutation => {
+    const f = await fixture("codex");
+    // Actual d826 installed-public-row-proof.json fields; only filesystem prefixes are relocated.
+    const row = {pluginId: "agent-governance-suite@ags38-d13-d826183e-01a14016b", name: "agent-governance-suite",
+      marketplaceName: "ags38-d13-d826183e-01a14016b", version: "3.7.0", installed: true, enabled: true,
+      source: {source: "local", path: path.join(f.source, "agent-governance-suite")},
+      marketplaceSource: {sourceType: "local", source: f.source}, installPolicy: "AVAILABLE", authPolicy: "ON_INSTALL"};
+    const outside = path.join(f.home, "outside-market"); await mkdir(outside);
+    await mkdir(row.source.path);
+    if (mutation === "wrong-origin") row.marketplaceSource.source = outside;
+    if (mutation === "outside-market") row.source.path = outside;
+    const root = path.join(f.home, ".codex/plugins/cache", row.marketplaceName, row.name, row.version);
+    await packageTree(root, ".codex-plugin", row.name, row.version);
+    host.outputs["codex plugin list --json"] = JSON.stringify({installed: [row], available: []});
+    host.outputs["codex plugin marketplace list --json"] = JSON.stringify({marketplaces: [{name: row.marketplaceName, root: f.source,
+      marketplaceSource: {sourceType: "local", source: f.source}}]});
+    const result = await gateway(root).inventory();
+    if (mutation === "valid") {
+      expect(result.discovery).toMatchObject({status: "COMPLETE", scope: "host"});
+      expect(result.skills).toMatchObject([{installed: true, enabled: true, hostSupported: true}]);
+    } else unavailable(result);
   });
   it.each(["missing", "duplicate", "wrong-version", "wrong-count", "malformed"])("antigravity: rejects %s installation text", async mutation => {
     const f = await fixture("antigravity"); const key = "agy plugin list"; const original = host.outputs[key]!;
