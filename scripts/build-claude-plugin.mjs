@@ -37,7 +37,7 @@ export const COMMON_POLICY_INVARIANTS = Object.freeze([
   "삭제·배포·마이그레이션을 비롯한 mutation 명령이나 외부 도구를 호출하지 않는다.",
   "승인이 없으면 분석 문서·대체 구현·복제 환경 시험으로 대신하지 않는다.",
 ]);
-export const EXCLUDED_SKILLS = Object.freeze(["codex-token-usage-analyzer"]);
+export const EXCLUDED_SKILLS = Object.freeze([]);
 const SHARED_ROOTS = Object.freeze(["skills/", "runtime/", "contracts/"]);
 const SHARED_FILES = Object.freeze([
   "LICENSE",

@@ -22,7 +22,7 @@
 | hook 문장 | `continuity-service.ts`(편집 관문, 단계 확인, checkpoint 안내), `continuity-hook.ts`, `session-message-hook.ts`, `peer-wait-policy.ts`, `claude-overlay/hooks/skill-trigger-hook.mjs` | 한국어·영어 혼재 | 사용자 화면, 에이전트 |
 | 호스트가 직접 읽는 정적 문장 | `hooks.json` `statusMessage`, `.codex-plugin`·`.gemini-plugin`·`plugin.json`의 설명·`suggestedPrompts`, `.claude-plugin/marketplace.json` | 영어·한국어 혼재 | 호스트 UI |
 | 스킬 | `skills/*/SKILL.md`(frontmatter `description` 포함), `references/`, `agents/openai.yaml` | 한국어(ponytail만 영어) | 에이전트 |
-| 스킬 스크립트 출력 | recovery-strategy-selector, codex-token-usage-analyzer, mutation-risk-preflight, evaluation-validity-auditor, independent-audit-gate, workspace-convention-profiler | 한국어 | 에이전트, 사용자 |
+| 스킬 스크립트 출력 | recovery-strategy-selector, mutation-risk-preflight, evaluation-validity-auditor, independent-audit-gate, workspace-convention-profiler | 한국어 | 에이전트, 사용자 |
 | CLI 출력 | `runtime/engineering-practices/cli.mjs`, session-message CLI, `check-for-updates` | 영어 | 사용자, 에이전트 |
 | 관리자 페이지(예정) | 없음 | — | 사용자 |
 

@@ -35,7 +35,6 @@ export const SKILL_FIELDS = Object.freeze({
   "ui-ux-design": null,
   "change-scope-guardian": "Git 작업 트리의 변경 범위",
   "code-review": "코드 변경분 검토",
-  "codex-token-usage-analyzer": "Codex 세션 로그",
   "cs-engineering": "소프트웨어의 동시성·DB·알고리즘·성능",
   "instruction-scope-resolver": "작업 공간의 에이전트 지침 파일",
   "korean-prose-editor": "한국어 산문",

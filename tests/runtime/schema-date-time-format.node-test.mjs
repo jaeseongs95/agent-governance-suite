@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { validateReport } from "../../skills/codex-token-usage-analyzer/scripts/schema-validation.mjs";
 import { validateMutationIntent } from "../../skills/mutation-risk-preflight/scripts/schema-validation.mjs";
 import { validateWorkspaceProfile } from "../../skills/workspace-convention-profiler/scripts/schema-validation.mjs";
 
@@ -11,7 +10,6 @@ const INVALID = ["1", "2026", "Oct 25", "2026-10-25", "2026-10-25 00:00:00", "20
 const cases = [
   { name: "workspace-convention-profiler", validate: validateWorkspaceProfile, path: "/observedAt", build: (value) => ({ observedAt: value }) },
   { name: "mutation-risk-preflight", validate: validateMutationIntent, path: "/approvalEvidenceRefs/0/expiresAt", build: (value) => ({ approvalEvidenceRefs: [{ expiresAt: value }] }) },
-  { name: "codex-token-usage-analyzer", validate: validateReport, path: "/observedAt/from", build: (value) => ({ observedAt: { from: value, to: null } }) },
 ];
 
 function formatErrors(validate, data, path) {

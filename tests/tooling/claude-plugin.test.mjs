@@ -731,13 +731,13 @@ syncBuiltinESMExports();
 
   it("maps Codex invocations of shipped skills to the Claude Code form only", () => {
     const files = new Map([
-      ["skills/example/SKILL.md", Buffer.from("Call `$task-contract`, then $task-contract-v2, $skill-name and $codex-token-usage-analyzer.\n")],
+      ["skills/example/SKILL.md", Buffer.from("Call `$task-contract`, then $task-contract-v2, $skill-name and $unshipped-skill.\n")],
       ["skills/example/scripts/run.mjs", Buffer.from("const skill = '$task-contract';\n")],
       [DUAL_HOST_FILES[0], Buffer.from("Codex: $task-contract\n")],
     ]);
     mapSkillInvocations(files, ["task-contract"]);
     expect(files.get("skills/example/SKILL.md").toString("utf8")).toBe(
-      "Call `/agent-governance-suite:task-contract`, then $task-contract-v2, $skill-name and $codex-token-usage-analyzer.\n",
+      "Call `/agent-governance-suite:task-contract`, then $task-contract-v2, $skill-name and $unshipped-skill.\n",
     );
     expect(files.get("skills/example/scripts/run.mjs").toString("utf8")).toBe("const skill = '$task-contract';\n");
     expect(files.get(DUAL_HOST_FILES[0]).toString("utf8")).toBe("Codex: $task-contract\n");
