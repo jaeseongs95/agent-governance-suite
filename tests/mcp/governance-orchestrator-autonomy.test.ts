@@ -95,7 +95,11 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     const intake = instructions("references/intake.md");
     const classification = instructions("references/skill-classification.md");
     expect(intake).toContain("도구 노출만으로 지원 설정을 추정하지 않");
-    expect(intake).toContain("독립적으로 가능한 작업과 막힌 의존 단계를 구분한다");
+    // 3.8.0 (AGS3-D-0034): a refused call is a blocked step under the shared blocked-step rule.
+    expect(intake).toContain("미확정·거부 때는 계약의 실패 처리를 따른다");
+    expect(intake).toContain("도구 실패·권한 거절");
+    expect(intake).toContain("막혀도 그 단계와 의존 단계만 보류하고");
+    expect(intake).toContain("남은 독립 작업을 계속하며");
     for (const criterion of [
       "기존 승인된 설치 설정과 호스트 호출 경로에서 지원이 확인된 경우",
       "새 탐지 도구·호출 경로·설정 경로를 만들거나 분류를 원 작업의 필수 선행단계로 추가하지 않는다",
@@ -120,7 +124,8 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     const text = instructions("references/entry-details.md");
     const integration = text.split("## 결과 통합\n")[1]!.split("## MCP 도구 사용 계약")[0]!;
     const intake = instructions("references/intake.md").split("<!-- skill-intake:start -->")[1]!.split("<!-- skill-intake:end -->")[0]!;
-    const userOnlyBoundary = intake.match(/사용자만 할 수 있는[^.]+\./u)?.[0];
+    // 3.8.0 (AGS3-D-0034): the user-only sentence and the blocked-step sentence after it, which keeps independent work going.
+    const userOnlyBoundary = intake.match(/사용자만 할 수 있는[^.]+\.[^.]+\./u)?.[0];
     expect(integration).toContain("해당 단계의 결과이며 사용자 요청 전체의 완료와 구분한다");
     expect(integration).toContain("분석·계획만 요청받았다면 후속 변경을 실행하지 않는다");
     expect(integration).toContain("사용자 요청에 구현·실행·검증이 포함되어 있고 이미 허용됐다면");
@@ -129,7 +134,8 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     expect(integration).toContain("실행 가능한 후속 확인을 사용자에게 넘기지 않는다");
     expect(userOnlyBoundary).toBeDefined();
     expect(userOnlyBoundary).toContain("승인·비밀값 입력·사용자 화면 조작");
-    expect(userOnlyBoundary).toContain("독립적인 작업은 계속한다");
+    expect(userOnlyBoundary).toContain("사용자 몫·");
+    expect(userOnlyBoundary).toContain("남은 독립 작업을 계속하며");
     expect(integration).toContain("[공통 접수·선택 기준](intake.md#공통-접수선택-기준)");
     expect(integration).not.toContain(userOnlyBoundary!);
     expect(integration).toContain("필수 입력이나 gate 실패로 막힌 의존 단계는 실행하지 않으며");

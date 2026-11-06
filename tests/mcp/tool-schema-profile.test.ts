@@ -283,7 +283,8 @@ describe("MCP tool schema profiles", () => {
           .find(row => row.id === initialize.id && row.result);
         expect(response?.result.instructions).toBe(expected);
         expect(response.result.instructions).toContain("도구 노출만으로 지원 설정을 추정하지 않");
-        expect(response.result.instructions).toContain("독립적으로 가능한 작업과 막힌 의존 단계를 구분한다");
+        expect(response.result.instructions).toContain("미확정·거부 때는 계약의 실패 처리를 따른다");
+        expect(response.result.instructions).toContain("남은 독립 작업을 계속하며");
         expect(Object.keys(response.result)).toEqual(expect.arrayContaining(["protocolVersion", "capabilities", "serverInfo", "instructions"]));
       }
       expect(implicit.getInstructions()).toBe(expected);

@@ -68,7 +68,11 @@ describe("shared intake: merged without dropping a rule (AGS3-D-0032)", () => {
       "근거가 없으면 이전 교정·실행·검증을 기억한다고 주장하지 않는다",
       "인계된 교정·제약 근거를 영향받는 실행 전에 대조",
       "현재 권한으로 접근할 수 있고 그 작업에 결속된 정본 참조를 먼저 확인",
-      "영향받는 실행만 보류한 채 누락된 제약만 확인하며 독립적으로 가능한 일은 계속한다",
+      // 3.8.0 (AGS3-D-0034): holding the affected execution and keeping independent work going moved into the one
+      // blocked-step rule, which names a missing constraint (근거 누락) among its causes.
+      "거기에도 없으면 누락된 제약만 확인한다",
+      "근거 누락·도구 실패·권한 거절·다른 담당의 수정 대기로 막혀도 그 단계와 의존 단계만 보류하고",
+      "남은 독립 작업을 계속하며",
       "이미 제공된 정보를 다시 묻거나 임의의 타 세션 대화·로그·인증 파일을 탐색하지 않는다",
       "새 요청에는 과거 교정을 가정해 이 절차를 더하지 않으며",
       "조건 변화가 없는 호출이나 빈 깨우기마다 재분류·workflow·기록을 추가하지 않는다",
@@ -118,7 +122,8 @@ describe("shared intake: merged without dropping a rule (AGS3-D-0032)", () => {
       "채택·교정·기각하고 최종 선택한다",
       "점수는 정답이나 실행 승인이 아니다",
       "도구 노출만으로 지원 설정을 추정하지 않",
-      "독립적으로 가능한 작업과 막힌 의존 단계를 구분한다",
+      // 3.8.0 (AGS3-D-0034): a refused classification call is a blocked step under the same rule (fragments above).
+      "미확정·거부 때는 계약의 실패 처리를 따른다",
       "JEV OFF·불가 시 사용 벤더의 검증된 중앙 고정 profile",
       "추천·선택·읽기·적용·검증과 실행 승인을 구분하며 미가용·미검증을 성공으로 처리하지 않는다",
     ]) expect(intake, fragment).toContain(fragment);
@@ -126,7 +131,8 @@ describe("shared intake: merged without dropping a rule (AGS3-D-0032)", () => {
 
   it("stays within the pre-3.8.0 size although it gained a rule", () => {
     const block = intake.slice(intake.indexOf("## 공통 접수·선택 기준"));
-    // 4,771 characters was the 3.7.0 block (skills/orchestrator/SKILL.md at d068dfd6).
+    // 4,771 characters was the 3.7.0 block (skills/orchestrator/SKILL.md at d068dfd6). The AGS3-D-0034 blocked-step
+    // rule (4,732 -> 4,768) still fits because it replaces three narrower sentences.
     expect([...block.slice(0, block.indexOf("\n\n여러 전문 단계를 연결할 때"))].length).toBeLessThan(4771);
   });
 });

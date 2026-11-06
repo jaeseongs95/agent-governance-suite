@@ -43,6 +43,8 @@ function git(...args) {
 //   the line that checks whether a target's purpose was already met before closing, deleting, reverting or replacing it.
 // - 3.8.0 intake move (AGS3-D-0032): the intake block moves unchanged from SKILL.md to references/intake.md (a reviewed
 //   addition below), SKILL.md keeps a one-line pointer, and entry-details.md links the moved section.
+// - 3.8.0 intake blocked step (AGS3-D-0034): one rule holds only a blocked step and the steps that depend on it, says
+//   what is blocked and who is waited on, and keeps the rest of the work going; the three narrower sentences merge into it.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
@@ -119,19 +121,27 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/orchestrator/references/entry-details.md": ["9827e50e480fbd70813e9c6f9643029e17e6b50d577bebd38d14b0e803a775fa", "abce8a5addf52b66c361561000a0f0db5c31f93fff9ad09a9fc8c2cc02988e41"],
     }),
   }),
+  Object.freeze({
+    revision: "86933a331d9356c3197708833da46b66b04aabdc",
+    hashes: Object.freeze({
+      "skills/orchestrator/classification.json": ["8af0e814b6cdc128de65a392274d718ba14ce3e34061d8c0492164e8d883109e", "478364b9bbd1cfd3b0c9102e4949d302abcca1b061a998321a40d37908be0c4d"],
+      "skills/orchestrator/references/intake.md": ["77b5496ce490207317d016d2ca9f6a467dbd85bcfc39df86c561dec8d5a685b1", "0f9be58edcaa80ad7bd6a51ff7f49b39026bfa88e8955abf5d400ef11b4c6d80"],
+    }),
+  }),
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
-// Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes.
+// Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes, or
+// reviewed successor bytes that project onto them.
 // - 3.8.0 (AGS3-D-0032): the shared intake block, moved without a byte change from skills/orchestrator/SKILL.md at
 //   bdcb0792 (its lines 15-31), so invoking the orchestrator skill does not load it a second time.
 const GUIDANCE_ADDITIONS = Object.freeze({
   "skills/orchestrator/references/intake.md": "77b5496ce490207317d016d2ca9f6a467dbd85bcfc39df86c561dec8d5a685b1",
 });
-/** True only for a reviewed addition that holds its exact reviewed bytes. */
+/** True only for a reviewed addition that holds its exact reviewed bytes (a reviewed guidance successor reads as them). */
 function isReviewedGuidanceAddition(relative) {
   if (!Object.hasOwn(GUIDANCE_ADDITIONS, relative)) return false;
   let bytes;
-  try { bytes = readFileBytes(join(ROOT, ...relative.split("/"))); } catch { return false; }
+  try { bytes = readFileSync(join(ROOT, ...relative.split("/"))); } catch { return false; }
   return createHash("sha256").update(bytes).digest("hex") === GUIDANCE_ADDITIONS[relative];
 }
 
@@ -410,11 +420,13 @@ export function checkSpecialistBehaviorSources() {
     ...git("ls-files", "--others", "--exclude-standard", "--", "skills").toString("utf8").trim().split(/\r?\n/u),
   ].filter(relative => /^skills\/[^/]+\/.+\.(?:md|ya?ml)$/iu.test(relative) || /^skills\/[^/]+\/classification\.json$/u.test(relative))
     .filter(relative => !POST_SNAPSHOT_SPECIALISTS.some(id => relative.startsWith(`skills/${id}/`))));
+  // A successor of a file the baseline did not have (references/intake.md) never projects onto the baseline.
   const projectsToBaseline = relative => guidanceSuccessor(relative) !== undefined
+    && git("ls-tree", "--name-only", SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, "--", relative).toString("utf8").trim() === relative
     && readFileSync(join(root, relative)).equals(git("show", `${SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision}:${relative}`));
   for (const relative of contextChanges) {
     if (!Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, relative) && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.additions, relative)
-      && !projectsToBaseline(relative) && !isReviewedGuidanceAddition(relative)) {
+      && !isReviewedGuidanceAddition(relative) && !projectsToBaseline(relative)) {
       errors.push(`specialist behavior unpinned context change: ${relative}`);
     }
   }
