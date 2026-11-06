@@ -12,10 +12,15 @@ if (!runDir || !repoDir || !Number.isFinite(Number(timeoutSec)) || Number(timeou
 requireLinux();
 const turns = process.env.CUE_TASKS_FILE ? JSON.parse(readFileSync(process.env.CUE_TASKS_FILE, "utf8")) : DEFAULT_TURNS;
 const pluginPin = process.env.CUE_PLUGIN_PIN_FILE ? JSON.parse(readFileSync(process.env.CUE_PLUGIN_PIN_FILE, "utf8")) : null;
+if (process.env.CUE_AWAIT_NATIVE_PEER_TURN !== undefined && !["0", "1"].includes(process.env.CUE_AWAIT_NATIVE_PEER_TURN)) throw new Error("Invalid native peer turn option");
+const awaitNativePeerTurn = process.env.CUE_AWAIT_NATIVE_PEER_TURN === "1";
+if (awaitNativePeerTurn && !pluginPin) throw new Error("Native peer turn requires the native plugin pin");
+const turnTimeoutMs = Math.min(Number(timeoutSec) * 1000, awaitNativePeerTurn ? 60_000 : Infinity);
 const bin = process.env.CLAUDE_BIN ?? "claude";
 const command = bin.endsWith(".mjs") ? [process.execPath, bin] : [bin];
 const errFd = openSync(path.join(runDir, "stream.err"), "a");
-const child = spawnOwned(command[0], [...command.slice(1), "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", ...claudeArgs],
+const child = spawnOwned(command[0], [...command.slice(1), "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
+  ...(awaitNativePeerTurn ? ["--include-hook-events", "--include-partial-messages"] : []), ...claudeArgs],
   { cwd: repoDir, stdio: ["pipe", "pipe", errFd], env: process.env }, runDir, "claude-stream");
 const sessionArgIndex = claudeArgs.indexOf("--session-id");
 const requestedSession = sessionArgIndex < 0 ? undefined : claudeArgs[sessionArgIndex + 1];
@@ -24,8 +29,9 @@ const saveSession = () => writeFileSync(path.join(runDir, "session.json"), JSON.
   transport: "claude-stream", requestedSession, observedSessionIds: [...observedSessions] }));
 saveSession();
 const pending = new Map(), rows = [];
-let nextId = 0, turnNumber = 0, fatal, resultWaiter, failure, signalFailure;
-const send = message => child.stdin.write(JSON.stringify(message) + "\n");
+let nextId = 0, turnNumber = 0, fatal, resultWaiter, failure, signalFailure, eventSequence = 0, stdinWrites = 0;
+const nativePeerTurn = awaitNativePeerTurn ? { state: "NOT_STARTED", actualResult: null } : null;
+const send = message => { stdinWrites += 1; return child.stdin.write(JSON.stringify(message) + "\n"); };
 const abort = error => {
   fatal ??= error;
   for (const item of pending.values()) item.reject(error);
@@ -48,7 +54,7 @@ function control(request) {
 }
 async function deadline(action) {
   let timer;
-  try { return await Promise.race([action(), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("turn or startup timeout")), Number(timeoutSec) * 1000); })]); }
+  try { return await Promise.race([action(), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("turn or startup timeout")), turnTimeoutMs); })]); }
   finally { clearTimeout(timer); }
 }
 createInterface({ input: child.stdout }).on("line", line => {
@@ -64,7 +70,8 @@ createInterface({ input: child.stdout }).on("line", line => {
     return;
   }
   if (event.type === "control_request") {
-    send({ type: "control_response", response: { subtype: "error", request_id: event.request_id, error: "Trial client does not authorize interactive requests" } });
+    // A passive native trial never writes another stdin message after advertising readiness.
+    if (!nativePeerTurn?.readyAtUtc) send({ type: "control_response", response: { subtype: "error", request_id: event.request_id, error: "Trial client does not authorize interactive requests" } });
     abort(new Error("Unhandled Claude control request")); return;
   }
   if (/account|auth|login/iu.test(`${event.type ?? ""}/${event.subtype ?? ""}`)) return;
@@ -72,7 +79,20 @@ createInterface({ input: child.stdout }).on("line", line => {
     observedSessions.add(event.session_id); saveSession();
     if (observedSessions.size !== 1 || (requestedSession && event.session_id !== requestedSession)) { abort(new Error("CLAUDE_SESSION_MIXED")); return; }
   }
-  appendFileSync(path.join(runDir, turnNumber ? `turn-${turnNumber}.jsonl` : "startup.jsonl"), line + "\n");
+  const sequence = ++eventSequence, receivedAtUtc = new Date().toISOString();
+  appendFileSync(path.join(runDir, nativePeerTurn?.readyAtUtc ? "native-peer-turn.jsonl" : turnNumber ? `turn-${turnNumber}.jsonl` : "startup.jsonl"), line + "\n");
+  if (nativePeerTurn?.state === "WAITING") {
+    if (event.type === "system" && /^hook_/u.test(event.subtype ?? "") && ["UserPromptSubmit", "Stop"].includes(event.hook_event)) {
+      const observed = { sequence, receivedAtUtc, type: event.subtype, hookEvent: event.hook_event,
+        hookId: event.hook_id ?? null, hookName: event.hook_name ?? null };
+      nativePeerTurn.hookEvents.push(observed);
+      if (event.hook_event === "Stop") nativePeerTurn.firstStop ??= observed;
+    }
+    if (event.type === "assistant" || (event.type === "stream_event" && event.event?.type === "message_start" && event.event.message?.role === "assistant")) {
+      nativePeerTurn.firstAssistant ??= { sequence, receivedAtUtc, type: event.type };
+    }
+    if (event.type === "result") nativePeerTurn.actualResult = { sequence, receivedAtUtc, event };
+  }
   if (pluginPin && event.type === "system" && /^hook_/u.test(event.subtype ?? "")) appendFileSync(path.join(runDir, "native-callbacks.jsonl"), line + "\n");
   if (pluginPin && event.type === "system" && event.subtype === "init") writeFileSync(path.join(runDir, "native-plugin-discovered.json"), JSON.stringify({ pluginPin,
     observedPlugins: event.plugins ?? null, observedMcpServers: event.mcp_servers ?? null, effectiveModel: event.model ?? null,
@@ -112,10 +132,28 @@ try {
     }));
     rows.push({ turn: turnNumber, id: spec.id, exit: 0, seconds: (Date.now() - started) / 1000 });
   }
+  if (awaitNativePeerTurn) {
+    if (fatal) throw fatal;
+    if (observedSessions.size !== 1) throw new Error("CLAUDE_SESSION_UNOBSERVED");
+    await deadline(() => new Promise((resolve, reject) => {
+      resultWaiter = { resolve, reject };
+      Object.assign(nativePeerTurn, { state: "WAITING", hostPid: child.pid, sessionId: [...observedSessions][0],
+        candidateSha: pluginPin.candidateSha, readyAtUtc: new Date().toISOString(), readyAfterSequence: eventSequence,
+        stdinWritesAtReady: stdinWrites, timeoutMs: turnTimeoutMs, hookEvents: [], firstAssistant: null, firstStop: null });
+      writeFileSync(path.join(runDir, "native-peer-ready.json"), JSON.stringify({ hostPid: nativePeerTurn.hostPid,
+        sessionId: nativePeerTurn.sessionId, candidateSha: nativePeerTurn.candidateSha, readyAtUtc: nativePeerTurn.readyAtUtc,
+        readyAfterSequence: eventSequence, timeoutMs: turnTimeoutMs }, null, 2));
+    }));
+    if (fatal) throw fatal;
+    nativePeerTurn.state = "RESULT_RECEIVED";
+  }
 } catch (error) {
   failure = error;
-  rows.push({ turn: turnNumber || 1, exit: 1, reason: error.message });
-  for (let n = (turnNumber || 1) + 1; n <= turns.length; n++) rows.push({ turn: n, skipped: true, reason: "earlier failure" });
+  if (nativePeerTurn) { nativePeerTurn.state = nativePeerTurn.readyAtUtc ? "FAILED" : "NOT_STARTED"; nativePeerTurn.failure = error.message; }
+  if (!awaitNativePeerTurn || rows.length < turns.length) {
+    rows.push({ turn: turnNumber || 1, exit: 1, reason: error.message });
+    for (let n = (turnNumber || 1) + 1; n <= turns.length; n++) rows.push({ turn: n, skipped: true, reason: "earlier failure" });
+  }
 } finally {
   writeFileSync(path.join(runDir, "turns.jsonl"), rows.map(row => JSON.stringify(row)).join("\n") + "\n");
   child.stdin.end();
@@ -128,8 +166,13 @@ try {
   finally { closeSync(errFd); process.removeListener("SIGTERM", onTerm); process.removeListener("SIGINT", onInt); }
 }
 failure ??= signalFailure;
-if (failure && rows.every(row => row.exit === 0)) {
+if (failure && rows.every(row => row.exit === 0) && !awaitNativePeerTurn) {
   rows.push({ phase: "driver-finalization", exit: 1, reason: failure.message });
   writeFileSync(path.join(runDir, "turns.jsonl"), rows.map(row => JSON.stringify(row)).join("\n") + "\n");
+}
+if (nativePeerTurn) {
+  nativePeerTurn.stdinWritesAfterReady = nativePeerTurn.readyAtUtc ? stdinWrites - nativePeerTurn.stdinWritesAtReady : null;
+  if (failure) nativePeerTurn.failure ??= failure.message;
+  writeFileSync(path.join(runDir, "native-peer-result.json"), JSON.stringify(nativePeerTurn, null, 2));
 }
 if (failure) { console.error(failure.message); process.exitCode = 1; }

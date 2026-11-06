@@ -13,6 +13,9 @@ const runDir = path.resolve(runArgument), here = import.meta.dirname;
 if (existsSync(runDir)) throw new Error("Never reuse an earlier trial directory");
 const spec = specArgument === "cue" ? { turns: TURNS } : JSON.parse(readFileSync(specArgument, "utf8"));
 if (!Array.isArray(spec.turns) || !spec.turns.length || spec.turns.some(turn => typeof turn.id !== "string" || typeof turn.prompt !== "string" || (turn.compactAfter !== undefined && typeof turn.compactAfter !== "boolean"))) throw new Error("Invalid trial turns");
+if (spec.awaitNativePeerTurn !== undefined && typeof spec.awaitNativePeerTurn !== "boolean") throw new Error("Invalid awaitNativePeerTurn");
+const awaitNativePeerTurn = spec.awaitNativePeerTurn === true;
+if (awaitNativePeerTurn && host !== "claude") throw new Error("Native peer turn requires Claude");
 const timeoutSec = spec.timeoutSec === undefined ? 600 : spec.timeoutSec;
 const outerMs = (spec.turns.length + spec.turns.filter(turn => turn.compactAfter).length + 1) * timeoutSec * 1000 + 10_000;
 if (!Number.isFinite(timeoutSec) || timeoutSec <= 0 || !Number.isFinite(outerMs) || outerMs > 2 ** 31 - 1) throw new Error("Invalid timeoutSec");
@@ -37,7 +40,8 @@ const repo = path.join(runDir, "repo"), tasksFile = path.join(runDir, "tasks.jso
 writeFileSync(pinFile, JSON.stringify(pin, null, 2));
 writeFileSync(tasksFile, JSON.stringify(spec.turns, null, 2));
 // Preserve native login and native plugin data resolution. No config, settings, MCP or state-path overrides.
-const environment = { ...process.env, CUE_TASKS_FILE: tasksFile, CUE_PLUGIN_PIN_FILE: pinFile, DISABLE_AUTOUPDATER: "1" };
+const environment = { ...process.env, CUE_TASKS_FILE: tasksFile, CUE_PLUGIN_PIN_FILE: pinFile,
+  CUE_AWAIT_NATIVE_PEER_TURN: awaitNativePeerTurn ? "1" : "0", DISABLE_AUTOUPDATER: "1" };
 let failure, attempted = false, rejectSignal;
 const interrupted = new Promise((_, reject) => { rejectSignal = reject; }); interrupted.catch(() => {});
 const onSignal = signal => { failure ??= new Error(`Wrapper interrupted by ${signal}`); writeFileSync(path.join(runDir, "wrapper-failure.json"), JSON.stringify({ reason: failure.message, signal })); rejectSignal(failure); };
@@ -86,8 +90,16 @@ finally {
     if (attempted && !rows.length) { rows = spec.turns.map((turn, index) => index === 0 ? { turn: 1, id: turn.id, exit: 1, reason: failure?.message ?? "Driver wrote no turns" } : { turn: index + 1, id: turn.id, skipped: true }); writeFileSync(turnsFile, rows.map(row => JSON.stringify(row)).join("\n") + "\n"); }
   } catch (error) { failure ??= error; process.exitCode = 1; }
   if (attempted && (rows.length !== spec.turns.length || rows.some(row => row.exit !== 0 || row.skipped))) process.exitCode = 1;
+  let nativePeerTurn;
+  if (attempted && awaitNativePeerTurn) {
+    try { nativePeerTurn = JSON.parse(readFileSync(path.join(runDir, "native-peer-result.json"), "utf8")); }
+    catch (error) { failure ??= error; }
+    if (nativePeerTurn?.state !== "RESULT_RECEIVED" || nativePeerTurn.actualResult?.event?.type !== "result"
+      || nativePeerTurn.stdinWritesAfterReady !== 0) process.exitCode = 1;
+  }
   writeFileSync(path.join(runDir, "transport-summary.json"), JSON.stringify({ processExit: process.exitCode ?? 0, mode, host, failure: failure?.message ?? null,
     plannedTurns: spec.turns.length, recordedTurns: rows.length, pluginPin: pin, cleanup,
+    ...(awaitNativePeerTurn ? { nativePeerTurn: nativePeerTurn ?? null } : {}),
     sessionStartCount: null, userPromptSubmitCount: null, lifecycleObservation: "CORRELATE_OWN_NATIVE_CALLBACK_EVENTS",
     actualAdmission: "REQUIRES_OWN_MCP_CALLBACK_DB_CORRELATION", cueDelivery: "NOT_PROVEN_BY_CALLBACK_ALONE", semanticResult: "NOT_EVALUATED",
     processTreeCleanup: "ESCAPED_DESCENDANTS_REQUIRE_ROOT_OBSERVATION" }, null, 2));
