@@ -26,10 +26,18 @@ mkdirSync(outputs);
 const tmp = mkdtempSync(path.join(tmpdir(), "cue-ab-hooks-"));
 const cwd = path.join(tmp, "repo");
 mkdirSync(cwd);
+const statePaths = {
+  AGENT_GOVERNANCE_DB_PATH: path.join(tmp, "state", "workflows.sqlite3"),
+  AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(tmp, "state", "continuity.sqlite3"),
+  AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(tmp, "shared", "session-board.sqlite3"),
+  AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(tmp, "shared", "session-messaging"),
+  AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(tmp, "shared"),
+  AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(tmp, "shared", "session-messaging", "trust.sqlite3"),
+};
 const env = {
   ...process.env,
+  ...statePaths,
   XDG_STATE_HOME: path.join(tmp, "state"),
-  AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(tmp, "shared"),
   ...(host === "claude" ? { CLAUDE_PLUGIN_ROOT: root, CLAUDE_PLUGIN_DATA: path.join(tmp, "data") } : { PLUGIN_ROOT: root }),
 };
 let sequence = 0;
@@ -97,7 +105,7 @@ const base = (sessionId, name, extra) => ({
   ...extra,
 });
 
-const result = { host, pluginRoot: root, hooksFile, hooksSha256: digest(hooksBytes), locale: env.AGENT_GOVERNANCE_LOCALE ?? null,
+const result = { host, pluginRoot: root, hooksFile, hooksSha256: digest(hooksBytes), stateRoot: tmp, statePaths, locale: env.AGENT_GOVERNANCE_LOCALE ?? null,
   localeScope: "passed AGENT_GOVERNANCE_LOCALE; null means unset/default", characterUnit: "UTF-16 code units (String.length)",
   measurementScope: "synchronous source output only; async NOT_MEASURED_ASYNC; no native/model wrapping or tokens", sessionStart: {}, userPromptSubmit: [] };
 try {
