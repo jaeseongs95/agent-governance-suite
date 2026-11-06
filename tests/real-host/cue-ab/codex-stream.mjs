@@ -1,26 +1,27 @@
 // One native app-server process and one thread; never exec/resume between user turns.
-import { spawn } from "node:child_process";
 import { appendFileSync, closeSync, openSync, readFileSync, writeFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 import path from "node:path";
+import { requireLinux, retireGroup, spawnOwned, stopGroups } from "./owned-process.mjs";
+import { awaitRootPreflight, verifyCodexHooks, verifyCodexSkills, verifyMcpDescriptor } from "./trial-preflight.mjs";
 
 const [runDir, repoDir, timeoutSec, model, effort] = process.argv.slice(2);
-if (!runDir || !repoDir || !Number.isFinite(Number(timeoutSec)) || Number(timeoutSec) <= 0 || !model || !effort) {
+if (!runDir || !repoDir || !Number.isFinite(Number(timeoutSec)) || Number(timeoutSec) <= 0 || Number(timeoutSec) * 1000 > 2 ** 31 - 1 || !model || !effort) {
   throw new Error("usage: node codex-stream.mjs <runDir> <repoDir> <timeoutSec> <model> <effort>");
 }
 const turns = JSON.parse(readFileSync(process.env.CUE_TASKS_FILE, "utf8"));
 const overrides = JSON.parse(readFileSync(process.env.CUE_CODEX_ARGV_FILE, "utf8"));
 const command = process.env.CODEX_CMD ? JSON.parse(process.env.CODEX_CMD) : [process.env.CODEX_BIN ?? "codex"];
+requireLinux();
 const errFd = openSync(path.join(runDir, "stream.err"), "wx");
-const child = spawn(command[0], [...command.slice(1), ...overrides, "app-server", "--listen", "stdio://"], {
+const child = spawnOwned(command[0], [...command.slice(1), ...overrides, "app-server", "--listen", "stdio://"], {
   cwd: repoDir, env: process.env, stdio: ["pipe", "pipe", errFd], windowsHide: true,
-});
+}, runDir, "codex-app-server");
 let nextId = 0, threadId, turnNumber = 0, fatal;
 const pending = new Map();
 const notifications = [];
 const notificationWaiters = new Set();
 const rows = [];
-const closed = new Promise(resolve => child.once("close", resolve));
 const abort = error => {
   fatal ??= error;
   for (const item of pending.values()) item.reject(error);
@@ -28,6 +29,14 @@ const abort = error => {
   for (const item of notificationWaiters) item.reject(error);
   notificationWaiters.clear();
 };
+let signalFailure;
+const onSignal = signal => {
+  signalFailure ??= new Error(`Driver interrupted by ${signal}`);
+  writeFileSync(path.join(runDir, "driver-failure.json"), JSON.stringify({ reason: signalFailure.message, signal }));
+  abort(signalFailure);
+};
+const onTerm = () => onSignal("SIGTERM"), onInt = () => onSignal("SIGINT");
+process.on("SIGTERM", onTerm); process.on("SIGINT", onInt);
 child.on("error", abort);
 child.stdin.on("error", abort);
 child.once("close", (code, signal) => abort(new Error(`app-server closed: ${code}/${signal}`)));
@@ -66,7 +75,7 @@ createInterface({ input: child.stdout }).on("line", line => {
     else item.resolve(message.result);
     return;
   }
-  appendFileSync(path.join(runDir, turnNumber ? `turn-${turnNumber}.jsonl` : "startup.jsonl"), line + "\n");
+  if (!/account|auth|login/iu.test(message.method ?? "")) appendFileSync(path.join(runDir, turnNumber ? `turn-${turnNumber}.jsonl` : "startup.jsonl"), line + "\n");
   if (message.id !== undefined) {
     // The harness never auto-approves a permission request or guesses a human answer.
     send({ id: message.id, error: { code: -32601, message: "Trial client does not authorize interactive requests" } });
@@ -88,17 +97,25 @@ try {
     const started = await request("thread/start", { cwd: repoDir, model, approvalPolicy: "never", sandbox: "workspace-write" });
     threadId = started.thread?.id;
     if (!threadId) throw new Error("thread/start returned no thread id");
+    writeFileSync(path.join(runDir, "session.json"), JSON.stringify({ hostPid: child.pid, threadId, transport: "native-app-server", requestedModel: model, requestedEffort: effort }));
+    const expected = JSON.parse(readFileSync(path.join(runDir, "composition.json"), "utf8"));
     const hookInventory = await request("hooks/list", { cwds: [repoDir] });
-    const observerDiscovered = JSON.stringify(hookInventory).includes("lifecycle-hook.mjs");
-    writeFileSync(path.join(runDir, "hooks-discovered.json"), JSON.stringify({ observerDiscovered, resultKeys: Object.keys(hookInventory ?? {}) }));
-    if (!observerDiscovered) throw new Error("TRIAL_HOOKS_NOT_DISCOVERED");
+    const hooks = verifyCodexHooks(hookInventory, expected.normalizedHooks, repoDir);
+    writeFileSync(path.join(runDir, "hooks-discovered.json"), JSON.stringify(hooks, null, 2));
+    const runtimeConfig = await request("config/read", { includeLayers: false, cwd: repoDir });
+    const mcpConfig = runtimeConfig?.config?.mcp_servers;
+    if (!mcpConfig || Object.keys(mcpConfig).length !== 1) throw new Error("MCP_CONFIG_MISSING_OR_MIXED");
+    const actualMcp = verifyMcpDescriptor(mcpConfig[expected.mcp.name], expected.mcp);
+    const skills = verifyCodexSkills(await request("skills/list", { cwds: [repoDir], forceReload: true }), expected.skills, repoDir);
+    writeFileSync(path.join(runDir, "skills-discovered.json"), JSON.stringify(skills, null, 2));
     const mcpInventory = await request("mcpServerStatus/list", { threadId, cursor: null, limit: 100 });
-    writeFileSync(path.join(runDir, "mcp-discovered.json"), JSON.stringify({ servers: (mcpInventory?.data ?? []).map(server => ({ name: server.name })) }));
     const servers = mcpInventory?.data;
     if (!Array.isArray(servers) || servers.length !== 1 || servers[0].name !== "agent-governance-suite" || mcpInventory.nextCursor) throw new Error("TRIAL_MCP_MISSING_OR_MIXED");
     const toolNames = Array.isArray(servers[0].tools) ? servers[0].tools.map(tool => tool.name) : Object.keys(servers[0].tools ?? {});
-    if (!toolNames.includes("start_workflow")) throw new Error("TRIAL_MCP_NOT_READY");
-    writeFileSync(path.join(runDir, "session.json"), JSON.stringify({ hostPid: child.pid, threadId, transport: "native-app-server", model, effort }));
+    if (!toolNames.includes("start_workflow") || servers[0].runtimeStatus !== "connected" || servers[0].toolsError || servers[0].pluginId) throw new Error("TRIAL_MCP_NOT_READY_OR_MIXED");
+    writeFileSync(path.join(runDir, "mcp-discovered.json"), JSON.stringify({ actualMcp, toolNames: toolNames.sort() }, null, 2));
+    const gate = await awaitRootPreflight(runDir, child.pid, { hooks, actualMcp, toolNames: toolNames.sort(), skills }, () => Boolean(fatal));
+    writeFileSync(path.join(runDir, "preflight-result.json"), JSON.stringify(gate));
   });
   for (const [index, spec] of turns.entries()) {
     turnNumber = index + 1;
@@ -130,8 +147,17 @@ try {
 } finally {
   writeFileSync(path.join(runDir, "turns.jsonl"), rows.map(row => JSON.stringify(row)).join("\n") + "\n");
   child.stdin.end();
-  const terminate = setTimeout(() => child.kill(), 2000);
-  const hardStop = setTimeout(() => child.kill("SIGKILL"), 5000);
-  try { await closed; } finally { clearTimeout(terminate); clearTimeout(hardStop); closeSync(errFd); }
+  try {
+    const cleanup = await stopGroups([child.pid]);
+    writeFileSync(path.join(runDir, "driver-cleanup.json"), JSON.stringify(cleanup));
+    if (cleanup.groupCleanup !== "CONFIRMED") failure ??= new Error("Codex owned group cleanup unconfirmed");
+    else retireGroup(runDir, child.pid);
+  } catch (error) { failure ??= error; }
+  finally { closeSync(errFd); process.removeListener("SIGTERM", onTerm); process.removeListener("SIGINT", onInt); }
+}
+failure ??= signalFailure;
+if (failure && rows.every(row => row.exit === 0)) {
+  rows.push({ phase: "driver-finalization", exit: 1, reason: failure.message });
+  writeFileSync(path.join(runDir, "turns.jsonl"), rows.map(row => JSON.stringify(row)).join("\n") + "\n");
 }
 if (failure) { console.error(failure.message); process.exitCode = 1; }
