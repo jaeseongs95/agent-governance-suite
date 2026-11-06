@@ -1,9 +1,13 @@
-import {cp, mkdir, mkdtemp, rm, writeFile} from "node:fs/promises";
+import {cp, mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
+import {createHash} from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import {describe, expect, it} from "vitest";
 import * as api from "./bootstrap.mjs";
 import {checkProviderObservationRetention} from "./provider-observation-retention.mjs";
+import {loadCurrentSourceBindings} from "../evaluation.js";
+
+const repo = path.resolve(import.meta.dirname, "../../..");
 
 async function preserveAndRemove(root: string) {
   const target = path.resolve(root);
@@ -19,12 +23,26 @@ async function preserveAndRemove(root: string) {
 }
 
 describe("prepared evaluation provider observation retention", () => {
+  it("binds the current public sources before evaluating provider response retention", async () => {
+    const current = loadCurrentSourceBindings(repo);
+    const corpus = JSON.parse(await readFile(path.join(repo, "tests/skill-classification/fixtures.json"), "utf8"));
+    const expected = new Map<string, string | null>(corpus.sourceSkills.map((source: {path: string; digest: string}) =>
+      [source.path, current.resolveDigest(source.path, source.digest)]));
+    for (const source of current.manifest.bindings) expected.set(source.path, source.digest);
+    const mismatches = [];
+    for (const [file, digest] of expected) {
+      const bytes = await readFile(path.join(repo, file)).catch(error => {if (error.code === "ENOENT") return null; throw error;});
+      const actual = bytes === null ? null : `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+      if (actual !== digest) mismatches.push({file, expected: digest, actual});
+    }
+    expect(mismatches, "source preparation is separate from the provider retention oracle").toEqual([]);
+  });
   it("keeps safe raw/usage across errors and omits unsafe or uninspectable bodies without resend", async () => {
-    const repo = path.resolve(import.meta.dirname, "../../..");
     const root = await mkdtemp(path.join(os.tmpdir(), "ags-provider-retention-"));
     try {
       const checks = await checkProviderObservationRetention(api, repo, root);
-      expect(checks).toHaveLength(13);
+      expect(checks).toEqual(["success", "http500", "revoked-after-fetch", "safe-chunk-read-error", "truncated-read-error",
+        "invalid-score", "escaped-credential", "endpoint-echo", "overwritten-secret", "byte-cap", "invalid-utf8", "invalid-json", "timeout-safe-chunk"]);
       await writeFile(path.join(root, "checks.json"), JSON.stringify({status: "OFFLINE_PROVIDER_RETENTION_PASS", checks, actualApiCalls: 0}) + "\n", {flag: "wx"});
       console.info(JSON.stringify({status: "OFFLINE_PROVIDER_RETENTION_PASS", checks, actualApiCalls: 0}));
     }
