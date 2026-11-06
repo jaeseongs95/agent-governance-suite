@@ -22,7 +22,7 @@ All state is kept in SQLite files on this computer.
 You need Node.js **24.0.0 or later** and plugin support in your host. Install AGS in every host that should take part. You do not need to clone this repository or run `pnpm install` to use the plugin.
 
 <!-- release-version:start -->
-The current public release is `v3.6.0`, and the examples below install it. 3.x is not compatible with 2.x. Changes for each version are in [GitHub Releases](https://github.com/jaeseongs95/agent-governance-suite/releases) and `docs/release-notes-v<version>.md` (Korean).
+The current public release is `v3.7.0`, and the examples below install it. 3.x is not compatible with 2.x. Changes for each version are in [GitHub Releases](https://github.com/jaeseongs95/agent-governance-suite/releases) and `docs/release-notes-v<version>.md` (Korean).
 <!-- release-version:end -->
 
 ### Choose a package
@@ -52,7 +52,7 @@ Run in a terminal:
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.6.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.7.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -65,8 +65,8 @@ Start a new Codex session, then review and trust the AGS hooks in `/hooks`. Unti
 
 <!-- release-agy:start -->
 ```bash
-curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v3.6.0/agent-governance-suite-antigravity-v3.6.0.zip
-unzip agent-governance-suite-antigravity-v3.6.0.zip
+curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v3.7.0/agent-governance-suite-antigravity-v3.7.0.zip
+unzip agent-governance-suite-antigravity-v3.7.0.zip
 agy plugin install ./agent-governance-suite
 agy plugin list
 ```
@@ -185,7 +185,7 @@ When a newer public stable release exists, the MCP server mentions it once in a 
 - **The edit check counts only edit-tool calls.** Files changed by shell commands, files outside version control, and subagent edits are not counted, and the count restarts every turn.
 - **Message delivery state is not a work result.** ACKs and wake attempts do not prove processing or completion, and a Codex session interrupted with Esc cannot be woken until the user resumes it.
 - **The turn check does not force behavior.** Skill text the agent loaded earlier stays in the conversation and AGS cannot remove it. Subagents do not receive the skill target list; a fix is planned for the next release.
-- **Verification is limited.** Real-host testing for 3.6.0 covered comparison runs on a Linux test server; a full real-host re-measurement and dual-Cloud verification are not claimed complete. The quality evaluation of `korean-prose-editor`'s current editing policy is also unfinished. ([3.6.0 release notes](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/release-notes-v3.6.0.md#검증), [roadmap](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/roadmap.md))
+- **Verification is limited.** 3.7.0 does not change the 3.6.0 runtime code, so real-host testing still covers only the 3.6.0 comparison runs on a Linux test server; a full real-host re-measurement and dual-Cloud verification are not claimed complete. The quality evaluation of `korean-prose-editor`'s current editing policy and of the design output of the new `ui-ux-design` is also unfinished. ([3.7.0 release notes](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/release-notes-v3.7.0.md#검증), [3.6.0 release notes](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/release-notes-v3.6.0.md#검증), [roadmap](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/roadmap.md))
 
 ## Troubleshooting
 

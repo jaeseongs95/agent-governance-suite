@@ -22,7 +22,7 @@ Agent Governance Suite(AGS)는 Claude Code, Codex, Antigravity(`agy`)에 설치�
 필요한 것은 Node.js **24.0.0 이상**과 호스트의 플러그인 기능입니다. 협업할 호스트마다 설치합니다. 플러그인을 쓰는 데 이 저장소를 clone하거나 `pnpm install`을 실행할 필요는 없습니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v3.6.0`이며 아래 설치 예시는 이 버전 기준입니다. 3.x는 2.x와 호환하지 않습니다. 버전별 변경 사항은 [GitHub 릴리스](https://github.com/jaeseongs95/agent-governance-suite/releases)와 `docs/release-notes-v<버전>.md`에 있습니다.
+현재 공개 릴리스는 `v3.7.0`이며 아래 설치 예시는 이 버전 기준입니다. 3.x는 2.x와 호환하지 않습니다. 버전별 변경 사항은 [GitHub 릴리스](https://github.com/jaeseongs95/agent-governance-suite/releases)와 `docs/release-notes-v<버전>.md`에 있습니다.
 <!-- release-version:end -->
 
 ### 패키지 고르기
@@ -52,7 +52,7 @@ Claude Code 안에서 실행하고, 설치 후 새 세션을 시작합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.6.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.7.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -65,8 +65,8 @@ codex plugin add agent-governance-suite@agent-governance
 
 <!-- release-agy:start -->
 ```bash
-curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v3.6.0/agent-governance-suite-antigravity-v3.6.0.zip
-unzip agent-governance-suite-antigravity-v3.6.0.zip
+curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v3.7.0/agent-governance-suite-antigravity-v3.7.0.zip
+unzip agent-governance-suite-antigravity-v3.7.0.zip
 agy plugin install ./agent-governance-suite
 agy plugin list
 ```
@@ -183,7 +183,7 @@ MCP 서버는 새 공개 안정 버전이 있으면 도구 응답에 한 번 알
 - **편집 관문은 편집 도구 호출만 셉니다.** 셸 명령으로 바꾼 파일, 버전 관리 밖 파일, 서브에이전트의 편집은 세지 않고, 구간은 턴마다 다시 셉니다.
 - **메시지 전달 상태는 작업 결과가 아닙니다.** ACK와 깨우기 시도는 처리나 완료의 증거가 아니며, Esc로 중단된 Codex 세션은 사용자가 재개할 때까지 깨울 수 없습니다.
 - **턴 확인 안내는 행동을 강제하지 않습니다.** 앞서 호출한 스킬의 본문은 호스트가 대화에 남기며 AGS가 지울 수 없습니다. 서브에이전트에는 스킬 대상 목록이 전달되지 않으며, 다음 판에서 고칠 예정입니다.
-- **검증 범위가 제한됩니다.** 3.6.0의 실호스트 시험은 Linux 시험 서버의 비교 시험까지이며, 전체 실호스트 재측정과 양 Cloud 검증은 완료로 주장하지 않습니다. `korean-prose-editor`의 현행 편집 정책 품질 평가도 끝나지 않았습니다. ([3.6.0 릴리스 노트](docs/release-notes-v3.6.0.md#검증), [로드맵](docs/roadmap.md))
+- **검증 범위가 제한됩니다.** 3.7.0은 3.6.0의 실행 코드를 바꾸지 않았으므로 실호스트 시험은 3.6.0의 Linux 시험 서버 비교 시험까지이며, 전체 실호스트 재측정과 양 Cloud 검증은 완료로 주장하지 않습니다. `korean-prose-editor`의 현행 편집 정책 품질 평가와 새 `ui-ux-design`의 실제 설계 품질 평가도 끝나지 않았습니다. ([3.7.0 릴리스 노트](docs/release-notes-v3.7.0.md#검증), [3.6.0 릴리스 노트](docs/release-notes-v3.6.0.md#검증), [로드맵](docs/roadmap.md))
 
 ## 문제 해결
 
