@@ -15,7 +15,7 @@ const pluginPin = process.env.CUE_PLUGIN_PIN_FILE ? JSON.parse(readFileSync(proc
 if (process.env.CUE_AWAIT_NATIVE_PEER_TURN !== undefined && !["0", "1"].includes(process.env.CUE_AWAIT_NATIVE_PEER_TURN)) throw new Error("Invalid native peer turn option");
 const awaitNativePeerTurn = process.env.CUE_AWAIT_NATIVE_PEER_TURN === "1";
 if (awaitNativePeerTurn && !pluginPin) throw new Error("Native peer turn requires the native plugin pin");
-const turnTimeoutMs = Math.min(Number(timeoutSec) * 1000, awaitNativePeerTurn ? 60_000 : Infinity);
+const turnTimeoutMs = Number(timeoutSec) * 1000;
 const bin = process.env.CLAUDE_BIN ?? "claude";
 const command = bin.endsWith(".mjs") ? [process.execPath, bin] : [bin];
 const errFd = openSync(path.join(runDir, "stream.err"), "a");
