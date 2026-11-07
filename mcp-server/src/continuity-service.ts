@@ -89,6 +89,8 @@ const PHASE_ROOT_ACTOR_EVENT = "phase-root-actor:";
 /** In a session whose hooks are another session's subagent (VerifiedCaller.hookSessionId): suffix
  * `<owner task correlation> <actor ID>`, recorded from that subagent's verified tool call. */
 const PHASE_ALIAS_EVENT = "phase-alias:";
+/** Suffix `<actor hash>:<state token>`: that actor has the session's current body with this token (AGS3-D-0065). */
+const SITUATION_HELD_EVENT = "situation-held:";
 /**
  * Workflow enforcement (design ags30-phase-check 7). A window is every observation after the later of the last phase
  * check and the last workflow start. Each distinct product file edited in a window without an active workflow is one
@@ -154,6 +156,14 @@ export function subagentStartCue(): HookText {
     msg("hooks.subagentCue.skills", { targets: installedSkillTargets() }),
     msg("hooks.subagentCue.scope", {}),
   ];
+}
+
+/**
+ * Every actor's check at a step boundary inside its work (AGS3-D-0065): one line, since it lands on every step of every
+ * host. The skill targets themselves stay in the context-start text and are not repeated here.
+ */
+export function stepCheck(): HookText {
+  return [msg("hooks.stepCheck.skills", {})];
 }
 
 export interface WorkflowContinuityCardV1 {
@@ -642,6 +652,12 @@ export class ContinuityService implements ContinuityGateway {
       if (stored.kind === "stale") return failure("STALE_REVISION", msg("continuity.checkpoint.stateChanged", {}), {
         reasonCode: "CONTINUITY_STATE_STALE", expectedStateToken: request.expectedStateToken, actualStateToken: stored.actualStateToken,
       });
+      // The actor that saved this body holds it: it is not given back to that actor at its next step. The save already
+      // committed, so a failed mark costs only one repeated body, never the save's result.
+      try {
+        this.store.recordObservation(binding.c, binding.e, this.situationHeldEvent(caller.actor.id, stored.snapshot.stateToken), null, true,
+          this.now().toISOString());
+      } catch { /* The body may be given to this actor once more. */ }
       return ok(stored.snapshot);
     });
   }
@@ -960,20 +976,27 @@ export class ContinuityService implements ContinuityGateway {
   }
 
   /**
-   * A subagent's start: the latest verified current body of the session that started it (the situational context is
-   * the session's and its subagents'). Read only: no session is created, rotated or bound, and a suppressed or empty
-   * current gives nothing.
+   * The session's situational context for one actor of it (AGS3-D-0065): the latest verified current body, once per state
+   * token, to an actor that does not hold it yet. No session is created, rotated or bound, and a suppressed or empty
+   * current gives nothing. The caller leaves out the session's own actor, which saves and restores this body itself.
    */
-  currentForSubagent(rawSessionId: string): HookText | null {
+  situationForActor(rawSessionId: string, actorId: string): HookText | null {
     const task = this.store.getTask(this.correlateSession(rawSessionId));
     if (!task) return null;
     const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", current => {
       const snapshot = this.store.getCurrent(current.taskCorrelation, current.currentEpoch);
       if (!snapshot?.memory) return null;
+      const held = this.situationHeldEvent(actorId, snapshot.stateToken);
+      if (this.store.hasObservation(current.taskCorrelation, current.currentEpoch, held)) return null;
       this.verifyCurrentMemory(snapshot);
+      this.store.recordObservation(current.taskCorrelation, current.currentEpoch, held, null, true, this.now().toISOString());
       return [msg("hooks.contextLayers.parentSituation", { stateToken: snapshot.stateToken, body: JSON.stringify(snapshot.memory) })];
     });
     return selected.kind === "available" ? selected.value : null;
+  }
+
+  private situationHeldEvent(actorId: string, stateToken: string): string {
+    return `${SITUATION_HELD_EVENT}${this.hashOpaque("actor", actorId)}:${stateToken}`;
   }
 
   compactContext(rawSessionId: string): HookText | null {

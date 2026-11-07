@@ -989,7 +989,8 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     expect(compacted).toMatchObject({ hookSpecificOutput: { hookEventName: "LifecycleNotice", additionalContext: expect.stringContaining("[AGS current memory]") } });
     await event({ kind: "post-compact", turnId: "normalized-turn", successful: false });
     const database = new DatabaseSync(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
-    try { expect(database.prepare("SELECT task_correlation, turn_hash, success FROM continuity_observations").get()).toMatchObject({
+    // The checkpoint above also records that its saver holds the body (AGS3-D-0065); this reads the post-compact row.
+    try { expect(database.prepare("SELECT task_correlation, turn_hash, success FROM continuity_observations WHERE event = 'post-compact'").get()).toMatchObject({
       task_correlation: service.correlateSession(session), turn_hash: service.hashOpaque("turn", "normalized-turn"), success: 0,
     }); } finally { database.close(); }
     await event({ kind: "clear" });
