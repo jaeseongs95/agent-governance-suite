@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline";
@@ -8,18 +8,23 @@ import { afterEach, describe, expect, it } from "vitest";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const directories = [];
-const PREFIX = "[agent-governance-suite] launcher-failure ";
 
 afterEach(async () => {
   await Promise.all(directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
 });
 
-/** Installs one overlay launcher next to an optional fake shared bundle, as in the installed tree. */
-async function install(launcher, bundle) {
+/** Installs one overlay launcher next to an optional fake shared bundle and the shared diagnostics runtime, as installed. */
+async function install(launcher, bundle, { runtime = true } = {}) {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-launcher-"));
   directories.push(directory);
   await mkdir(path.join(directory, "hooks"));
   await mkdir(path.join(directory, "mcp-server", "dist"), { recursive: true });
+  if (runtime) {
+    await mkdir(path.join(directory, "runtime"));
+    for (const file of ["diagnostic-record.mjs", "failure-diagnostics.mjs"]) {
+      await writeFile(path.join(directory, "runtime", file), await readFile(path.join(root, "runtime", file)));
+    }
+  }
   await writeFile(path.join(directory, "hooks", launcher), await readFile(path.join(root, "claude-overlay", "hooks", launcher)));
   if (bundle !== null) await writeFile(path.join(directory, "mcp-server", "dist", launcher), bundle);
   return directory;
@@ -31,8 +36,16 @@ function run(directory, launcher, env = process.env) {
   });
 }
 
+/** Launcher records in the one common format (AGS3-D-0023); no product line may use the retired prefix form. */
 function diagnostics(stderr) {
-  return stderr.split(/\r?\n/u).filter((line) => line.startsWith(PREFIX)).map((line) => JSON.parse(line.slice(PREFIX.length)));
+  expect(stderr).not.toContain("[agent-governance-suite]");
+  return stderr.split(/\r?\n/u).flatMap((line) => {
+    try { const record = JSON.parse(line); return record && typeof record === "object" && !Array.isArray(record) ? [record] : []; }
+    catch { return []; }
+  }).filter((record) => record.event === "launcher-failure").map(({ component, event, ...rest }) => {
+    expect(typeof component).toBe("string");
+    return { launcher: component, ...rest };
+  });
 }
 
 describe("Claude launcher stage diagnostics", () => {
@@ -81,19 +94,20 @@ describe("Claude launcher stage diagnostics", () => {
   // Fake bundles export both entries like the real bundle, so the launcher's choice of entry is what is tested.
   const messageBundle = (outcome, diagnostic) => [
     'export async function runSessionMessageHook() { return ""; }',
-    `export async function runSessionMessageHookOutcome() { ${diagnostic ? `console.error("[agent-governance-suite] peer-hook-failure " + ${JSON.stringify(JSON.stringify(diagnostic))});` : ""} return ${outcome}; }`,
+    `export async function runSessionMessageHookOutcome() { ${diagnostic ? `console.error(${JSON.stringify(JSON.stringify(diagnostic))});` : ""} return ${outcome}; }`,
     "",
   ].join("\n");
 
   it("session-message-hook: a failed bundle outcome retains exit 0 and its bounded diagnostic", async () => {
-    const failure = { phase: "handle", reason: "BROKER_DEADLINE_EXPIRED", reasonBasis: "producer", producerReason: "BROKER_DEADLINE_EXPIRED" };
+    const failure = { phase: "handle", reason: "BROKER_DEADLINE_EXPIRED", reasonBasis: "producer", producerReason: "BROKER_DEADLINE_EXPIRED",
+      component: "session-message-hook", event: "peer-hook-failure" };
     const directory = await install("session-message-hook.mjs", messageBundle(
       `{ ok: false, output: "", failure: ${JSON.stringify(failure)} }`, failure));
     const result = run(directory, "session-message-hook.mjs");
     expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
     // The bundle owns the phase/reason diagnostic; the launcher adds no duplicate stage failure.
-    expect(result.stderr.trim()).toBe("[agent-governance-suite] peer-hook-failure " + JSON.stringify(failure));
+    expect(result.stderr.trim()).toBe(JSON.stringify(failure));
     expect(diagnostics(result.stderr)).toEqual([]);
   });
 
@@ -165,6 +179,23 @@ describe("Claude launcher stage diagnostics", () => {
     const absent = run(directory, "continuity-hook.mjs", env);
     expect(absent.status).toBe(0);
     expect(diagnostics(absent.stderr)).toEqual([]);
+  });
+
+  it("DG07 every Claude launcher keeps the common record when the shared diagnostics runtime is missing", async () => {
+    const launchers = (await readdir(path.join(root, "claude-overlay", "hooks"))).filter((file) => file.endsWith(".mjs"));
+    expect(launchers.length).toBeGreaterThan(5);
+    for (const launcher of launchers) {
+      const directory = await install(launcher, null, { runtime: false });
+      // A plugin data path that is a file and unparsable input make every launcher fail at its first own stage.
+      await writeFile(path.join(directory, "data-file"), "fixture");
+      const result = spawnSync(process.execPath, [path.join(directory, "hooks", launcher)], {
+        input: "{", encoding: "utf8", env: { ...process.env, CLAUDE_PLUGIN_DATA: path.join(directory, "data-file") }, windowsHide: true,
+      });
+      const lines = result.stderr.split(/\r?\n/u).filter(Boolean);
+      expect(lines.length, launcher).toBe(1);
+      expect(JSON.parse(lines[0]), launcher).toMatchObject({ component: launcher.replace(/\.mjs$/u, ""), event: "launcher-failure",
+        stage: expect.any(String), reason: "DIAGNOSTIC_RUNTIME_UNAVAILABLE" });
+    }
   });
 
   it("continuity-hook: a successful shared hook emits no diagnostic", async () => {
