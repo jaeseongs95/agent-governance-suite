@@ -26,7 +26,7 @@ const sentence = (marker: string) => sentences.find(text => text.includes(marker
 const count = (text: string, fragment: string) => text.split(fragment).length - 1;
 const vendors = /\b(?:Codex|Claude|Gemini|GPT-[0-9]|Cloudflare|SSH)/u;
 
-const casesFirst = sentence("만들거나 바꾸기 전에");
+const casesFirst = sentence("만들거나 바꾸기 전");
 const realEntryPoint = sentence("끝나면 그 사례를");
 const runnableChecks = sentence("현재 도구·권한으로 가능한 실행·검증은");
 const reportUnrun = sentence("미실행 범위는 미검증으로");
@@ -43,8 +43,9 @@ describe("shared intake: verification cases first (AGS3-D-0036)", () => {
   it("has any work that makes or changes something fix what, where and which result is success before it starts", () => {
     expect(casesFirst).not.toBe("");
     // Not limited to code: any work that makes or changes something.
-    expect(casesFirst).toContain("만들거나 바꾸기 전에");
-    expect(casesFirst).toContain("무엇을·어디서·어떤 결과면 성공인지 사례를 적는다");
+    expect(casesFirst).toContain("만들거나 바꾸기 전");
+    for (const field of ["요구별", "대상", "경로", "환경", "검증 방법", "통과 조건을 사례로 적고"]) expect(casesFirst).toContain(field);
+    expect(casesFirst).toContain("사례 정의→실행→동일 사례 확인");
     expect(casesFirst).not.toMatch(/코드|테스트/u);
   });
 });

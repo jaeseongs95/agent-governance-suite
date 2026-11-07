@@ -71,12 +71,20 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
   it("prepares requirement-level cases before routing any result-changing work, including non-code and small direct edits (D36)", () => {
     const text = instructions("references/entry-details.md");
     const preparation = text.split("## 초기 라우팅")[1]!.split("선택 결과에는")[0]!;
-    expect(preparation).toContain("비코드 작업과 작은 직접 편집도");
-    expect(preparation).toContain("사례 정의 → 실행 → 동일 사례 확인");
-    expect(preparation).toContain("capability 선택·계획 때 먼저 요구마다");
-    for (const field of ["검증 대상", "사용자의 실제 진입점", "대상 환경", "검증 방법", "통과 조건을 적고"]) expect(preparation).toContain(field);
-    expect(preparation).toContain("변경 뒤 그 사례를 같은 경로·환경에서 실행해 실제 결과를 대조한다");
+    // Direct specialist calls also read this source; they need not activate the orchestrator or load its entry.
+    const intake = instructions("references/intake.md").split("<!-- skill-intake:start -->")[1]!.split("<!-- skill-intake:end -->")[0]!;
+    const casesFirst = intake.match(/만들거나 바꾸기 전[^.]+\./u)?.[0] ?? "";
+    expect(casesFirst).toContain("요구별");
+    for (const field of ["대상", "경로", "환경", "검증 방법", "통과 조건을 사례로 적고"]) expect(casesFirst).toContain(field);
+    expect(casesFirst).toContain("사례 정의→실행→동일 사례 확인");
+    expect(intake).toContain("끝나면 그 사례를 사용자의 실제 진입점·대상 환경에서");
+    expect(preparation).toContain("비코드 작업과 작은 직접 편집을 포함해");
+    expect(preparation).toContain("[공통 접수·선택 기준의 사례 준비·실행·확인 순서](intake.md#공통-접수선택-기준)를 먼저 따른다");
+    expect(preparation.replaceAll(" ", "")).not.toContain("사례정의→실행→동일사례확인");
+    expect(preparation).not.toContain("capability 선택·계획 때 먼저 요구마다");
     expect(preparation).toContain("목표나 일반 완료 조건만 적은 것은 사례 정의를 대신하지 않는다");
+    expect([...intake.trim()].length).toBeLessThanOrEqual(4344);
+    expect(Buffer.byteLength(intake.trim(), "utf8")).toBeLessThanOrEqual(9783);
   });
   it("reuses the existing AC evidence plan and validator while keeping small direct work free of new workflow or gate obligations (D36)", () => {
     const text = instructions("references/entry-details.md");
