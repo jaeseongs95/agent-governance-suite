@@ -27,8 +27,9 @@ it("binds parent accountability after frozen r27 without changing prior source-s
   const nativeProcedure = JSON.parse(read("tests/skill-classification/fixtures.native-procedure-source-successor.json").toString("utf8"));
   const intakeLength = JSON.parse(read("tests/skill-classification/fixtures.intake-length-source-successor.json").toString("utf8"));
   const writtenCases = JSON.parse(read("tests/skill-classification/fixtures.intake-written-cases-source-successor.json").toString("utf8"));
+  const delivery = JSON.parse(read("tests/skill-classification/fixtures.intake-delivery-source-successor.json").toString("utf8"));
   const current = loadCurrentSourceBindings(rootDirectory);
-  expect(current.manifest).toMatchObject({revision: writtenCases.revision});
+  expect(current.manifest).toMatchObject({revision: delivery.revision});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(previous.bindings.map((binding: {path: string}) => binding.path));
   for (const binding of manifest.bindings) {
     expect(binding.previousDigest).toBe(previous.bindings.find((row: {path: string}) => row.path === binding.path).digest);
@@ -36,7 +37,7 @@ it("binds parent accountability after frozen r27 without changing prior source-s
     expect(domainLatest.previousDigest).toBe(binding.digest);
     const successor = nativeProcedure.bindings.find((row: {path: string}) => row.path === binding.path);
     if (successor) expect(successor.previousDigest).toBe(domainLatest.digest);
-    const latest = writtenCases.bindings.find((row: {path: string}) => row.path === binding.path) ?? intakeLength.bindings.find((row: {path: string}) => row.path === binding.path) ?? successor ?? domainLatest;
+    const latest = delivery.bindings.find((row: {path: string}) => row.path === binding.path) ?? writtenCases.bindings.find((row: {path: string}) => row.path === binding.path) ?? intakeLength.bindings.find((row: {path: string}) => row.path === binding.path) ?? successor ?? domainLatest;
     const actual = read(binding.path);
     expect([actual.length, hash(actual)]).toEqual([latest.bytes, latest.digest]);
     expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest.digest);
@@ -54,7 +55,8 @@ it("binds parent accountability after frozen r27 without changing prior source-s
     expect(hash(source)).toBe(reference.digest);
     const selected = Buffer.from(source.toString("utf8").split(/\r?\n/u).slice(reference.startLine - 1, reference.endLine).join("\n"))
       .subarray(reference.startByte ?? 0, reference.endByte);
-    const live = writtenCases.spanPreservation.spans.find((row: {skillId: string; group: string; index: number}) => row.skillId === "orchestrator" && row.group === span.group && row.index === span.index)
+    const live = delivery.spanPreservation.spans.find((row: {skillId: string; group: string; index: number}) => row.skillId === "orchestrator" && row.group === span.group && row.index === span.index)
+      ?? writtenCases.spanPreservation.spans.find((row: {skillId: string; group: string; index: number}) => row.skillId === "orchestrator" && row.group === span.group && row.index === span.index)
       ?? intakeLength.spanPreservation.spans.find((row: {skillId: string; group: string; index: number}) => row.skillId === "orchestrator" && row.group === span.group && row.index === span.index)
       ?? nativeProcedure.spanPreservation.spans.find((row: {skillId: string; group: string; index: number}) => row.skillId === "orchestrator" && row.group === span.group && row.index === span.index)
       ?? domain.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === span.group && row.index === span.index);

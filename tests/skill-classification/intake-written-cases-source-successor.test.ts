@@ -14,6 +14,16 @@ const bytes = readFileSync(path.join(root, file));
 const manifest = JSON.parse(bytes.toString("utf8"));
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], {cwd: root});
+const deliveryBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-delivery-source-successor.json"));
+const delivery = JSON.parse(deliveryBytes.toString("utf8"));
+/** Preserve the r35 one-verb oracle at the hash-bound predecessor of r36. */
+function writtenCasesSource(file: string): Buffer {
+  const binding = delivery.bindings.find((row: {path: string}) => row.path === file);
+  if (!binding) return readFileSync(path.join(root, file));
+  const source = execFileSync("git", ["show", `${delivery.sourceBaseRevision}:${file}`], {cwd: root});
+  expect(hash(source)).toBe(binding.previousDigest);
+  return source;
+}
 type Span = {path: string; startLine: number; endLine: number; startByte?: number; endByte?: number; digest: string};
 function selected(source: Buffer, span: Span): Buffer {
   expect(hash(source)).toBe(span.digest);
@@ -27,7 +37,7 @@ function selected(source: Buffer, span: Span): Buffer {
 
 it("D36 WR01 changes only the case-recording verb and preserves the exact intake length and budgets", () => {
   const entry = "skills/orchestrator/references/intake.md";
-  const before = previous(entry).toString("utf8"), after = readFileSync(path.join(root, entry), "utf8");
+  const before = previous(entry).toString("utf8"), after = writtenCasesSource(entry).toString("utf8");
   expect(before.split("사례를 정한다.")).toHaveLength(2);
   expect(after).toBe(before.replace("사례를 정한다.", "사례를 적는다."));
   expect([after.length, Buffer.byteLength(after)]).toEqual([before.length, Buffer.byteLength(before)]);
@@ -47,16 +57,18 @@ it("D36 WR02-04 appends r35 after frozen r34 and changes only the selected case-
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.intake-length-source-successor.json", bytes: frozen.length, digest: hash(frozen)});
   expect(manifest.bindings.map((row: {path: string}) => row.path)).toEqual(["skills/orchestrator/classification.json", "skills/orchestrator/references/intake.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: manifest.revision}, digest: hash(bytes)});
+  expect(current).toMatchObject({manifest: {revision: delivery.revision}, digest: hash(deliveryBytes)});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
-    const actual = readFileSync(path.join(root, binding.path));
+    const actual = writtenCasesSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
-    for (const unbound of [binding.digest, `sha256:${"0".repeat(64)}`]) expect(() => current.resolveDigest(binding.path, unbound)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    const latest = delivery.bindings.find((row: {path: string}) => row.path === binding.path).digest;
+    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
+    expect(current.resolveDigest(binding.path, binding.digest)).toBe(latest);
+    for (const unbound of [latest, `sha256:${"0".repeat(64)}`]) expect(() => current.resolveDigest(binding.path, unbound)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
   const descriptor = "skills/orchestrator/classification.json", intake = "skills/orchestrator/references/intake.md";
-  const before = JSON.parse(previous(descriptor).toString("utf8")), after = JSON.parse(readFileSync(path.join(root, descriptor), "utf8"));
+  const before = JSON.parse(previous(descriptor).toString("utf8")), after = JSON.parse(writtenCasesSource(descriptor).toString("utf8"));
   const digest = manifest.bindings.find((row: {path: string}) => row.path === intake).digest;
   const rebind = (span: Span) => span.path === intake ? {...span, digest} : span;
   expect(after).toEqual({...before, applicability: before.applicability.map(rebind), exclusions: before.exclusions.map(rebind)});
@@ -65,7 +77,7 @@ it("D36 WR02-04 appends r35 after frozen r34 and changes only the selected case-
   const changed: string[] = []; let compared = 0, rebound = 0, unchanged = 0;
   for (const group of ["applicability", "exclusions"] as const) for (const [index, span] of (after[group] as Span[]).entries()) {
     const prior = selected(previous(before[group][index].path), before[group][index]);
-    const actual = selected(readFileSync(path.join(root, span.path)), span);
+    const actual = selected(writtenCasesSource(span.path), span);
     const row = manifest.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === group && row.index === index);
     if (span.path === intake) {
       expect(row.previous).toEqual({...before[group][index], selectedBytes: prior.length, selectedDigest: hash(prior)});
@@ -79,7 +91,9 @@ it("D36 WR02-04 appends r35 after frozen r34 and changes only the selected case-
       expect(actual.toString("utf8")).toBe(prior.toString("utf8").replace("사례를 정한다.", "사례를 적는다."));
       expect(actual.toString("utf8")).toContain("무엇을·어디서·어떤 결과면 성공인지 사례를 적는다.");
     }
-    expect(skill[group]).toContain(actual.toString("utf8").trim()); compared++;
+    const reboundSpan = delivery.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === group && row.index === index);
+    const live = reboundSpan ? selected(readFileSync(path.join(root, reboundSpan.current.path)), reboundSpan.current) : actual;
+    expect(skill[group]).toContain(live.toString("utf8").trim()); compared++;
   }
   expect([compared, rebound, unchanged]).toEqual([18, 13, 5]);
   expect(changed).toEqual(["orchestrator:applicability[5]"]);
