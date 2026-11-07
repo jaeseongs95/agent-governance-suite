@@ -45,7 +45,8 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
     await mkdir(path.join(isolated, "mcp-server", "dist"), { recursive: true });
     await mkdir(state, { recursive: true });
     await Promise.all([
-      ...["contracts", "skills"].map((directory) => cp(path.join(root, directory), path.join(isolated, directory), { recursive: true })),
+      // 3.9.0 (AGS3-D-0007): the routing catalog is packaged in runtime/, next to contracts and skills.
+      ...["contracts", "skills", "runtime"].map((directory) => cp(path.join(root, directory), path.join(isolated, directory), { recursive: true })),
       ...["server.mjs", "governance-hook.mjs"].map((bundle) => cp(path.join(root, "mcp-server", "dist", bundle), path.join(isolated, "mcp-server", "dist", bundle))),
     ]);
     const seed = new SqliteWorkflowStore(database);

@@ -253,15 +253,17 @@ describe("checkpoint cue and restore candidate locale", () => {
   // Behavior 5 (d7585d74): the AGS turn check text.
   // The skill line points at the installed purpose map given at context start (AGS3-D-0032 candidate); the map and its
   // rules are checked on their own in d0360-skill-purpose-cue.
+  // 3.9.0 (AGS3-D-0032/0053): the skill line also points at the intake's checks before acting, and the save line
+  // asks each save to rebuild the stored state (merge duplicates, drop obsolete premises, reference finished work).
   const CUE_KO_TAIL = [
-    "답하거나 다음 도구를 쓰기 전에 이번 메시지가 요구하는 판단·행동을 맥락 시작에 받은 AGS 스킬별 대상 목록과 대조하고, 맞는 스킬은 그 판단·행동 전에 지금 호출한다(질문·확인 요청도 포함한다).",
-    "이번 메시지가 교정, 새 결정·승인·금지, 추가 작업, 범위 변경이면 답하거나 다음 도구를 쓰기 전에 두 가지를 하라. (1) 바뀐 목표·범위·위험에 맞춰 스킬 선택을 다시 판단하고 새로 필요한 스킬은 지금 호출한다. (2) checkpoint_context로 현재 행동을 바꾸는 필요한 사용자 원문과 바뀐 남은 일을 핵심 현재 상태에 반영하고 중복·폐기·불필요한 완료 이력은 정리한다.",
+    "답하거나 다음 도구를 쓰기 전에 이번 메시지가 요구하는 판단·행동을 맥락 시작에 받은 AGS 스킬별 대상 목록과 대조하고, 맞는 스킬은 그 판단·행동 전에 지금 호출한다(질문·확인 요청도 포함한다). 만들기·재개·보고·다음 단계 전에는 공통 접수 기준의 「행동 전 확인」 중 해당하는 항목을 적용한다.",
+    "이번 메시지가 교정, 새 결정·승인·금지, 추가 작업, 범위 변경이면 답하거나 다음 도구를 쓰기 전에 두 가지를 하라. (1) 바뀐 목표·범위·위험에 맞춰 스킬 선택을 다시 판단하고 새로 필요한 스킬은 지금 호출한다. (2) checkpoint_context로 현재 행동을 바꾸는 필요한 사용자 원문과 바뀐 남은 일을 핵심 현재 상태에 반영하되, 저장된 상태와 대조해 중복은 합치고 폐기된 전제는 지우며 완료 이력은 근거 참조로 줄인다.",
     "압축·재개·fork 뒤 이어 갈 핵심 현재 상태가 대화에 보이지 않으면 inspect_context로 후보를 확인하고 load_context로 읽어 최신 요청과 대조하라. 이미 주입된 현재 본문은 다시 읽을 필요 없다.",
     "checkpoint_context는 압축·재개 뒤 이어 갈 핵심 현재 상태용이다. 이 알림은 저장·복원을 대신하지 않는다. 상태 변화가 없으면 불필요한 저장을 하지 말고 계속하라.",
   ];
   const CUE_EN_TAIL = [
-    "Before answering or using the next tool, match the judgment or action this message calls for against the AGS skill targets given at context start, and call every matching skill now, before that judgment or action (questions and check requests included).",
-    "If this message brings a correction, decision, approval, prohibition, added work or scope change, do two things before answering or using the next tool: (1) re-decide skill selection for the changed goal, scope and risk; call newly needed skills now; (2) use checkpoint_context to update essential current state with needed user quotes affecting current action and changed remaining work; trim duplicate, obsolete and unnecessary completed history.",
+    "Before answering or using the next tool, match the judgment or action this message calls for against the AGS skill targets given at context start, and call every matching skill now, before that judgment or action (questions and check requests included). Before building, resuming, reporting or moving to the next step, apply the matching items of the shared intake checks before acting (「행동 전 확인」).",
+    "If this message brings a correction, decision, approval, prohibition, added work or scope change, do two things before answering or using the next tool: (1) re-decide skill selection for the changed goal, scope and risk; call newly needed skills now; (2) use checkpoint_context to update essential current state with needed user quotes affecting current action and changed remaining work, comparing it with the stored state: merge duplicates, drop obsolete premises and reduce completed history to evidence references.",
     "After compaction/resume/fork, if essential current state is not visible, inspect_context for a candidate and load_context to read it, then compare with the latest request. No need to reload an already injected current body.",
     "checkpoint_context keeps essential current state for compaction/resume. This notice does not save or restore anything. If state is unchanged, skip unnecessary saves and continue.",
   ];

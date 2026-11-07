@@ -166,9 +166,12 @@ describe("server instructions (docs/i18n-design.md 4.2, 6)", () => {
     expect(serverInstructions("ko")).toBe(`${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);
     const english = serverInstructions("en");
     expect(english).not.toBe(serverInstructions("ko"));
-    expect(english.startsWith("agent-governance-suite intake guide: ")).toBe(true);
+    expect(english.startsWith("AGS shared intake:\n\n")).toBe(true);
     expect(english.split(intake)).toHaveLength(2);
-    expect(english).toContain("A successful send means the message was queued, not that the recipient received or processed it.");
+    // 3.9.0 (AGS3-D-0032): the guide keeps what the message tool descriptions lack (after-send wake handling and the
+    // reporting rule); prepare/send/ACK meanings are in each tool description.
+    expect(english).toContain("After a send: autoWake available, no extra wake;");
+    expect(english).toContain("Report only confirmed queueing/delivery;");
     expect(english.replace(intake, "")).not.toMatch(HANGUL);
     for (const locale of ["en", "ko"] as const) {
       const fixture = await connect(locale);
@@ -181,6 +184,16 @@ describe("server instructions (docs/i18n-design.md 4.2, 6)", () => {
         expect(received).toContain("자식에게 책임을 넘기거나 불필요한 자식 전용 차단·권한·식별 계층을 더하지 않는다");
       } finally { await fixture.close(); }
     }
+  });
+});
+
+// 3.9.0 (AGS3-D-0032): the 3.8.2 instructions reached a Claude Code session cut off with "[truncated]" after about
+// 4,060 characters, so the session-message guide never arrived. Both locales keep the whole MCP instructions within one
+// budget below that point. Codex and Antigravity limits are not measured; the same budget applies to every host.
+const INSTRUCTIONS_BUDGET = 4000;
+describe("server instructions size (AGS3-D-0032)", () => {
+  it.each(["ko", "en"] as const)("keeps the whole %s MCP instructions within the shared budget", locale => {
+    expect([...serverInstructions(locale)].length).toBeLessThanOrEqual(INSTRUCTIONS_BUDGET);
   });
 });
 

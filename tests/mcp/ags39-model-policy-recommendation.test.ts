@@ -69,12 +69,24 @@ describe("AGS3-D-0018/0007 one recommendation definition owned by core", () => {
     expect(getPolicyRevision()).toBe(runtimeCatalog.policy_revision);
   });
 
+  // The acceptance-evidence schemas that workflow-service reaches through runtime/provider-acceptance-schema.mjs predate
+  // 3.8.2 and are the not-yet-owned exemptions CB-07 lists (ags38-core-boundary-shared.test.ts), which fails when they
+  // disappear. Here they stay external so every other skills/ file, the routing catalog included, must be unreachable.
+  const NOT_YET_OWNED = new Set([
+    "../skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
+    "../skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+    "../skills/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json",
+    "../skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
+  ]);
   it.each(["runtime/model-catalog-adapter.mjs", "mcp-server/src/host-execution-adapters.ts", "mcp-server/src/workflow-service.ts"])(
     "B3 bundles %s with every skills/ file unavailable", async (entry) => {
       const blocked: string[] = [];
       const result = await build({ entryPoints: [path.join(root, entry)], bundle: true, platform: "node", format: "esm", write: false, logLevel: "silent",
         plugins: [{ name: "no-skill-files", setup(builder) {
-          builder.onResolve({ filter: /(^|[\\/])skills[\\/]/ }, args => { blocked.push(args.path); return { errors: [{ text: "skill file unavailable to core" }] }; });
+          builder.onResolve({ filter: /(^|[\\/])skills[\\/]/ }, args => {
+            if (path.basename(args.importer) === "provider-acceptance-schema.mjs" && NOT_YET_OWNED.has(args.path)) return { path: args.path, external: true };
+            blocked.push(args.path); return { errors: [{ text: "skill file unavailable to core" }] };
+          });
         } }] }).catch((error: { errors?: unknown[] }) => ({ errors: error.errors ?? [error] }));
       expect(blocked).toEqual([]);
       expect(result.errors).toEqual([]);

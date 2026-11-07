@@ -300,9 +300,7 @@ describe("MCP tool schema profiles", () => {
         const response = trace.filter(row => row.direction === "server").map(row => JSON.parse(row.wire))
           .find(row => row.id === initialize.id && row.result);
         expect(response?.result.instructions).toBe(expected);
-        expect(response.result.instructions).toContain("분류 지원이 설정된 환경에서만");
-        expect(response.result.instructions).toContain("도구 노출로 설정을 추정하지 않으며");
-        expect(response.result.instructions).toContain("미확정·거부 시 계약의 실패 처리를 따른다");
+        expect(response.result.instructions).toContain("분류 지원(`classify_skills`)은 설정된 환경에서만");
         expect(response.result.instructions).toContain("독립 작업을 계속하며 턴·전체 작업을 끝내지 않는다.");
         expect(Object.keys(response.result)).toEqual(expect.arrayContaining(["protocolVersion", "capabilities", "serverInfo", "instructions"]));
       }
@@ -314,6 +312,14 @@ describe("MCP tool schema profiles", () => {
       expect(claudeTools.map((tool) => tool.name)).toEqual(codexTools.map((tool) => tool.name));
       const withoutSchema = (tools: typeof codexTools) => tools.map((tool) => ({ ...tool, inputSchema: null }));
       expect(withoutSchema(claudeTools)).toEqual(withoutSchema(codexTools));
+      // 3.9.0 (AGS3-D-0032): the classification details left the instructions for the classify_skills description,
+      // which every profile receives in tools/list before the call.
+      for (const tools of [(await implicit.listTools()).tools, codexTools, claudeTools]) {
+        const classify = tools.find((tool) => tool.name === "classify_skills")?.description ?? "";
+        expect(classify).toContain("이 도구가 노출됐다는 사실만으로 분류 지원이 설정됐다고 추정하지 않는다");
+        expect(classify).toContain("미확정·거부·미가용·미검증은 성공이 아니다");
+        expect(classify).toContain("공통 분류 지원 계약의 실패 처리대로 직접 고른 스킬로 독립 작업을 계속한다");
+      }
     } finally {
       await implicit.close();
       await codex.close();

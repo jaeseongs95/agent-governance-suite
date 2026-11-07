@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
-  SKILL_FIELDS, checkRepository, findFieldWording, intakeLines, skillLines,
+  REFERENCE_FIELDS, SKILL_FIELDS, checkRepository, findFieldWording, intakeLines, skillLines,
 } from "../../scripts/check-domain-neutral-wording.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -35,6 +35,8 @@ const REFERENCE_CASES = [
 ];
 
 function copyReferences(fixture, withClaude = false) {
+  // 3.9.0 (AGS3-D-0038): a listed field-specific reference must exist, so a fixture repository carries the folder.
+  for (const field of Object.keys(REFERENCE_FIELDS)) mkdirSync(path.join(fixture, field), { recursive: true });
   for (const { file } of REFERENCE_CASES) for (const prefix of withClaude ? ["", "claude-plugin/"] : [""]) {
     const target = path.join(fixture, prefix + file);
     mkdirSync(path.dirname(target), { recursive: true });

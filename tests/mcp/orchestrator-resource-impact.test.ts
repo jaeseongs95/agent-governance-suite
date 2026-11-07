@@ -7,10 +7,12 @@ const shared = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import
 // 3.8.0 (AGS3-D-0032): the intake block lives in its own reference, so the orchestrator skill does not load it twice.
 const sharedIntake = readFileSync(new URL("../../skills/orchestrator/references/intake.md", import.meta.url), "utf8");
 const intake = sharedIntake.match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1] ?? "";
-const impactLine = intake.split("\n").find((line) => line.startsWith("- 대규모 준비·검증")) ?? "";
-const resumeLine = intake.split("\n").find((line) => line.includes("자원에 따른 실행 위치")) ?? "";
+// 3.9.0 (AGS3-D-0032) shortened the lines; what to keep across a resume is saved by the checkpoint cue and tool.
+const impactLine = intake.split("\n").find((line) => line.startsWith("- 대규모·장시간·동시 실행 전에는")) ?? "";
+const resumeLine = intake.split("\n").find((line) => line.startsWith("새 사용자 메시지의 교정")) ?? "";
 const gateLine = intake.split("\n").find((line) => line.startsWith("- 무거운 단계")) ?? "";
 const selectionLine = intake.split("\n").find((line) => line.startsWith("선택 결과를 출력하지 않아도")) ?? "";
+const checkpointDescription = (JSON.parse(readFileSync(new URL("../../locales/ko/tools.json", import.meta.url), "utf8")) as Record<string, string>)["tools.checkpoint_context.description"] ?? "";
 
 /** Candidate-derived synthetic cases for a designated evaluator; none is a holdout or a model result. */
 export const resourceImpactBehaviorEvaluation = {
@@ -74,30 +76,32 @@ describe("orchestrator resource-impact prompt propagation", () => {
     expect(impactLine).not.toBe("");
     expect(resumeLine).not.toBe("");
     expect(impactLine).toContain("확인한 환경·동시 작업");
-    expect(impactLine).toContain("예상 메모리·디스크 공간·I/O·시간");
+    expect(impactLine).toContain("예상 메모리·디스크·I/O·시간");
     expect(impactLine).toContain("범위·병렬 수·실행 위치·종료·정리 조건");
-    expect(impactLine).toContain("미확인 값은 추측하지 않는다");
+    expect(impactLine).toContain("미확인 값은 추측하지 않으며");
     expect(impactLine).toContain("승인·PRE를 붙이지 않는다");
     expect(impactLine).toContain("작은 읽기·편집마다 계측·보고·점검 도구를 더하거나");
     expect(impactLine).toContain("이미 허용된 준비·검증·작업본 저장·자동 검사에 승인·PRE를 붙이지 않는다");
     expect(intake.indexOf(impactLine)).toBeLessThan(intake.indexOf(gateLine));
-    expect(selectionLine).toContain("해당 전문 판단·행동 전에 호스트 방식으로 실제 호출하고");
-    expect(selectionLine).toContain("본문·필요 참고 자료에 따라 작업·검증·산출물까지 수행한다");
-    // 3.8.0 (AGS3-D-0032): re-selection on a changed goal, scope or risk sits with the selection rules, and every new
-    // user message is checked for such a change.
-    expect(selectionLine).toContain("작업 중이나 새 메시지에서 목표·범위·위험·필요 판단이 달라지면");
-    expect(selectionLine).toContain("다음 해당 행동 전에 재선택·호출한다");
+    expect(selectionLine).toContain("해당 판단·행동 전에 호스트 방식으로 실제 호출하고");
+    expect(selectionLine).toContain("그 스킬이 정한 작업·필수 산출물·검증을 실제로 했는지 대조한다");
+    // 3.8.0 (AGS3-D-0032): re-selection on a changed goal, scope, risk or needed judgment sits with the selection rules.
+    expect(selectionLine).toContain("목표·범위·위험·필요 판단이 바뀌면 다음 해당 행동 전에 다시 고른다");
     expect(resumeLine).toContain("새 사용자 메시지의 교정");
-    expect(resumeLine).toContain("교정된 행동·범위·남은 검증");
+    expect(resumeLine).toContain("그 턴에 `checkpoint_context`로 현재 상태에 반영한다");
     expect(resumeLine).toContain("근거 없이 이전 교정·실행·검증을 기억한다고 하지 않는다");
-    expect(resumeLine).toContain("압축·새 세션·재부팅 뒤에는 `inspect_context`·`load_context`로");
-    expect(resumeLine).toContain("현재 환경과 대조하고 출처·범위를 보고해 지적된 행동을 반복하지 않");
-    expect(resumeLine).toContain("인계 작업은 실행 전 교정·제약 근거를 대조");
-    expect(intake).toContain("현재 도구·권한으로 가능한 실행·검증은 끝내 실제 결과를 보고");
-    expect(intake).toContain("사용자만 할 승인·비밀값 입력·본인 조작은 그 부분·이유만 요청");
+    expect(resumeLine).toContain("압축·새 세션·재부팅·인계 뒤에는 `inspect_context`·`load_context`로");
+    expect(resumeLine).toContain("현재 상태와 대조하고 출처·범위를 보고해 지적된 행동을 반복하지 않");
+    // The corrected behavior, scope, remaining checks and resource-dependent location, parallelism and stop/resume
+    // conditions are saved by the per-message cue and checkpoint_context (AGS3-D-0032).
+    expect(checkpointDescription).toContain("실행 위치·병렬 수·중단·재개 조건은 보존한다");
+    expect(intake).toContain("시작·재개·인계·새 시험·도구 단계 전: 기억한 전제 대신 현재 정본");
+    expect(intake).toContain("가능한 검증을 사용자에게 넘기지 않고");
+    expect(intake).toContain("사용자만 할 승인·비밀값 입력·본인 조작이 남으면 그 턴에 그 부분만");
     expect(gateLine).toContain("mutation-risk-preflight");
     expect(gateLine).toContain("change-scope-guardian");
-    expect(gateLine).toContain("원본·백업·이력으로 복구할 편집·작업본 저장·공유·검증·자동 검사는 바로 한다");
+    expect(gateLine).toContain("같은 디스크 안 이동·이름 변경과 복구할 수 있는 편집·검증은 바로 한다");
+    expect(impactLine).toContain("이미 허용된 준비·검증·작업본 저장·자동 검사에 승인·PRE를 붙이지 않는다");
 
     for (const instructions of [SKILL_INTAKE_SERVER_INSTRUCTIONS, serverInstructions()]) {
       expect(instructions).toContain(intake);

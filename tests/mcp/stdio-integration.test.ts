@@ -132,6 +132,8 @@ describe("bundled STDIO MCP server", () => {
       cp(bundledServer, isolatedServer),
       cp(join(rootDirectory, "contracts"), join(isolatedRoot, "contracts"), { recursive: true }),
       cp(join(rootDirectory, "skills"), join(isolatedRoot, "skills"), { recursive: true }),
+      // 3.9.0 (AGS3-D-0007): the glossary and routing catalog are packaged in runtime/, next to contracts and skills.
+      cp(join(rootDirectory, "runtime"), join(isolatedRoot, "runtime"), { recursive: true }),
     ]);
     await mkdir(unavailableContinuityPath, { recursive: true });
     const server = await connect("clean-room-install-test", { command: process.execPath, args: [isolatedServer], cwd: isolatedRoot, env: environment });

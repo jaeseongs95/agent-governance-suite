@@ -38,7 +38,8 @@ it("keeps explicit disable and user override above persistence and mandatory-fir
   expect(text).toContain("Explicit disable or user override takes precedence over automatic selection and mandatory-first wording");
   expect(text).toContain("examples, not the only ways to disable it");
   expect(intake).toContain("사용자 disable·override가 우선하며");
-  expect(intake).toContain("부재·비활성이면 재활성화를 요구하거나 멈추지 말고 일반 engineering 원칙으로");
+  // 3.9.0 (AGS3-D-0032) wording of the same rule.
+  expect(intake).toContain("없거나 꺼져 있으면 재활성화를 요구하거나 멈추지 말고");
   expect(intake).toContain("원 요구·수용 기준·시험을 지킨다");
   expect(text).toContain("A later explicit user request may enable this skill for that request; it does not change persistent settings");
   expect(intake).toContain("후속 명시 사용은 그 요청에만 적용하고 전역 설정은 바꾸지 않는다");

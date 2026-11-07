@@ -133,9 +133,11 @@ describe("AGS 3.1.1 agy call observation", () => {
 
   it("reports a board hook that timed out or failed instead of dropping it silently", async () => {
     const timedOut = await preInvocation(() => ({ status: null, signal: "SIGTERM", error: Object.assign(new Error("spawnSync ETIMEDOUT"), { code: "ETIMEDOUT" }) }));
-    expect(timedOut.map((line) => JSON.parse(line.slice(line.indexOf("{"))))).toEqual([{ stage: "session-board", code: "ETIMEDOUT" }]);
+    // 3.9.0 (AGS3-D-0023): one common-format record per line, naming the component and event.
+    const record = { component: "antigravity-hook-runner", event: "stage-failure", stage: "session-board" };
+    expect(timedOut.map((line) => JSON.parse(line))).toEqual([{ ...record, code: "ETIMEDOUT" }]);
     const failed = await preInvocation(() => ({ status: 1, signal: null }));
-    expect(failed.map((line) => JSON.parse(line.slice(line.indexOf("{"))))).toEqual([{ stage: "session-board", code: "HOOK_EXIT_NONZERO" }]);
+    expect(failed.map((line) => JSON.parse(line))).toEqual([{ ...record, code: "HOOK_EXIT_NONZERO" }]);
   });
 
   it("records only the tools the server observes", async () => {

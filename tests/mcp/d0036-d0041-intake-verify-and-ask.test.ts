@@ -26,26 +26,26 @@ const sentence = (marker: string) => sentences.find(text => text.includes(marker
 const count = (text: string, fragment: string) => text.split(fragment).length - 1;
 const vendors = /\b(?:Codex|Claude|Gemini|GPT-[0-9]|Cloudflare|SSH)/u;
 
-const casesFirst = sentence("만들거나 바꾸기 전");
-const realEntryPoint = sentence("끝나면 그 사례를");
-const runnableChecks = sentence("현재 도구·권한으로 가능한 실행·검증은");
-const reportUnrun = sentence("미실행 범위는 미검증으로");
-const userOnly = sentence("사용자만 할 승인·비밀값 입력·본인 조작은");
-const specificRequest = sentence("앞 문맥 없이 실행하도록");
+// 3.9.0 (AGS3-D-0032) regrouped the intake into checks before acting and shortened the wording to keep the whole MCP
+// instructions within the size a host delivers. The rules and their boundaries below are the same; the markers and
+// the order checks follow the new grouping (the request target, the approval ask and the no-ask list share one line).
+const casesFirst = sentence("먼저 사례로 적고");
+const realEntryPoint = sentence("끝나면 그 사례를 사용자의 실제 진입점");
+const runnableChecks = sentence("가능한 검증을 사용자에게 넘기지 않고");
+const userOnly = sentence("사용자만 할 승인·비밀값 입력·본인 조작이 남으면");
+const blockedStep = sentence("다른 담당의 수정 대기는");
 const askApproval = sentence("우회하지 말고 대상·영향·명령을 모아");
 const premiseSignal = sentence("증거가 흔한 기본값과 어긋나면");
-const noAsk = sentence("되돌릴 수 있는 수행 방식·관례로");
-const handOff = sentence("역할 밖 요청은");
-const peerBlocker = sentence("다른 세션이 내 역할·도구로 풀 막힘을 요청하면");
-const added = [casesFirst, realEntryPoint, runnableChecks, reportUnrun, specificRequest, askApproval, premiseSignal, noAsk, peerBlocker];
+const peerBlocker = sentence("다른 세션이 해결을 요청한 막힘");
+const added = [casesFirst, realEntryPoint, runnableChecks, userOnly, askApproval, premiseSignal, peerBlocker];
 
 describe("shared intake: verification cases first (AGS3-D-0036)", () => {
   it("has any work that makes or changes something fix what, where and which result is success before it starts", () => {
     expect(casesFirst).not.toBe("");
-    // Not limited to code: any work that makes or changes something.
-    expect(casesFirst).toContain("만들거나 바꾸기 전");
-    for (const field of ["요구별", "대상", "경로", "환경", "검증 방법", "통과 조건을 사례로 적고"]) expect(casesFirst).toContain(field);
-    expect(casesFirst).toContain("사례 정의→실행→동일 사례 확인");
+    // Not limited to code: any work that changes something, before the change and before the report.
+    expect(casesFirst).toContain("만들거나 바꾸기 전과 보고 전");
+    for (const field of ["요구별", "대상", "경로", "환경", "검증 방법", "통과 조건을 먼저 사례로 적고"]) expect(casesFirst).toContain(field);
+    expect(casesFirst).toContain("정의→실행→같은 사례 확인");
     expect(casesFirst).not.toMatch(/코드|테스트/u);
   });
 });
@@ -54,23 +54,17 @@ describe("shared intake: run the cases where the user uses the result (AGS3-D-00
   it("runs those cases at the user's real entry point and target environment, not an inside check", () => {
     expect(realEntryPoint).not.toBe("");
     // It runs the cases fixed before the work, after the work.
-    expect(realEntryPoint).toContain("끝나면 그 사례를");
     expect(sentences.indexOf(casesFirst)).toBeLessThan(sentences.indexOf(realEntryPoint));
-    expect(realEntryPoint).toContain("사용자의 실제 진입점·대상 환경");
-    // D32 removed illustrative examples; the universal make/change scope and all actual-use boundaries stay binding.
-    for (const boundary of ["그 사례", "사용자의 실제 진입점", "대상 환경", "직접 실행해 확인"]) expect(realEntryPoint).toContain(boundary);
-    expect(realEntryPoint).toContain("직접 실행해 확인하며");
+    for (const boundary of ["끝나면", "사용자의 실제 진입점·대상 환경", "직접 실행해 확인한다"]) expect(realEntryPoint).toContain(boundary);
     // The case: a check inside the server (12 tools) stood in for the user's path (10 tools).
-    expect(realEntryPoint).toContain("내부 점검·일부 시험 통과로 대신하지 않는다");
+    expect(runnableChecks).toContain("내부 점검·일부 통과로 대신하거나");
   });
 
   it("finishes the runnable checks itself and reports what was not run as unverified", () => {
-    expect(runnableChecks).toContain("현재 도구·권한으로 가능한 실행·검증은 끝내 실제 결과를 보고");
     // The case: the session asked the user to press sync and look again instead of reading the public tool list itself.
-    expect(runnableChecks).toContain("사용자에게 떠넘기지 않는다");
-    expect(sentences.indexOf(runnableChecks)).toBeGreaterThan(-1);
-    expect(sentences.indexOf(reportUnrun)).toBe(sentences.indexOf(runnableChecks) + 1);
-    expect(reportUnrun).toContain("미실행 범위는 미검증으로 적는다");
+    expect(runnableChecks).toContain("가능한 검증을 사용자에게 넘기지 않고");
+    expect(runnableChecks).toContain("실행하지 않은 범위는 미검증으로 적는다");
+    expect(sentences.indexOf(runnableChecks)).toBeGreaterThan(sentences.indexOf(realEntryPoint));
     // The narrower "do not call an unrun step done" wording is replaced, not kept beside it.
     expect(count(source, "미실행을 완료로 표현하지 않는다")).toBe(0);
   });
@@ -78,48 +72,42 @@ describe("shared intake: run the cases where the user uses the result (AGS3-D-00
 
 describe("shared intake: name what the user is asked to do (AGS3-D-0039)", () => {
   it("says which value, file or screen, when and from what it came, where, new or reused, and the exact command", () => {
-    expect(specificRequest).not.toBe("");
-    expect(specificRequest).toContain("요청은 앞 문맥 없이 실행하도록 대상(");
-    expect(specificRequest).toContain("대상(계정·권한·값·파일·화면, 언제 무엇으로 받았는지·위치·신규/재사용)");
-    expect(specificRequest).toContain("정확한 명령을 적는다");
+    expect(userOnly).not.toBe("");
+    expect(userOnly).toContain("그 부분만 앞 문맥 없이 실행하도록 대상(");
+    expect(userOnly).toContain("대상(계정·권한·값·파일·화면, 언제 무엇으로 받았는지·위치·신규/재사용)");
+    expect(userOnly).toContain("정확한 명령과 함께 요청하고");
     // The case: "the token" alone made the user ask which token.
-    expect(specificRequest).toContain("계정·권한·값");
-    // It opens the asking rules after the user-only and blocked-step sentences; the user-only sentence keeps asking
-    // only for the user's part and splitting the work, and the approval ask follows.
-    expect(userOnly).toContain("그 부분·이유만 요청하고");
-    expect(sentences.indexOf(userOnly)).toBeGreaterThan(-1);
-    expect(sentences.indexOf(specificRequest)).toBe(sentences.indexOf(sentence("턴·전체 작업을 끝내지 않는다")) + 1);
-    expect(sentences.indexOf(askApproval)).toBe(sentences.indexOf(specificRequest) + 1);
+    expect(userOnly).toContain("계정·권한·값");
+    expect(userOnly).toContain("「사용자가 할 일」과 「에이전트가 이어서 할 일」을 나눈다");
+    // The blocked-step rule follows the user-only request, and the approval ask follows the blocked step.
+    expect(sentences.indexOf(blockedStep)).toBe(sentences.indexOf(userOnly) + 1);
+    expect(sentences.indexOf(askApproval)).toBe(sentences.indexOf(blockedStep) + 1);
   });
 });
 
 describe("shared intake: follow-up repairs inside an approved goal (AGS3-D-0040)", () => {
   it("does not ask again for a follow-up fix or repair the approved goal needs, even when the action differs", () => {
-    expect(noAsk).toContain("이미 승인된 목표에 필요한 후속 수정·복구는 행동이 달라도 재질문 없이 진행한다");
+    expect(askApproval).toContain("승인된 목표의 후속 수정·복구는 행동이 달라도 다시 묻지 않는다");
     expect(premiseSignal).toContain("증거가 흔한 기본값과 어긋나면 질문 신호로 본다");
-    expect(sentences.indexOf(premiseSignal)).toBeGreaterThan(-1);
-    expect(sentences.indexOf(noAsk)).toBe(sentences.indexOf(premiseSignal) + 1);
     // What it already did not ask about stays.
-    expect(noAsk).toContain("되돌릴 수 있는 수행 방식·관례로 정할 값·이미 답한 사항");
+    expect(askApproval).toContain("되돌릴 수 있는 방식·관례로 정할 값·이미 답한 사항");
   });
 
   it("still asks for a new high-risk action outside the approval, and the pre-execution check stays", () => {
-    expect(askApproval).toContain("현재 권한 밖 승인이나 받은 승인 밖 새 고위험 행동은");
-    expect(askApproval).toContain("우회하지 말고 대상·영향·명령을 모아 한 번에 묻는다");
-    expect(source).toContain("직전에만 `mutation-risk-preflight`를 실제 호출한다");
-    // The ask comes before the no-ask list in the same line.
-    expect(sentences.indexOf(askApproval)).toBeLessThan(sentences.indexOf(noAsk));
+    expect(askApproval).toContain("현재 권한 밖 승인이나 받은 승인 밖 고위험 행동은");
+    expect(askApproval).toContain("우회하지 말고 대상·영향·명령을 모아 한 번에 묻고");
+    expect(source).toContain("변경 직전에만 `mutation-risk-preflight`를");
+    // The ask comes before the no-ask list in the same sentence.
+    expect(askApproval.indexOf("한 번에 묻고")).toBeLessThan(askApproval.indexOf("다시 묻지 않는다"));
   });
 });
 
 describe("shared intake: a peer's blocker inside this session's role is handled now (AGS3-D-0041)", () => {
   it("handles or starts it in that turn and answers the asking session instead of holding it as its own blocked step", () => {
     expect(peerBlocker).not.toBe("");
-    expect(peerBlocker).toContain("내 역할·도구로 풀 막힘을 요청하면");
-    expect(peerBlocker).toContain("보류 단계로 미루지 말고");
-    expect(peerBlocker).toContain("그 턴에 처리·시작해 결과를 답한다");
-    // It sits with the role rules, right after handing a request outside the role to the session that holds it.
-    expect(sentences.indexOf(peerBlocker)).toBe(sentences.indexOf(handOff) + 1);
+    expect(peerBlocker).toContain("맡은 범위의 것(진단 공백, 다른 세션이 해결을 요청한 막힘 포함)");
+    expect(peerBlocker).toContain("보고로 끝내지 말고");
+    expect(peerBlocker).toContain("그 턴에 고치기 시작해 결과를 답한다");
   });
 });
 

@@ -73,14 +73,14 @@
     {
       "path": "skills/orchestrator/classification.json",
       "previousDigest": "sha256:d49407e5fe8f6b2db407a52aedaddd90f3ba4d9ece5cc0fc2371982820647843",
-      "digest": "sha256:5b8de6fc0098d655565391c8c32cee91322680c862890df8c21ca00fccd17d5f",
+      "digest": "sha256:1ecc972babc27508f73c0f449f51b031dcd4279196198966eb9800428e3b66ef",
       "bytes": 4813
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "previousDigest": "sha256:1e1bddfaa4c294815a2ab2da4b071ecd2281a72c7b1e8f7bc72bb5ac585a6c71",
-      "digest": "sha256:9ee68b514bd98613dc37bb1fbabe5616f452035470dd40409e1b951c7c6b71d2",
-      "bytes": 6044
+      "digest": "sha256:7fca57e5d1538ecb0ccf9a2adc67a7494c35e9978eef0600b31e8751d40a319d",
+      "bytes": 8233
     },
     {
       "path": "skills/acceptance-evidence-validator/references/entry-details.md",

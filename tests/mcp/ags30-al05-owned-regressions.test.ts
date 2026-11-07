@@ -170,12 +170,16 @@ it("AGS3-D-0021 observes the descriptor once without a diagnostic-only capabilit
   expect(resolve.mock.results[0]?.value).toBe(capability);
 });
 
+// 3.9.0 (AGS3-D-0023): the sink passes only one common-format record line through; other text is replaced.
 it("AGS-D-0209 preserves producer serialization and absorbs only diagnostic writer failures", () => {
-  const serialized = 'synthetic-prefix {"phase":"fixture","reason":"FIXTURE"}';
+  const serialized = '{"phase":"fixture","reason":"FIXTURE","component":"fixture","event":"failure"}';
   const writer = vi.fn(() => { throw new Error("synthetic sink unavailable"); });
   expect(() => writeFailureDiagnostic(serialized, writer)).not.toThrow();
   expect(writer).toHaveBeenCalledTimes(1);
-  expect(writer).toHaveBeenCalledWith(serialized);
+  expect(writer).toHaveBeenCalledWith(`${serialized}\n`);
+  const other = vi.fn();
+  writeFailureDiagnostic('synthetic-prefix {"phase":"fixture","reason":"FIXTURE"}', other);
+  expect(other).toHaveBeenCalledWith('{"component":"diagnostics","event":"rejected-record","reason":"NOT_COMMON_FORMAT"}\n');
 });
 
 it.each([{ label: "missing", supported: undefined }, { label: "empty", supported: [] as const }])(

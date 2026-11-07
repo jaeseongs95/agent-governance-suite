@@ -54,19 +54,29 @@ describe("GOV09/10 actual provider replacement boundary", () => {
     expect(applied.value.spawnArguments).toEqual(input.spawnArguments);
     expect(createHash("sha256").update(readFileSync(h.cli)).digest("hex")).toBe(before);
   });
-  it.each(["unsupported", "unknown-catalog", "minimum", "class", "unknown-class", "audit", "order", "injection"])("keeps the original %s guard on explicitly supplied presets", mode => {
-    const h = fixture(), input = structuredClone(h.options), presets = structuredClone(h.presets), provider = presets.providers[input.provider];
+  it.each(["unsupported", "minimum", "audit", "order", "injection"])("keeps the original %s guard on explicitly supplied presets", mode => {
+    const h = fixture(), input = structuredClone(h.options), presets = structuredClone(h.presets);
     if (mode === "unsupported") input.supported = [];
-    if (mode === "unknown-catalog") {input.user = {model: "unregistered", effort: "high"}; input.supported = [{model: "unregistered", modelClass: "frontier", efforts: ["high"]}];}
     if (mode === "minimum") input.user = {effort: "medium"};
-    if (mode === "class") {input.highRisk = true; provider.catalog.models["opaque-engine-a"].model_class = "lightweight";}
-    if (mode === "unknown-class") {input.highRisk = true; input.supported[0].modelClass = null;}
     if (mode === "audit") input.role = "independent-audit";
     if (mode === "order") presets.model_class_order = [...classes].reverse();
     if (mode === "injection") input.presets = presets;
     const result = h.run("resolve", input, presets); expect(result.status).toBe(1);
     if (["audit", "order", "injection"].includes(mode)) expect(result.value).toBeNull();
     else expect(result.value.delivery).toBe("blocked");
+  });
+  // 3.9.0 (AGS3-D-0058): the model class and catalog registration are no longer grounds to refuse a selection. An
+  // unregistered model, a lower-class model on high-risk work and a model whose class is unknown are delivered as asked.
+  it.each(["unknown-catalog", "class", "unknown-class"])("delivers the %s selection instead of refusing it (AGS3-D-0058)", mode => {
+    const h = fixture(), input = structuredClone(h.options), presets = structuredClone(h.presets), provider = presets.providers[input.provider];
+    let model = "opaque-engine-a";
+    if (mode === "unknown-catalog") {model = "unregistered"; input.user = {model, effort: "high"}; input.supported = [{model, modelClass: "frontier", efforts: ["high"]}];}
+    if (mode === "class") {input.highRisk = true; provider.catalog.models[model].model_class = "lightweight";}
+    if (mode === "unknown-class") {input.highRisk = true; input.supported[0].modelClass = null;}
+    const result = h.run("resolve", input, presets);
+    expect(result.status).toBe(0);
+    expect(result.value.selection).toEqual({model, effort: "high"});
+    expect(result.value.delivery).toBe("explicit");
   });
   it.each(["missing", "partial", "self-report", "full-history"])("preserves dispatch observation and independence: %s", mode => {
     const h = fixture(), input = h.record();

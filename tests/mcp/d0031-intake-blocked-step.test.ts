@@ -28,17 +28,18 @@ describe("shared intake: a blocked step holds only itself and its dependents (AG
       // Causes: the user-only part named just before, a missing constraint, a tool failure, a denied permission and
       // waiting for another owner's fix (the 11-06 case: an SSH MCP refusal while its owner fixed it).
       "사용자 몫·근거 누락·도구 실패·권한 거절·다른 담당의 수정 대기는",
-      "해당 단계와 의존 단계만 보류하고",
+      // 3.9.0 (AGS3-D-0032) shortened wording of the same rule.
+      "그 단계와 의존 단계만 보류하고",
       "막힌 것·기다리는 대상을 적은 뒤",
       "독립 작업을 계속하며",
       "턴·전체 작업을 끝내지 않는다",
     ]) expect(blockedStep).toContain(fragment);
     expect(blockedStep).not.toMatch(/\b(?:Codex|Claude|Gemini|GPT-[0-9]|SSH)/u);
     // It follows the user-only sentence, which keeps its request and split-the-work rules.
-    const userOnly = source.indexOf("사용자만 할 승인·비밀값 입력·본인 조작은 그 부분·이유만 요청하고");
+    const userOnly = source.indexOf("사용자만 할 승인·비밀값 입력·본인 조작이 남으면 그 턴에 그 부분만");
     expect(userOnly).toBeGreaterThan(-1);
     expect(source.indexOf(blockedStep)).toBeGreaterThan(userOnly);
-    expect(source.slice(userOnly, source.indexOf(blockedStep))).toContain("「사용자가 할 일」과 「에이전트가 이어서 할 일」을 나눠 적는다");
+    expect(source.slice(userOnly, source.indexOf(blockedStep))).toContain("「사용자가 할 일」과 「에이전트가 이어서 할 일」을 나눈다");
   });
 
   it("states the continue-the-independent-work rule once, in place of the three narrower sentences", () => {
@@ -47,8 +48,10 @@ describe("shared intake: a blocked step holds only itself and its dependents (AG
     expect(count(source, "독립적인 작업은 계속한다")).toBe(0);
     expect(count(source, "독립적으로 가능한 작업과 막힌 의존 단계를 구분한다")).toBe(0);
     // What each narrower sentence said besides continuing stays where it was.
-    expect(source).toContain("빠진 제약은 권한 내 작업에 결속된 정본부터 찾고 없으면 그 부분만 확인한다");
-    expect(source).toContain("미확정·거부 시 계약의 실패 처리를 따른다");
+    expect(source).toContain("빠진 제약은 권한 내 작업에 결속된 정본부터 찾고 없으면 그 부분만 묻는다");
+    // 3.9.0 (AGS3-D-0032): the refused-classification handling is read in the classification contract the intake names.
+    expect(source).toContain("[공통 분류 지원 계약](references/skill-classification.md)대로 쓴다");
+    expect(readFileSync(new URL("skills/orchestrator/references/skill-classification.md", root), "utf8")).toContain("미확정 상태에서");
   });
 
   it("reaches every host through the MCP server instructions (ko, en) and the generated packages", () => {

@@ -13,6 +13,7 @@ class ProseFixtureRegistry extends FileSkillRegistry {
 }
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const instructions = (file: string) => readFileSync(new URL("../../skills/orchestrator/" + file, import.meta.url), "utf8");
+const classifyDescription = (JSON.parse(readFileSync(new URL("../../locales/ko/tools.json", import.meta.url), "utf8")) as Record<string, string>)["tools.classify_skills.description"] ?? "";
 function service() {const validator = new ContractValidator(); return new WorkflowService(new ProseFixtureRegistry(registryPath, validator), validator);}
 function task(capabilities: string[], riskLevel: TaskEnvelopeV1["riskLevel"] = "low"): TaskEnvelopeV1 {
   return {schemaVersion: "1.0.0", taskId: "governance-autonomy", objective: "요청한 단계만 수행하고 한국어로 결과를 설명한다.",
@@ -75,10 +76,11 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     const intake = instructions("references/intake.md").split("<!-- skill-intake:start -->")[1]!.split("<!-- skill-intake:end -->")[0]!;
     const casesFirst = intake.match(/만들거나 바꾸기 전[^.]+\./u)?.[0] ?? "";
     expect(casesFirst).toContain("요구별");
-    for (const field of ["대상", "경로", "환경", "검증 방법", "통과 조건을 사례로 적고"]) expect(casesFirst).toContain(field);
-    expect(casesFirst).toContain("사례 정의→실행→동일 사례 확인");
+    // 3.9.0 (AGS3-D-0032) wording of the same rule.
+    for (const field of ["대상", "경로", "환경", "검증 방법", "통과 조건을 먼저 사례로 적고"]) expect(casesFirst).toContain(field);
+    expect(casesFirst).toContain("정의→실행→같은 사례 확인");
     expect(intake).toContain("끝나면 그 사례를 사용자의 실제 진입점·대상 환경에서");
-    expect(preparation).toContain("비코드 작업과 작은 직접 편집을 포함해");
+    expect(preparation).toContain("작업 분야와 관계없이 작은 직접 편집을 포함해"); // 3.9.0 (AGS3-D-0038) field-neutral wording
     expect(preparation).toContain("[공통 접수·선택 기준의 사례 준비·실행·확인 순서](intake.md#공통-접수선택-기준)를 먼저 따른다");
     expect(preparation.replaceAll(" ", "")).not.toContain("사례정의→실행→동일사례확인");
     expect(preparation).not.toContain("capability 선택·계획 때 먼저 요구마다");
@@ -120,11 +122,13 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     expect(text).toContain("일부 단계만 요청하면 필요한 기존 artifact를 제공");
     expect(text).toContain("reference-only policy는 유지한다");
     // 3.8.0 (AGS3-D-0032): the shared intake moved to references/intake.md, which every host gets at context start.
-    const intake = instructions("references/intake.md");
-    expect(intake).toContain("조언은 AGENT가 원문과 스킬 적용·제외 조건에 대조해");
-    expect(intake).toContain("채택·교정·기각하고 최종 선택");
-    expect(intake).toContain("점수는 정답·승인이 아니다");
+    // 3.9.0 (AGS3-D-0032): the intake names the contract; the AGENT's final selection and scores-are-not-approval are
+    // read in the classify_skills description at the call and in the contract.
+    expect(instructions("references/intake.md")).toContain("[공통 분류 지원 계약](references/skill-classification.md)대로 쓴다");
+    expect(classifyDescription).toContain("최종 선택은 여전히 AGENT가 한다");
+    expect(classifyDescription).toContain("점수·조언은 정답이나 실행 승인이 아니며");
     const classification = instructions("references/skill-classification.md");
+    expect(classification).toContain("AGENT가 조언을 채택·교정·기각하고 **최종 선택**한다");
     expect(classification).toContain("오류 가능한 분류 조언");
     expect(classification).toContain("점수나 분류 결과를 정답·실행 승인으로 취급하지 않는다");
   });
@@ -132,11 +136,12 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     // 지침 전달만 검사하며 실제 호스트 행동·거부·재시도 검증을 대신하지 않는다.
     const intake = instructions("references/intake.md");
     const classification = instructions("references/skill-classification.md");
-    expect(intake).toContain("도구 노출로 설정을 추정하지 않으며");
+    // 3.9.0 (AGS3-D-0032): read in the classify_skills description, which every schema profile lists before the call.
+    expect(classifyDescription).toContain("이 도구가 노출됐다는 사실만으로 분류 지원이 설정됐다고 추정하지 않는다");
+    expect(classifyDescription).toContain("공통 분류 지원 계약의 실패 처리대로 직접 고른 스킬로 독립 작업을 계속한다");
     // 3.8.0 (AGS3-D-0031, formerly D-0034): a refused call is a blocked step under the shared blocked-step rule.
-    expect(intake).toContain("미확정·거부 시 계약의 실패 처리를 따른다");
     expect(intake).toContain("도구 실패·권한 거절");
-    expect(intake).toContain("대기는 해당 단계와 의존 단계만 보류하고");
+    expect(intake).toContain("대기는 그 단계와 의존 단계만 보류하고");
     expect(intake).toContain("독립 작업을 계속하며");
     for (const criterion of [
       "기존 승인된 설치 설정과 호스트 호출 경로에서 지원이 확인된 경우",
@@ -155,7 +160,8 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
   it("does not require another PRE for ordinary branch commits, pushes or CI", () => {
     const text = instructions("references/entry-details.md");
     expect(text).not.toContain("배포·push·태그처럼 사전 점검 대상");
-    expect(text).toContain("시험 실행, 작업 브랜치의 커밋·push와 CI 실행에는 추가 PRE나 승인을 요구하지 않는다");
+    // 3.9.0 (AGS3-D-0038) field-neutral wording with the branch examples kept.
+    expect(text).toContain("시험 실행, 되돌릴 수 있는 작업 사본 저장과 자동 검사 실행(예: 작업 브랜치의 커밋·push, CI)에는 추가 PRE나 승인을 요구하지 않는다");
     expect(text).toContain("배포·태그처럼 별도 승인 경계");
   });
   it("continues authorized work after a specialist result without expanding analysis-only requests or bypassing gates", () => {
@@ -163,7 +169,7 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     const integration = text.split("## 결과 통합\n")[1]!.split("## MCP 도구 사용 계약")[0]!;
     const intake = instructions("references/intake.md").split("<!-- skill-intake:start -->")[1]!.split("<!-- skill-intake:end -->")[0]!;
     // 3.8.0 (AGS3-D-0031, formerly D-0034): the user-only sentence and the blocked-step sentence after it, which keeps independent work going.
-    const userOnlyBoundary = intake.match(/사용자만 할 승인·비밀값 입력·본인 조작은[^.]+\.[^.]+\./u)?.[0];
+    const userOnlyBoundary = intake.match(/사용자만 할 승인·비밀값 입력·본인 조작이 남으면[^.]+\.[^.]+\./u)?.[0];
     expect(integration).toContain("해당 단계의 결과이며 사용자 요청 전체의 완료와 구분한다");
     expect(integration).toContain("분석·계획만 요청받았다면 후속 변경을 실행하지 않는다");
     expect(integration).toContain("사용자 요청에 구현·실행·검증이 포함되어 있고 이미 허용됐다면");
