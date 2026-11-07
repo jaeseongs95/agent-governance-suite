@@ -74,6 +74,13 @@ describe("AGS3-D-0005 shell writes the 3.8.0 observation missed", () => {
     ["SU08 git apply", "git apply fix.patch"],
     ["SU09 perl -pi", "perl -pi -e 's/a/b/' src/a.ts"],
     ["SU10 cd to variable", "cd \"$DIR\" && printf a > a.ts"],
+    // Marker names with a suffix (Sync, Async, plural): a trailing word boundary on the bare name missed them.
+    ["SU12 node appendFileSync", "node -e \"require('fs').appendFileSync('src/a.ts','x')\""],
+    ["SU13 node copyFileSync", "node -e \"require('fs').copyFileSync('x','src/a.ts')\""],
+    ["SU14 node openSync for writing", "node -e \"const fs=require('fs');fs.writeSync(fs.openSync('src/a.ts','w'),'x')\""],
+    ["SU15 deno writeTextFileSync", "deno eval \"Deno.writeTextFileSync('src/a.ts','x')\""],
+    ["SU16 python os.removedirs", "python3 -c \"import os; os.removedirs('src/empty')\""],
+    ["SU17 python os.renames", "python3 -c \"import os; os.renames('src/a.ts','lib/a.ts')\""],
   ])("%s counts one write whose file is unnamed: %s", (_name, command) => {
     for (const [host, tool, key] of hosts) expect(observe(host, shell(host, tool, key, command)).editTargets, host).toEqual([]);
   });
@@ -152,6 +159,7 @@ describe("AGS3-D-0005 read-only commands are not edits (no over-blocking)", () =
     "if [ -f a ]; then cat a; fi", "printf 'a > fake.ts'", "# printf a > fake.ts", "printf a >&2", "git show HEAD:src/a.ts",
     "rg -n 'x > y' src", "xargs -0 grep -l foo < list.txt", "find src -name '*.ts' -exec grep -l x {} +", "git checkout -b topic",
     "python3 - <<'EOF'\nprint(1 > 0)\nEOF", "env FOO=1 node scripts/check.mjs", "timeout 10 git fetch -q",
+    "node -e \"const fs=require('fs');console.log(fs.readFileSync(fs.openSync('a','r'),'utf8'))\"",
   ];
   it.each(hosts)("RO01: %s leaves read-only shell commands uncounted and the first edit allowed", (host, tool, key) => {
     const target = service();
