@@ -10,7 +10,7 @@ import type {
   StateCleanupReceiptV1,
 } from "../../contracts/types.js";
 import { WorkflowContractError } from "../../contracts/types.js";
-import { contractFailure } from "./failure-diagnostics.js";
+import { contractFailure, failureContext, failureReason } from "./failure-diagnostics.js";
 import type { SqliteContinuityStore, ContinuityCleanupPreview } from "./continuity-store.js";
 import type { ContractValidator } from "./schema-validator.js";
 import type { SqliteWorkflowStore, WorkflowCleanupPreview } from "./sqlite-workflow-store.js";
@@ -82,7 +82,7 @@ export class StateCleanupService {
         continuityPayload: new Date(created.getTime() - POLICY.continuityPayloadRetentionDays * DAY_MS).toISOString(),
         continuityRecord: new Date(created.getTime() - POLICY.continuityRecordRetentionDays * DAY_MS).toISOString(),
       };
-      const { workflow, continuity, protectedContinuityTasks, candidates } = this.currentCandidates(cutoffs);
+      const { workflow, protectedContinuityTasks, candidates } = this.currentCandidates(cutoffs);
       const candidateDigest = digest({ candidates, linkedRuns: workflow.linkedRuns });
       const rootProtection = { previewCreatedAt: createdAt, ...workflow.rootProtection };
       const payload: CleanupTokenPayload = {
@@ -105,8 +105,8 @@ export class StateCleanupService {
         counts: {
           workflowRoots: workflow.roots.length,
           workflowRuns: workflow.standaloneRuns.length + workflow.roots.reduce((count, root) => count + root.runIds.length, 0),
-          continuitySnapshots: continuity?.snapshots.length ?? 0,
-          continuityTasks: continuity?.tasks.length ?? 0,
+          continuitySnapshots: candidates.continuitySnapshots.length,
+          continuityTasks: candidates.continuityTasks.length,
           protectedActiveRoots: workflow.protectedActiveRoots,
           protectedActiveContinuityTasks: protectedContinuityTasks,
         },
@@ -172,9 +172,10 @@ export class StateCleanupService {
 
       if (continuityHasCandidates && this.continuityStore && current.continuity) {
         try {
-          continuityResult.backupPath = this.backupPath(this.continuityStore.databasePath, "continuity", payload.planId);
-          this.continuityStore.backupTo(continuityResult.backupPath);
-          this.protectBackup(continuityResult.backupPath);
+          // The recovery backup includes private history. Keep it internal; the agent receipt never links to it.
+          const backupPath = this.backupPath(this.continuityStore.databasePath, "continuity", payload.planId);
+          this.continuityStore.backupTo(backupPath);
+          this.protectBackup(backupPath);
           const guardedRootIds = [...current.continuity.tasks, ...current.continuity.snapshots]
             .flatMap((candidate) => this.continuityStore!.allBoundRoots(candidate.taskCorrelation));
           const deleted = this.workflowStore.withInactiveRootGuard(guardedRootIds, () => this.continuityStore!.executeCleanup(
@@ -188,7 +189,11 @@ export class StateCleanupService {
           continuityResult.deletedTasks = deleted.tasks;
         } catch (error) {
           continuityResult.status = "failed";
-          continuityResult.error = error instanceof Error ? error.message : String(error);
+          continuityResult.error = JSON.stringify({
+            code: contractFailure(error).code,
+            reason: failureReason(error).reason ?? "INTERNAL_FAILURE",
+            cause: failureContext(error),
+          });
         }
       }
 
@@ -233,6 +238,7 @@ export class StateCleanupService {
         return !active;
       });
       continuity.snapshots = continuity.snapshots.filter((snapshot) => {
+        if (snapshot.kind !== "current") return false;
         const active = bindsActiveRoot(snapshot.taskCorrelation);
         if (active) protectedRootTaskIds.add(snapshot.taskCorrelation);
         return !active;
@@ -242,8 +248,10 @@ export class StateCleanupService {
     const candidates = {
       workflowRoots: workflow.roots,
       standaloneWorkflowRuns: workflow.standaloneRuns,
-      continuitySnapshots: continuity?.snapshots ?? [],
-      continuityTasks: continuity?.tasks ?? [],
+      continuitySnapshots: continuity?.snapshots.map(({ kind, taskCorrelation, rootId, epoch, stateToken, memoryDigest, updatedAt }) =>
+        ({ kind, taskCorrelation, rootId, epoch, stateToken, memoryDigest, updatedAt })) ?? [],
+      continuityTasks: continuity?.tasks.map(({ taskCorrelation, currentEpoch, rootId, updatedAt }) =>
+        ({ taskCorrelation, currentEpoch, rootId, updatedAt })) ?? [],
     };
     return { workflow, continuity, protectedContinuityTasks, candidates };
   }
