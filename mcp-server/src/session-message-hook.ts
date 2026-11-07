@@ -764,7 +764,8 @@ export async function runSessionMessageHookOutcome(host: SupportedHookHost, raw:
   let phase: HookFailurePhase = "options";
   const progress: { step?: HookFailureStep | undefined } = {};
   try {
-    options = snapshotOptions(options);
+    // The hook's entry is a boundary too: a budget spent before this process read its input stops here, before any work.
+    options = budgetedStep(options.executionBudget, () => snapshotOptions(options));
     phase = "input";
     const input = JSON.parse(raw) as Record<string, unknown>;
     if (!input || typeof input !== "object" || Array.isArray(input)) throw hookFailure("INVALID_HOOK_INPUT", "Invalid hook input.");
