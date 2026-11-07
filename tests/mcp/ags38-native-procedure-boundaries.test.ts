@@ -51,9 +51,26 @@ describe("native pilot procedure contracts (D31/D32/D36/D38)", () => {
 
   it.each([
     ["ko", "읽기 전용이거나 상태 쓰기가 금지된 요청에서는 호출하지 않는다"],
-    ["en", "Do not call it for a read-only request or when state writes are prohibited"],
+    ["en", "Never call if read-only or state writes are banned."],
   ] as const)("NP02 preserves the same restriction in the %s tools/list description", async (locale, restriction) => {
     expect(await checkpointDescription(locale)).toContain(restriction);
+  });
+
+  // D53: tools/list delivery only; these clauses do not prove reconstruction quality or model behaviour.
+  it.each([
+    ["ko", [
+      "매번 기존·새 사실을 대조해 현재 상태를 재구성하고 중복을 합치고 대체된 항목·완료 이력을 정리하되, 최신 결정·권한과 유효 제약, 미완료 작업, 다음 행동에 필요한 실패·근거는 보존한다.",
+      "직전 본문이 현재 문맥에 없을 때만 inspect_context→load_context로 읽어 누락을 채운다.",
+      "STALE_REVISION이면 최신 본문을 다시 읽어 재구성한다.",
+    ]],
+    ["en", [
+      "Rebuild from prior and new facts: merge duplicates, drop superseded items, condense completed history; keep latest decisions/authority, valid constraints, unfinished work, needed failures/evidence.",
+      "If prior body absent: inspect_context then load_context; fill gaps.",
+      "STALE_REVISION: reload/rebuild.",
+    ]],
+  ] as const)("NP04 exposes the D53 reconstruction delivery contract in %s without claiming semantic quality", async (locale, clauses) => {
+    const description = await checkpointDescription(locale);
+    for (const clause of clauses) expect(description).toContain(clause);
   });
 
   it("NP03 makes the test plan precede test implementation and execution, with root-relative CLI references", () => {
