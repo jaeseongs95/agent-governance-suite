@@ -26,7 +26,7 @@ const maxGitOutputBytes = 64 * 1024 * 1024;
 function runGit(root, args, encoding = "utf8", input) {
   try {
     return execFileSync("git", ["-C", root, ...args], {
-      encoding,
+      encoding: encoding === "buffer" ? null : encoding,
       maxBuffer: maxGitOutputBytes,
       input,
       windowsHide: true,

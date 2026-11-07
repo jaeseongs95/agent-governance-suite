@@ -88,7 +88,7 @@
       "version": "1.0.0",
       "versionSource": "version-file",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:decbac7db9b0773813c8931a634faa3f951156d72231d97f3724fb9007ce7fac",
+      "integratedChecksum": "sha256:7c3fee23031739b4879185630c612a9542e197c3b3f0826bfe1e88f042c301fd",
       "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
     },
     {
