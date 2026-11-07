@@ -44,13 +44,14 @@ async function listedCheckpointTool(locale: SupportedLocale): Promise<ListedTool
 describe("AGS3-D-0025 checkpoint_context requestId rule in tools/list", () => {
   it.each([
     ["ko", [
-      "바뀐 내용에는 새 requestId를 쓰고, 응답 불명을 포함한 동일 payload 재송신은 같은 ID를 유지한다.",
+      "내용 변경에는 새 requestId, 응답 불명을 포함한 동일 payload 재송신에는 같은 ID를 쓴다.",
       "REQUEST_CONFLICT를 ID만 바꿔 회피하지 않는다.",
+      "현재 본문·토큰이 없으면 load_context로 읽고 stateToken을 expectedStateToken에 그대로 넣는다.",
     ]],
     ["en", [
-      "New requestId for changed content.",
-      "Keep ID for identical retries, including unknown responses.",
+      "Changed content: new requestId; identical payload retries, even unknown responses: same ID.",
       "Never bypass REQUEST_CONFLICT by changing ID.",
+      "If current body/token absent, load_context; echo stateToken as expectedStateToken.",
     ]],
   ] as const)("the %s description says a requestId is new for each saved content", async (locale, phrases) => {
     const tool = await listedCheckpointTool(locale);

@@ -94,11 +94,17 @@ describe("skill reselection at a workflow change", () => {
   it("takes the stage now due from a plan, and names no stage once none is due", () => {
     const plan = { stages: [{ ...stage, stageId: "stage-01", skillId: "change-scope-guardian", requiredCapability: "change-baseline" }],
       currentStageId: null, nextStageId: "stage-01" } as unknown as WorkflowPlanV1;
-    const fromPlan = workflowChangeNotice(plan, () => null, false).map(line => render(line, "en"));
+    const fromPlanMessages = workflowChangeNotice(plan, () => null, false);
+    expect(fromPlanMessages.map(line => line.key)).toEqual(["server.workflowChange.stage", "server.workflowChange.skills", "hooks.checkpointCue.refresh"]);
+    const fromPlan = fromPlanMessages.map(line => render(line, "en"));
     expect(fromPlan[0]).toBe("[AGS workflow change] Next stage: stage-01 (capability change-baseline). Its result is recorded under the change-scope-guardian provider contract.");
     const finished = { ...receipt, plan: { ...receipt.plan, currentStageId: null, nextStageId: null } } as WorkflowReceiptV1;
-    const done = workflowChangeNotice({ runId: "run-synthetic" }, () => finished, false).map(line => render(line, "en"));
-    expect(done).toHaveLength(1);
+    const doneMessages = workflowChangeNotice({ runId: "run-synthetic" }, () => finished, false);
+    expect(doneMessages.map(line => line.key)).toEqual(["server.workflowChange.skills", "hooks.checkpointCue.refresh"]);
+    const done = doneMessages.map(line => render(line, "en"));
+    expect(done).toHaveLength(2);
     expect(done[0]).toContain("match it against the targets of every installed skill below");
+    expect(done.join("\n")).not.toContain("Next stage:");
+    expect(done[1]).toBe("Keep essential current state for compaction/resume. When a completed step or failure changes goals, remaining work or needed evidence, update checkpoint_context; skip saves if unchanged.");
   });
 });

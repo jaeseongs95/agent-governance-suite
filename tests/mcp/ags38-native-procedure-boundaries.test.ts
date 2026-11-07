@@ -50,8 +50,8 @@ describe("native pilot procedure contracts (D31/D32/D36/D38)", () => {
   });
 
   it.each([
-    ["ko", "읽기 전용이거나 상태 쓰기가 금지된 요청에서는 호출하지 않는다"],
-    ["en", "Never call if read-only or state writes are banned."],
+    ["ko", "workflow 중에도 쓰며 읽기 전용·상태 쓰기 금지에서는 호출하지 않는다."],
+    ["en", "Also use in workflows; never if read-only/state writes banned."],
   ] as const)("NP02 preserves the same restriction in the %s tools/list description", async (locale, restriction) => {
     expect(await checkpointDescription(locale)).toContain(restriction);
   });
@@ -59,13 +59,19 @@ describe("native pilot procedure contracts (D31/D32/D36/D38)", () => {
   // D53: tools/list delivery only; these clauses do not prove reconstruction quality or model behaviour.
   it.each([
     ["ko", [
-      "매번 기존·새 사실을 대조해 현재 상태를 재구성하고 중복을 합치고 대체된 항목·완료 이력을 정리하되, 최신 결정·권한과 유효 제약, 미완료 작업, 다음 행동에 필요한 실패·근거는 보존한다.",
-      "직전 본문이 현재 문맥에 없을 때만 inspect_context→load_context로 읽어 누락을 채운다.",
-      "STALE_REVISION이면 최신 본문을 다시 읽어 재구성한다.",
+      "기존 유효 핵심도 최적화해 보존한다.",
+      "상태가 바뀌면 목표, 최신 결정·권한·유효 제약, 미완료·다음 행동, 필요한 실패·근거를 즉시 갱신하라.",
+      "현재 행동을 바꾸는 필요한 사용자 원문은 보존하고 상세 근거는 참조하되, 대화 요약·원시 로그·완료 내역을 덤프하지 않는다.",
+      "보고 전에도 바뀐 상태를 반영하고 단순 덧붙임·무변화 저장을 하지 않는다.",
+      "현재 본문·토큰이 없으면 load_context로 읽고 stateToken을 expectedStateToken에 그대로 넣는다.",
+      "STALE_REVISION이면 최신 현재 상태를 읽어 재구성한다.",
     ]],
     ["en", [
-      "Rebuild from prior and new facts: merge duplicates, drop superseded items, condense completed history; keep latest decisions/authority, valid constraints, unfinished work, needed failures/evidence.",
-      "If prior body absent: inspect_context then load_context; fill gaps.",
+      "Optimize prior valid essentials; on changes immediately update goals, latest decisions/authority/constraints, unfinished work/next actions and needed failures/evidence.",
+      "Keep needed user quotes; reference details.",
+      "No chat summaries/log/completed-history dumps or secrets.",
+      "Reflect changes before reports; no append-only or unchanged saves.",
+      "If current body/token absent, load_context; echo stateToken as expectedStateToken.",
       "STALE_REVISION: reload/rebuild.",
     ]],
   ] as const)("NP04 exposes the D53 reconstruction delivery contract in %s without claiming semantic quality", async (locale, clauses) => {
