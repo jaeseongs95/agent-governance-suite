@@ -614,6 +614,14 @@ describe("skill context optimization", () => {
   // D38 DR06: exact five-context r37 bytes map through the existing guidance chain;
   // tampered bytes and unlisted paths must not gain the trusted predecessor's acceptance.
   // Product/red-green execution is NOT_RUN locally; root runs the existing Vitest suite on TEST.
+  // D38 consumer repair cases, planned before changing the matcher/wording:
+  // C01: exact manifest + five current sources -> existing public policy-wording (classification),
+  // authorization (task-contract) or reviewed-reference matcher -> true, with both manifest digests unchanged.
+  // C02: flip one byte or append .unreviewed to each path -> the same selected matcher -> false.
+  // C03: root/Claude audit protocol -> exact current "변경 작업에 참여한" prohibition -> no reused auditor;
+  // preserve its FAIL/BLOCKED wording, independence/fresh rules and all other assertions.
+  // Preconditions: integrated D38 sources/current pins. Oracle: existing positives and negatives, no new pins.
+  // Actual: root reports Linux05f 135 PASS/2 FAIL; local syntax/diff only, TEST/model execution NOT_RUN.
   it("accepts only the exact D38 reference successor while preserving historical context checks", () => {
     const root = fileURLToPath(new URL("../../", import.meta.url));
     const manifest = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.d38-reference-source-successor.json"), "utf8"));
@@ -627,8 +635,8 @@ describe("skill context optimization", () => {
       const current = readFileSync(path.join(root, binding.path));
       const digest = bytes => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
       expect([digest(old), digest(current)]).toEqual([binding.previousDigest, binding.digest]);
-      const accepts = binding.path.startsWith("skills/task-contract/")
-        ? matchesTaskContractAuthorizationSuccessor : matchesReviewedImplementationUpdate;
+      const accepts = binding.path.endsWith("/classification.json") ? matchesSkillPolicyWordingSuccessorBytes
+        : binding.path.startsWith("skills/task-contract/") ? matchesTaskContractAuthorizationSuccessor : matchesReviewedImplementationUpdate;
       expect(accepts(binding.path, current), binding.path).toBe(true);
       const altered = Buffer.from(current); altered[altered.length - 1] ^= 1;
       expect(accepts(binding.path, altered), binding.path).toBe(false);
@@ -825,7 +833,7 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
       expect(text).toContain("파일 이동·복사·이름 변경은 삭제가 아니다.");
       expect(text).toContain("승인 근거는 요청자와 다른 사용자 본인의 결정이어야 하며, 요청한 에이전트가 승인자 도구나 저장된 사용자 로그인으로 승인을 직접 실행한 `approve` 호출은 승인 근거가 아니다.");
       expect(text).toContain("자가 승인이 확인되면 `FAIL`로 판정한다");
-      expect(text).toContain("감사·Judge 역할에 한 번이라도 쓰였거나 구현에 참여한 에이전트는, 이후 감사·재감사에 다시 배정되지 않는다. 재사용된 감사자는 거부되거나 `BLOCKED` 처리된다.");
+      expect(text).toContain("감사·Judge 역할에 한 번이라도 쓰였거나 변경 작업에 참여한 에이전트는, 이후 감사·재감사에 다시 배정되지 않는다. 재사용된 감사자는 거부되거나 `BLOCKED` 처리된다.");
     }
     for (const text of readBoth("skills/independent-audit-gate/references/entry-details.md")) {
       expect(text).toContain("파일 이동·복사·이름 변경은 삭제가 아니며 이 경계의 승인 대상이 아니다.");
