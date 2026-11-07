@@ -8,7 +8,7 @@ const FORMAT_VERSION = 1;
 const WORKFLOW_V6_TABLES = Object.freeze(["workflow_metadata", "workflow_runs", "plugin_update_state", "convergence_roots", "convergence_root_identities", "convergence_epochs", "convergence_leases", "convergence_attempts", "convergence_reviews", "workflow_attempt_links", "state_cleanup_claims", "execution_observation_claims", "call_admissions"]);
 const MODULES = Object.freeze({
   workflow: { version: 7, tables: [...WORKFLOW_V6_TABLES, "root_approval_decisions"] },
-  continuity: { version: 2, tables: ["continuity_metadata", "continuity_tasks", "continuity_snapshots", "continuity_requests", "continuity_tombstones", "continuity_observations"] },
+  continuity: { version: 4, tables: ["continuity_metadata", "continuity_tasks", "continuity_current_memory", "continuity_memory_history", "continuity_requests", "continuity_tombstones", "continuity_observations"] },
   messaging: { version: 4, tables: ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "wake_paths", "peer_wait_snapshots"] },
   trust: { version: 1, tables: ["trust_metadata", "input_source_receipts"] },
   board: { version: 1, tables: ["board_sessions"] },
@@ -16,6 +16,7 @@ const MODULES = Object.freeze({
 // 모듈별 직전 형식. 명시적 initialize에서만 현재 형식으로 이전한다.
 // board v0(2.x 현황판)은 옮기지 않고 비운다(3.0 현황판 초기화).
 const PREVIOUS = Object.freeze({
+  continuity: Object.freeze({ version: 2, tables: ["continuity_metadata", "continuity_tasks", "continuity_snapshots", "continuity_requests", "continuity_tombstones", "continuity_observations"] }),
   workflow: Object.freeze({ version: 6, tables: WORKFLOW_V6_TABLES }),
   messaging: Object.freeze({ version: 3, tables: ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "wake_paths"] }),
   board: Object.freeze({ version: 0, tables: ["sessions"] }),
