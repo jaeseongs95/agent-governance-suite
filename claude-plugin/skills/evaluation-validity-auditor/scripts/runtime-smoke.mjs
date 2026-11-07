@@ -27,10 +27,18 @@ try {
     },
   });
   await cp(path.join(sourceSuite, "runtime"), path.join(suiteRoot, "runtime"), { recursive: true });
-  const tests = path.join(suiteRoot, "tests", "evaluation-validity-auditor");
-  await mkdir(tests, { recursive: true });
-  for (const file of ["evaluation-validity.node.mjs", "fixture.mjs"]) {
-    await cp(path.join(sourceSuite, "tests", "evaluation-validity-auditor", file), path.join(tests, file));
+  // Installed packages ship skills/ and runtime/ but not tests/: there the node:test suite is a source-checkout check.
+  const sourceTests = path.join(sourceSuite, "tests", "evaluation-validity-auditor");
+  const suiteTests = await access(path.join(sourceTests, "evaluation-validity.node.mjs")).then(
+    () => true,
+    error => { if (error.code === "ENOENT") return false; throw error; },
+  );
+  if (suiteTests) {
+    const tests = path.join(suiteRoot, "tests", "evaluation-validity-auditor");
+    await mkdir(tests, { recursive: true });
+    for (const file of ["evaluation-validity.node.mjs", "fixture.mjs"]) {
+      await cp(path.join(sourceTests, file), path.join(tests, file));
+    }
   }
   // A clean suite retains the actual package-relative imports but has no dependency installation.
   for (const directory of [suiteRoot, installedSkill]) {
@@ -39,14 +47,18 @@ try {
       error => { if (error.code !== "ENOENT") throw error; },
     );
   }
-  const result = await execute(process.execPath, ["--test", "--test-reporter=tap", "tests/evaluation-validity-auditor/evaluation-validity.node.mjs"], {
-    cwd: suiteRoot,
-    encoding: "utf8",
-    env: environment,
-    windowsHide: true,
-    maxBuffer: 10 * 1024 * 1024,
-  });
-  process.stdout.write(result.stdout);
+  if (suiteTests) {
+    const result = await execute(process.execPath, ["--test", "--test-reporter=tap", "tests/evaluation-validity-auditor/evaluation-validity.node.mjs"], {
+      cwd: suiteRoot,
+      encoding: "utf8",
+      env: environment,
+      windowsHide: true,
+      maxBuffer: 10 * 1024 * 1024,
+    });
+    process.stdout.write(result.stdout);
+  } else {
+    process.stdout.write(`node:test suite NOT_RUN: ${path.relative(sourceSuite, sourceTests)} is not part of an installed package (source checkout only)\n`);
+  }
   await execute(process.execPath, ["--input-type=module", "--eval", "await import('./scripts/core.mjs');"], {
     cwd: installedSkill,
     encoding: "utf8",
@@ -54,7 +66,9 @@ try {
     windowsHide: true,
     maxBuffer: 10 * 1024 * 1024,
   });
-  process.stdout.write("node_modules-free runtime check passed\n");
+  process.stdout.write(suiteTests
+    ? "node_modules-free runtime check passed\n"
+    : "node_modules-free import check passed (installed package layout)\n");
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }
