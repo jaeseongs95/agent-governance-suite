@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { inspect } from "node:util";
@@ -37,6 +38,10 @@ import { runRuntimeSmokeCheck } from "../../scripts/runtime-smoke.mjs";
 
 const cleanRoot = path.join(tmpdir(), "agent-governance-runtime-startup-diagnostics-fixture");
 const sourceRoot = "fixture-source";
+// AGS3-D-0014: the host stops the SessionStart continuity hook at the timeout the manifest declares; the smoke must not
+// give it longer.
+const hostSessionStartTimeoutMs = JSON.parse(readFileSync(new URL("../../hooks/hooks.json", import.meta.url), "utf8"))
+  .hooks.SessionStart.flatMap(group => group.hooks).find(hook => hook.statusMessage === "Checking local task continuity").timeout * 1000;
 const entrypointByName = new Map(SKILL_RUNTIME_ENTRYPOINTS.map((entrypoint) => [path.normalize(entrypoint.path), entrypoint]));
 const MAX_SMOKE_STREAM_CHARS = 512;
 
@@ -175,7 +180,7 @@ function defaultSpawnResponse(scriptPath, args, options) {
 function mockContinuityHook(result) {
   boundary.spawnSync.mockImplementation((_execPath, [scriptPath, ...args], options) => {
     if (path.basename(scriptPath) === "continuity-hook.mjs") {
-      expect(options.timeout).toBe(30_000);
+      expect(options.timeout).toBe(hostSessionStartTimeoutMs);
       return result;
     }
     return defaultSpawnResponse(scriptPath, args, options);
@@ -231,7 +236,8 @@ describe("continuity-hook runtime startup smoke diagnostics", () => {
     expect(failure.message).toContain(`stderr=${JSON.stringify(expectedStreamDescriptor(""))}`);
     // AGS3-D-0014: the timeout names its own wall time and the earlier clean-room children's, so a slow machine and one
     // slow child read differently.
-    expect(failure.message).toMatch(/ elapsedMs=\d+ earlierChildren=\{"count":[1-9]\d*,"medianMs":\d+,"maxMs":\d+\}/u);
+    expect(failure.message).toMatch(/ elapsedMs=\d+ limitMs=(\d+) earlierChildren=\{"count":[1-9]\d*,"medianMs":\d+,"maxMs":\d+\}/u);
+    expect(failure.message).toContain(` limitMs=${hostSessionStartTimeoutMs} `);
     const renderedPublicOutput = `${failure.message}\n${inspect(failure)}`;
     expect(renderedPublicOutput).not.toContain("PRIVATE_ERROR_MARKER");
     expect(renderedPublicOutput).not.toContain("PRIVATE_CODE_MARKER");
