@@ -1,7 +1,8 @@
 {
-  "hooks.checkpointCue.notice": "3f4e4c8c3fbed3e8a401f6745ee1273fccdb24c17cb9298c7ec6c14382ad018b",
-  "hooks.checkpointCue.resume": "2357e397d30fb14ed870ffedaa2727cad4ec01dfd3fe2dff9671cf5b63ef8aed",
-  "hooks.checkpointCue.save": "3a14d341f83610c192933fcad42992e021ced51201c7900d557978cb1da1710e",
+  "hooks.checkpointCue.notice": "f10ba1b7c45a36e332302549a37ea6292b93712d145c79786387ca1c87791849",
+  "hooks.checkpointCue.refresh": "337d25948d282d5099d523a7fc5fbc0da594d71a16eb5a18a1134dbd7e9d5e61",
+  "hooks.checkpointCue.resume": "71a9f9829d565b1a238baea0dd9d3d022f549b5cd9c0c6359f726cb46705f0b3",
+  "hooks.checkpointCue.save": "72e8105fa9c34c4cf4b1037448233b54fb290d625ad332168823d9f224a92fa5",
   "hooks.checkpointCue.skills": "22973dc42654baaeb3c296eee6d36aa5c08bba4ef72a88aeb908c5af5fc1c073",
   "hooks.checkpointCue.status": "f757f283b3b52ddffb6637366cbabcebccf1c44ed09114f9f029ee7b7d7224d9",
   "hooks.editGate.criterionPlaceholder": "808164d140111d8fb7d6002a20a7c0d471b98eaedf13dfe491d497cb15e8349c",
