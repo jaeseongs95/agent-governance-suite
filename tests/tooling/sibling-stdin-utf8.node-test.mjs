@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -17,9 +17,10 @@ const readers = [
   ["iteration-frame-auditor", "readJsonArgument"],
   ["recovery-strategy-selector", "readJsonInput"],
 ];
-const profileRequest = () => ({
+const profileFixture = path.join(root, "tests/workspace-convention-profiler/fixtures/python");
+const profileRequest = (workspaceRoot = profileFixture) => ({
   schemaVersion: "1.0.0",
-  workspaceRoot: path.join(root, "tests/workspace-convention-profiler/fixtures/python"),
+  workspaceRoot,
   taskObjective: text, targetPaths: ["src"], resolvedInstructionRefs: [], knownConstraints: [],
   evidenceLimits: { maxFiles: 100, maxBytesPerFile: 100000, excludedPatterns: [] },
 });
@@ -49,7 +50,11 @@ async function boundary(kind, distribution, directory) {
       check: value => { assert.equal(value.ok, true); assert.equal(value.output.taskEnvelope.objective, text); } };
   }
   if (kind === "profile-workspace") {
-    return { argv: [path.join(scripts, "workspace-convention-profiler/scripts/profile-workspace.mjs")], input: profileRequest(),
+    // 저장소 안의 fixture를 쓰면 자식마다 git을 네 번 띄운다. 이 경계는 Git 상태와 무관하고, Windows에서 git 시작은
+    // CPU 경합 때 한 번에 수 초까지 늘어 자식 제한 10초를 넘겼다(AGS3-D-0016). 작업 트리 밖 사본은 Git 확인 한 번만 한다.
+    const workspace = path.join(directory, "workspace");
+    await cp(profileFixture, workspace, { recursive: true });
+    return { argv: [path.join(scripts, "workspace-convention-profiler/scripts/profile-workspace.mjs")], input: profileRequest(workspace),
       check: value => { assert.equal(value.verdict, "PASS"); assert.match(value.profileFingerprint, /^sha256:[a-f0-9]{64}$/); } };
   }
   const profile = await profileWorkspace(profileRequest());
