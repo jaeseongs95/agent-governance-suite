@@ -370,7 +370,7 @@ const PURPOSE_CHANGE_SUCCESSOR = Object.freeze({
     "skills/model-effort-advisor/agents/openai.yaml": Object.freeze(["64b36b7840823a5e389a97689c7e5baa3f598faa2ebec720b1d96271f07681fa", "a8cce4b59156031226c66091266badedade8eb0dd311293cc589b56334ca2226"]),
     "skills/model-effort-advisor/classification.json": Object.freeze(["2794ab01288c3d531c49b31704ba565bb554b64fb59369946c39237237038faf", "fec98b3623b3f8984dcf780beb2f535eb9c22eb25953c44d38efbda8af6f4590"]),
     "skills/model-effort-advisor/references/entry-details.md": Object.freeze(["4fd8153834b5ab19ea12af67634e5ac8b06a5645f7cafc62c9fca2289d18368f", "3ac91a94b02ae8dc775702dfe611215106e2718bc1f3f922327655df34ef2b9d"]),
-    "skills/orchestrator/references/entry-details.md": Object.freeze(["abce8a5addf52b66c361561000a0f0db5c31f93fff9ad09a9fc8c2cc02988e41", "6fb72d35e4df7a7a35eaa003d98b846b9b84425c9274166a154ea02ec3b2578c"]),
+    "skills/orchestrator/references/entry-details.md": Object.freeze(["abce8a5addf52b66c361561000a0f0db5c31f93fff9ad09a9fc8c2cc02988e41", "2001d81b90817688661489cef9205c01b7a4b5a3ac88d2467478c8b251c1b451"]),
   }),
   additions: Object.freeze({
     "skills/model-effort-advisor/contracts/subagent-model-advice.v1.schema.json": "ab29e4885268bd43f7a1e49d8ea0cd4c306349b8176664ac443d3f54ca3a14fe",
