@@ -447,7 +447,6 @@ export class WorkflowService {
           trustedBootstrapContext,
           BOOTSTRAP_ORCHESTRATION,
           binding,
-          false,
         );
         executionContext = trustedBootstrapContext;
       }
@@ -1386,13 +1385,10 @@ export class WorkflowService {
             revision: result.expectedRevision,
           };
           const subject = stageSubject(target.stageId);
-          // Only a passing stage has to clear the assurance floor. A failing one still records
-          // what ran when the host can see it: requiring attestation there would push legitimate
-          // unattested failures into abort_workflow, which drops the failure fingerprint.
+          // Only a passing stage has to be observed. A failing one still records what ran when the host can see it:
+          // requiring attestation there would push legitimate unattested failures into abort_workflow, which drops
+          // the failure fingerprint. Whoever records it, the observed model and effort are kept, never refused.
           const passed = result.state === "passed";
-          // The floor applies to an agent whose model an agent chose. The root session runs the model the user chose,
-          // so its record is observed and bound but never refused for model or effort.
-          const enforced = passed && (caller === null || caller.parentChain.length > 0);
           trustedStageContext = passed
             ? this.observeTrustedExecutionContext(binding, subject)
             : this.observeExecutionContext(binding);
@@ -1402,7 +1398,6 @@ export class WorkflowService {
               trustedStageContext,
               subject,
               binding,
-              enforced,
             );
             result.executionContext = clone(trustedStageContext);
           }
@@ -2190,7 +2185,7 @@ export class WorkflowService {
       };
     }
 
-    // AGENTS.md의 명시 고위험 정책만 집행한다. 역할 추천이나 감사 의무는 모델 하한이 아니다.
+    // 고위험 단계에는 공용 추천(HIGH_RISK_MINIMUM)을 적어 둔다. 추천일 뿐이며 기록·종결을 거부하지 않는다.
     const riskLevel = providerRiskLevel !== undefined && RISK_LEVEL.indexOf(providerRiskLevel) > RISK_LEVEL.indexOf(task.riskLevel)
       ? providerRiskLevel : task.riskLevel;
     const highRisk = riskLevel === "high" || riskLevel === "critical";
@@ -2232,12 +2227,10 @@ export class WorkflowService {
     context: ExecutionContextV1,
     subject: ExecutionSubject,
     binding: ExecutionObservationBindingV1,
-    enforceMinimum = true,
   ): void {
-    this.assertExecutionContext(requirement, context, subject, false);
+    this.assertExecutionContext(requirement, context, subject);
     this.assertTrustedExecutionBinding(context, subject, binding);
     this.assertTrustedExecutionFreshness(context, subject);
-    if (enforceMinimum) this.assertExecutionContext(requirement, context, subject);
   }
 
   private assertTrustedExecutionBinding(
@@ -2309,7 +2302,7 @@ export class WorkflowService {
       revision: null,
     };
     const bootstrapSubject: ExecutionSubject = { subject: `${subject}Bootstrap`, stageId: "" };
-    this.assertExecutionContext(bootstrap.requirement, bootstrap.context, bootstrapSubject, false);
+    this.assertExecutionContext(bootstrap.requirement, bootstrap.context, bootstrapSubject);
     this.assertTrustedExecutionBinding(bootstrap.context, bootstrapSubject, binding);
     for (const stage of plan.stages) {
       if (!stage.executionRequirement && !isDeterministicStage(stage.satisfiedCapabilities)) {
@@ -2325,7 +2318,6 @@ export class WorkflowService {
     requirement: ExecutionRequirementV1,
     context: ExecutionContextV1 | null | undefined,
     subject: ExecutionSubject,
-    enforceMinimum = true,
   ): void {
     if (requirement.kind === "deterministic") return;
     if (!context) {
@@ -2350,49 +2342,11 @@ export class WorkflowService {
         { reasonCode: "EXECUTION_CONTEXT_MALFORMED", context },
       );
     }
-
-    if (!enforceMinimum) return;
-
-    const minimumModelClass = requirement.minimumModelClass;
-    const minimumReasoningEffort = requirement.minimumReasoningEffort;
-    if (minimumModelClass === null && minimumReasoningEffort === null) return;
-    if (!minimumModelClass || !minimumReasoningEffort) {
-      throw new WorkflowContractError(
-        "INVALID_INPUT",
-        msg("workflow.service.semanticRequirementIncomplete", subject),
-        { requirement },
-      );
-    }
-
-    // A model no catalog names has no class to compare and is not refused for it; a known lighter class is.
-    const reasonCode = context.reasoningEffort === null ? "REASONING_EFFORT_UNOBSERVED"
-      : REASONING_EFFORT.indexOf(context.reasoningEffort) < REASONING_EFFORT.indexOf(minimumReasoningEffort) ? "REASONING_EFFORT_BELOW_FLOOR"
-        : context.modelClass !== null && MODEL_CLASS.indexOf(context.modelClass) < MODEL_CLASS.indexOf(minimumModelClass) ? "MODEL_CLASS_BELOW_FLOOR"
-          : null;
-    if (reasonCode) {
-      throw new WorkflowContractError(
-        "GATE_FAILED",
-        msg("workflow.service.executionProfileBelowFloor", subject),
-        {
-          reasonCode,
-          model: context.model,
-          modelClass: context.modelClass,
-          reasoningEffort: context.reasoningEffort,
-          minimumModelClass,
-          minimumReasoningEffort,
-        },
-      );
-    }
   }
 
   private assertExecutionAssurance(stage: PlannedStageV1, result: StageResultV1): void {
     if (!stage.executionRequirement || result.state !== "passed") return;
-    this.assertExecutionContext(
-      stage.executionRequirement,
-      result.executionContext,
-      stageSubject(stage.stageId),
-      result.recordedBy?.parentChain.length !== 0,
-    );
+    this.assertExecutionContext(stage.executionRequirement, result.executionContext, stageSubject(stage.stageId));
   }
 
   private validateWorkUnitGraph(task: TaskEnvelopeV1): void {

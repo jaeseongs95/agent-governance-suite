@@ -85,7 +85,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     { riskLevel: "critical", modelClass: "general", effort: "high" },
     { riskLevel: "critical", modelClass: "lightweight", effort: "high" },
     { riskLevel: "critical", modelClass: "general", effort: "low" },
-    // A host that reports no effort is observed with a null effort: the root runs, a child floor refuses it.
+    // A host that reports no effort is observed with a null effort; root and child records both keep it (AGS3-D-0058).
     { riskLevel: "critical", modelClass: "general", effort: null },
   ] as const)("이름 등록 없는 opaque 관측을 같은 guarded workflow 단계에서 소비한다: $riskLevel/$modelClass/$effort (D0094)", ({ riskLevel, modelClass, effort }) => {
     let model = "";
@@ -171,7 +171,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         evidence: [{ artifactId: "opaque-stage", kind: "test", locator: "model-capability-contract.test.ts", verified: true, note: "같은 opaque 관측의 인메모리 단계 소비 회귀." }],
         findings: [], blockers: [], error: null,
       };
-      // The floor binds an agent whose model an agent chose (3.1.1), so the stage is recorded by a child first.
+      // A child agent records first: its model or effort is recorded, never refused (AGS3-D-0058).
       const stageCaller = childCaller(adapter.host, SESSION, "d0094-agent", {
         callId: `d0094-opaque-stage-${ordinal}`,
         execution: { model, effort, turnId: "d0094-opaque-stage-turn", provenance: "synthetic-authority-host:runtime" },
@@ -183,26 +183,11 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       const recorded = provider.run("record_stage_result", stageCaller,
         () => service.recordStageResult(stageInput, true, observedCaller(stageCaller)));
       expect(resolveAdapterModelCapability(adapter, model, "synthetic-authority-host:runtime")).toMatchObject({ provider: adapter.provider, policyRevision: adapter.policyRevision, rawModel: model });
-      if (modelClass === "lightweight" || effort === "low" || effort === null) {
-        expect(recorded.error).toMatchObject({ code: "GATE_FAILED", details: { reasonCode: effort === null ? "REASONING_EFFORT_UNOBSERVED"
-          : effort === "low" ? "REASONING_EFFORT_BELOW_FLOOR" : "MODEL_CLASS_BELOW_FLOOR" } });
-        expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
-        // The root session runs the model the user chose: the same result recorded by the root is observed, not refused.
-        const rootStageCaller = rootCaller(adapter.host, SESSION, {
-          callId: `d0094-opaque-root-stage-${ordinal}`,
-          execution: { model, effort, turnId: "d0094-opaque-stage-turn", provenance: "synthetic-authority-host:runtime" },
-        });
-        const rootRecorded = provider.run("record_stage_result", rootStageCaller,
-          () => service.recordStageResult(stageInput, true, observedCaller(rootStageCaller)));
-        expect(rootRecorded.ok, JSON.stringify(rootRecorded)).toBe(true);
-        expect(rootRecorded.data?.stageResults[0]?.executionContext).toMatchObject({ model, modelClass, reasoningEffort: effort });
-      } else {
-        expect(recorded.ok).toBe(true);
-        expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({
-          model, modelClass, reasoningEffort: effort, actorId: hostActorId(adapter.host, SESSION, "d0094-agent"),
-          taskId: input.taskEnvelope.taskId, runId: receipt.runId, stageId: stage.stageId, revision: receipt.revision,
-        });
-      }
+      expect(recorded.ok, JSON.stringify(recorded)).toBe(true);
+      expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({
+        model, modelClass, reasoningEffort: effort, actorId: hostActorId(adapter.host, SESSION, "d0094-agent"),
+        taskId: input.taskEnvelope.taskId, runId: receipt.runId, stageId: stage.stageId, revision: receipt.revision,
+      });
     }
   });
 
@@ -596,7 +581,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     }, syntheticCatalogV2).delivery).toBe("blocked");
   });
 
-  it("rejects below-class and below-effort stage observations before recording a valid stage (AC4, AC5)", () => {
+  it("records a below-recommendation stage observation and keeps the signed plan values (AC4, AC5, AGS3-D-0058)", () => {
     const store = new InMemoryWorkflowStore();
     const validator = new ContractValidator();
     const provider = new HostAttestationProvider(codexExecutionAdapter);
@@ -667,25 +652,14 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       evidence: [{ artifactId: "stage-floor", kind: "test", locator: "model-capability-contract.test.ts", verified: true, note: "Synthetic in-memory stage observations." }],
       findings: [], blockers: [], error: null,
     };
-    for (const [model, reasoningEffort, toolUseId] of [
-      ["gpt-5.6-luna", "high", "stage-low-class"],
-      ["gpt-6-astra", "low", "stage-low-effort"],
-    ] as const) {
-      const caller = rootCaller("codex", SESSION, {
-        callId: toolUseId, execution: { model, effort: reasoningEffort, turnId: "stage-turn", provenance: "codex:mcp-meta" },
-      });
-      const rejected = provider.run("record_stage_result", caller,
-        () => service.recordStageResult(stageArgs, true));
-      expect(rejected.error?.code).toBe("GATE_FAILED");
-      expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
-    }
-    const strongCaller = rootCaller("codex", SESSION, {
-      callId: "stage-strong", execution: { model: "gpt-6-astra", effort: "xhigh", turnId: "stage-turn", provenance: "codex:mcp-meta" },
+    const lightCaller = rootCaller("codex", SESSION, {
+      callId: "stage-low-class", execution: { model: "gpt-5.6-luna", effort: "high", turnId: "stage-turn", provenance: "codex:mcp-meta" },
     });
-    const recorded = provider.run("record_stage_result", strongCaller,
+    const recorded = provider.run("record_stage_result", lightCaller,
       () => service.recordStageResult(stageArgs, true));
-    expect(recorded.ok).toBe(true);
-    expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ model: "gpt-6-astra", modelClass: "frontier", reasoningEffort: "xhigh" });
+    expect(recorded.ok, JSON.stringify(recorded.error)).toBe(true);
+    expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ model: "gpt-5.6-luna", modelClass: "lightweight", reasoningEffort: "high" });
+    expect(recorded.data?.plan.stages[0]?.executionRequirement).toMatchObject({ minimumModelClass: "general", minimumReasoningEffort: "high" });
   });
 
   it("uses one catalog interpretation for native IDs, aliases, inherited settings, and unknown models (AC2, AC3, AC4)", () => {
