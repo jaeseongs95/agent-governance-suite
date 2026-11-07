@@ -1,12 +1,33 @@
 # AGS 3.8.0 릴리스 노트(초안)
 
-3.8.0은 서브에이전트·위임·세션 역할·열린 workflow 식별에 관한 결함 다섯 건(AGS3-D-0001, D-0002, D-0003, D-0004, D-0030)과 공통 접수 기준의 결함 여섯 건(D-0031, D-0032, D-0036, D-0039, D-0040, D-0041)을 고친다. D-0031에는 옛 D-0034·D-0035를 합쳤다. 범용 스킬 문구 검사(AGS3-D-0038)와 checkpoint_context의 requestId 설명(AGS3-D-0025)도 고친다. 판 번호와 판 메타데이터는 아직 올리지 않았다. 사용자 원문은 「3.7.0 릴리즈되면 결함중 가장 우선순위가 높은거 뽑아서 개선하고 릴리즈해.」「한번에 여러개 개선해도 돼.」「결함부터 때려잡아야 기능 개발을 하던지 할거아냐.」다. D-0030 관련 원문은 「그리고 AGS가 세션 협업을 유도하는지 확인해줄래?」「즉 자신의 역할을 인지하는지. 자신의 일이 아니면 다른 세션에 맡길수있는지 확인. 그래도 안되면 사용자에게 물어보기.」다.
+3.8.0의 최신 발행 범위는 사용자 원문 「컨텍스트 전면 개편 + 지금까지 고친 결함들만 포함해서 3.8 릴리즈를 발행하는것이다.」에 따른 D53 개편과 현재까지 수리한 결함이다. 미수리 결함 전체의 수리를 이 판의 필수 범위로 추가하지 않는다. 서브에이전트·위임·세션 역할·열린 workflow 식별에 관한 결함 다섯 건(AGS3-D-0001, D-0002, D-0003, D-0004, D-0030)과 공통 접수 기준의 결함 여섯 건(D-0031, D-0032, D-0036, D-0039, D-0040, D-0041)을 고친다. D-0031에는 옛 D-0034·D-0035를 합쳤다. 범용 스킬 문구 검사(AGS3-D-0038)와 checkpoint_context의 requestId 설명(AGS3-D-0025)도 고친다. `release/version.json`의 판 번호는 3.8.0으로 준비했으며, 최종 후보 검증과 발행 완료는 별도다. 앞선 사용자 원문은 「3.7.0 릴리즈되면 결함중 가장 우선순위가 높은거 뽑아서 개선하고 릴리즈해.」「한번에 여러개 개선해도 돼.」「결함부터 때려잡아야 기능 개발을 하던지 할거아냐.」다. D-0030 관련 원문은 「그리고 AGS가 세션 협업을 유도하는지 확인해줄래?」「즉 자신의 역할을 인지하는지. 자신의 일이 아니면 다른 세션에 맡길수있는지 확인. 그래도 안되면 사용자에게 물어보기.」다.
+
+## 컨텍스트 전면 개편(D53)
+
+- `checkpoint_context`는 압축·재개 뒤 이어 갈 핵심 현재 상태를 유지한다. `JSON(status/core/evidenceRefs)` 전체의 UTF-8 크기는 2000 byte 이하여야 하며, 상한을 채우는 것이 목표가 아니다. 상황이 바뀌면 기존 유효 핵심을 보존·최적화해 자율적으로 갱신하고, 대화·로그·불필요한 완료 내역을 쌓지 않는다. 도구 설명과 기존 hook cue가 이 목적과 무변화 저장 금지를 함께 안내한다.
+- SQLite schema v4의 `continuity_current_memory`·`continuity_memory_history`로 현재와 이력을 나누고, 현재 교체와 이전 내용의 history 보관을 같은 transaction으로 처리한다. History는 에이전트 도구/API에 노출하지 않는다. 같은 OS 사용자의 직접 파일·shell 접근 권한은 현행대로이며 새 DBMS나 별도 OS 권한 격리를 구현한 것은 아니다.
+- 자기 current는 `load_context`에 `{"schemaVersion":"1.0.0"}`만 보내 읽고, 반환된 opaque `stateToken`을 쓰기·삭제의 `expectedStateToken`에 그대로 넣어 CAS로 대조한다. 명시적 `purge_direct_context`는 current만 지우고 hash tombstone을 남기며 비공개 history와 workflow 원장은 삭제하지 않는다.
+- Resume·direct compact는 기존 hook으로 원자적 읽기 시점 L의 현재 본문을 주입한다. Codex·Claude Code의 일반 입력은 짧은 cue만 받고, AGY turn0는 native ephemeral current+cue를 사용해 주입문을 durable 대화 이력에 누적하지 않는다. Hook 출력은 모델의 수락·실제 행동 증거가 아니며, 호스트 수락 ACK 없이 crash 이후까지 exactly-once 전달이나 첫 행동까지의 최신성을 보장하지 않는다. Workflow revision·marker·bounded 구조 카드 계약은 유지한다.
+
+### 기존 current의 관리 이관
+
+Legacy schema 2/3에서 4로 이관할 때 현재 메모리 JSON이 2000 UTF-8 byte 이하면 그대로 보존한다. 초과한 current에는 기존 유효 핵심을 최적화한 명시적 semantic mapping이 필요하다. 필요한 mapping이 없거나 원본 digest가 달라지면 `MIGRATION_INCOMPLETE`로 전체 이관을 원자적으로 rollback하며, 원문 자르기나 빈 값 대체로 통과시키지 않는다.
+
+관리자는 해당 DB를 쓰는 호스트를 중지한 상태에서 명시적 DB 경로로 기존 CLI를 사용한다. 아래는 사용법이며 실행 완료 기록이 아니다.
+
+```text
+node mcp-server/dist/continuity-memory-migration.mjs export-current --database "<continuity.sqlite3>" --output "<current-mapping.json>"
+node mcp-server/dist/continuity-memory-migration.mjs apply --database "<continuity.sqlite3>" --mapping "<current-mapping.json>"
+```
+
+`export-current`는 이관용으로 허용된 당시 current만 내보내며 history 열람 권한을 주지 않는다. 관리자는 초과 current의 mapping을 준비해 적용한다. 내보낸 파일과 mapping은 이관 후 과거 본문 사본이 되므로 에이전트 접근에서 회수한다. 원시 대화·로그·인증 정보나 다른 세션의 history는 이 절차의 입력으로 삼지 않는다.
 
 다섯 건 중 네 건(D-0001, D-0002, D-0003, D-0030)은 원인이 같다. 안내가 메인 에이전트의 사용자 메시지 경계(UserPromptSubmit)와 전문 스킬 본문에만 있었다. 서브에이전트, 스킬을 호출하지 않은 위임, 자기 역할 판단에는 안내가 닿지 않았다.
 
 호환성:
 
-- 공개 계약은 더하기만 했다(SemVer minor). `update_session_status` 요청에 선택 필드 `role`이 생겼고, `list_session_status`의 각 행과 `update_session_status` 응답에 `role`(문자열 또는 null)이 생겼다. 기존 요청은 그대로 받는다.
+- 세션 역할 계약은 하위 호환 추가다. `update_session_status` 요청에 선택 필드 `role`이 생겼고, `list_session_status`의 각 행과 `update_session_status` 응답에 `role`(문자열 또는 null)이 생겼다. 이 도구들의 기존 요청은 그대로 받는다.
+- D53의 공개 continuity 요청은 변경됐다. `checkpoint_context`는 `expectedRevision`을 폐기하고 `expectedStateToken`을 필수로 받는다. `load_context`는 `schemaVersion`만으로 자기 current를 읽으며 제공받은 서명 후보를 선택할 때만 `candidateToken`을 전달한다. `purge_direct_context`도 `expectedStateToken`을 필수로 받고 current만 지운다. 따라서 3.8.0 전체를 공개 계약의 추가만 있는 SemVer minor 호환 변경으로 설명하지 않는다. 기존 workflow의 revision·receipt·구조 카드 계약은 그대로다.
 - 세션 현황판(`session-board.sqlite3`)의 `board_sessions` 표에 `role` 열을 더하되 형식 판(`user_version` 1)은 바꾸지 않는다. 열을 이름으로 지정해 쓰는 이전 AGS도 같은 컴퓨터에서 이 현황판을 계속 읽고 쓴다. 이전 AGS가 요약을 갱신해도 `role`은 지워지지 않는다.
 - hook 설정: Claude Code 플러그인(`claude-overlay/hooks/hooks.json`)과 Codex(`hooks/hooks.json`)에 `SubagentStart`를 등록했다. Codex의 UserPromptSubmit continuity hook `additionalContextLimit`를 1800에서 8192로 올렸다(아래 D-0003).
 - 단계 확인 알림 `hooks.phaseCheck.pending`에 자리표시자 `{runId}`, `{rootId}`가 생겼다.
@@ -304,6 +325,15 @@
 - 10개 스킬(위 9개와 ui-ux-design)의 `classification.json` span digest·바이트 위치와, 그중 source lock에 있는 9개(session-board 제외)의 통합 checksum을 새 값으로 바꿨다.
 
 ## 검증
+
+### D53 통합 후보의 현재 상태
+
+- root의 `6abcf4a0` Linux 표적 실행은 12파일·307사례 중 305 PASS, 1 FAIL, 1 SKIP이며 종료 1이었다. 실패 결과를 통과로 바꾸지 않는다.
+- 남은 `EEXIST` 공통 OS reason 결함은 `52dcc557124fafb30438705b9d950237fd3967cc`에서 수리했으며, 수정 뒤 동일 표적 재검증은 대기 중이다.
+- 최종 발행 후보 SHA, 해당 후보의 양 OS CI·표적 재검증과 native 호스트 결과는 **TBD**다. Root가 후보를 고정한 뒤 실제 결과를 추가한다. 소스 통합·메타데이터 준비·hook 출력만으로 시험 완료나 모델 수락·행동을 판정하지 않는다.
+- 아래 기존 정적 검사·CI·red/green·NOT_RUN과 기준 SHA는 원래 후보의 역사 기록으로 보존하며, D53 최종 후보의 통과 근거로 전용하지 않는다.
+
+### 기존 후보의 검증 기록
 
 - 로컬 정적 검사(이 PC): `corepack pnpm build`, `node scripts/check-bundle.mjs`, `node scripts/check-skill-context-optimization.mjs`, `node scripts/validate-repository.mjs`, `node scripts/run-python-validations.mjs`, `node scripts/check-source-lock.mjs`, `node scripts/i18n.mjs --check`, `node scripts/sync-release-metadata.mjs`, `node scripts/build-claude-plugin.mjs --check`, `node scripts/build-en-packages.mjs --check`, `eslint .`, `git diff --check`가 모두 종료 0이었다. vitest는 이 PC에서 돌리지 않았다.
 - CI(Linux·Windows, Node 24): 코드 변경을 모두 담은 0b1aa299에서 run 42153692286이 두 job 모두 success였다. 문서만 바꾼 최종 후보 커밋의 CI는 부모가 후보를 고정할 때 함께 적는다.
