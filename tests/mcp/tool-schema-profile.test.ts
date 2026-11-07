@@ -254,7 +254,7 @@ describe("MCP tool schema profiles", () => {
     const expected = `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
     expect(serverInstructions("ko")).toBe(expected);
     // Initialization projects the actual shared criteria, not merely their location.
-    const shared = await readFile(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8");
+    const shared = await readFile(new URL("../../skills/orchestrator/references/intake.md", import.meta.url), "utf8");
     const intake = shared.split("<!-- skill-intake:start -->\n")[1]?.split("\n<!-- skill-intake:end -->")[0];
     expect(intake).toBeTruthy();
     expect(SKILL_INTAKE_SERVER_INSTRUCTIONS.split(intake!)).toHaveLength(2);
@@ -282,9 +282,10 @@ describe("MCP tool schema profiles", () => {
         const response = trace.filter(row => row.direction === "server").map(row => JSON.parse(row.wire))
           .find(row => row.id === initialize.id && row.result);
         expect(response?.result.instructions).toBe(expected);
-        expect(response.result.instructions).toContain("도구 노출만으로 지원 설정을 추정하지 않");
-        expect(response.result.instructions).toContain("미확정·거부 때는 계약의 실패 처리를 따른다");
-        expect(response.result.instructions).toContain("남은 독립 작업을 계속하며");
+        expect(response.result.instructions).toContain("분류 지원이 설정된 환경에서만");
+        expect(response.result.instructions).toContain("도구 노출로 설정을 추정하지 않으며");
+        expect(response.result.instructions).toContain("미확정·거부 시 계약의 실패 처리를 따른다");
+        expect(response.result.instructions).toContain("독립 작업을 계속하며 턴·전체 작업을 끝내지 않는다.");
         expect(Object.keys(response.result)).toEqual(expect.arrayContaining(["protocolVersion", "capabilities", "serverInfo", "instructions"]));
       }
       expect(implicit.getInstructions()).toBe(expected);
