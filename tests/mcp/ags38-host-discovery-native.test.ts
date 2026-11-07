@@ -1,5 +1,6 @@
 import {createHash} from "node:crypto";
-import {mkdtemp, mkdir, writeFile, readFile, copyFile, chmod, rm} from "node:fs/promises";
+import {mkdtemp, mkdir, writeFile, readFile, copyFile, chmod, rm, realpath} from "node:fs/promises";
+import {createRequire} from "node:module";
 import {tmpdir} from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
@@ -156,14 +157,37 @@ describe("D0013 current native installation and running root binding", () => {
     const f = await fixture("codex"); const npm = path.join(f.home, "npm");
     host.launcher = await windowsNpmFixture(npm);
     vi.stubEnv("PATH", npm); host.nativeMissing = true;
-    expect((await gateway(f.root).inventory()).discovery).toMatchObject({status: "COMPLETE", scope: "host"});
-    expect(host.rawCalls.filter(call => call.file === host.launcher)).toEqual([
-      {file: host.launcher, args: ["--version"]},
-      {file: host.launcher, args: ["plugin", "marketplace", "list", "--json"]},
-      {file: host.launcher, args: ["plugin", "list", "--marketplace", "neutral-market", "--json"]},
-    ]);
-    expect(host.rawCalls.some(call => call.file === process.execPath)).toBe(false);
-    expect(host.rawCalls.filter(call => call.file === "codex")).toHaveLength(1);
+    try {
+      expect((await gateway(f.root).inventory()).discovery).toMatchObject({status: "COMPLETE", scope: "host"});
+      expect(host.rawCalls.filter(call => call.file === host.launcher)).toEqual([
+        {file: host.launcher, args: ["--version"]},
+        {file: host.launcher, args: ["plugin", "marketplace", "list", "--json"]},
+        {file: host.launcher, args: ["plugin", "list", "--marketplace", "neutral-market", "--json"]},
+      ]);
+      expect(host.rawCalls.some(call => call.file === process.execPath)).toBe(false);
+      expect(host.rawCalls.filter(call => call.file === "codex")).toHaveLength(1);
+    } catch (failure) {
+      const packageRoot = path.join(npm, "node_modules/@openai/codex");
+      const requestedPackage = `@openai/codex-win32-${process.arch}`;
+      const diagnostic: Record<string, unknown> = {arch: process.arch, fixturePath: host.launcher, requestedPackage, rawCalls: host.rawCalls};
+      const observe = async (field: string, read: () => Promise<unknown>) => {
+        try { diagnostic[field] = await read(); }
+        catch (cause) { diagnostic[field] = {code: cause && typeof cause === "object" && "code" in cause && typeof cause.code === "string"
+          ? cause.code : "PUBLIC_METADATA_READ_FAILED"}; }
+      };
+      await observe("fixtureRealpath", () => realpath(host.launcher));
+      await observe("launcherPackage", async () => {
+        const metadata = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
+        return {name: metadata.name, version: metadata.version, bin: metadata.bin?.codex};
+      });
+      await observe("nativePackage", async () => {
+        const resolvedPath = createRequire(path.join(packageRoot, "bin/codex.js")).resolve(`${requestedPackage}/package.json`);
+        const metadata = JSON.parse(await readFile(resolvedPath, "utf8"));
+        return {resolvedPath, name: metadata.name, version: metadata.version};
+      });
+      console.error("WINDOWS_NATIVE_DISCOVERY_DIAGNOSTIC", JSON.stringify(diagnostic));
+      throw failure;
+    }
   });
   it.skipIf(process.platform !== "win32").each(["missing", "wrong-package", "wrong-bin", "duplicate"])("Windows shim ENOENT keeps %s official launcher unavailable", async mutation => {
     const f = await fixture("codex"); const npm = path.join(f.home, "npm");
