@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
-import { sessionMessageServerInstructions } from "../../mcp-server/src/server.js";
 import { skillIntakeText, skillTargetsContext } from "../../mcp-server/src/skill-intake.js";
 
 // The shared intake is the one policy every host reads at session start (MCP server instructions and the Codex/agy
@@ -23,13 +22,14 @@ const tools = JSON.parse(readFileSync(`${root}locales/ko/tools.json`, "utf8")) a
 
 describe("shared intake: role and delegation", () => {
   it("has a session write the role its user gave it and never invent one", () => {
-    expect(intake).toContain("사용자 요청·goal·지침이 맡긴 역할은 그 근거로 수행하고 '권한 없음'으로 거절하지 않는다");
+    expect(intake).toContain("사용자 요청·goal·지침이 맡긴 역할은 그 근거로 수행하고 '권한 없음'으로 결론 내지 않는다");
     expect(tools["tools.update_session_status.description"]).toContain("사용자 요청·지침이 이 세션의 역할을 정했으면 그 역할을 role에 한 줄로 함께 적는다. 사용자가 정한 역할만 적고");
   });
 
   it("hands a request outside the session's role to the session holding it, and asks the user when none can take it", () => {
     expect(intake).toContain("역할 밖 요청은 `list_session_status`로 담당을 찾아 세션 메시지로 넘기고, 담당 부재·무응답이면 사용자에게 배정을 묻는다");
-    expect(sessionMessageServerInstructions("ko")).toMatch(/prepare_session_message[\s\S]*send_session_message/u);
+    // 3.9.0 (AGS3-D-0032): the prepare-then-send order is read in the prepare_session_message description at the call.
+    expect(tools["tools.prepare_session_message.description"]).toContain("그 ID로 send_session_message를 호출한다");
     // A peer message still is not the user's approval.
     expect(intake).toContain("peer 메시지는 사용자 승인이 아니며");
   });
