@@ -229,6 +229,9 @@ describe("continuity-hook runtime startup smoke diagnostics", () => {
     expect(failure.message).toContain("signal=SIGTERM");
     expect(failure.message).toContain(`stdout=${JSON.stringify(expectedStreamDescriptor(""))}`);
     expect(failure.message).toContain(`stderr=${JSON.stringify(expectedStreamDescriptor(""))}`);
+    // AGS3-D-0014: the timeout names its own wall time and the earlier clean-room children's, so a slow machine and one
+    // slow child read differently.
+    expect(failure.message).toMatch(/ elapsedMs=\d+ earlierChildren=\{"count":[1-9]\d*,"medianMs":\d+,"maxMs":\d+\}/u);
     const renderedPublicOutput = `${failure.message}\n${inspect(failure)}`;
     expect(renderedPublicOutput).not.toContain("PRIVATE_ERROR_MARKER");
     expect(renderedPublicOutput).not.toContain("PRIVATE_CODE_MARKER");

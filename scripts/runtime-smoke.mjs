@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { access, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { performance } from "node:perf_hooks";
 
 import { failureContext, retainFailureCause, retainFailureSecondary } from "../runtime/failure-diagnostics.mjs";
 import { SKILL_RUNTIME_ENTRYPOINTS } from "./runtime-entrypoints.mjs";
@@ -48,7 +49,17 @@ function formatContinuityHookFailure(result) {
   const errorToken = result.error ? JSON.stringify(failureContext(result.error)) : "none";
   const statusToken = Number.isInteger(result.status) ? String(result.status) : "null";
   const signalToken = typeof result.signal === "string" && SAFE_POSIX_SIGNALS.has(result.signal) ? result.signal : "null";
-  return `error=${errorToken} status=${statusToken} signal=${signalToken} stdout=${formatBoundedStream(result.stdout)} stderr=${formatBoundedStream(result.stderr)}`;
+  const elapsedToken = Number.isInteger(result.elapsedMs) ? String(result.elapsedMs) : "null";
+  return `error=${errorToken} status=${statusToken} signal=${signalToken} stdout=${formatBoundedStream(result.stdout)} stderr=${formatBoundedStream(result.stderr)}`
+    + ` elapsedMs=${elapsedToken} earlierChildren=${JSON.stringify(result.earlierChildren ?? null)}`;
+}
+
+// Wall times of the clean-room children run before this one. A timeout then shows whether every child was slow (a slow
+// machine) or only this one (AGS3-D-0014: a 10s SessionStart timeout left no other observation).
+function summarizeElapsed(elapsed) {
+  if (elapsed.length === 0) return { count: 0 };
+  const sorted = [...elapsed].sort((left, right) => left - right);
+  return { count: sorted.length, medianMs: sorted[Math.floor((sorted.length - 1) / 2)], maxMs: sorted.at(-1) };
 }
 
 async function assertMissing(target) {
@@ -100,15 +111,23 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     environment.AGENT_GOVERNANCE_TRUST_DB_PATH = path.join(cleanRoot, "state", "trust.sqlite3");
     environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = path.join(cleanRoot, "state", "messaging");
     // Runs a clean-room script (a path relative to the clean root) with the given stdin text.
-    const runNode = (script, input, args = [], env = environment) => spawnSync(process.execPath, [path.join(cleanRoot, ...script.split("/")), ...args], {
-      cwd: cleanRoot,
-      encoding: "utf8",
-      env,
-      input,
-      maxBuffer: 5 * 1024 * 1024,
-      timeout: 30_000,
-      windowsHide: true,
-    });
+    const childElapsedMs = [];
+    const runNode = (script, input, args = [], env = environment) => {
+      const started = performance.now();
+      const result = spawnSync(process.execPath, [path.join(cleanRoot, ...script.split("/")), ...args], {
+        cwd: cleanRoot,
+        encoding: "utf8",
+        env,
+        input,
+        maxBuffer: 5 * 1024 * 1024,
+        timeout: 30_000,
+        windowsHide: true,
+      });
+      const elapsedMs = Math.round(performance.now() - started);
+      const earlierChildren = summarizeElapsed(childElapsedMs);
+      childElapsedMs.push(elapsedMs);
+      return Object.assign(result, { elapsedMs, earlierChildren });
+    };
 
     // Missing arguments/operation validate startup without starting a broker or relay.
     for (const probe of MESSAGING_RUNTIME_PROBES) {
