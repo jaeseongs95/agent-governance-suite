@@ -36,6 +36,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: true,
   }),
   Object.freeze({
+    id: "continuity-memory-migration",
+    entry: "mcp-server/src/continuity-memory-migration.ts",
+    output: "mcp-server/dist/continuity-memory-migration.mjs",
+    executable: true,
+  }),
+  Object.freeze({
     id: "intake-hook",
     entry: "mcp-server/src/intake-hook.ts",
     output: "mcp-server/dist/intake-hook.mjs",
