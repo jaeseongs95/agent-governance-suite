@@ -1,7 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { ElicitRequestSchema, type ElicitResult } from "@modelcontextprotocol/sdk/types.js";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
@@ -396,7 +396,14 @@ describe("context layer injection at hook boundaries", () => {
     expect(hostActorId("codex", session, "agent-1")).not.toBe(hostActorId("codex", session));
   });
 
-  it("stays within each host's additionalContext limit with every layer at its limit (Codex 8192, Claude Code 10000 characters)", () => {
+  // Codex 0.166 counts a hook's additionalContextLimit in approximate tokens, ceil(UTF-8 bytes / 4) (codex-rs
+  // hooks/src/output_spill.rs, utils/string/src/truncate.rs approx_token_count; tag rust-v0.166.0), read here from the
+  // continuity hook's own entries in hooks/hooks.json. Claude Code keeps 10,000 characters of a hook's additionalContext
+  // (claude-overlay/README.md, TLS session messages). agy publishes no limit; it is measured on the real host.
+  it("stays within each host's additionalContext limit with every layer at its limit", () => {
+    const codexHooks = (JSON.parse(readFileSync(path.join(fileURLToPath(new URL("../../", import.meta.url)), "hooks/hooks.json"), "utf8")) as
+      { hooks: Record<string, Array<{ hooks: Array<{ command: string; additionalContextLimit?: number }> }>> }).hooks;
+    const codexLimit = (event: string) => codexHooks[event]!.flatMap(group => group.hooks).find(hook => hook.command.includes("continuity-hook.mjs"))!.additionalContextLimit!;
     const env = { ...environment(directory()), AGENT_GOVERNANCE_LOCALE: "ko" };
     hook(env, { hook_event_name: "SessionStart", source: "startup" });
     // Worst case: each body at its byte limit, in the widest UTF-8 the bodies are likely to use (Hangul, 3 bytes).
@@ -414,7 +421,7 @@ describe("context layer injection at hook boundaries", () => {
     measure("SessionStart:compact", hook(env, { hook_event_name: "SessionStart", source: "compact" }));
     console.log(`CONTEXT_LAYER_SIZES ${JSON.stringify(sizes)}`);
     for (const [name, size] of Object.entries(sizes)) {
-      expect(size.bytes, name).toBeLessThanOrEqual(8192);
+      expect(Math.ceil(size.bytes / 4), name).toBeLessThanOrEqual(codexLimit(name.split(":")[0]!));
       expect(size.characters, name).toBeLessThanOrEqual(10_000);
     }
   });
