@@ -6,7 +6,7 @@ dist/
 coverage/
 *.log
 *.sqlite3
-!skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3
+!runtime/korean-prose-glossary/korean-prose-glossary.sqlite3
 *.sqlite3-shm
 *.sqlite3-wal
 .env
@@ -17,11 +17,11 @@ __pycache__/
 .pytest_cache/
 !claude-plugin/mcp-server/dist/
 !claude-plugin/mcp-server/dist/*.mjs
-!claude-plugin/skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3
+!claude-plugin/runtime/korean-prose-glossary/korean-prose-glossary.sqlite3
 # Generated English-only packages (scripts/build-en-packages.mjs) ship the same bundles.
 !claude-plugin-en/mcp-server/dist/
 !claude-plugin-en/mcp-server/dist/*.mjs
-!claude-plugin-en/skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3
+!claude-plugin-en/runtime/korean-prose-glossary/korean-prose-glossary.sqlite3
 !codex-plugin-en/mcp-server/dist/
 !codex-plugin-en/mcp-server/dist/**
-!codex-plugin-en/skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3
+!codex-plugin-en/runtime/korean-prose-glossary/korean-prose-glossary.sqlite3

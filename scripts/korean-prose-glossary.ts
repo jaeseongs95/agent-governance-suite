@@ -17,8 +17,8 @@ try {
     arguments_.set(key.slice(2), value);
   }
   const mode = arguments_.get("mode") ?? "check";
-  const seedPath = path.resolve(root, arguments_.get("seed") ?? "skills/korean-prose-editor/resources/glossary.seed.jsonl");
-  const databasePath = path.resolve(root, arguments_.get("db") ?? "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3");
+  const seedPath = path.resolve(root, arguments_.get("seed") ?? "runtime/korean-prose-glossary/glossary.seed.jsonl");
+  const databasePath = path.resolve(root, arguments_.get("db") ?? "runtime/korean-prose-glossary/korean-prose-glossary.sqlite3");
   const entries = parseGlossarySeed(await readFile(seedPath, "utf8"));
 
   let metadata: ReturnType<typeof checkGlossaryDatabase>;

@@ -113,7 +113,8 @@
         "preconditions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "failureHandling": { "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "object", "minProperties": 1 }] },
         "gate": { "$ref": "#/$defs/gate" },
-        "receiptPolicy": { "$ref": "#/$defs/receiptPolicy" }
+        "receiptPolicy": { "$ref": "#/$defs/receiptPolicy" },
+        "stageValidator": { "type": "string", "pattern": "^skills/[^\\\\]*\\.mjs$" }
       }
     }
   }

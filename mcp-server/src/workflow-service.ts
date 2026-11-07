@@ -1417,7 +1417,7 @@ export class WorkflowService {
         this.assertPlannedInputsAvailable(receipt, target, result.state === "passed");
         this.assertResultSemantics(target, checked, receipt.plan.taskId, receipt.plan.taskDigest);
         if (target.requiredCapability === "cs-implementation-review") {
-          assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+          assertCsStageBundle(this.registry, target, receipt.plan.taskDigest, checked, this.validator);
         }
         assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, target.requiredCapability, checked, this.validator);
         this.assertDeclaredReceiptPolicy(receipt, target, checked);
@@ -1505,7 +1505,7 @@ export class WorkflowService {
             : result;
           this.assertResultSemantics(stage, checked, receipt.plan.taskId, receipt.plan.taskDigest);
           if (stage.requiredCapability === "cs-implementation-review") {
-            assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+            assertCsStageBundle(this.registry, stage, receipt.plan.taskDigest, checked, this.validator);
           }
           assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, stage.requiredCapability, checked, this.validator);
           this.assertMandatoryAuditGate(stage, checked);
