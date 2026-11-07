@@ -20,6 +20,7 @@ import {
 } from "./runtime-config.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { msg, render, resolveHostLocale, type SupportedLocale } from "./i18n.js";
+import { hostActorId } from "./host-attestation.js";
 
 type HookInput = Record<string, unknown>;
 
@@ -186,11 +187,11 @@ function stopOutput(host: string, eventName: string, cue: string | null): Record
 
 /** A file edit before it runs: the workflow gate (design ags30-phase-check 7.2). Exempt-only edits are not recorded. */
 function gateEdit(observation: InputObservation, service: ContinuityService, host: string, environment: NodeJS.ProcessEnv,
-  locale: SupportedLocale, bySubagent = false): Record<string, unknown> {
+  locale: SupportedLocale, actor: string | null = null): Record<string, unknown> {
   const { product: targets, unversioned } = productEditTargets(observation, host, environment, locale);
   if (targets.size === 0 && unversioned.length === 0) return {};
   const refusal = service.gateEditForSession(observation.sessionId, [...targets.keys()], [...targets.values()],
-    minimalWorkflowStartExample(locale), unversioned, bySubagent);
+    minimalWorkflowStartExample(locale), unversioned, actor);
   return refusal ? deniedEdit(render(refusal, locale)) : {};
 }
 
@@ -214,10 +215,16 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
   if (isSubagentStart(input)) return subagentStartOutput(input, locale);
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
-  // A subagent's edit counts in its parent session's window (the host names the parent in session_id). Nothing else
-  // a child does pins or binds continuity state, and it does not re-arm the parent's turn-end phase check: a parent
-  // waiting on background subagents was otherwise continued at every Stop with nothing to do (AGS3-D-0060).
-  if (isObservedSubagent(observation)) return isEditBoundary(observation) ? gateEdit(observation, service, host, environment, locale, true) : {};
+  // A subagent's hooks name its parent in session_id and itself in agentKey. Its edits are gated in the session and
+  // arm only its own phase check, which runs at its own turn end (Claude Code SubagentStop) over the workflows it
+  // started: never at the parent's Stop (AGS3-D-0060, AGS3-D-0061). Nothing else a child does pins or binds continuity.
+  if (isObservedSubagent(observation)) {
+    // Every adapter that observes a child sets its agentKey; the fallback still keeps the edit off the parent's window.
+    const actor = hostActorId(host, sessionId, observation.agentKey ?? "unidentified-child");
+    if (isEditBoundary(observation)) return gateEdit(observation, service, host, environment, locale, actor);
+    return isTurnEnd(input) ? stopOutput(host, outputEventName,
+      renderHookText(service.phaseCheckForSession(sessionId, observation.stopHookActive === true, actor), locale)) : {};
+  }
   if (!actorAccess(observation.actor).allowed) return {};
   switch (action?.kind) {
     case "startup": service.ensureSession(sessionId); return {};

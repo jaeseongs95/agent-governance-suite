@@ -78,6 +78,8 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
     kind = "tool-boundary";
     boundaryPhase = "after";
   } else if (event === "Stop") kind = "turn-end";
+  // A subagent's own end (Claude Code SubagentStop, with agent_id): the turn end of that child (AGS3-D-0061).
+  else if (event === "SubagentStop") kind = "turn-end";
   // Claude Code and Codex 0.166 name the hook that adds context to a new subagent SubagentStart; it carries agent_id.
   else if (event === "SubagentStart") kind = "subagent-start";
   if (event === "PreCompact") continuityAction = { kind: "pre-compact" };
@@ -122,7 +124,10 @@ function adaptInferredRootHookInput(input: Record<string, unknown>, host: string
   if (!adapted.observation.sessionId.trim()) actor.reasonCode = `${prefix}_NATIVE_SESSION_ID_INVALID`;
   else if (adapted.observation.kind === "subagent-start") {
     // A subagent start is a child by definition (it names the parent session): never inferred as the root.
-    if (typeof input.agent_id === "string" && input.agent_id.trim()) Object.assign(actor, { role: "child", basis: "observed", reasonCode: `${prefix}_NATIVE_CHILD_AGENT_ID` });
+    if (typeof input.agent_id === "string" && input.agent_id.trim()) {
+      Object.assign(actor, { role: "child", basis: "observed", reasonCode: `${prefix}_NATIVE_CHILD_AGENT_ID` });
+      adapted.observation.agentKey = input.agent_id;
+    }
     else actor.reasonCode = `${prefix}_NATIVE_SUBAGENT_START_AGENT_ID_INVALID`;
   } else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: `${prefix}_ROOT_INFERRED_CHILD_GATE_DEFERRED` });
   return adapted;
@@ -144,9 +149,10 @@ function adaptCodexHookInput(input: Record<string, unknown>, host: string): Adap
   if (Object.hasOwn(input, "agent_id")) {
     // Codex's native subagent hook context serializes agent_id even though session_id names the parent.
     // Missing markers retain the 3.0 stopgap; a positive or malformed marker must never inherit it.
-    adapted.observation.actor = typeof input.agent_id === "string" && input.agent_id.trim()
-      ? { role: "child", basis: "observed", reasonCode: "CODEX_NATIVE_CHILD_AGENT_ID" }
-      : { role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_AGENT_ID_INVALID" };
+    if (typeof input.agent_id === "string" && input.agent_id.trim()) {
+      adapted.observation.actor = { role: "child", basis: "observed", reasonCode: "CODEX_NATIVE_CHILD_AGENT_ID" };
+      adapted.observation.agentKey = input.agent_id;
+    } else adapted.observation.actor = { role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_AGENT_ID_INVALID" };
     return adapted;
   }
   // The fork fact comes only from the host's SessionStart source; the parent comes from the rollout's first line.
@@ -220,7 +226,10 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
     actor.reasonCode = "CLAUDE_NATIVE_AGENT_TYPE_INVALID";
   } else if (Object.hasOwn(input, "agent_id")) {
     if (typeof input.agent_id !== "string" || !input.agent_id.trim()) actor.reasonCode = "CLAUDE_NATIVE_AGENT_ID_INVALID";
-    else Object.assign(actor, { role: "child", basis: "observed", reasonCode: "CLAUDE_NATIVE_CHILD_AGENT_ID" });
+    else {
+      Object.assign(actor, { role: "child", basis: "observed", reasonCode: "CLAUDE_NATIVE_CHILD_AGENT_ID" });
+      adapted.observation.agentKey = input.agent_id;
+    }
   } else if (adapted.observation.kind === "subagent-start") actor.reasonCode = "CLAUDE_NATIVE_SUBAGENT_START_AGENT_ID_INVALID";
   else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT" });
   const transcriptPath = text(input.transcript_path);

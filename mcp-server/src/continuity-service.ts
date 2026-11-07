@@ -77,9 +77,18 @@ const LINEAGE_ANCHOR_COUNT = 16;
 /** Phase check (design ags30-phase-check 3.2-3.3): a file edit, and the turn-end check that covers it. */
 const PHASE_EDIT_EVENT = "phase-edit";
 const PHASE_CHECK_EVENT = "phase-check";
-/** A root a subagent started or opened in its parent's session: it stays bound (the subagent's edits pass the gate) but
- * is the subagent's work, so the parent's turn-end phase check does not list it (AGS3-D-0060). Suffix: the root ID. */
+/**
+ * Phase checks belong to the actor that does the work (AGS3-D-0061): a subagent's edits and the roots it starts or opens
+ * are checked at its own turn end, never at its parent's. A subagent's phase-edit and phase-check rows carry the suffix
+ * `@<actor hash>`; the session's root actor keeps the bare names. A subagent's root stays bound to the session, so every
+ * actor's edits inside any of the session's roots pass the gate (AGS3-D-0063). Suffix here: the root ID.
+ */
 const PHASE_CHILD_ROOT_EVENT = "phase-child-root:";
+/** Suffix `<actor hash>:<root ID>`: the subagent that started or opened the root. */
+const PHASE_ROOT_ACTOR_EVENT = "phase-root-actor:";
+/** In a session whose hooks are another session's subagent (VerifiedCaller.hookSessionId): suffix
+ * `<owner task correlation> <actor ID>`, recorded from that subagent's verified tool call. */
+const PHASE_ALIAS_EVENT = "phase-alias:";
 /**
  * Workflow enforcement (design ags30-phase-check 7). A window is every observation after the later of the last phase
  * check and the last workflow start. Each distinct product file edited in a window without an active workflow is one
@@ -204,8 +213,11 @@ export interface ContinuityGateway {
   suppressContextRestore(value: unknown, caller: VerifiedCaller): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }>;
   purgeDirectContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuityPurgeResultV1>;
   bindOpenedRoot(caller: VerifiedCaller, rootId: string): boolean;
-  /** Called only with the session identity verified by the MCP ingress: binds one more root to the session. */
-  prepareWorkflowStart(rawSessionId: string, rootId: string, bySubagent?: boolean): void;
+  /** Called only with the session identity verified by the MCP ingress: binds one more root to the session. `owner`: the
+   * subagent actor that starts it; null for the session's root actor. */
+  prepareWorkflowStart(rawSessionId: string, rootId: string, owner?: string | null): void;
+  /** Records that the caller's own hooks run under `caller.hookSessionId` (a subagent of `caller.sessionId`). */
+  noteHookSession(caller: VerifiedCaller): void;
   /** Whether this session ever bound the root, in any epoch (start_workflow rootId and ROOT_CONFLICT ownership). */
   ownsRoot(rawSessionId: string, rootId: string): boolean;
   /** Whether another session bound the root (claim frame change and replacement refuse it). False without a store: nobody owns it. */
@@ -290,7 +302,7 @@ export class ContinuityService implements ContinuityGateway {
     return `hmac-sha256:${this.hmac(`session\0${rawSessionId}`)}`;
   }
 
-  hashOpaque(kind: "request" | "turn" | "file", value: string): string {
+  hashOpaque(kind: "request" | "turn" | "file" | "actor", value: string): string {
     return `hmac-sha256:${this.hmac(`${kind}\0${value}`)}`;
   }
 
@@ -783,7 +795,7 @@ export class ContinuityService implements ContinuityGateway {
       const binding = this.toolBinding(caller, "open_convergence_root");
       const now = this.now().toISOString();
       if (!this.store.bindRoot(binding.c, binding.e, rootId, now)) return false;
-      if (caller.actor.role === "child") this.store.recordObservation(binding.c, binding.e, PHASE_CHILD_ROOT_EVENT + rootId, null, true, now);
+      this.markRootOwner(binding.c, binding.e, rootId, caller.actor.role === "child" ? caller.actor.id : null, now);
       return true;
     } catch {
       // The committed workflow result is independent; callers must observe missing correlation.
@@ -791,7 +803,7 @@ export class ContinuityService implements ContinuityGateway {
     }
   }
 
-  prepareWorkflowStart(rawSessionId: string, rootId: string, bySubagent = false): void {
+  prepareWorkflowStart(rawSessionId: string, rootId: string, owner: string | null = null): void {
     const now = this.now().toISOString();
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     // Roots bound earlier do not conflict: overlapping paths are the convergence guard's ROOT_CONFLICT. Only a
@@ -805,9 +817,43 @@ export class ContinuityService implements ContinuityGateway {
       throw new WorkflowContractError("STALE_REVISION", msg("continuity.binding.stale", {}), { reason: "CONTINUITY_EPOCH_CHANGED" });
     }
     const { taskCorrelation: c, currentEpoch: e } = task;
-    if (bySubagent) this.store.recordObservation(c, e, PHASE_CHILD_ROOT_EVENT + rootId, null, true, now);
+    this.markRootOwner(c, e, rootId, owner, now);
     // A start ends the window and its lock; success marks a start that followed a refused edit.
     this.store.recordObservation(c, e, PHASE_START_EVENT, null, this.locked(c, e), now);
+  }
+
+  private markRootOwner(c: string, e: number, rootId: string, owner: string | null, now: string): void {
+    if (owner === null) return;
+    this.store.recordObservation(c, e, PHASE_CHILD_ROOT_EVENT + rootId, null, true, now);
+    this.store.recordObservation(c, e, `${PHASE_ROOT_ACTOR_EVENT}${this.hashOpaque("actor", owner)}:${rootId}`, null, true, now);
+  }
+
+  noteHookSession(caller: VerifiedCaller): void {
+    if (!caller.hookSessionId || caller.hookSessionId === caller.sessionId) return;
+    const now = this.now().toISOString();
+    const owner = this.store.ensureTask(this.correlateSession(caller.sessionId), now);
+    const alias = this.store.ensureTask(this.correlateSession(caller.hookSessionId), now);
+    const event = `${PHASE_ALIAS_EVENT}${owner.taskCorrelation} ${caller.actor.id}`;
+    if (!this.store.hasObservation(alias.taskCorrelation, alias.currentEpoch, event)) {
+      this.store.recordObservation(alias.taskCorrelation, alias.currentEpoch, event, null, true, now);
+    }
+  }
+
+  /** The task and actor a hook event's phase window belongs to: `actor` (a subagent the hook names) in this session,
+   * or, when this session's hooks are another session's subagent, that subagent there. Null without a task. */
+  private phaseOwner(rawSessionId: string, actor: string | null, now: string | null): { task: ContinuityTaskRecord; actor: string | null } | null {
+    const correlation = this.correlateSession(rawSessionId);
+    const task = now === null ? this.store.getTask(correlation) : this.store.ensureTask(correlation, now);
+    if (!task || actor !== null) return task ? { task, actor } : null;
+    const alias = this.store.observationEventsAfter(task.taskCorrelation, task.currentEpoch, PHASE_ALIAS_EVENT, 0).at(-1);
+    const [owner, aliasActor] = alias ? alias.slice(PHASE_ALIAS_EVENT.length).split(" ") : [];
+    const ownerTask = owner && aliasActor ? this.store.getTask(owner) : null;
+    return ownerTask ? { task: ownerTask, actor: aliasActor! } : { task, actor: null };
+  }
+
+  /** The actor's own phase row name: the bare name for the session's root actor. */
+  private actorEvent(event: string, actor: string | null): string {
+    return actor === null ? event : `${event}@${this.hashOpaque("actor", actor)}`;
   }
 
   ownsRoot(rawSessionId: string, rootId: string): boolean {
@@ -953,13 +999,14 @@ export class ContinuityService implements ContinuityGateway {
     const now = this.now().toISOString();
     // ensureTask, not ensureSession: an edit boundary never rotates a bound epoch.
     const { taskCorrelation: c, currentEpoch: e } = this.store.ensureTask(this.correlateSession(rawSessionId), now);
-    this.recordEdit(c, e, now);
+    this.recordEdit(c, e, now, null);
   }
 
-  private recordEdit(c: string, e: number, now: string): void {
-    const edit = this.store.lastObservationId(c, e, PHASE_EDIT_EVENT);
-    if (edit !== null && edit > (this.store.lastObservationId(c, e, PHASE_CHECK_EVENT) ?? 0)) return;
-    this.store.recordObservation(c, e, PHASE_EDIT_EVENT, null, true, now);
+  private recordEdit(c: string, e: number, now: string, actor: string | null): void {
+    const editEvent = this.actorEvent(PHASE_EDIT_EVENT, actor);
+    const edit = this.store.lastObservationId(c, e, editEvent);
+    if (edit !== null && edit > (this.store.lastObservationId(c, e, this.actorEvent(PHASE_CHECK_EVENT, actor)) ?? 0)) return;
+    this.store.recordObservation(c, e, editEvent, null, true, now);
   }
 
   private windowStart(c: string, e: number): number {
@@ -982,13 +1029,14 @@ export class ContinuityService implements ContinuityGateway {
    * (absolute paths outside version control, design 7.3) meet only the gated check: they are never counted or recorded.
    */
   gateEditForSession(rawSessionId: string, targets: readonly string[], shown: readonly string[] = targets,
-    example = minimalWorkflowStartExample(ROOT_LOCALE), unversioned: readonly string[] = [], bySubagent = false):
+    example = minimalWorkflowStartExample(ROOT_LOCALE), unversioned: readonly string[] = [], actor: string | null = null):
     MessageRef<"hooks.editGate.denied" | "hooks.editGate.outsideScope" | "hooks.editGate.gatedRoot"> | null {
     const now = this.now().toISOString();
-    const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
+    const owner = this.phaseOwner(rawSessionId, actor, now)!;
+    const { task } = owner;
     const { taskCorrelation: c, currentEpoch: e } = task;
-    // Only the session's own edits arm its turn-end phase check (AGS3-D-0060); a subagent's edit is still gated below.
-    if (targets.length > 0 && !bySubagent) this.recordEdit(c, e, now);
+    // An edit arms only its own actor's turn-end phase check (AGS3-D-0060, AGS3-D-0061).
+    if (targets.length > 0) this.recordEdit(c, e, now, owner.actor);
     const windowStart = this.windowStart(c, e);
     const unavailable = (code: string): null => {
       const event = GATE_UNAVAILABLE_PREFIX + code;
@@ -1044,8 +1092,12 @@ export class ContinuityService implements ContinuityGateway {
       { limit: WORKFLOW_FILE_LIMIT, paths, earlier: counted.size, example });
   }
 
-  /** The session's active workflows: each bound root not completed or abandoned whose latest run is not terminal. */
-  private workflowActivity(task: ContinuityTaskRecord): WorkflowActivity {
+  /**
+   * The session's active workflows: each bound root not completed or abandoned whose latest run is not terminal. `owner`
+   * narrows them to one actor's (the phase check): null = the session's root actor, an actor ID = that subagent. Without
+   * it every bound root counts (the edit gate: a subagent edits in its parent's workflow and in its own, AGS3-D-0063).
+   */
+  private workflowActivity(task: ContinuityTaskRecord, owner?: string | null): WorkflowActivity {
     const bound = this.store.boundRoots(task.taskCorrelation, task.currentEpoch);
     if (bound.length === 0) return [];
     const workflowStore = this.workflowStore;
@@ -1054,7 +1106,9 @@ export class ContinuityService implements ContinuityGateway {
       return bound.flatMap(rootId => {
         const snapshot = workflowStore.getConvergenceSnapshot(rootId);
         if (!snapshot || snapshot.root.state === "completed" || snapshot.root.state === "abandoned") return [];
-        if (this.store.hasObservation(task.taskCorrelation, task.currentEpoch, PHASE_CHILD_ROOT_EVENT + rootId)) return [];
+        if (owner === null && this.store.hasObservation(task.taskCorrelation, task.currentEpoch, PHASE_CHILD_ROOT_EVENT + rootId)) return [];
+        if (owner && !this.store.hasObservation(task.taskCorrelation, task.currentEpoch,
+          `${PHASE_ROOT_ACTOR_EVENT}${this.hashOpaque("actor", owner)}:${rootId}`)) return [];
         const runId = snapshot.workflowRunIds.at(-1);
         const receipt = runId ? workflowStore.getRun(runId) : null;
         return runId && receipt && !RUN_TERMINAL_STATES.has(receipt.state) ? [{ rootId, runId, snapshot, receipt }] : [];
@@ -1069,19 +1123,22 @@ export class ContinuityService implements ContinuityGateway {
    * and the AGS infrastructure failures that let this window pass. A window with no active run and no failure gives
    * no output. `quiet` records the check without output (a turn the host already continued).
    */
-  phaseCheckForSession(rawSessionId: string, quiet = false): HookText | null {
-    const task = this.store.getTask(this.correlateSession(rawSessionId));
-    if (!task) return null;
+  phaseCheckForSession(rawSessionId: string, quiet = false, actor: string | null = null): HookText | null {
+    const owner = this.phaseOwner(rawSessionId, actor, null);
+    if (!owner) return null;
+    const { task } = owner;
     const { taskCorrelation: c, currentEpoch: e } = task;
-    const lastCheck = this.store.lastObservationId(c, e, PHASE_CHECK_EVENT) ?? 0;
-    const edit = this.store.lastObservationId(c, e, PHASE_EDIT_EVENT);
-    const failures = [START_FAILED_PREFIX, GATE_UNAVAILABLE_PREFIX]
+    const checkEvent = this.actorEvent(PHASE_CHECK_EVENT, owner.actor);
+    const lastCheck = this.store.lastObservationId(c, e, checkEvent) ?? 0;
+    const edit = this.store.lastObservationId(c, e, this.actorEvent(PHASE_EDIT_EVENT, owner.actor));
+    // Infrastructure failures are the session's: its root actor names them once.
+    const failures = owner.actor !== null ? [] : [START_FAILED_PREFIX, GATE_UNAVAILABLE_PREFIX]
       .flatMap(prefix => this.store.observationEventsAfter(c, e, prefix, lastCheck));
     if ((edit === null || edit < lastCheck) && failures.length === 0) return null;
-    const activity = this.workflowActivity(task);
+    const activity = this.workflowActivity(task, owner.actor);
     if (!Array.isArray(activity)) failures.push(GATE_UNAVAILABLE_PREFIX + activity.unavailable);
     const pending = Array.isArray(activity) ? activity.map(item => this.pendingStages(item)).filter(item => item.stages.length > 0) : [];
-    this.store.recordObservation(c, e, PHASE_CHECK_EVENT, null, pending.length === 0 && failures.length === 0, this.now().toISOString());
+    this.store.recordObservation(c, e, checkEvent, null, pending.length === 0 && failures.length === 0, this.now().toISOString());
     const lines: MessageRef[] = [];
     // Only a gate that could not judge, or an edit passed because of a start failure, let changes through unchecked.
     const unchecked = failures.some(code => code.startsWith(GATE_UNAVAILABLE_PREFIX))
@@ -1284,6 +1341,7 @@ export class UnavailableContinuityService implements ContinuityGateway {
   bindOpenedRoot(): boolean { return false; }
   // Direct checkpoint access is unavailable too; preserve optional continuity.
   prepareWorkflowStart(): void {}
+  noteHookSession(): void {}
   /** Ownership cannot be told without the continuity store: that is its own failure, not another session's root. */
   ownsRoot(): boolean {
     throw new WorkflowContractError("CONTINUITY_UNAVAILABLE", msg("continuity.store.optionalUnavailable", {}), { reason: this.reason });

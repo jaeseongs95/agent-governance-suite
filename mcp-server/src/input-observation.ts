@@ -17,6 +17,8 @@ export interface InputObservation {
   callId?: string;
   kind: InputObservationKind;
   actor: ActorObservation;
+  /** An observed child only: the host's ID for that subagent (the same value its MCP calls carry). */
+  agentKey?: string;
   boundaryPhase?: "before" | "after";
   toolName?: string;
   toolInput?: Record<string, unknown>;

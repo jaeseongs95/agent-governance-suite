@@ -14,6 +14,7 @@ import { ContinuityService, minimalWorkflowStartExample, WORKFLOW_FILE_LIMIT } f
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { hostActorId } from "../../mcp-server/src/host-attestation.js";
 import { msg } from "../../mcp-server/src/i18n.js";
 
 // Design docs/ags30-phase-check-design.md 7 (enforcement, 3.1.0). Synthetic hook inputs and stores; no real host run.
@@ -340,12 +341,20 @@ describe("Stop output", () => {
   });
 });
 
-// AGS3-D-0060: a Claude subagent's hook calls carry its parent's session_id. Its edits stay gated in the parent's
-// window, but neither they nor the workflows it starts may continue the parent's Stop: a parent waiting on background
-// subagents was otherwise woken at every Stop with nothing to do.
-describe("subagent work at the parent's Stop (AGS3-D-0060)", () => {
+// AGS3-D-0060, AGS3-D-0061, AGS3-D-0063: phase checks belong to the actor that does the work. A subagent's edits and
+// the workflows it starts are checked at its own turn end, never at its parent's Stop; every bound root of the session
+// still passes the edit gate for every actor. Host shapes: Claude Code and Codex hooks name the parent in session_id
+// and the subagent in agent_id (Claude Code SubagentStop ends the subagent); agy runs a subagent's hooks under its own
+// conversation, and its MCP calls name that conversation, its parent and the root (session binding design 1.5).
+describe("phase checks per actor (AGS3-D-0060, AGS3-D-0061, AGS3-D-0063)", () => {
   const child = { agent_id: "child-1", agent_type: "general-purpose" };
+  const childActor = (host: string) => hostActorId(host, session, "child-1");
+  const subagentStop = { hook_event_name: "SubagentStop", session_id: session, ...child };
   const text = (output: Record<string, unknown>) => JSON.stringify(output);
+  const twoRoots = () => service(workflowWith([
+    { state: "open", rootId: "root-parent", runState: "running", scope: "alpha" },
+    { state: "open", rootId: "root-child", runState: "running", scope: "beta" },
+  ]));
 
   it("a subagent's edit does not continue the parent's Stop; the parent's own edit does", () => {
     const target = service(workflowWith([{ state: "open", rootId: "enforce-root", runState: "running" }]));
@@ -357,18 +366,94 @@ describe("subagent work at the parent's Stop (AGS3-D-0060)", () => {
     expect(text(handleContinuityHook(stop(), target, "claude-code", NO_ENV))).toContain("[AGS 단계 확인]");
   });
 
-  it("does not list a workflow a subagent started in the parent's phase check, and still passes the subagent's edits in it", () => {
-    const target = service(workflowWith([
-      { state: "open", rootId: "root-parent", runState: "running", scope: "alpha" },
-      { state: "open", rootId: "root-child", runState: "running", scope: "beta" },
-    ]));
+  it("passes every edit a subagent makes inside the workflow it started, past the file limit (AGS3-D-0063)", () => {
+    const target = twoRoots();
     target.prepareWorkflowStart(session, "root-parent");
-    target.prepareWorkflowStart(session, "root-child", true);
+    target.prepareWorkflowStart(session, "root-child", childActor("claude-code"));
+    for (let index = 1; index <= WORKFLOW_FILE_LIMIT + 1; index += 1) {
+      expect(handleContinuityHook(write(`beta/${index}.ts`, child), target, "claude-code", NO_ENV)).toEqual({});
+    }
+    expect(events(target).filter(event => event === "phase-file")).toHaveLength(0);
+  });
+
+  it("passes a subagent's edits inside its parent's workflow, past the file limit", () => {
+    const target = twoRoots();
+    target.prepareWorkflowStart(session, "root-parent");
+    for (let index = 1; index <= WORKFLOW_FILE_LIMIT + 1; index += 1) {
+      expect(handleContinuityHook(write(`alpha/${index}.ts`, child), target, "claude-code", NO_ENV)).toEqual({});
+    }
+  });
+
+  it("Claude Code: the subagent's own end lists the workflow it started; the parent's Stop lists only the parent's", () => {
+    const target = twoRoots();
+    target.prepareWorkflowStart(session, "root-parent");
+    target.prepareWorkflowStart(session, "root-child", childActor("claude-code"));
     expect(handleContinuityHook(write("beta/1.ts", child), target, "claude-code", NO_ENV)).toEqual({});
+    // Only the subagent edited: the parent's Stop stays quiet.
+    expect(handleContinuityHook(stop(), target, "claude-code", NO_ENV)).toEqual({});
+    const childCue = text(handleContinuityHook(subagentStop, target, "claude-code", NO_ENV));
+    expect(childCue).toContain("rootId root-child");
+    expect(childCue).not.toContain("root-parent");
+    // Once per edit run: the same subagent end without a new edit gives nothing.
+    expect(handleContinuityHook(subagentStop, target, "claude-code", NO_ENV)).toEqual({});
     expect(handleContinuityHook(write("alpha/1.ts"), target, "claude-code", NO_ENV)).toEqual({});
-    const cue = text(handleContinuityHook(stop(), target, "claude-code", NO_ENV));
-    expect(cue).toContain("rootId root-parent");
-    expect(cue).not.toContain("root-child");
+    const parentCue = text(handleContinuityHook(stop(), target, "claude-code", NO_ENV));
+    expect(parentCue).toContain("rootId root-parent");
+    expect(parentCue).not.toContain("root-child");
+  });
+
+  it("a workflow a subagent opened (open_convergence_root) is that subagent's too", () => {
+    const target = twoRoots();
+    target.prepareWorkflowStart(session, "root-parent");
+    const caller = {
+      host: "claude-code", sessionId: session, callId: "call-open", provenance: "host-observed" as const,
+      actor: { id: childActor("claude-code"), role: "child" as const }, parentChain: [hostActorId("claude-code", session)],
+      parentChainComplete: true, execution: { unavailable: "TEST" },
+    };
+    expect(target.bindOpenedRoot(caller as never, "root-child")).toBe(true);
+    expect(handleContinuityHook(write("beta/1.ts", child), target, "claude-code", NO_ENV)).toEqual({});
+    expect(text(handleContinuityHook(subagentStop, target, "claude-code", NO_ENV))).toContain("rootId root-child");
+    expect(handleContinuityHook(write("alpha/1.ts"), target, "claude-code", NO_ENV)).toEqual({});
+    expect(text(handleContinuityHook(stop(), target, "claude-code", NO_ENV))).not.toContain("root-child");
+  });
+
+  it("Codex: a subagent's Stop (agent_id) checks its own workflow, not the parent's", () => {
+    const target = twoRoots();
+    target.prepareWorkflowStart(session, "root-parent");
+    target.prepareWorkflowStart(session, "root-child", childActor("codex"));
+    expect(target.gateEditForSession(session, [file("beta/1.ts")], [file("beta/1.ts")], undefined, [], childActor("codex"))).toBeNull();
+    expect(handleContinuityHook(stop(), target, "codex", NO_ENV)).toEqual({});
+    const childCue = text(handleContinuityHook(stop({ ...child, turn_id: "turn-child" }), target, "codex", NO_ENV));
+    expect(childCue).toContain("rootId root-child");
+    expect(childCue).not.toContain("root-parent");
+  });
+
+  it("agy: a subagent's own conversation is checked as that subagent once its tool call names it", () => {
+    const parentConversation = session, childConversation = "agy-child-conversation";
+    const target = twoRoots();
+    const agyActor = hostActorId("antigravity", parentConversation, childConversation);
+    target.prepareWorkflowStart(parentConversation, "root-parent");
+    target.noteHookSession({
+      host: "antigravity", sessionId: parentConversation, callId: null, provenance: "host-observed",
+      actor: { id: agyActor, role: "child" }, parentChain: [hostActorId("antigravity", parentConversation)],
+      parentChainComplete: true, execution: { unavailable: "TEST" }, hookSessionId: childConversation,
+    } as never);
+    target.prepareWorkflowStart(parentConversation, "root-child", agyActor);
+    const agyWrite = (conversation: string, name: string) =>
+      ({ ...edit("antigravity", "Write", { Path: file(name), Content: "x", Overwrite: true }), session_id: conversation });
+    // The subagent's edits pass inside its own workflow and its parent's, past the file limit.
+    for (let index = 1; index <= WORKFLOW_FILE_LIMIT + 1; index += 1) {
+      expect(handleContinuityHook(agyWrite(childConversation, `beta/${index}.ts`), target, "antigravity", NO_ENV)).toEqual({});
+      expect(handleContinuityHook(agyWrite(childConversation, `alpha/${index}.ts`), target, "antigravity", NO_ENV)).toEqual({});
+    }
+    expect(handleContinuityHook(stop(), target, "antigravity", NO_ENV)).toEqual({});
+    const childCue = text(handleContinuityHook({ hook_event_name: "Stop", session_id: childConversation }, target, "antigravity", NO_ENV));
+    expect(childCue).toContain("rootId root-child");
+    expect(childCue).not.toContain("root-parent");
+    expect(handleContinuityHook(agyWrite(parentConversation, "alpha/9.ts"), target, "antigravity", NO_ENV)).toEqual({});
+    const parentCue = text(handleContinuityHook(stop(), target, "antigravity", NO_ENV));
+    expect(parentCue).toContain("rootId root-parent");
+    expect(parentCue).not.toContain("root-child");
   });
 });
 

@@ -28,6 +28,9 @@ export interface VerifiedCaller {
   execution: CallerExecution;
   /** Reads the caller's host-written lineage for continuity anchors, when the adapter can; absent otherwise. */
   readLineage?: () => LineageRead;
+  /** The session ID this actor's own hooks carry when it is not `sessionId` (agy: a subagent's hooks name its own
+   * conversation and no child marker). Absent: its hooks carry `sessionId`, plus the agent ID for a child. */
+  hookSessionId?: string;
 }
 
 export type ObservedCaller = Omit<VerifiedCaller, "provenance">;

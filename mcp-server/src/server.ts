@@ -298,6 +298,9 @@ const updateCheckInputSchema = {
   },
 } as const;
 
+/** The subagent that starts a workflow owns its turn-end phase check; null = the session's root actor (AGS3-D-0061). */
+const workflowOwner = (caller: VerifiedCaller): string | null => caller.actor.role === "child" ? caller.actor.id : null;
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -889,6 +892,9 @@ export function createMcpServer(
       // redacted cause, not a cause-less fixed reason.
       return respond(failureResult(error));
     }
+    // A subagent whose hooks run under its own session ID (agy) is tied to its session here, so its edits and turn end
+    // are judged as that subagent's (AGS3-D-0061). A store failure leaves those hooks on their own session only.
+    try { continuity.noteHookSession(caller); } catch { writeDiagnostic("server", "continuity-hook-session-unavailable", {}); }
     // Only a host with an execution adapter qualifies the caller's observed model and effort.
     const attested = <T>(tool: string, call: (input: Record<string, unknown>) => T): T =>
       hostAttestation ? hostAttestation.run(tool, caller, () => call(args)) : call(args);
@@ -1018,7 +1024,7 @@ export function createMcpServer(
           break;
         case "start_guarded_workflow":
           result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true,
-            rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId, caller.actor.role === "child")), workflowStatusSummary);
+            rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId, workflowOwner(caller))), workflowStatusSummary);
           break;
         case "get_convergence_status":
           result = withMode("detail", () => service.getConvergenceStatus(String(args.rootId ?? "")), convergenceStatusSummary);
@@ -1031,7 +1037,7 @@ export function createMcpServer(
             const started = service.startMinimalWorkflow(input, observedCaller(caller), {
               priorFileCount: () => continuity.editWindowFileCount(caller.sessionId),
               settle: () => continuity.settleFinishedWorkflow(caller.sessionId),
-              beforeCommit: rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId, caller.actor.role === "child"),
+              beforeCommit: rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId, workflowOwner(caller)),
               ownsRoot: rootId => continuity.ownsRoot(caller.sessionId, rootId),
               ownerPresence: rootAccess.ownerPresence,
               sessionWorkspace: () => observedSessionWorkspace(sessionBoardPath, caller),

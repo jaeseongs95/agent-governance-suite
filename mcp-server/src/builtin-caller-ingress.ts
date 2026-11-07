@@ -87,7 +87,10 @@ export function antigravityMetaIngress(store: WorkflowStore | null = null, host 
     }
     const parent = text(rawParent);
     if (!parent || conversation === root || parent === conversation) invalid("ANTIGRAVITY_CALL_META_INVALID");
-    return observed(host, root, conversation, parent, callId, execution);
+    const result = observed(host, root, conversation, parent, callId, execution);
+    // agy runs a subagent's hooks under its own conversation, with no child marker (session binding design 1.5).
+    if (result.provenance === "host-observed") result.caller.hookSessionId = conversation;
+    return result;
   };
 }
 
