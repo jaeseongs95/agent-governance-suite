@@ -5,6 +5,7 @@ import path from "node:path";
 import {clearTimeout, setTimeout} from "node:timers";
 import {describe, expect, it, vi} from "vitest";
 import {createSourceScratch, removeSourceScratch} from "./source-scratch.mjs";
+import {withHistoricalSource} from "./history-r04-boundary.mjs";
 
 const repo = path.resolve(import.meta.dirname, "../../..");
 const directory = path.join(repo, "tests/skill-classification/live-bootstrap");
@@ -22,6 +23,7 @@ const programs = [
   ["history-r04-boundary.mjs", "OFFLINE_PRECISION_REGRESSION_PASS", 180_000, 190_000],
   ["history-r04-budget.mjs", "OFFLINE_RUN_BUDGET_PASS"],
 ];
+const historicalPrograms = new Set(["contract-selfcheck.mts", "expiry-regression.mts"]);
 const sourcePrograms = new Set(["dynamic-current-stale.mts", "independent-wire-mutations.mts",
   "history-r04-boundary.mjs", "history-r04-budget.mjs"]);
 
@@ -130,8 +132,8 @@ describe("live bootstrap offline CLI contracts", () => {
     it.concurrent(`${program}${scenario ? ` (${scenario})` : ""} preserves its standalone assertions`, async () => {
       const root = sourcePrograms.has(program) ? createSourceScratch(repo,
         program === "dynamic-current-stale.mts" ? "ags-current-stale-" : "ags-bootstrap-source-") : null;
-      try {
-        const args = ["--import", "tsx", path.join(directory, program), repo];
+      const runProgram = async inputRepo => {
+        const args = ["--import", "tsx", path.join(directory, program), inputRepo];
         if (program !== "contract-selfcheck.mts") args.push(path.join(directory, "bootstrap.mts"));
         if (root) args.push(root);
         if (scenario) args.push(scenario);
@@ -152,6 +154,10 @@ describe("live bootstrap offline CLI contracts", () => {
           expect(report.checks[1]).toMatch(new RegExp(`^${scenario}: RED INDEPENDENT_`));
           expect(report.checks[2]).toBe(`${scenario}:restored: BYTES_IDENTICAL`);
         }
+      };
+      try {
+        if (historicalPrograms.has(program)) await withHistoricalSource(repo, runProgram);
+        else await runProgram(repo);
       } finally {
         if (root) removeSourceScratch(root);
       }

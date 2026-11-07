@@ -4,7 +4,7 @@
 
 | ID·원AC | 입력·전제 | 절차(후속 TEST/Actions) | 기대·실패 판정 | actual |
 | --- | --- | --- | --- | --- |
-| H01 원case29 contract18gold/raw | 고정 history-r04 archive+현재 helper, 기본 목적 | 기존 contract-selfcheck 전체를 기존 CLI로 실행 | oracle18·raw 집계·21 request·응답보존·비밀/정답비전송·unknown/no-resend 원assertion 그대로. current retention으로 분모0 변경하면 FAIL | NOT_RUN |
+| H01 원case29 contract18gold/raw | 기존 기본 후계핀에 맞는 pre-purpose 역사 projection+현재 helper, 기본 목적 | 기존 contract-selfcheck 전체를 기존 CLI로 실행 | oracle18·raw 집계·21 request·응답보존·비밀/정답비전송·unknown/no-resend 원assertion 그대로. current retention으로 분모0 변경하면 FAIL | NOT_RUN |
 | H02 원case30 expiry | 같은 coherent 역사 입력+현재 helper | 원6증거 만료·credential-await 만료 검사 | 원 fetch/예약 횟수·unknown/미착수·환경경계 유지 | NOT_RUN |
 | H03 원case42–44 C1–C3 | 자기 소유 역사 fixture+현재 source/helper | 기존 seed복제·ID/authority 독립·원source/oracle/inventory 변조 검사 | 원error·실제 admission 재읽기·환경/전송0. sourcefixture변조가 real helper에 연결되지 않으면 FAIL | NOT_RUN |
 | H04 원case45 authority/CAS/IPC | 역사 fixture+현재 helper/실제prepared-child | 기존43검사 전체 | revoke·clock·scope·fsync·claim/ledger 원bytes·경쟁 승자·재시작무전송 유지, child회수뒤에만fixture정리 | NOT_RUN |
@@ -15,6 +15,8 @@
 | L01 fixture자원수명 | 역사준비/호출자성공·오류·자식실패 | 기존cleanup/finally와원자식exit관측 | 자기temp만정리, childclose전삭제금지, 원fail/cause보존·새retry/timeout증가0 | NOT_RUN |
 
 원AC→파일: H01/H02=bootstrap-contract.test.mjs; H03=bootstrap-fixture-reuse.test.ts; H04=prepared-bootstrap.test.ts; H01~04공유=history-r04-boundary.mjs(기존archive준비/cleanup재사용,새runner0). C01=budget-regression.mts(동일파일worker포함); C02=dynamic-current-{stale,oracle}.mts/dynamic-precision-boundary.mts; C03=precision-regression.mts; C01~03=prepared-fixture.mts(기존readyEstimateMock의선택목적전달). 다른담당independent-wire-mutations.mts는읽기만.
+
+구현 중 정적 판별로 fixture 선택을 구체화했다. r04 archive는18gold지만 기본 loader가그historical hash에서source-successor를읽지않으므로H03의원후계manifest변조거부를검증할수없다. 원assertion을바꾸지않고,기존history helper의source-scratch/process/cleanup을재사용하여현재기본후계manifest/corpus/currenthelper를복사한뒤기존retirement정본14549a2e의3skill전체(coordinate-subagents/model-effort-advisor/codex-token-usage-analyzer)+registry를역사bytes로재현한다. 이projection은단일과거revision snapshot이라고주장하지않는다. 기존7핀의previousDigest및현기본61핀과원문정적비교61/61일치·불일치0을확인했다. 새gold·후계hash·purpose추가0. 원r04 archive/CLI2종/고정SHA/그역사budget·precision기대는그대로다. H01~04입력의‘coherent역사’는이검증된기본핀projection이다. 실제제품시험은여전히NOT_RUN이다.
 
 CS 적용: CONC-CLAIM-001 원단일승자/실제child경합을보존, CONC-FENCE-002 authority/ledger revision재검증과외부bytes보존을보존, CONC-CANCEL-004 childclose/fixturefinally정리경계를보존. IMP004 자원소유자는 기존source-scratch와호출자가지며공유fixture캐시를추가하지않는다. 새락/폴링/DB0. 동적의무는승인환경TEST에서만판정하며정적검사를제품PASS로보고하지않는다.
 

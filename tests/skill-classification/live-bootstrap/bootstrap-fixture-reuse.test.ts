@@ -7,8 +7,9 @@ import {describe, expect, it} from "vitest";
 import * as api from "./bootstrap.mjs";
 import {readyMock, readyMockFromBinding, type FixtureBinding} from "./prepared-fixture.mjs";
 import {loadCurrentSourceBindings} from "../evaluation.js";
+const {withHistoricalSource} = await import(new URL("./history-r04-boundary.mjs", import.meta.url).href);
 
-const repo = path.resolve(import.meta.dirname, "../../..");
+const currentRepo = path.resolve(import.meta.dirname, "../../..");
 async function ownedRoot(action: (root: string) => Promise<void>) {
   const root = await mkdtemp(path.join(os.tmpdir(), "ags-fixture-reuse-"));
   try {await action(root);}
@@ -21,7 +22,7 @@ async function ownedRoot(action: (root: string) => Promise<void>) {
 
 describe("bootstrap fixture binding reuse", () => {
   it("C1 keeps fixtures, current authority and actual request identities independent", async () => {
-    await ownedRoot(async root => {
+    await withHistoricalSource(currentRepo, async (repo: string) => ownedRoot(async root => {
       const first = await readyMock(api, repo, path.join(root, "first"), "first", {requests: 1});
       const binding: FixtureBinding = Object.freeze({inventoryDigest: first.prepared.inventory.inventoryDigest,
         taxonomyRevision: first.prepared.inventory.taxonomyRevision});
@@ -55,11 +56,11 @@ describe("bootstrap fixture binding reuse", () => {
       await writeFile(authorityA, JSON.stringify(revoked));
       expect(JSON.parse(await readFile(authorityB, "utf8")).approved).toBe(true);
       expect(binding.inventoryDigest).toBe(first.prepared.inventory.inventoryDigest);
-    });
+    }));
   });
 
   it("C2 original run freshly rejects oracle, source and inventory changes after fixture seed", async () => {
-    await ownedRoot(async root => {
+    await withHistoricalSource(currentRepo, async (repo: string) => ownedRoot(async root => {
       const copiedRepo = path.join(root, "source-copy");
       await mkdir(copiedRepo);
       for (const relative of new Set(["mcp-server/src/skill-classification", "skills", "tests/skill-classification/fixtures.json",
@@ -95,7 +96,7 @@ describe("bootstrap fixture binding reuse", () => {
           try {
             if (bytes === null) {
               await mkdir(path.dirname(file), {recursive: true});
-              await writeFile(file, execFileSync("git", ["show", "e6e313864a4fe1be15ac2b199fb56284dbc327a9:skills/context-continuity/SKILL.md"], {cwd: repo}));
+              await writeFile(file, execFileSync("git", ["show", "e6e313864a4fe1be15ac2b199fb56284dbc327a9:skills/context-continuity/SKILL.md"], {cwd: currentRepo}));
             } else if (id === "source") await writeFile(file, Buffer.concat([bytes, Buffer.from("\n")]));
             else {
               const changed = JSON.parse(bytes.toString("utf8"));
@@ -114,11 +115,11 @@ describe("bootstrap fixture binding reuse", () => {
           }
         }
       } finally {await unlink(dependencyLink);}
-    });
+    }));
   });
 
   it("C3 original admission rereads each fixture authority and evidence before environment access", async () => {
-    await ownedRoot(async root => {
+    await withHistoricalSource(currentRepo, async (repo: string) => ownedRoot(async root => {
       const first = await readyMock(api, repo, path.join(root, "first"), "authority-first", {requests: 1});
       const binding = Object.freeze({inventoryDigest: first.prepared.inventory.inventoryDigest,
         taxonomyRevision: first.prepared.inventory.taxonomyRevision});
@@ -137,6 +138,6 @@ describe("bootstrap fixture binding reuse", () => {
         expect(environmentReads).toBe(0);
         expect(sends).toBe(0);
       }
-    });
+    }));
   });
 });
