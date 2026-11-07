@@ -232,13 +232,17 @@ function buildInputSchemas(contracts: ContractDocuments, locale: SupportedLocale
     },
   };
 
+  // D53's two load branches only distinguish absent/present candidateToken; the optional property is equivalent.
+  const loadContextInline = embeddedSchema(contracts.loadContextRequest);
+  delete loadContextInline.oneOf;
+
   const prepareSessionMessage = structuredClone(contracts.prepareSessionMessageRequest) as ObjectSchema;
   const sendBodySchema = prepareSessionMessage.properties?.body as Record<string, unknown> | undefined;
   if (sendBodySchema) sendBodySchema.description = toolText("tools.prepare_session_message.input.body", locale);
 
   return {
     planWorkflow, planWorkflowInline, openConvergenceRoot, attemptProposal, guardedWorkflowStart, resolveConvergenceGate,
-    recordStageResult, minimalWorkflowStart, releaseConvergenceRoot, prepareSessionMessage,
+    recordStageResult, minimalWorkflowStart, releaseConvergenceRoot, prepareSessionMessage, loadContextInline,
   };
 }
 
@@ -782,7 +786,7 @@ export function createMcpServer(
       {
         name: "load_context",
         description: description("tools.load_context.description"),
-        inputSchema: contracts.loadContextRequest,
+        inputSchema: usesInlineReferences(toolSchemaProfile) ? schemas.loadContextInline : contracts.loadContextRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {

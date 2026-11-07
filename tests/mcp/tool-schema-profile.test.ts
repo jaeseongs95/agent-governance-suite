@@ -139,7 +139,7 @@ describe("MCP tool schema profiles", () => {
       expect(Object.keys(planning.properties as object)).toEqual(expect.arrayContaining(["taskEnvelope", "evaluationAuditPurpose", "taskId"]));
       expect(JSON.stringify(planning)).not.toContain("executionContext");
       expect(JSON.stringify(planning)).not.toContain("$ref");
-      // Only plan_workflow and the schemas that use $ref differ; Claude Code cannot resolve references.
+      // Flat plan_workflow/load_context and schemas that use $ref differ; Claude Code cannot resolve references.
       const referencing = defaults.filter((tool) => JSON.stringify(tool.inputSchema).includes("$ref")).map((tool) => tool.name);
       expect(referencing).toEqual(expect.arrayContaining(["open_convergence_root", "claim_workflow_attempt", "start_guarded_workflow", "record_stage_result"]));
       for (const tool of tools) {
@@ -147,7 +147,7 @@ describe("MCP tool schema profiles", () => {
         expect(JSON.stringify(tool.inputSchema), tool.name).not.toContain("$defs");
       }
       const changed = tools.filter((tool) => JSON.stringify(tool) !== JSON.stringify(defaults.find((entry) => entry.name === tool.name)));
-      expect(changed.map((tool) => tool.name).sort()).toEqual([...new Set(["plan_workflow", ...referencing])].sort());
+      expect(changed.map((tool) => tool.name).sort()).toEqual([...new Set(["plan_workflow", "load_context", ...referencing])].sort());
     } finally {
       await client.close();
       await fallback.close();
@@ -196,6 +196,24 @@ describe("MCP tool schema profiles", () => {
         const inline = inlineAjv.compile(inlined.find((tool) => tool.name === name)!.inputSchema);
         const reference = compileReferenced(referenced.find((tool) => tool.name === name)!.inputSchema);
         expect(inline(input), `${name} ${JSON.stringify(input).slice(0, 80)}`).toBe(reference(input));
+      }
+      // D53's current load and signed-candidate selection keep the exact input boundary in both profiles.
+      const loadInputs: Array<[Record<string, unknown>, boolean]> = [
+        [{ schemaVersion: "1.0.0" }, true],
+        [{ schemaVersion: "1.0.0", candidateToken: "a".repeat(16) }, true],
+        [{}, false],
+        [{ schemaVersion: "2.0.0" }, false],
+        [{ schemaVersion: "1.0.0", candidateToken: "a".repeat(15) }, false],
+        [{ schemaVersion: "1.0.0", candidateToken: null }, false],
+        [{ schemaVersion: "1.0.0", candidateToken: 16 }, false],
+        [{ schemaVersion: "1.0.0", epoch: 1 }, false],
+        [{ schemaVersion: "1.0.0", sessionId: "other-session" }, false],
+      ];
+      const inlineLoad = inlineAjv.compile(inlined.find((tool) => tool.name === "load_context")!.inputSchema);
+      const referenceLoad = compileReferenced(referenced.find((tool) => tool.name === "load_context")!.inputSchema);
+      for (const [input, expected] of loadInputs) {
+        expect(inlineLoad(input), JSON.stringify(input)).toBe(expected);
+        expect(referenceLoad(input), JSON.stringify(input)).toBe(expected);
       }
       expect(inlineAjv.compile(inlined.find((tool) => tool.name === "open_convergence_root")!.inputSchema)(open)).toBe(true);
     } finally {
