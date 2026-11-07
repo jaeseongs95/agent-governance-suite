@@ -66,30 +66,47 @@ const descriptor: SkillDescriptorV2 = { schemaVersion: "2.0.0", skillId: "d0344-
   }] };
 
 // Also a plain tools/call argument record.
+/** Private history oracle for this owned SQLite fixture; no agent-facing history API is used. */
+function memoryAt(store: SqliteContinuityStore, correlation: string, epoch: number): ContinuitySnapshotV1 | null {
+  const current = store.getCurrent(correlation, epoch);
+  if (current) return current.memory ? current : null;
+  const database = Reflect.get(store, "database") as DatabaseSync;
+  const row = database.prepare(`SELECT state_token,memory_json,memory_digest,created_at,updated_at
+    FROM continuity_memory_history WHERE task_correlation=? AND epoch=? AND format='memory-v1'
+    ORDER BY rowid DESC LIMIT 1`).get(correlation, epoch) as {
+      state_token: string; memory_json: string; memory_digest: ContinuitySnapshotV1["memoryDigest"];
+      created_at: string; updated_at: string;
+    } | undefined;
+  return row ? { schemaVersion: "1.0.0", source: "direct", taskCorrelation: correlation, epoch,
+    stateToken: row.state_token, memory: JSON.parse(row.memory_json), memoryDigest: row.memory_digest,
+    createdAt: row.created_at, updatedAt: row.updated_at } : null;
+}
+
 function checkpoint(objective = "New task after the completed workflow.", overrides: Partial<CheckpointContextRequestV1> = {}): CheckpointContextRequestV1 & Record<string, unknown> {
-  return { schemaVersion: "1.0.0", requestId: "d0344-next-task", expectedRevision: 0, status: "active",
+  return { schemaVersion: "1.0.0", requestId: "d0344-next-task", expectedStateToken: "unissued-state-token", status: "active",
     core: { objective, completionCriteria: ["Checkpoint succeeds."], constraints: [], decisions: [], progress: [], blockers: [], nextActions: [] },
     evidenceRefs: [], ...overrides };
 }
 
 /**
- * Behavior 4 (d7585d74): when every bound workflow settles, E's session record moves to E+1 with the same revision, so
- * the next save in E+1 continues from the historical revision 1.
+ * Behavior 4 (d7585d74): when every bound workflow settles, E's session record moves to E+1 with the same body, so
+ * the next save in E+1 continues from the historical memory.
  */
 function afterCarry(): CheckpointContextRequestV1 & Record<string, unknown> {
-  return checkpoint(undefined, { expectedRevision: 1 });
+  return checkpoint();
 }
 
 /** Behavior 1 (d7585d74): a save while a root is still bound writes the session record in that epoch. */
-function whileBound(expectedRevision = 1): CheckpointContextRequestV1 & Record<string, unknown> {
-  return checkpoint("Session record while the workflow is bound.", { requestId: "d0344-while-bound", expectedRevision });
+function whileBound(): CheckpointContextRequestV1 & Record<string, unknown> {
+  return checkpoint("Session record while the workflow is bound.", { requestId: "d0344-while-bound" });
 }
 
-/** E+1 holds E's historical record re-based on E+1: same revision and body, a digest of its own. */
+/** Rotation retains the body and digest and replaces the state token. */
 function expectCarried(fixture: Awaited<ReturnType<typeof harness>>, correlation: string, epoch = 2) {
-  const carried = fixture.continuity.getSnapshot(correlation, epoch);
-  expect(carried).toEqual({ ...fixture.historical, epoch, snapshotDigest: carried?.snapshotDigest });
-  expect(carried?.snapshotDigest).not.toBe(fixture.historical.snapshotDigest);
+  const carried = fixture.continuity.getCurrent(correlation, epoch);
+  expect(carried).toMatchObject({ ...fixture.historical, epoch, stateToken: expect.any(String), updatedAt: expect.any(String) });
+  expect(carried!.stateToken).not.toBe(fixture.historical.stateToken);
+  expect(carried!.memoryDigest).toBe(fixture.historical.memoryDigest);
 }
 
 async function harness() {
@@ -110,8 +127,11 @@ async function harness() {
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, workflow);
   const initialContinuity = new ContinuityService(continuity, validator, workflow);
-  const historical = initialContinuity.checkpointContext(checkpoint("Historical direct payload must remain historical."), asRoot()).data!;
-  expect(historical).toMatchObject({ epoch: 1, revision: 1 });
+  const initial = initialContinuity.loadContext({ schemaVersion: "1.0.0" }, asRoot());
+  if (initial.data?.source !== "direct") throw new Error("Expected own current memory.");
+  const initialToken = initial.data.stateToken;
+  const historical = initialContinuity.checkpointContext(checkpoint("Historical direct payload must remain historical.", { expectedStateToken: initialToken }), asRoot()).data!;
+  expect(historical).toMatchObject({ epoch: 1, stateToken: expect.any(String) });
   const task: TaskEnvelopeV1 = { schemaVersion: "1.0.0", taskId: "d0344-hook-workflow", objective: "Complete a real guarded fixture workflow.",
     scope: { included: ["candidate.txt"], excluded: [] }, acceptanceCriteria: ["The fixture stage passes."], riskLevel: "low",
     workUnits: [{ id: "work", objective: "Use fixture data.", dependencies: [], writeTargets: ["candidate.txt"] }],
@@ -264,7 +284,10 @@ function consumeInFreshService(fixture: Awaited<ReturnType<typeof harness>>, inp
   const continuity = new SqliteContinuityStore(fixture.env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
   stores.add(workflow); stores.add(continuity);
   // A fresh service with no prior ensureSession: the server computes the scope from the verified caller alone.
-  return new ContinuityService(continuity, new ContractValidator(), workflow).checkpointContext(input, asRoot());
+  const service = new ContinuityService(continuity, new ContractValidator(), workflow);
+  const current = service.loadContext({ schemaVersion: "1.0.0" }, asRoot());
+  expect(current.error).toBeNull();
+  return service.checkpointContext({ ...input, expectedStateToken: current.data?.source === "direct" ? current.data.stateToken : "unissued-state-token" }, asRoot());
 }
 
 /** The real before-tool hook runs first and changes nothing; then the fresh service handles the call. */
@@ -286,8 +309,8 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     const saved = consumeInFreshService(fixture, afterCarry());
     expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
     expect(saved.error).toBeNull();
-    expect(saved.data).toMatchObject({ source: "direct", epoch: 2, revision: 2, core: { objective: checkpoint().core.objective } });
-    expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
+    expect(saved.data).toMatchObject({ source: "direct", epoch: 2, stateToken: expect.any(String), memory: { core: { objective: checkpoint().core.objective } } });
+    expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(fixture.historical);
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(completed);
   });
 
@@ -299,8 +322,8 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     expect(runContinuityHook(JSON.stringify({ ...event, session_id: session }), fixture.env, rootHost)).toBe("");
     expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
     expectCarried(fixture, correlation);
-    expect(checkpointAfterHook(fixture, afterCarry()).data).toMatchObject({ epoch: 2, revision: 2 });
-    expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
+    expect(checkpointAfterHook(fixture, afterCarry()).data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
+    expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(fixture.historical);
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(completed);
   });
 
@@ -313,11 +336,11 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     expect(active).toMatchObject({ root: { state: "open" }, outcomes: [{ leaseId: attempt.lease.leaseId, state: "aborted" }] });
     const saved = checkpointAfterHook(fixture, afterCarry());
     expect(saved.error).toBeNull();
-    expect(saved.data).toMatchObject({ source: "direct", epoch: 2, revision: 2 });
+    expect(saved.data).toMatchObject({ source: "direct", epoch: 2, stateToken: expect.any(String) });
     const correlation = fixture.initialContinuity.correlateSession(session);
     expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
-    expect(fixture.continuity.getSnapshot(correlation, 2)).toEqual(saved.data);
-    expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
+    expect(memoryAt(fixture.continuity, correlation, 2)).toEqual(saved.data);
+    expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(fixture.historical);
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(active);
   });
 
@@ -327,10 +350,10 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     expect(settled).toMatchObject({ root: { state }, outcomes: [{ state: "passed", leaseId: attempt.lease.leaseId }] });
     const saved = checkpointAfterHook(fixture, afterCarry());
     expect(saved.error).toBeNull();
-    expect(saved.data).toMatchObject({ source: "direct", epoch: 2, revision: 2 });
+    expect(saved.data).toMatchObject({ source: "direct", epoch: 2, stateToken: expect.any(String) });
     const correlation = fixture.initialContinuity.correlateSession(session);
-    expect(fixture.continuity.getSnapshot(correlation, 2)).toEqual(saved.data);
-    expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
+    expect(memoryAt(fixture.continuity, correlation, 2)).toEqual(saved.data);
+    expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(fixture.historical);
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(settled);
   });
 
@@ -341,11 +364,11 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     expect(active).toMatchObject({ outcomes: [], leases: [{ state: "consumed", leaseId: attempt.lease.leaseId }] });
     const saved = checkpointAfterHook(fixture, whileBound());
     expect(saved.error).toBeNull();
-    expect(saved.data).toMatchObject({ source: "direct", epoch: 1, revision: 2 });
+    expect(saved.data).toMatchObject({ source: "direct", epoch: 1, stateToken: expect.any(String) });
     const correlation = fixture.initialContinuity.correlateSession(session);
     expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: fixture.root.rootId });
-    expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(saved.data);
-    expect(fixture.continuity.getSnapshot(correlation, 2)).toBeNull();
+    expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(saved.data);
+    expect(memoryAt(fixture.continuity, correlation, 2)).toBeNull();
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(active);
   });
 
@@ -363,10 +386,10 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     }
     const before = fixture.workflow.getConvergenceSnapshot(fixture.root.rootId);
     const saved = checkpointAfterHook(fixture, whileBound());
-    expect(saved.data).toMatchObject({ source: "direct", epoch: 1, revision: 2 });
+    expect(saved.data).toMatchObject({ source: "direct", epoch: 1, stateToken: expect.any(String) });
     expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: expectedRoot });
-    expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(saved.data);
-    expect(fixture.continuity.getSnapshot(correlation, 2)).toBeNull();
+    expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(saved.data);
+    expect(memoryAt(fixture.continuity, correlation, 2)).toBeNull();
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(before);
   });
 
@@ -377,7 +400,7 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     expect(beforeTool(fixture, childHost, { role: "root", actor: { role: "root", basis: "observed" },
       _sessionProof: "forged-root-proof", continuityAction: { kind: "clear" } })).toBe("");
     expect(fixture.continuity.getTask(correlation)).toEqual(before);
-    expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
+    expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(fixture.historical);
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(completed);
   });
 });
@@ -399,11 +422,11 @@ function replyResult<T>(reply: Awaited<ReturnType<Client["callTool"]>>): ApiResu
 
 describe("D0344 hook admission through the actual MCP checkpoint handler", () => {
   // Behaviors 1 and 4 (d7585d74): a running workflow keeps the epoch and the save lands in it; a settled one carries the
-  // record into E+1, where the save continues from the carried revision.
+  // record into E+1, where the save continues from the carried token.
   it.each(["completed", "aborted", "finalized-open", "finalized-needs-review", "running"] as const)("%s workflow: the server scopes a call admitted before the change by the state at claim time, once", async state => {
     const fixture = await harness(), attempt = start(fixture);
     const correlation = fixture.initialContinuity.correlateSession(session);
-    const input = state === "running" ? whileBound() : afterCarry();
+    const input = { ...(state === "running" ? whileBound() : afterCarry()), expectedStateToken: fixture.historical.stateToken };
     // Admitted while the guarded run is active; the admission carries no continuity scope that could go stale.
     const early = await admit(fixture, `d0344-early-mcp-checkpoint-${state}`, "checkpoint_context", input);
     if (state === "completed") finalize(fixture, attempt.receipt);
@@ -437,17 +460,32 @@ describe("D0344 hook admission through the actual MCP checkpoint handler", () =>
     try {
       await server.connect(serverTransport);
       await client.connect(clientTransport);
-      const result = replyResult<ContinuitySnapshotV1>(await client.callTool({ name: "checkpoint_context", arguments: input, _meta: early }));
+      const firstResult = replyResult<ContinuitySnapshotV1>(await client.callTool({ name: "checkpoint_context", arguments: input, _meta: early }));
+      let result = firstResult;
+      if (state !== "running") {
+        expect(firstResult).toMatchObject({ ok: false, data: null, error: { code: "STALE_REVISION",
+          details: { reasonCode: "CONTINUITY_STATE_STALE" } } });
+        const carried = continuity.getCurrent(correlation, 2)!;
+        expect(carried.memory).toEqual(fixture.historical.memory);
+        expect(carried.stateToken).not.toBe(input.expectedStateToken);
+        expect(continuity.getRequest(correlation, 2, fixture.initialContinuity.hashOpaque("request", input.requestId))).toBeNull();
+        const loadMeta = await admit(fixture, `d0344-reload-${state}`, "load_context", { schemaVersion: "1.0.0" });
+        const loaded = replyResult<ContinuitySnapshotV1>(await client.callTool({ name: "load_context", arguments: { schemaVersion: "1.0.0" }, _meta: loadMeta }));
+        expect(loaded.data).toEqual(carried);
+        const refreshed = { ...input, expectedStateToken: loaded.data!.stateToken };
+        const freshMeta = await admit(fixture, `d0344-refreshed-${state}`, "checkpoint_context", refreshed);
+        result = replyResult<ContinuitySnapshotV1>(await client.callTool({ name: "checkpoint_context", arguments: refreshed, _meta: freshMeta }));
+      }
       expect(result.error).toBeNull();
       if (state === "running") {
-        expect(result.data).toMatchObject({ source: "direct", epoch: 1, revision: 2, core: { objective: input.core.objective } });
+        expect(result.data).toMatchObject({ source: "direct", epoch: 1, stateToken: expect.any(String), memory: { core: { objective: input.core.objective } } });
         expect(continuity.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: fixture.root.rootId });
-        expect(continuity.getSnapshot(correlation, 1)).toEqual(result.data);
-        expect(continuity.getSnapshot(correlation, 2)).toBeNull();
+        expect(memoryAt(continuity, correlation, 1)).toEqual(result.data);
+        expect(memoryAt(continuity, correlation, 2)).toBeNull();
       } else {
-        expect(result.data).toMatchObject({ source: "direct", epoch: 2, revision: 2, core: { objective: checkpoint().core.objective } });
+        expect(result.data).toMatchObject({ source: "direct", epoch: 2, stateToken: expect.any(String), memory: { core: { objective: checkpoint().core.objective } } });
         expect(continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
-        expect(continuity.getSnapshot(correlation, 2)).toEqual(result.data);
+        expect(memoryAt(continuity, correlation, 2)).toEqual(result.data);
       }
       const afterFirst = continuity.getTask(correlation);
       // One claim per admission row: a replay of the same host call is unobserved and is not presumed to be a root.
@@ -455,8 +493,8 @@ describe("D0344 hook admission through the actual MCP checkpoint handler", () =>
       expect(replay).toMatchObject({ ok: false, data: null, error: { code: "BINDING_REQUIRED",
         details: { reasonCode: "CALLER_PROVENANCE_UNAVAILABLE", ingressReason: "CALL_ADMISSION_MISSING" } } });
       expect(continuity.getTask(correlation)).toEqual(afterFirst);
-      expect(continuity.getSnapshot(correlation, 3)).toBeNull();
-      expect(continuity.getSnapshot(correlation, 1)).toEqual(state === "running" ? result.data : fixture.historical);
+      expect(memoryAt(continuity, correlation, 3)).toBeNull();
+      expect(memoryAt(continuity, correlation, 1)).toEqual(state === "running" ? result.data : fixture.historical);
       expect(workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(beforeWorkflow);
     } finally {
       try { await client.close(); } finally { await server.close(); }
@@ -471,9 +509,9 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
     expect(fixture.initialContinuity.clearSession(session)).toMatchObject({ currentEpoch: 2, rootId: null });
     const saved = checkpointAfterHook(fixture);
     expect(saved.error).toBeNull();
-    expect(saved.data).toMatchObject({ epoch: 2, revision: 1 });
+    expect(saved.data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
     const correlation = fixture.initialContinuity.correlateSession(session);
-    expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
+    expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(fixture.historical);
     expect(fixture.workflow.getRun(active.receipt.runId)?.state).toBe("running");
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(before);
   });
@@ -494,6 +532,12 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
     let call = 0;
     const invoke = async <T,>(name: string, input: Record<string, unknown>): Promise<ApiResultV1<T>> => {
       // The hook records the caller and leaves the arguments as the model wrote them.
+      if (name === "checkpoint_context") {
+        const loadMeta = await admit(fixture, `d0344-start-load-${++call}`, "load_context", { schemaVersion: "1.0.0" });
+        const current = replyResult<ContinuitySnapshotV1>(await client.callTool({ name: "load_context", arguments: { schemaVersion: "1.0.0" }, _meta: loadMeta }));
+        expect(current.error).toBeNull();
+        input = { ...input, expectedStateToken: current.data?.source === "direct" ? current.data.stateToken : "unissued-state-token" };
+      }
       const meta = await admit(fixture, `d0344-start-lifecycle-${++call}`, name, input);
       return replyResult<T>(await client.callTool({ name, arguments: input, _meta: meta }));
     };
@@ -501,24 +545,24 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
       await server.connect(serverTransport); await client.connect(clientTransport);
       const secondEpoch = await invoke<ContinuitySnapshotV1>("checkpoint_context", afterCarry());
       expect(secondEpoch.error).toBeNull();
-      expect(secondEpoch.data).toMatchObject({ epoch: 2, revision: 2 });
+      expect(secondEpoch.data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
       const startInput = retry(fixture, trusted.service, trusted.plan);
       const started = await invoke<WorkflowReceiptV1>("start_guarded_workflow", { ...startInput, responseMode: "full" });
       expect(started.error).toBeNull();
       expect(started.data?.state).toBe("running");
       const correlation = fixture.initialContinuity.correlateSession(session);
       expect(continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: fixture.root.rootId });
-      const rebound = await invoke<ContinuitySnapshotV1>("checkpoint_context", whileBound(2));
+      const rebound = await invoke<ContinuitySnapshotV1>("checkpoint_context", whileBound());
       expect(rebound.error).toBeNull();
-      expect(rebound.data).toMatchObject({ epoch: 2, revision: 3 });
+      expect(rebound.data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
       expect(continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: fixture.root.rootId });
       expect(trusted.service.abortWorkflow(started.data!.runId, started.data!.revision).error).toBeNull();
-      const thirdEpoch = await invoke<ContinuitySnapshotV1>("checkpoint_context", checkpoint(undefined, { expectedRevision: 3 }));
+      const thirdEpoch = await invoke<ContinuitySnapshotV1>("checkpoint_context", checkpoint());
       expect(thirdEpoch.error).toBeNull();
-      expect(thirdEpoch.data).toMatchObject({ epoch: 3, revision: 4 });
-      expect(continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
-      expect(continuity.getSnapshot(correlation, 2)).toEqual(rebound.data);
-      expect(continuity.getSnapshot(correlation, 3)).toEqual(thirdEpoch.data);
+      expect(thirdEpoch.data).toMatchObject({ epoch: 3, stateToken: expect.any(String) });
+      expect(memoryAt(continuity, correlation, 1)).toEqual(fixture.historical);
+      expect(memoryAt(continuity, correlation, 2)).toEqual(rebound.data);
+      expect(memoryAt(continuity, correlation, 3)).toEqual(thirdEpoch.data);
     } finally { try { await client.close(); } finally { await server.close(); } }
   });
 
@@ -532,14 +576,14 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
     expect(started.error).toBeNull();
     const epoch = order === "detach-first" ? 2 : 1;
     expect(fixture.initialContinuity.ensureSession(session)).toMatchObject({ currentEpoch: epoch, rootId: fixture.root.rootId });
-    // detach-first carried the historical revision 1 into E2, so both orders continue from revision 1.
+    // detach-first carried the historical memory into E2, so both orders continue from revision 1.
     if (order === "detach-first") expectCarried(fixture, correlation);
     const saved = checkpointAfterHook(fixture, whileBound());
-    expect(saved.data).toMatchObject({ epoch, revision: 2 });
+    expect(saved.data).toMatchObject({ epoch, stateToken: expect.any(String) });
     expect(fixture.initialContinuity.ensureSession(session)).toMatchObject({ currentEpoch: epoch, rootId: fixture.root.rootId });
     expect(fixture.workflow.getRun(started.data!.runId)?.state).toBe("running");
-    expect(fixture.continuity.getSnapshot(correlation, epoch)).toEqual(saved.data);
-    expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(order === "start-first" ? saved.data : fixture.historical);
+    expect(memoryAt(fixture.continuity, correlation, epoch)).toEqual(saved.data);
+    expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(order === "start-first" ? saved.data : fixture.historical);
   });
 
   // A second root bound to the same epoch is not a failure any more (several workflows per session); only the epoch is compared.
@@ -585,7 +629,7 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
       expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(beforeWorkflow);
       expect(workflowRows(fixture)).toEqual(beforeRows);
       expect(fixture.continuity.getTask(correlation)).toEqual(expectedTask);
-      expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
+      expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(fixture.historical);
     } finally { database.exec("DROP TRIGGER IF EXISTS d0344_reject_start_binding"); database.close(); }
   });
 
@@ -615,10 +659,10 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
       expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: fixture.root.rootId });
       // Behavior 1: the conservative binding does not close the session record; clear carried nothing into E2.
       const bound = checkpointAfterHook(fixture);
-      expect(bound.data).toMatchObject({ epoch: 2, revision: 1 });
+      expect(bound.data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
       expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: fixture.root.rootId });
-      expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
-      expect(fixture.continuity.getSnapshot(correlation, 2)).toEqual(bound.data);
+      expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(fixture.historical);
+      expect(memoryAt(fixture.continuity, correlation, 2)).toEqual(bound.data);
       database.exec("DROP TRIGGER d0344_fail_workflow_commit");
       const retried = fixture.service.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: pending.lease.leaseId,
         expectedRootRevision: pending.lease.rootRevision, plan: pending.plan }, false,
@@ -630,9 +674,9 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
       // Behavior 4: the abort settles the root, so E2's record moves to E3 and the next save continues it.
       const recovered = checkpointAfterHook(fixture, afterCarry());
       expect(recovered.error).toBeNull();
-      expect(recovered.data).toMatchObject({ epoch: 3, revision: 2 });
-      expect(fixture.continuity.getSnapshot(correlation, 3)).toEqual(recovered.data);
-      expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
+      expect(recovered.data).toMatchObject({ epoch: 3, stateToken: expect.any(String) });
+      expect(memoryAt(fixture.continuity, correlation, 3)).toEqual(recovered.data);
+      expect(memoryAt(fixture.continuity, correlation, 1)).toEqual(fixture.historical);
     } finally {
       database.exec("DROP TRIGGER IF EXISTS d0344_fail_workflow_commit; DROP TABLE IF EXISTS d0344_deferred_commit; DROP TABLE IF EXISTS d0344_missing_parent;");
       database.close();

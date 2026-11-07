@@ -4,7 +4,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
-import type { AttemptLeaseV1, AttemptProposalV1, ContinuitySnapshotV1, ConvergenceRootV1, TaskEnvelopeV1, WorkflowReceiptV1 } from "../../contracts/types.js";
+import type { AttemptLeaseV1, AttemptProposalV1, ContinuityMemoryBodyV1, ConvergenceRootV1, TaskEnvelopeV1, WorkflowReceiptV1 } from "../../contracts/types.js";
 import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
 import { InactiveSharedConnection } from "../../runtime/unified-state/shared-connection.mjs";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
@@ -19,7 +19,8 @@ const keys = { workflow: Buffer.alloc(32, 1).toString("base64url"), continuity: 
 const iso = (value: number) => new Date(value).toISOString();
 function fixture(clock = () => 100, syntheticKeys = keys) { const directory = fs.mkdtempSync(path.join(os.tmpdir(), "ags-r2-legacy-")); directories.push(directory); const value = createInactiveSharedStores({ directory, mode: "fixture-only", clock, syntheticKeys }); bundles.push(value); return value; }
 function receipt(runId = "original-run", revision = 0): WorkflowReceiptV1 { return { schemaVersion: "1.0.0", runId, revision, state: "running", plan: { schemaVersion: "1.0.0", taskId: "synthetic-task", integrityToken: "SYNTHETIC_UNVERIFIED_PLAN", executionMode: "orchestrated", state: "running", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] }, stageResults: [], blockers: [], unresolved: [], error: null, unverifiedClaims: [] }; }
-function snapshot(correlation = "original-correlation"): ContinuitySnapshotV1 { return { schemaVersion: "1.0.0", source: "direct", taskCorrelation: correlation, epoch: 1, revision: 1, status: "active", core: { objective: "synthetic", completionCriteria: [], constraints: [], decisions: [], progress: [], blockers: [], nextActions: [] }, evidenceRefs: [], snapshotDigest: `sha256:${"a".repeat(64)}`, createdAt: iso(100), updatedAt: iso(100) }; }
+function memory(): ContinuityMemoryBodyV1 { return { status: "active", core: { objective: "synthetic", completionCriteria: [], constraints: [], decisions: [], progress: [], blockers: [], nextActions: [] }, evidenceRefs: [] }; }
+
 function root(directory: string): ConvergenceRootV1 {
   const task: TaskEnvelopeV1 = { schemaVersion: "1.0.0", taskId: "synthetic-task", objective: "synthetic repository fixture", scope: { included: ["fixture.ts"], excluded: [] }, acceptanceCriteria: ["fixture"], riskLevel: "low", workUnits: [{ id: "fixture", objective: "fixture", dependencies: [], writeTargets: ["fixture.ts"] }], requiredCapabilities: [], constraints: [], authorization: { allowedActions: ["fixture"], prohibitedActions: ["operating"], approvalRequired: [] }, decision: { complexity: "simple", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true } };
   const frame = { schemaVersion: "1.0.0" as const, workspace: { workspaceId: "synthetic-workspace", locator: directory }, controlArtifacts: [], targetArtifacts: [], operationalSettings: { maxAttemptsPerEpoch: 3 as const, maxEpochs: 2 as const, leaseTtlSeconds: 10 } };
@@ -44,17 +45,36 @@ describe("native legacy APIs on one inactive authority connection", () => {
     expect(value.workflow.updateRun({ ...run, revision: 1 }, 99)).toBe(false); expect(value.workflow.getRun(run.runId)).toEqual(run);
     expect(value.workflow.updateRun({ ...run, revision: 1 }, 0)).toBe(true); expect(() => value.workflow.insertRun({ ...run, revision: 2 })).toThrow(); expect(value.workflow.getRun(run.runId)?.revision).toBe(1);
   });
-  it("B2-LEGACY-02: original continuity request digest, epoch, snapshot and marker semantics stay distinct", () => {
-    const value = fixture(); const store = value.continuity; const image = snapshot(); store.ensureTask(image.taskCorrelation, iso(100));
-    expect(store.checkpoint(image.taskCorrelation, 1, 0, "original-request", "original-digest", image)).toEqual({ kind: "stored" });
-    expect(store.checkpoint(image.taskCorrelation, 1, 0, "original-request", "original-digest", image)).toMatchObject({ kind: "replay" });
-    expect(store.checkpoint(image.taskCorrelation, 1, 0, "original-request", "changed-digest", image)).toEqual({ kind: "conflict" });
-    expect(store.checkpoint(image.taskCorrelation, 1, 0, "new-request", "new-digest", image)).toEqual({ kind: "stale", actualRevision: 1 });
-    expect(store.bindRoot(image.taskCorrelation, 1, "original-root", iso(100))).toBe(true);
-    expect(store.setPendingMarker(image.taskCorrelation, 1, "workflow", 1, image.snapshotDigest, "original-root", iso(100))).toBe(true);
-    expect(store.consumeWorkflowMarker(image.taskCorrelation, 1, "original-root", 1, "wrong-digest", iso(100))).toBe(false); expect(store.consumeWorkflowMarker(image.taskCorrelation, 1, "original-root", 1, image.snapshotDigest, iso(100))).toBe(true); expect(store.consumeWorkflowMarker(image.taskCorrelation, 1, "original-root", 1, image.snapshotDigest, iso(100))).toBe(false);
-    expect(store.rotateEpoch(image.taskCorrelation, iso(101)).currentEpoch).toBe(2); expect(store.setPendingMarker(image.taskCorrelation, 1, "workflow", 1, image.snapshotDigest, null, iso(102))).toBe(false);
-    expect(store.getSnapshot(image.taskCorrelation, 1)).toEqual(image); expect(store.getRequest(image.taskCorrelation, 1, "original-request")?.commandDigest).toBe("original-digest");
+  it("B2-LEGACY-02: continuity request digest, opaque state, epoch and workflow marker semantics stay distinct", () => {
+    const value = fixture(); const store = value.continuity; const correlation = "original-correlation";
+    store.ensureTask(correlation, iso(100));
+    const empty = store.getCurrent(correlation, 1)!;
+    expect(empty.memory).toBeNull();
+    const first = store.checkpoint(correlation, 1, empty.stateToken, "original-request", "original-digest", memory(), iso(100));
+    expect(first.kind).toBe("stored");
+    if (first.kind !== "stored") throw new Error("Expected a stored current memory fixture.");
+    const image = first.snapshot;
+    expect(image.memory).toEqual(memory()); expect(image.stateToken).not.toBe(empty.stateToken);
+    expect(store.checkpoint(correlation, 1, empty.stateToken, "original-request", "original-digest", memory(), iso(100))).toMatchObject({ kind: "replay" });
+    expect(store.checkpoint(correlation, 1, empty.stateToken, "original-request", "changed-digest", memory(), iso(100))).toEqual({ kind: "conflict" });
+    expect(store.checkpoint(correlation, 1, empty.stateToken, "new-request", "new-digest", memory(), iso(100))).toEqual({ kind: "stale", actualStateToken: image.stateToken });
+    expect(store.bindRoot(correlation, 1, "original-root", iso(100))).toBe(true);
+    const workflowDigest = convergenceDigest("workflow-marker");
+    expect(store.setPendingMarker(correlation, 1, "workflow", 1, workflowDigest, "original-root", iso(100))).toBe(true);
+    expect(store.consumeWorkflowMarker(correlation, 1, "original-root", 1, "wrong-digest", iso(100))).toBe(false);
+    expect(store.consumeWorkflowMarker(correlation, 1, "original-root", 1, workflowDigest, iso(100))).toBe(true);
+    expect(store.consumeWorkflowMarker(correlation, 1, "original-root", 1, workflowDigest, iso(100))).toBe(false);
+    expect(store.rotateEpoch(correlation, iso(101)).currentEpoch).toBe(2);
+    expect(store.setPendingMarker(correlation, 1, "workflow", 1, workflowDigest, null, iso(102))).toBe(false);
+    const cleared = store.getCurrent(correlation, 2)!;
+    expect(cleared.memory).toBeNull(); expect(cleared.stateToken).not.toBe(image.stateToken);
+    expect(store.getCurrent(correlation, 1)).toBeNull();
+    const raw = new DatabaseSync(value.owner.databasePath, { readOnly: true });
+    try {
+      const archived = raw.prepare("SELECT state_token,memory_json,memory_digest FROM continuity_memory_history WHERE task_correlation=? AND epoch=1").get(correlation) as { state_token: string; memory_json: string; memory_digest: string };
+      expect(archived.state_token).toBe(image.stateToken); expect(JSON.parse(archived.memory_json)).toEqual(memory()); expect(archived.memory_digest).toBe(image.memoryDigest);
+    } finally { raw.close(); }
+    expect(store.getRequest(correlation, 1, "original-request")?.commandDigest).toBe("original-digest");
     expect(() => store.backupTo(path.join(path.dirname(value.owner.databasePath), "no-backup.sqlite3"))).toThrow(/SHARED_BACKUP_OWNER_REQUIRED/u);
   });
   it("B2-LEGACY-03: ACK, committed receipt, unknown delivery and same-ID retry are different states", () => {

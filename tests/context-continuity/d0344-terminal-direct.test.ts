@@ -21,7 +21,7 @@ import { fixtureLocator } from "../helpers/fixture-locator.js";
 
 // D0344 test plan: service/lifecycle + real SQLite conditional-rotation boundaries.
 // AC B: settled linked runs permit E -> E+1 even while a root remains open/needs-review.
-// Fresh direct revision 1 preserves history and fences old authority.
+// Fresh direct state tokens preserve history and fence old authority.
 // Negative cases: active/missing/unavailable authority and unfinished older attempts never detach.
 // Race oracle: the exact E/root observed before entry may rotate once; a changed E/root survives.
 // Owned adapter/snapshot fixtures are synthetic authority observations, not native-host evidence.
@@ -54,6 +54,22 @@ afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })));
 });
 
+/** Private history oracle for this owned SQLite fixture; no agent-facing history API is used. */
+function memoryAt(store: SqliteContinuityStore, correlation: string, epoch: number): ContinuitySnapshotV1 | null {
+  const current = store.getCurrent(correlation, epoch);
+  if (current) return current.memory ? current : null;
+  const database = Reflect.get(store, "database") as DatabaseSync;
+  const row = database.prepare(`SELECT state_token,memory_json,memory_digest,created_at,updated_at
+    FROM continuity_memory_history WHERE task_correlation=? AND epoch=? AND format='memory-v1'
+    ORDER BY rowid DESC LIMIT 1`).get(correlation, epoch) as {
+      state_token: string; memory_json: string; memory_digest: ContinuitySnapshotV1["memoryDigest"];
+      created_at: string; updated_at: string;
+    } | undefined;
+  return row ? { schemaVersion: "1.0.0", source: "direct", taskCorrelation: correlation, epoch,
+    stateToken: row.state_token, memory: JSON.parse(row.memory_json), memoryDigest: row.memory_digest,
+    createdAt: row.created_at, updatedAt: row.updated_at } : null;
+}
+
 function service(workflow: WorkflowStore | null = new InMemoryWorkflowStore(), path = ":memory:") {
   const store = new SqliteContinuityStore(path);
   stores.add(store);
@@ -62,7 +78,7 @@ function service(workflow: WorkflowStore | null = new InMemoryWorkflowStore(), p
 
 function checkpoint(overrides: Partial<CheckpointContextRequestV1> = {}): CheckpointContextRequestV1 {
   return {
-    schemaVersion: "1.0.0", requestId: "same-request-id", expectedRevision: 0, status: "active",
+    schemaVersion: "1.0.0", requestId: "same-request-id", expectedStateToken: "unissued-state-token", status: "active",
     core: { objective: "HISTORICAL-D0344-PAYLOAD", completionCriteria: ["Tests pass."], constraints: [],
       decisions: [], progress: ["Previous task."], blockers: [], nextActions: ["Historical action."] },
     evidenceRefs: [], ...overrides,
@@ -100,16 +116,22 @@ function finish(workflow: WorkflowStore, value: ConvergenceRootV1, state: "compl
 
 function loadInput(candidate: ContinuityCandidateV1) {
   expect(candidate.restoreToken).toEqual(expect.any(String));
-  return { schemaVersion: "1.0.0" as const, candidateToken: candidate.restoreToken!, epoch: candidate.summary!.epoch,
-    revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
+  return { schemaVersion: "1.0.0" as const, candidateToken: candidate.restoreToken! };
 }
 
-/** E's record re-based on E+1 (behavior 4, d7585d74): same revision and body, a digest of its own. */
+/** Rotation preserves the memory body while issuing a distinct current-state token. */
 function expectCarried(target: ContinuityService, correlation: string, previous: ContinuitySnapshotV1, epoch = previous.epoch + 1) {
-  const carried = target.store.getSnapshot(correlation, epoch);
-  expect(carried).toEqual({ ...previous, epoch, snapshotDigest: carried?.snapshotDigest });
-  expect(carried?.snapshotDigest).not.toBe(previous.snapshotDigest);
+  const carried = target.store.getCurrent(correlation, epoch);
+  expect(carried).toMatchObject({ ...previous, epoch, stateToken: expect.any(String), updatedAt: expect.any(String) });
+  expect(carried!.stateToken).not.toBe(previous.stateToken);
+  expect(carried!.memoryDigest).toBe(previous.memoryDigest);
   return carried!;
+}
+
+/** Read the current server token before constructing a new command; retries keep their original input. */
+function checkpointFor(target: ContinuityService, overrides: Partial<CheckpointContextRequestV1> = {}) {
+  const current = target.loadContext({ schemaVersion: "1.0.0" }, caller);
+  return checkpoint({ expectedStateToken: (current.data?.source === "direct" ? current.data.stateToken : "unissued-state-token"), ...overrides });
 }
 
 /**
@@ -177,27 +199,28 @@ function settleSqliteAttempt(workflow: SqliteWorkflowStore, attempt: ReturnType<
 describe("D0344 terminal workflow to fresh direct task", () => {
   for (const state of ["completed", "abandoned"] as const) {
     // Behaviors 2-4 (d7585d74): while bound, the session record is the restore candidate beside the workflow card;
-    // when the workflow settles it moves to E+1 with the same revision, and E's tokens and marker stay fenced.
+    // when the workflow settles it moves to E+1 with the same body, and E's tokens and marker stay fenced.
     it.each(["lifecycle", "tool-call"] as const)(`${state}: %s starts E+1 carrying the session record without deleting history`, entry => {
       const workflow = new InMemoryWorkflowStore(), value = root();
       expect(workflow.insertConvergenceRoot(value)).toBeNull();
       const target = service(workflow);
-      const historical = target.checkpointContext(checkpoint(), caller).data!;
+      const historical = target.checkpointContext(checkpointFor(target), caller).data!;
       const oldDirectLoad = loadInput(target.candidateForSession(session));
       bindRoot(target, value);
       const boundCandidate = target.candidateForSession(session);
-      expect(boundCandidate.summary).toMatchObject({ source: "direct", epoch: 1, revision: 1 });
+      expect(boundCandidate.summary).toMatchObject({ source: "direct", epoch: 1, stateToken: expect.any(String) });
       const oldBoundLoad = loadInput(boundCandidate);
       target.markPreCompact(session);
       const card = renderHookText(target.compactContext(session), "ko");
-      expect(card).toContain("source=direct");
-      expect(card).toContain("decision=INJECT");
+      expect(card).toContain(historical.stateToken);
+      expect(card).toContain(JSON.stringify(historical.memory));
+      expect(target.compactContext(session)).toBeNull();
       const correlation = target.correlateSession(session);
       expect(target.store.setSuppressed(correlation, 1, now)).toBe(true);
       const receipt = target.store.getRequest(correlation, 1, target.hashOpaque("request", "same-request-id"));
       expect(receipt).not.toBeNull();
       const terminal = finish(workflow, value, state);
-      const fresh = checkpoint({ core: { ...checkpoint().core, objective: "CURRENT-D0344-TASK" } });
+      const fresh = checkpoint({ expectedStateToken: historical.stateToken, core: { ...checkpoint().core, objective: "CURRENT-D0344-TASK" } });
       if (entry === "lifecycle") {
         expect(handleContinuityHook({ hook_event_name: "SessionStart", session_id: session, source: "startup" }, target, host)).toEqual({});
         expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
@@ -206,16 +229,16 @@ describe("D0344 terminal workflow to fresh direct task", () => {
         // The first AGS call after the terminal state: the server scopes it from the caller and detaches before reading.
         expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
         expect(target.inspectContext({ schemaVersion: "1.0.0" }, caller).data).toMatchObject({ decision: "DEFER",
-          summary: { source: "direct", epoch: 2, revision: 1 } });
+          summary: { source: "direct", epoch: 2, stateToken: expect.any(String) } });
       }
       // E's suppression and marker do not move with the record.
       expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null, suppressed: false,
-        lastAutoInjectedRevision: null, pendingSource: null, pendingRevision: null, pendingDigest: null,
+        lastAutoInjectedRevision: null, pendingSource: null, pendingStateToken: null, pendingRevision: null, pendingDigest: null,
         pendingRootId: null, pendingConsumed: false });
       const carried = expectCarried(target, correlation, historical);
       const candidate = target.candidateForSession(session);
-      expect(candidate).toMatchObject({ decision: "DEFER", summary: { source: "direct", epoch: 2, revision: 1, snapshotDigest: carried.snapshotDigest } });
-      expect(JSON.stringify(candidate)).not.toContain(historical.core.objective);
+      expect(candidate).toMatchObject({ decision: "DEFER", summary: { source: "direct", epoch: 2, stateToken: expect.any(String), memoryDigest: carried.memoryDigest } });
+      expect(JSON.stringify(candidate)).not.toContain(historical.memory!.core.objective);
       // No E+1 marker yet, so compaction injects nothing.
       const beforeCompact = target.store.getTask(correlation);
       expect(target.compactContext(session)).toBeNull();
@@ -225,21 +248,21 @@ describe("D0344 terminal workflow to fresh direct task", () => {
         const rejected = target.loadContext(oldCandidate, caller);
         expect(rejected.error?.code).toBe("BINDING_INVALID");
         expect(rejected.data).toBeNull();
-        expect(JSON.stringify(rejected)).not.toContain(historical.core.objective);
+        expect(JSON.stringify(rejected)).not.toContain(historical.memory!.core.objective);
       }
-      expect(target.store.getSnapshot(correlation, 1)).toEqual(historical);
+      expect(memoryAt(target.store, correlation, 1)).toEqual(historical);
       expect(target.store.getRequest(correlation, 1, target.hashOpaque("request", "same-request-id"))).toEqual(receipt);
       expect(target.store.getTombstone(correlation, 1)).toBeNull();
       expect(workflow.getConvergenceSnapshot(value.rootId)?.root).toEqual(terminal);
       expect(target.loadContext(loadInput(candidate), caller).data).toEqual(carried);
-      expect(target.checkpointContext(fresh, caller).error).toMatchObject({ code: "STALE_REVISION", details: { actualRevision: 1 } });
-      const next = { ...fresh, requestId: "next-request-id", expectedRevision: 1 };
+      expect(target.checkpointContext(fresh, caller).error).toMatchObject({ code: "STALE_REVISION", details: { reasonCode: "CONTINUITY_STATE_STALE" } });
+      const next = { ...fresh, requestId: "next-request-id", expectedStateToken: carried.stateToken };
       const saved = target.checkpointContext(next, caller);
-      expect(saved.data).toMatchObject({ source: "direct", epoch: 2, revision: 2, core: { objective: "CURRENT-D0344-TASK" } });
+      expect(saved.data).toMatchObject({ source: "direct", epoch: 2, stateToken: expect.any(String), memory: { core: { objective: "CURRENT-D0344-TASK" } } });
       expect(target.checkpointContext(next, caller)).toEqual(saved);
       expect(target.ensureSession(session).currentEpoch).toBe(2);
-      expect(target.candidateForSession(session).summary).toMatchObject({ source: "direct", epoch: 2, revision: 2 });
-      expect(target.store.getSnapshot(correlation, 1)).toEqual(historical);
+      expect(target.candidateForSession(session).summary).toMatchObject({ source: "direct", epoch: 2, stateToken: expect.any(String) });
+      expect(memoryAt(target.store, correlation, 1)).toEqual(historical);
     });
   }
 
@@ -249,45 +272,45 @@ describe("D0344 terminal workflow to fresh direct task", () => {
     expect(workflow.insertConvergenceRoot(value)).toBeNull();
     const target = service(workflow);
     bindRoot(target, value);
-    const saved = target.checkpointContext(checkpoint(), caller);
-    expect(saved.data).toMatchObject({ source: "direct", epoch: 1, revision: 1 });
+    const saved = target.checkpointContext(checkpointFor(target), caller);
+    expect(saved.data).toMatchObject({ source: "direct", epoch: 1, stateToken: expect.any(String) });
     expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
-    expect(target.store.getSnapshot(target.correlateSession(session), 1)).toEqual(saved.data);
-    expect(target.store.getSnapshot(target.correlateSession(session), 2)).toBeNull();
+    expect(memoryAt(target.store, target.correlateSession(session), 1)).toEqual(saved.data);
+    expect(memoryAt(target.store, target.correlateSession(session), 2)).toBeNull();
   });
 
   // Behaviors 1-2 (d7585d74): the epoch's own record stays the restore candidate (metadata only) and writable.
   it.each(["missing", "unavailable", "wrong-root"] as const)("%s authority cannot detach; the session record of the bound epoch stays writable and restorable", authority => {
     const workflow = new InMemoryWorkflowStore(), value = root();
     const target = service(authority === "unavailable" ? null : workflow);
-    const historical = target.checkpointContext(checkpoint(), caller).data!;
+    const historical = target.checkpointContext(checkpointFor(target), caller).data!;
     bindRoot(target, value);
     if (authority === "wrong-root") {
       expect(workflow.insertConvergenceRoot({ ...value, rootId: "different-root", state: "completed" })).toBeNull();
       const wrong = workflow.getConvergenceSnapshot("different-root")!;
       vi.spyOn(workflow, "getConvergenceSnapshot").mockReturnValue(wrong);
     }
-    const saved = target.checkpointContext(checkpoint({ requestId: "while-bound", expectedRevision: 1 }), caller);
-    expect(saved.data).toMatchObject({ source: "direct", epoch: 1, revision: 2 });
+    const saved = target.checkpointContext(checkpointFor(target, { requestId: "while-bound" }), caller);
+    expect(saved.data).toMatchObject({ source: "direct", epoch: 1, stateToken: expect.any(String) });
     expect(target.store.getTask(target.correlateSession(session))).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
-    expect(target.store.getSnapshot(target.correlateSession(session), 1)).toEqual(saved.data);
-    expect(target.store.getSnapshot(target.correlateSession(session), 2)).toBeNull();
+    expect(memoryAt(target.store, target.correlateSession(session), 1)).toEqual(saved.data);
+    expect(memoryAt(target.store, target.correlateSession(session), 2)).toBeNull();
     const candidate = target.candidateForSession(session);
-    expect(candidate).toMatchObject({ decision: "DEFER", summary: { source: "direct", epoch: 1, revision: 2, snapshotDigest: saved.data!.snapshotDigest } });
-    expect(JSON.stringify(candidate)).not.toContain(historical.core.objective);
+    expect(candidate).toMatchObject({ decision: "DEFER", summary: { source: "direct", epoch: 1, stateToken: expect.any(String), memoryDigest: saved.data!.memoryDigest } });
+    expect(JSON.stringify(candidate)).not.toContain(historical.memory!.core.objective);
   });
 
   it("a failing authority read fails the tool call and leaves the binding and historical data untouched", () => {
     const workflow = new InMemoryWorkflowStore(), target = service(workflow), value = root();
-    const historical = target.checkpointContext(checkpoint(), caller).data!;
+    const historical = target.checkpointContext(checkpointFor(target), caller).data!;
     bindRoot(target, value);
     const before = target.store.getTask(target.correlateSession(session));
     vi.spyOn(workflow, "getConvergenceSnapshot").mockImplementation(() => { throw new Error("synthetic-authority-unavailable"); });
-    expect(target.checkpointContext(checkpoint({ requestId: "after-authority-failure" }), caller))
+    expect(target.checkpointContext(checkpointFor(target, { requestId: "after-authority-failure" }), caller))
       .toMatchObject({ ok: false, data: null, error: { code: "CONTINUITY_UNAVAILABLE" } });
-    expect(target.store.getSnapshot(target.correlateSession(session), 2)).toBeNull();
+    expect(memoryAt(target.store, target.correlateSession(session), 2)).toBeNull();
     expect(target.store.getTask(target.correlateSession(session))).toEqual(before);
-    expect(target.store.getSnapshot(target.correlateSession(session), 1)).toEqual(historical);
+    expect(memoryAt(target.store, target.correlateSession(session), 1)).toEqual(historical);
   });
 });
 
@@ -334,12 +357,12 @@ describe("D0344 completed root must be quiescent across all workflow epochs", ()
     snapshot.outcomes = mismatch === "absent" ? [] : [finished];
     const read = vi.spyOn(workflow, "getConvergenceSnapshot").mockReturnValue(snapshot);
     // Behavior 1: the unfinished lease keeps the root bound; the save lands in E1.
-    expect(target.checkpointContext(checkpoint(), caller).data).toMatchObject({ epoch: 1, revision: 1 });
+    expect(target.checkpointContext(checkpointFor(target), caller).data).toMatchObject({ epoch: 1, stateToken: expect.any(String) });
     expect(target.store.getTask(target.correlateSession(session))).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
     snapshot.outcomes = [outcome(lease)];
     read.mockReturnValue(snapshot);
-    // Behavior 4: settlement carries revision 1 into E2, and the next save continues from it.
-    expect(target.checkpointContext(checkpoint({ requestId: "after-settlement", expectedRevision: 1 }), caller).data).toMatchObject({ epoch: 2, revision: 2 });
+    // Behavior 4: settlement carries the memory into E2, and the next save continues from it.
+    expect(target.checkpointContext(checkpointFor(target, { requestId: "after-settlement" }), caller).data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
   });
 
   it("abandonment cannot bypass a running consumed attempt, and exact settlement permits direct work", async () => {
@@ -351,11 +374,11 @@ describe("D0344 completed root must be quiescent across all workflow epochs", ()
     expect(workflow.updateConvergenceRoot(abandoned, attempt.root.revision)).toBe(true);
     expect(workflow.getRun(attempt.receipt.runId)?.state).toBe("running");
     // Behavior 1: the running attempt keeps the root bound; the save lands in E1.
-    expect(target.checkpointContext(checkpoint(), caller).data).toMatchObject({ epoch: 1, revision: 1 });
+    expect(target.checkpointContext(checkpointFor(target), caller).data).toMatchObject({ epoch: 1, stateToken: expect.any(String) });
     expect(target.store.getTask(target.correlateSession(session))).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
     const settled = settleSqliteAttempt(workflow, attempt, abandoned, "abandoned");
-    // Behavior 4: settlement carries revision 1 into E2.
-    expect(target.checkpointContext(checkpoint({ requestId: "after-settlement", expectedRevision: 1 }), caller).data).toMatchObject({ epoch: 2, revision: 2 });
+    // Behavior 4: settlement carries the memory into E2.
+    expect(target.checkpointContext(checkpointFor(target, { requestId: "after-settlement" }), caller).data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
     expect(workflow.getConvergenceSnapshot(value.rootId)?.root).toEqual(settled.root);
   });
 });
@@ -376,7 +399,7 @@ describe("D0344 conditional epoch rotation races", () => {
     expect(first.ensureSession(session)).toMatchObject(expected);
     expect(first.ensureSession(session)).toMatchObject(expected);
     // Behavior 1: the save lands in the preserved epoch and leaves the new binding in place.
-    expect(first.checkpointContext(checkpoint(), caller).data).toMatchObject({ epoch: expected.currentEpoch, revision: 1 });
+    expect(first.checkpointContext(checkpointFor(first), caller).data).toMatchObject({ epoch: expected.currentEpoch, stateToken: expect.any(String) });
     expect(second.store.getTask(correlation)).toMatchObject(expected);
   });
 
@@ -406,7 +429,7 @@ describe("D0344 conditional epoch rotation races", () => {
     });
     expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
     // Behavior 1: still bound, so the save lands in E1.
-    expect(target.checkpointContext(checkpoint(), caller).data).toMatchObject({ epoch: 1, revision: 1 });
+    expect(target.checkpointContext(checkpointFor(target), caller).data).toMatchObject({ epoch: 1, stateToken: expect.any(String) });
     expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
   });
 
@@ -444,8 +467,8 @@ describe("D0344 SQLite service composition and transactional rollback", () => {
       stores.add(workflow);
       const target = service(workflow, join(directory, "continuity.sqlite3")), value = root();
       expect(workflow.insertConvergenceRoot(value)).toBeNull();
-      const historical = target.checkpointContext(checkpoint(), caller).data!;
-      expect(historical).toMatchObject({ epoch: 1, revision: 1 });
+      const historical = target.checkpointContext(checkpointFor(target), caller).data!;
+      expect(historical).toMatchObject({ epoch: 1, stateToken: expect.any(String) });
       bindRoot(target, value);
       const terminal = finish(workflow, value, state), correlation = target.correlateSession(session);
       const receipt = target.store.getRequest(correlation, 1, target.hashOpaque("request", "same-request-id"));
@@ -453,14 +476,14 @@ describe("D0344 SQLite service composition and transactional rollback", () => {
       if (entry === "ensure-session") expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 2, rootId: null });
       if (entry === "tool-call") {
         expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
-        expect(target.inspectContext({ schemaVersion: "1.0.0" }, caller).data).toMatchObject({ decision: "DEFER", summary: { source: "direct", epoch: 2, revision: 1 } });
+        expect(target.inspectContext({ schemaVersion: "1.0.0" }, caller).data).toMatchObject({ decision: "DEFER", summary: { source: "direct", epoch: 2, stateToken: expect.any(String) } });
       }
-      const request = checkpoint({ expectedRevision: 1, core: { ...checkpoint().core, objective: "New SQLite-backed task." } });
+      const request = checkpointFor(target, { core: { ...checkpoint().core, objective: "New SQLite-backed task." } });
       expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
       const carried = expectCarried(target, correlation, historical);
-      expect(target.candidateForSession(session)).toMatchObject({ decision: "DEFER", summary: { source: "direct", epoch: 2, revision: 1, snapshotDigest: carried.snapshotDigest } });
-      expect(target.checkpointContext(request, caller).data).toMatchObject({ epoch: 2, revision: 2, core: { objective: "New SQLite-backed task." } });
-      expect(target.store.getSnapshot(correlation, 1)).toEqual(historical);
+      expect(target.candidateForSession(session)).toMatchObject({ decision: "DEFER", summary: { source: "direct", epoch: 2, stateToken: expect.any(String), memoryDigest: carried.memoryDigest } });
+      expect(target.checkpointContext(request, caller).data).toMatchObject({ epoch: 2, stateToken: expect.any(String), memory: { core: { objective: "New SQLite-backed task." } } });
+      expect(memoryAt(target.store, correlation, 1)).toEqual(historical);
       expect(target.store.getRequest(correlation, 1, target.hashOpaque("request", "same-request-id"))).toEqual(receipt);
       expect(target.store.getTombstone(correlation, 1)).toBeNull();
       expect(workflow.getConvergenceSnapshot(value.rootId)?.root).toEqual(terminal);
@@ -470,8 +493,8 @@ describe("D0344 SQLite service composition and transactional rollback", () => {
     it(`${state}: shared service reads workflow authority inside rotation and preserves history`, async () => {
       const { target, workflow, continuity } = await sharedFixture(), value = root();
       expect(workflow.insertConvergenceRoot(value)).toBeNull();
-      const historical = target.checkpointContext(checkpoint(), caller).data!;
-      expect(historical).toMatchObject({ epoch: 1, revision: 1 });
+      const historical = target.checkpointContext(checkpointFor(target), caller).data!;
+      expect(historical).toMatchObject({ epoch: 1, stateToken: expect.any(String) });
       bindRoot(target, value);
       target.markPreCompact(session);
       const correlation = target.correlateSession(session), before = continuity.getTask(correlation)!;
@@ -480,23 +503,23 @@ describe("D0344 SQLite service composition and transactional rollback", () => {
       const receipt = continuity.getRequest(correlation, 1, target.hashOpaque("request", "same-request-id"));
       const terminal = finish(workflow, value, state);
       // No authority spy: getConvergenceSnapshot uses the same owner's nested transaction.
-      expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 2, rootId: null, pendingSource: null,
+      expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 2, rootId: null, pendingSource: null, pendingStateToken: null,
         pendingRevision: null, pendingDigest: null, pendingRootId: null, pendingConsumed: false });
-      expect(continuity.getSnapshot(correlation, 1)).toEqual(historical);
+      expect(memoryAt(continuity, correlation, 1)).toEqual(historical);
       expect(continuity.getRequest(correlation, 1, target.hashOpaque("request", "same-request-id"))).toEqual(receipt);
       expect(continuity.getTombstone(correlation, 1)).toBeNull();
       expect(workflow.getConvergenceSnapshot(value.rootId)?.root).toEqual(terminal);
-      // Behavior 4: the rotation inside the shared transaction carried revision 1 into E2.
+      // Behavior 4: the rotation inside the shared transaction carried memory into E2.
       expectCarried(target, correlation, historical);
-      expect(target.checkpointContext(checkpoint({ expectedRevision: 1 }), caller).data).toMatchObject({ epoch: 2, revision: 2 });
-      expect(continuity.getSnapshot(correlation, 1)).toEqual(historical);
+      expect(target.checkpointContext(checkpointFor(target), caller).data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
+      expect(memoryAt(continuity, correlation, 1)).toEqual(historical);
     });
   }
 
   it("a throwing shared predicate rolls back nested epoch, root, suppression and marker changes", async () => {
     const { target, workflow, continuity } = await sharedFixture(), value = root();
     expect(workflow.insertConvergenceRoot(value)).toBeNull();
-    const historical = target.checkpointContext(checkpoint(), caller).data!;
+    const historical = target.checkpointContext(checkpointFor(target), caller).data!;
     bindRoot(target, value);
     const correlation = target.correlateSession(session);
     workflowMarker(target, correlation, 1, value);
@@ -516,8 +539,8 @@ describe("D0344 SQLite service composition and transactional rollback", () => {
     } })).toThrow();
     expect(nestedWriteReached).toBe(true);
     expect(continuity.getTask(correlation)).toEqual(before);
-    expect(continuity.getSnapshot(correlation, 1)).toEqual(historical);
-    expect(continuity.getSnapshot(correlation, 2)).toBeNull();
+    expect(memoryAt(continuity, correlation, 1)).toEqual(historical);
+    expect(memoryAt(continuity, correlation, 2)).toBeNull();
     expect(continuity.getRequest(correlation, 1, requestHash)).toEqual(receipt);
     // The owner remains usable after the outer rollback.
     expect(target.clearSession(session)).toMatchObject({ currentEpoch: 2, rootId: null, suppressed: false, pendingConsumed: false });
@@ -528,20 +551,20 @@ describe("D0344 settled runs and exact outcomes authorize direct work", () => {
   it.each(["open", "needs-review"] as const)("a settled SQLite run carries the record and permits direct work while its root is %s (behavior 4)", async state => {
     const { target, workflow } = await sqliteFixture(), value = root();
     expect(workflow.insertConvergenceRoot(value)).toBeNull();
-    const historical = target.checkpointContext(checkpoint(), caller).data!;
+    const historical = target.checkpointContext(checkpointFor(target), caller).data!;
     bindRoot(target, value);
     const attempt = startSqliteAttempt(workflow, value, "settled-active-root");
     const settled = settleSqliteAttempt(workflow, attempt, attempt.root, state);
     const before = workflow.getConvergenceSnapshot(value.rootId);
     expect(before).toMatchObject({ root: { state }, workflowRunIds: [attempt.receipt.runId], outcomes: [settled.outcome] });
     expect(workflow.getRun(attempt.receipt.runId)?.state).toBe("passed");
-    const saved = target.checkpointContext(checkpoint({ expectedRevision: 1 }), caller);
+    const saved = target.checkpointContext(checkpointFor(target), caller);
     expect(saved.error).toBeNull();
-    expect(saved.data).toMatchObject({ epoch: 2, revision: 2 });
+    expect(saved.data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
     const correlation = target.correlateSession(session);
     expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
-    expect(target.store.getSnapshot(correlation, 1)).toEqual(historical);
-    expect(target.store.getSnapshot(correlation, 2)).toEqual(saved.data);
+    expect(memoryAt(target.store, correlation, 1)).toEqual(historical);
+    expect(memoryAt(target.store, correlation, 2)).toEqual(saved.data);
     expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(before);
   });
 
@@ -567,7 +590,7 @@ describe("D0344 settled runs and exact outcomes authorize direct work", () => {
     const before = workflow.getConvergenceSnapshot(value.rootId);
     expect(before).toMatchObject({ workflowRunIds: [attempt.receipt.runId], outcomes: [settled.outcome] });
     // Behavior 1: the root stays bound and the save lands in E1.
-    expect(target.checkpointContext(checkpoint(), caller).data).toMatchObject({ epoch: 1, revision: 1 });
+    expect(target.checkpointContext(checkpointFor(target), caller).data).toMatchObject({ epoch: 1, stateToken: expect.any(String) });
     expect(target.store.getTask(target.correlateSession(session))).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
     expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(before);
   });
@@ -581,11 +604,11 @@ describe("D0344 settled runs and exact outcomes authorize direct work", () => {
     const rawSnapshot: unknown = { ...snapshot, root: { ...snapshot.root, state: "future-terminal-state" } };
     vi.spyOn(workflow, "getConvergenceSnapshot").mockReturnValue(rawSnapshot as ConvergenceSnapshot);
     // Behavior 1: the root stays bound and the save lands in E1.
-    const saved = target.checkpointContext(checkpoint(), caller);
-    expect(saved.data).toMatchObject({ epoch: 1, revision: 1 });
+    const saved = target.checkpointContext(checkpointFor(target), caller);
+    expect(saved.data).toMatchObject({ epoch: 1, stateToken: expect.any(String) });
     expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
-    expect(target.store.getSnapshot(target.correlateSession(session), 1)).toEqual(saved.data);
-    expect(target.store.getSnapshot(target.correlateSession(session), 2)).toBeNull();
+    expect(memoryAt(target.store, target.correlateSession(session), 1)).toEqual(saved.data);
+    expect(memoryAt(target.store, target.correlateSession(session), 2)).toBeNull();
   });
 });
 
@@ -593,7 +616,7 @@ describe("D0344 persisted failure, settlement and repeated clear boundaries", ()
   it("an aborted epoch UPDATE preserves continuity and workflow history, then retries successfully", async () => {
     const { target, workflow, continuityPath } = await sqliteFixture(), value = root();
     expect(workflow.insertConvergenceRoot(value)).toBeNull();
-    const historical = target.checkpointContext(checkpoint(), caller).data!;
+    const historical = target.checkpointContext(checkpointFor(target), caller).data!;
     bindRoot(target, value);
     const attempt = startSqliteAttempt(workflow, value, "update-failure-lease");
     const correlation = target.correlateSession(session);
@@ -612,18 +635,18 @@ describe("D0344 persisted failure, settlement and repeated clear boundaries", ()
       expect(failure).toBeInstanceOf(ContinuityStoreError);
       expect((failure as ContinuityStoreError).causeValue).toMatchObject({ message: expect.stringContaining("d0344-owned-rotation-abort") });
       expect(target.store.getTask(correlation)).toEqual(beforeTask);
-      expect(target.store.getSnapshot(correlation, 1)).toEqual(historical);
-      expect(target.store.getSnapshot(correlation, 2)).toBeNull();
+      expect(memoryAt(target.store, correlation, 1)).toEqual(historical);
+      expect(memoryAt(target.store, correlation, 2)).toBeNull();
       expect(target.store.getRequest(correlation, 1, requestHash)).toEqual(beforeRequest);
       expect(target.store.getTombstone(correlation, 1)).toBeNull();
       expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(beforeWorkflow);
       database.exec("DROP TRIGGER d0344_abort_rotation");
       expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 2, rootId: null, suppressed: false,
-        lastAutoInjectedRevision: null, pendingSource: null, pendingRevision: null, pendingDigest: null, pendingRootId: null, pendingConsumed: false });
+        lastAutoInjectedRevision: null, pendingSource: null, pendingStateToken: null, pendingRevision: null, pendingDigest: null, pendingRootId: null, pendingConsumed: false });
       // Behavior 4: the retried rotation carries the record; the aborted one carried nothing (checked above).
       expectCarried(target, correlation, historical);
-      expect(target.checkpointContext(checkpoint({ expectedRevision: 1 }), caller).data).toMatchObject({ epoch: 2, revision: 2 });
-      expect(target.store.getSnapshot(correlation, 1)).toEqual(historical);
+      expect(target.checkpointContext(checkpointFor(target), caller).data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
+      expect(memoryAt(target.store, correlation, 1)).toEqual(historical);
       expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(beforeWorkflow);
     } finally {
       database.exec("DROP TRIGGER IF EXISTS d0344_abort_rotation");
@@ -645,7 +668,7 @@ describe("D0344 persisted failure, settlement and repeated clear boundaries", ()
       leases: [{ leaseId: older.lease.leaseId, epoch: 1, state: "consumed" }, { leaseId: newer.lease.leaseId, epoch: 2, state: "consumed" }],
       outcomes: [{ leaseId: newer.lease.leaseId, epoch: 2 }] });
     // Behavior 1: the older lease keeps the root bound; the save lands in E1.
-    expect(target.checkpointContext(checkpoint(), caller).data).toMatchObject({ epoch: 1, revision: 1 });
+    expect(target.checkpointContext(checkpointFor(target), caller).data).toMatchObject({ epoch: 1, stateToken: expect.any(String) });
     expect(target.store.getTask(target.correlateSession(session))).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
     expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(before);
     const olderSettlement = settleSqliteAttempt(workflow, older, newerSettlement.root, state);
@@ -657,8 +680,8 @@ describe("D0344 persisted failure, settlement and repeated clear boundaries", ()
     })).toThrow();
     expect(workflow.getRun(older.receipt.runId)).toEqual(olderSettlement.receipt);
     expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(settledSnapshot);
-    // Behavior 4: one rotation carries revision 1 into E2.
-    expect(target.checkpointContext(checkpoint({ requestId: "after-settlement", expectedRevision: 1 }), caller).data).toMatchObject({ epoch: 2, revision: 2 });
+    // Behavior 4: one rotation carries the memory into E2.
+    expect(target.checkpointContext(checkpointFor(target, { requestId: "after-settlement" }), caller).data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
     expect(target.ensureSession(session).currentEpoch).toBe(2);
     expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(settledSnapshot);
   });
@@ -669,9 +692,9 @@ describe("D0344 persisted failure, settlement and repeated clear boundaries", ()
     const correlation = target.correlateSession(session), requestHash = target.hashOpaque("request", "same-request-id");
     const history = [];
     for (const epoch of [1, 2]) {
-      const input = checkpoint({ core: { ...checkpoint().core, objective: `Epoch ${epoch} task.` } });
+      const input = checkpointFor(target, { core: { ...checkpoint().core, objective: `Epoch ${epoch} task.` } });
       const snapshot = target.checkpointContext(input, caller).data!;
-      expect(snapshot).toMatchObject({ epoch, revision: 1 });
+      expect(snapshot).toMatchObject({ epoch, stateToken: expect.any(String) });
       const receipt = target.store.getRequest(correlation, epoch, requestHash);
       expect(receipt).not.toBeNull();
       history.push({ epoch, snapshot, receipt });
@@ -681,18 +704,18 @@ describe("D0344 persisted failure, settlement and repeated clear boundaries", ()
       expect(target.store.getTask(correlation)).toMatchObject({ suppressed: true, pendingConsumed: true, pendingSource: "workflow",
         pendingRootId: value.rootId, pendingRevision: value.revision, lastAutoInjectedRevision: value.revision });
       expect(target.clearSession(session)).toMatchObject({ currentEpoch: epoch + 1, rootId: null, suppressed: false,
-        lastAutoInjectedRevision: null, pendingSource: null, pendingRevision: null, pendingDigest: null, pendingRootId: null, pendingConsumed: false });
+        lastAutoInjectedRevision: null, pendingSource: null, pendingStateToken: null, pendingRevision: null, pendingDigest: null, pendingRootId: null, pendingConsumed: false });
       expect(target.candidateForSession(session)).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
     }
-    const fresh = checkpoint({ core: { ...checkpoint().core, objective: "Epoch 3 task." } });
+    const fresh = checkpointFor(target, { core: { ...checkpoint().core, objective: "Epoch 3 task." } });
     const saved = target.checkpointContext(fresh, caller);
-    expect(saved.data).toMatchObject({ epoch: 3, revision: 1 });
+    expect(saved.data).toMatchObject({ epoch: 3, stateToken: expect.any(String) });
     expect(target.checkpointContext(fresh, caller)).toEqual(saved);
     const conflicting = { ...fresh, core: { ...fresh.core, objective: "Different payload for the current request." } };
     expect(target.checkpointContext(conflicting, caller).error?.code).toBe("REQUEST_CONFLICT");
-    expect(target.store.getSnapshot(correlation, 3)).toEqual(saved.data);
+    expect(memoryAt(target.store, correlation, 3)).toEqual(saved.data);
     for (const old of history) {
-      expect(target.store.getSnapshot(correlation, old.epoch)).toEqual(old.snapshot);
+      expect(memoryAt(target.store, correlation, old.epoch)).toEqual(old.snapshot);
       expect(target.store.getRequest(correlation, old.epoch, requestHash)).toEqual(old.receipt);
       expect(target.store.getTombstone(correlation, old.epoch)).toBeNull();
     }
@@ -740,7 +763,7 @@ describe("D0344 workflow transaction fence", () => {
       expect(workflow.insertGuardedRun(receipt, lease.leaseId, claimed.revision, now)?.lease.state).toBe("consumed");
       target.prepareWorkflowStart(session, value.rootId);
       // Behavior 1: the new binding does not close the session record; the save lands in E2 and keeps the binding.
-      expect(target.checkpointContext(checkpoint(), caller).data).toMatchObject({ epoch: 2, revision: 1 });
+      expect(target.checkpointContext(checkpointFor(target), caller).data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
       expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 2, rootId: value.rootId });
     } finally { competing.close(); }
   });

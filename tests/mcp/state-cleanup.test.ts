@@ -8,10 +8,11 @@ import { DatabaseSync } from "node:sqlite";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { ContinuitySnapshotV1, WorkflowReceiptV1 } from "../../contracts/types.js";
+import type { ContinuityMemoryBodyV1, WorkflowReceiptV1 } from "../../contracts/types.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator, contractSchemas } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
+import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { StateCleanupService } from "../../mcp-server/src/state-cleanup-service.js";
 
 const directories: string[] = [];
@@ -32,12 +33,27 @@ function receipt(runId: string, state: WorkflowReceiptV1["state"] = "passed"): W
   };
 }
 
-function snapshot(taskCorrelation: string, status: "active" | "paused" | "completed"): ContinuitySnapshotV1 {
-  return {
-    schemaVersion: "1.0.0", source: "direct", taskCorrelation, epoch: 1, revision: 1, status,
-    core: { objective: "test", completionCriteria: [], constraints: [], decisions: [], progress: [], blockers: [], nextActions: [] },
-    evidenceRefs: [], snapshotDigest: `sha256:${"a".repeat(64)}`, createdAt: OLD, updatedAt: OLD,
-  };
+function memory(status: ContinuityMemoryBodyV1["status"]): ContinuityMemoryBodyV1 {
+  return { status, core: { objective: "test", completionCriteria: [], constraints: [], decisions: [], progress: [], blockers: [], nextActions: [] }, evidenceRefs: [] };
+}
+
+function saveMemory(store: SqliteContinuityStore, correlation: string, status: ContinuityMemoryBodyV1["status"], request: string, command: string) {
+  const current = store.getCurrent(correlation, 1)!;
+  const metadataTime = store.getTask(correlation)!.updatedAt;
+  const saved = store.checkpoint(correlation, 1, current.stateToken, request, command, memory(status), OLD);
+  expect(saved.kind).toBe("stored");
+  // Fixture distinguishes an old payload from recently touched task metadata.
+  const raw = new DatabaseSync(store.databasePath);
+  try { raw.prepare("UPDATE continuity_tasks SET updated_at=? WHERE task_correlation=?").run(metadataTime, correlation); }
+  finally { raw.close(); }
+  return saved.kind === "stored" ? saved.snapshot : null;
+}
+
+// Exact legacy bytes are migration input only, never the current agent-facing DTO.
+function legacySnapshot() {
+  const base = { schemaVersion: "1.0.0", source: "direct", taskCorrelation: "preserved", epoch: 1, revision: 1,
+    ...memory("paused"), createdAt: OLD, updatedAt: OLD };
+  return { ...base, snapshotDigest: convergenceDigest(base) };
 }
 
 function linkRun(databasePath: string, rootId: string, runId: string, state: "open" | "completed"): void {
@@ -91,14 +107,14 @@ describe("state cleanup", () => {
       linkRun(workflowPath, "active-root", "active-linked", "open");
 
       continuity.ensureTask("expired", "2026-06-01T00:00:00.000Z");
-      continuity.checkpoint("expired", 1, 0, "request-expired", "command-expired", snapshot("expired", "completed"));
+      const expired = saveMemory(continuity, "expired", "completed", "request-expired", "command-expired")!;
       continuity.ensureTask("old-task", OLD);
       continuity.ensureTask("recent-metadata", OLD);
       continuity.recordObservation("recent-metadata", 1, "resume", null, true, "2026-09-01T00:00:00.000Z");
       continuity.ensureTask("active", OLD);
-      continuity.checkpoint("active", 1, 0, "request-active", "command-active", snapshot("active", "active"));
+      saveMemory(continuity, "active", "active", "request-active", "command-active");
       continuity.ensureTask("root-protected", "2026-06-01T00:00:00.000Z");
-      continuity.checkpoint("root-protected", 1, 0, "request-protected", "command-protected", snapshot("root-protected", "paused"));
+      saveMemory(continuity, "root-protected", "paused", "request-protected", "command-protected");
       continuity.bindRoot("root-protected", 1, "active-root", "2026-06-01T00:00:00.000Z");
 
       const service = new StateCleanupService(workflow, continuity, new ContractValidator(), () => new Date(NOW));
@@ -107,21 +123,25 @@ describe("state cleanup", () => {
       expect(preview.data?.counts).toMatchObject({
         workflowRoots: 1, workflowRuns: 2, continuitySnapshots: 1, continuityTasks: 1, protectedActiveRoots: 1,
       });
+      const privateBackup = vi.spyOn(continuity, "backupTo");
       const executed = service.execute({ schemaVersion: "1.0.0", planToken: preview.data!.planToken });
       expect(executed.ok, JSON.stringify(executed.error)).toBe(true);
       expect(executed.data?.status).toBe("completed");
       expect(workflow.getRun("completed-linked")).toBeNull();
       expect(workflow.getRun("standalone")).toBeNull();
       expect(workflow.getRun("active-linked")).not.toBeNull();
-      expect(continuity.getSnapshot("expired", 1)).toBeNull();
-      expect(continuity.getTombstone("expired", 1)?.payloadDigest).toBe(`sha256:${"a".repeat(64)}`);
-      expect(continuity.getSnapshot("active", 1)).not.toBeNull();
-      expect(continuity.getSnapshot("root-protected", 1)).not.toBeNull();
+      expect(continuity.getCurrent("expired", 1)?.memory).toBeNull();
+      expect(continuity.getTombstone("expired", 1)?.payloadDigest).toBe(expired.memoryDigest);
+      expect(continuity.getCurrent("active", 1)?.memory).toEqual(memory("active"));
+      expect(continuity.getCurrent("root-protected", 1)?.memory).toEqual(memory("paused"));
       expect(continuity.getTask("old-task")).toBeNull();
       expect(continuity.getTask("recent-metadata")).not.toBeNull();
 
       const workflowBackup = executed.data!.databases.workflow.backupPath!;
-      const continuityBackup = executed.data!.databases.continuity.backupPath!;
+      expect(executed.data!.databases.continuity.backupPath).toBeNull();
+      expect(privateBackup).toHaveBeenCalledTimes(1);
+      const continuityBackup = privateBackup.mock.calls[0]![0];
+      expect(JSON.stringify(executed)).not.toContain(continuityBackup);
       await expect(stat(workflowBackup)).resolves.toBeTruthy();
       await expect(stat(continuityBackup)).resolves.toBeTruthy();
       const backup = new DatabaseSync(workflowBackup, { readOnly: true });
@@ -233,7 +253,7 @@ describe("state cleanup", () => {
       );
       INSERT INTO continuity_metadata VALUES ('signing-secret', 'preserved-secret');
       INSERT INTO continuity_tasks VALUES ('preserved', 2, 'root-preserved', 1, 3, 'direct', 4, 'digest', NULL, 1, '${OLD}');
-      INSERT INTO continuity_snapshots VALUES ('preserved', 1, 1, 'sha256:${"c".repeat(64)}', '${JSON.stringify(snapshot("preserved", "paused")).replaceAll("'", "''")}', '${OLD}');
+      INSERT INTO continuity_snapshots VALUES ('preserved', 1, 1, '${legacySnapshot().snapshotDigest}', '${JSON.stringify(legacySnapshot()).replaceAll("'", "''")}', '${OLD}');
       INSERT INTO continuity_requests VALUES ('preserved', 1, 'request', 'command', '{"kind":"legacy"}', '${OLD}');
       INSERT INTO continuity_tombstones VALUES ('preserved', 2, 2, 'sha256:${"d".repeat(64)}', '${OLD}');
       INSERT INTO continuity_observations(task_correlation, epoch, event, turn_hash, success, observed_at)
@@ -242,16 +262,22 @@ describe("state cleanup", () => {
     `);
     legacyContinuity.close();
     const continuity = new SqliteContinuityStore(continuityPath);
-    expect(continuity.getSchemaVersion()).toBe(2);
+    expect(continuity.getSchemaVersion()).toBe(4);
     expect(continuity.getOrCreateSecret(() => "replacement")).toBe("preserved-secret");
     expect(continuity.getTask("preserved")).toMatchObject({ currentEpoch: 2, rootId: "root-preserved", suppressed: true });
-    expect(continuity.getSnapshot("preserved", 1)?.status).toBe("paused");
-    expect(continuity.getRequest("preserved", 1, "request")).toEqual({ commandDigest: "command", resultJson: '{"kind":"legacy"}' });
-    expect(continuity.getTombstone("preserved", 2)?.payloadDigest).toBe(`sha256:${"d".repeat(64)}`);
+    expect(continuity.getCurrent("preserved")?.memory).toBeNull();
+    const history = new DatabaseSync(continuityPath, { readOnly: true });
+    try {
+      const row = history.prepare("SELECT memory_json FROM continuity_memory_history WHERE task_correlation='preserved' AND epoch=1").get() as { memory_json: string };
+      expect(JSON.parse(row.memory_json)).toEqual(legacySnapshot());
+      expect(history.prepare("SELECT value FROM continuity_metadata WHERE key='legacy-tombstone:preserved:2'").get()).toMatchObject({ value: expect.stringContaining(`sha256:${"d".repeat(64)}`) });
+    } finally { history.close(); }
+    expect(continuity.getRequest("preserved", 1, "request")).toEqual({ commandDigest: "command", resultJson: '{"schemaVersion":"1.0.0","kind":"legacy-receipt-unavailable"}' });
+    expect(continuity.getTombstone("preserved", 2)).toBeNull();
     continuity.close();
     const migratedContinuity = new DatabaseSync(continuityPath, { readOnly: true });
     expect((migratedContinuity.prepare("SELECT COUNT(*) AS count FROM continuity_observations").get() as { count: number }).count).toBe(1);
-    expect((migratedContinuity.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name LIKE 'continuity_%_cleanup'").get() as { count: number }).count).toBe(5);
+    expect((migratedContinuity.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name LIKE 'continuity_%_cleanup'").get() as { count: number }).count).toBe(6);
     migratedContinuity.close();
     expect(await readFile(workflowPath)).toBeTruthy();
   });
@@ -353,7 +379,7 @@ describe("state cleanup", () => {
         .run("2026-09-01T00:00:00.000Z");
       raw.close();
       continuity.ensureTask("root-raced-task", OLD);
-      continuity.checkpoint("root-raced-task", 1, 0, "request", "command", snapshot("root-raced-task", "paused"));
+      saveMemory(continuity, "root-raced-task", "paused", "request", "command");
       continuity.bindRoot("root-raced-task", 1, "raced-root", OLD);
       const continuityRaw = new DatabaseSync(continuity.databasePath);
       continuityRaw.prepare("UPDATE continuity_tasks SET updated_at = ? WHERE task_correlation = 'root-raced-task'")
@@ -378,7 +404,7 @@ describe("state cleanup", () => {
       expect(result.ok).toBe(true);
       expect(result.data?.status).toBe("partial");
       expect(result.data?.databases.continuity.status).toBe("failed");
-      expect(continuity.getSnapshot("root-raced-task", 1)).not.toBeNull();
+      expect(continuity.getCurrent("root-raced-task", 1)?.memory).toEqual(memory("paused"));
     } finally {
       continuity.close();
       workflow.close();

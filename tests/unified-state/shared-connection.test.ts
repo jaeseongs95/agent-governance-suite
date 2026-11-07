@@ -167,9 +167,9 @@ describe("inactive native shared connection", () => {
     value.messaging.send({ sender: { host: "fixture-a", sessionId: "s" }, target: { host: "fixture-b", sessionId: "r" }, messageId: "owner-message", body: "synthetic" }, 100);
     const snapshot = value.owner.inspect();
     expect(snapshot.databases.filter(row => row.file !== "")).toHaveLength(1); expect(snapshot.databases[0]).toMatchObject({ name: "main", file: value.owner.databasePath }); expect(snapshot.databases.every(row => row.name === "main" || row.name === "temp" && row.file === "")).toBe(true);
-    expect(Object.keys(snapshot.counts)).toHaveLength(33); expect(snapshot.counts.root_approval_decisions).toBe(0); expect(snapshot.counts.call_admissions).toBe(0); expect(snapshot.counts.messages).toBe(1); expect(snapshot.counts.continuity_tasks).toBe(1);
-    expect(snapshot.modules.map(row => [row.module, row.version])).toEqual([["board", 1], ["continuity", 2], ["messaging", 4], ["trust", 1], ["workflow", 7]]);
-    expect(snapshot.userVersion).toBe(1); expect(value.workflow.getSchemaVersion()).toBe(7); expect(value.continuity.getSchemaVersion()).toBe(2);
+    expect(Object.keys(snapshot.counts)).toHaveLength(34); expect(snapshot.counts.root_approval_decisions).toBe(0); expect(snapshot.counts.call_admissions).toBe(0); expect(snapshot.counts.messages).toBe(1); expect(snapshot.counts.continuity_tasks).toBe(1);
+    expect(snapshot.modules.map(row => [row.module, row.version])).toEqual([["board", 1], ["continuity", 4], ["messaging", 4], ["trust", 1], ["workflow", 7]]);
+    expect(snapshot.userVersion).toBe(1); expect(value.workflow.getSchemaVersion()).toBe(7); expect(value.continuity.getSchemaVersion()).toBe(4);
     expect(snapshot.integrity).toEqual([{ integrity_check: "ok" }]); expect(snapshot.foreignKeyViolations).toEqual([]);
     console.log("B2-RAW owner", JSON.stringify(snapshot));
   });
