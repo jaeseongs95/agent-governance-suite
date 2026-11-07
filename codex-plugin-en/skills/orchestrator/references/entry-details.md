@@ -4,7 +4,7 @@
 
 `executionClass`별로 흐름을 분리한다.
 
-- `bootstrap`: `plan_workflow` 전에 실행한다. `phaseOrder` 순으로 지침 범위를 확인하고, 신뢰할 수 있는 현재 선택값이 있을 때 모델·추론 수준 적합성을 평가하며, 필요할 때 저장소 관례를 조사한 뒤 유효한 `TaskEnvelope.v1`과 수용 근거 계획을 만든다. 이미 같은 대상과 지침 revision에 대해 검증된 산출물이 있으면 중복 실행하지 않는다.
+- `bootstrap`: `plan_workflow` 전에 실행한다. `phaseOrder` 순으로 지침 범위를 확인하고, 하위 배정이 있으면 호출 전에 담당 작업과 호스트가 제공한 지원 조합에 맞는 모델·추론 수준을 선택하며, 필요할 때 저장소 관례를 조사한 뒤 유효한 `TaskEnvelope.v1`과 수용 근거 계획을 만든다. 이미 같은 대상과 지침 revision에 대해 검증된 산출물이 있으면 중복 실행하지 않는다.
 - `workflow`: 동결된 `TaskEnvelope.v1`에서 필요한 capability만 선택한다. `phaseOrder`와 artifact 의존성을 함께 지키며, 첫 변경 전 기준선, 위험한 상태 변경 직전 precondition gate, 구현 후 범위·수용 근거 확인, 마지막 완료 gate 순서를 유지한다.
 - `recovery`: 기존 run의 실패 기록을 바꾸지 않고 별도 workflow로 실행한다. 반복 실패가 없으면 미리 넣지 않으며, recovery provider와 일반 workflow provider를 한 run에 섞지 않는다. `blocker-diagnostician`이 `CAUSE_CONFIRMED`를 반환한 뒤에만 별도의 recovery run에서 `recovery-strategy-selector`를 실행한다. 검증된 `RecoveryHandoff.v1`은 새 작업 계약의 입력일 뿐 권한이나 실행 승인이 아니며, 새 `TaskEnvelope.v1` 결속 검사 전에는 후속 workflow를 시작하지 않는다.
 
@@ -15,6 +15,10 @@
 에이전트 간 이견이나 통합 대상 변경으로 기준선을 재배치할 때는 [협업 상세 계약](collaboration.md#전체-최적화와-기준선-재배치)을 먼저 읽는다.
 
 ## 초기 라우팅
+
+결과를 만들거나 바꾸는 요청은 비코드 작업과 작은 직접 편집도 '사례 정의 → 실행 → 동일 사례 확인' 순서로 진행한다. capability 선택·계획 때 먼저 요구마다 검증 대상·사용자의 실제 진입점·대상 환경·검증 방법과 통과 조건을 적고, 변경 뒤 그 사례를 같은 경로·환경에서 실행해 실제 결과를 대조한다. 목표나 일반 완료 조건만 적은 것은 사례 정의를 대신하지 않는다.
+
+작업 계약을 만드는 경로에서는 이 사례를 기존 `AcceptanceEvidencePlan.v1`의 `verificationMethod`(대상·실제 경로·환경·방법)와 `passCondition`에 담고, `criterionId`·`statement`를 `TaskEnvelope.v1.acceptanceCriteria`와 일대일로 연결한다. [기존 작업 계약 검증 절차](../../task-contract/references/entry-details.md#작성-절차)의 AC 대응 검사를 재사용한다. 작은 직접 작업은 기존 작업 기록에 필요한 사례와 결과를 적고, 이를 위해 새 workflow·gate·산출물 형식을 만들지 않는다. 조회·설명만 하는 요청에 변경 작업용 사례를 요구하지 않는다.
 
 선택 결과에는 선택한 capability·provider·phase와 이유, 적용 조건에 가까웠지만 생략한 capability와 그 이유를 남긴다. 요청에서 capability를 고르는 판단은 이 지침의 책임이다. MCP 계획기는 `TaskEnvelope.v1.requiredCapabilities`를 provider로 결정적으로 매핑하고 계획·단계·결과의 순서와 근거만 검사하므로, 선택 의미를 계획기로 옮기거나 계획 호출을 선택 근거로 대신하지 않는다.
 
