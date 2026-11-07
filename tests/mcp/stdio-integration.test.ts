@@ -11,6 +11,9 @@ import { describe, expect } from "vitest";
 
 import type {
   ApiResultV1,
+  CheckpointContextRequestV1,
+  ContinuityCandidateV1,
+  ContinuitySnapshotV1,
   PluginUpdateStatusV1,
   StateCleanupPlanV1,
   TaskEnvelopeV1,
@@ -357,10 +360,15 @@ describe("bundled STDIO MCP server", () => {
     return { client: server.client, environment };
   }, async ({ client, environment }) => {
     {
-      const checkpoint = {
+      const session = "stdio-continuity-session";
+      const inspect = { schemaVersion: "1.0.0" };
+      const empty = toolData<ContinuitySnapshotV1>(await client.callTool(rootCall("load_context", inspect, session)));
+      expect(empty).toMatchObject({ ok: true, data: { source: "direct", memory: null, memoryDigest: null } });
+      expect(empty.data!.stateToken).toEqual(expect.any(String));
+      const checkpoint: CheckpointContextRequestV1 = {
         schemaVersion: "1.0.0",
         requestId: "stdio-checkpoint-1",
-        expectedRevision: 0,
+        expectedStateToken: empty.data!.stateToken,
         status: "active",
         core: {
           objective: "Resume this private direct task.",
@@ -369,34 +377,31 @@ describe("bundled STDIO MCP server", () => {
         },
         evidenceRefs: [],
       };
-      const session = "stdio-continuity-session";
-      const stored = toolData(await client.callTool(rootCall("checkpoint_context", checkpoint, session)));
-      expect(stored).toMatchObject({ ok: true, data: { revision: 1 } });
+      const stored = toolData<ContinuitySnapshotV1>(await client.callTool(rootCall("checkpoint_context", toolArguments(checkpoint), session)));
+      expect(stored).toMatchObject({ ok: true, data: { source: "direct", stateToken: expect.any(String) } });
+      expect(stored.data!.stateToken).not.toBe(empty.data!.stateToken);
+      expect(stored.data!.memory).toEqual({ status: checkpoint.status, core: checkpoint.core, evidenceRefs: checkpoint.evidenceRefs });
 
-      const inspect = { schemaVersion: "1.0.0" };
-      const candidate = toolData<{
-        summary: { epoch: number; revision: number; snapshotDigest: string };
-        restoreToken: string;
-      }>(await client.callTool(rootCall("inspect_context", inspect, session)));
+      const candidate = toolData<ContinuityCandidateV1>(await client.callTool(rootCall("inspect_context", inspect, session)));
+      expect(candidate).toMatchObject({ ok: true, data: { decision: "DEFER", restoreToken: expect.any(String),
+        summary: { source: "direct", stateToken: stored.data!.stateToken, memoryDigest: stored.data!.memoryDigest } } });
       expect(JSON.stringify(candidate)).not.toContain("Resume this private direct task.");
 
-      const load = {
-        schemaVersion: "1.0.0",
-        candidateToken: candidate.data!.restoreToken,
-        epoch: candidate.data!.summary.epoch,
-        revision: candidate.data!.summary.revision,
-        digest: candidate.data!.summary.snapshotDigest,
-      };
-      expect(toolData<{ core: { objective: string } }>(await client.callTool(rootCall("load_context", load, session))).data?.core.objective)
-        .toBe("Resume this private direct task.");
+      const load = { schemaVersion: "1.0.0", candidateToken: candidate.data!.restoreToken! };
+      expect(toolData<ContinuitySnapshotV1>(await client.callTool(rootCall("load_context", load, session))).data).toEqual(stored.data);
 
       const resume = runContinuityHook(environment, {
         hook_event_name: "SessionStart",
         session_id: session,
         source: "resume",
       });
-      expect(JSON.stringify(resume)).toContain("decision=DEFER");
-      expect(JSON.stringify(resume)).not.toContain("Resume this private direct task.");
+      expect(resume).toMatchObject({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: expect.any(String) } });
+      const restored = (resume as { hookSpecificOutput: { additionalContext: string } }).hookSpecificOutput.additionalContext.split("\n");
+      expect(restored).toHaveLength(4);
+      expect(restored.slice(0, 2)).toEqual(["[AGS current memory]", `stateToken=${stored.data!.stateToken}`]);
+      expect(JSON.parse(restored[3]!)).toEqual(stored.data!.memory);
+      expect(JSON.stringify(resume)).not.toContain("candidateToken=");
+      expect(toolData<ContinuitySnapshotV1>(await client.callTool(rootCall("load_context", inspect, session))).data).toEqual(stored.data);
     }
   }, 15_000);
 });
