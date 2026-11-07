@@ -42,9 +42,9 @@ afterEach(() => {
   rmSync(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
 });
 
-function hook(host: string, input: Record<string, unknown>, env = environment): { event?: string; text: string } {
+function hook(host: string, input: Record<string, unknown>, env = environment): { event: string | undefined; text: string } {
   const output = runContinuityHook(JSON.stringify({ cwd: tmpdir(), ...input }), env, host, true);
-  if (!output) return { text: "" };
+  if (!output) return { event: undefined, text: "" };
   const specific = (JSON.parse(output) as { hookSpecificOutput?: { hookEventName?: string; additionalContext?: string } }).hookSpecificOutput;
   return { event: specific?.hookEventName, text: specific?.additionalContext ?? "" };
 }
