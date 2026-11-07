@@ -66,6 +66,8 @@ describe("D0353 Windows relay launch without the hook's handles", () => {
     // Start-Process without -NoNewWindow or redirection is ShellExecuteEx, which inherits no handles.
     expect(script).toMatch(/^\$p = Start-Process -FilePath '[^']+' -ArgumentList '.+' -WindowStyle Hidden -PassThru; /u);
     expect(script).not.toMatch(/-NoNewWindow|-Redirect/u);
+    // AGS3-D-0064: the relay does not keep the hook's working directory (an agy plugin install folder).
+    expect(script).toContain(` -WorkingDirectory '${state}' -WindowStyle Hidden`);
     expect(script).toContain("--session-id \"a b\\\"c\\\\\" ");
     expect(script).toContain(`--parent-pid 424242 --relay-id ${relayId}`);
     expect(options).toMatchObject({ windowsHide: true, timeout: 5000, env: expect.objectContaining({ AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: state }) });
