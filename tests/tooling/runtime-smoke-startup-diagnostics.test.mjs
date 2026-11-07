@@ -81,7 +81,7 @@ function defaultSpawnResponse(scriptPath, args, options) {
       status: 0,
       signal: null,
       stdout: "",
-      stderr: `[agent-governance-suite] peer-hook-failure ${JSON.stringify({ phase: "input", reason: "INVALID_JSON" })}\n`,
+      stderr: `${JSON.stringify({ phase: "input", reason: "INVALID_JSON", component: "session-message-hook", event: "peer-hook-failure" })}\n`,
     };
   }
   const skillEntry = entrypointByName.get(path.normalize(relative));
@@ -415,7 +415,7 @@ describe("continuity-hook runtime startup smoke diagnostics", () => {
                 '    return { status: 1, signal: null, stdout: JSON.stringify({ protocolVersion: "1.0.0", ok: false, error: "Unsupported session message operation.", messageKey: "services.sessionMessage.cli.unsupportedOperation", params: {} }), stderr: "" };',
                 '  }',
                 '  if (scriptPath.endsWith("session-message-hook.mjs")) {',
-                '    return { status: 0, signal: null, stdout: "", stderr: "[agent-governance-suite] peer-hook-failure " + JSON.stringify({ phase: "input", reason: "INVALID_JSON" }) + "\\\\n" };',
+                '    return { status: 0, signal: null, stdout: "", stderr: JSON.stringify({ phase: "input", reason: "INVALID_JSON", component: "session-message-hook", event: "peer-hook-failure" }) + "\\\\n" };',
                 '  }',
                 '  if (scriptPath.endsWith("continuity-hook.mjs")) {',
                 '    const err = Object.assign(new Error("spawnSync PRIVATE_CAUSE_MARKER /private/PRIVATE_PATH_MARKER PRIVATE_INPUT_MARKER PRIVATE_ENV_MARKER"), {',
