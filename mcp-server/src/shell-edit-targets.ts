@@ -142,11 +142,11 @@ function operands(args: Token[], valued: ReadonlySet<string> = new Set()): { opt
 // Inline interpreter code that writes files. ponytail: a marker list, not a language parser; code without one of these
 // calls (or a script file run by name) is not counted. Upgrade path: host write mediation (sandbox write events).
 const SCRIPT_WRITES = [
-  /\b(?:writeFile|appendFile|copyFile|createWriteStream|writeTextFile|write_text|write_bytes|file_put_contents)\b/u,
+  /\b(?:writeFile|appendFile|copyFile|createWriteStream|writeTextFile|write_text|write_bytes|file_put_contents)/u,
   /\b(?:unlink|rm|rmdir|rename|cp|truncate)Sync\s*\(/u,
-  /\b(?:os\.(?:remove|unlink|rename|replace|truncate)|shutil\.(?:copy\w*|move|rmtree))\s*\(/u,
+  /\b(?:os\.(?:remove(?:dirs)?|unlink|renames?|replace|truncate)|shutil\.(?:copy\w*|move|rmtree))\s*\(/u,
   /\.(?:unlink|rename|rm|rmdir|touch|truncate)\s*\(/u,
-  /\bf?open\s*\([^)]*?['"](?:[wax]|r\+)[bt+]*['"]/u,
+  /\bf?open(?:Sync)?\s*\([^)]*?['"](?:[wax]|r\+)[bt+]*['"]/u,
   /\bopen\b[^;\n]*?['"]\+?>{1,2}/u,
   /\bFile\.(?:write|delete|rename)\b/u,
 ];
