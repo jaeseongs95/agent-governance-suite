@@ -12,15 +12,18 @@ afterEach(async () => {
   await Promise.all(temporary.splice(0).map(directory => rm(directory, { recursive: true, force: true })));
 });
 
-async function suiteCopy() {
+async function suiteCopy({ withTests = true } = {}) {
   const directory = await mkdtemp(path.join(tmpdir(), "evaluation-smoke-regression-"));
   temporary.push(directory);
   const suite = path.join(directory, "suite");
   await mkdir(path.join(suite, "skills"), { recursive: true });
-  await mkdir(path.join(suite, "tests"), { recursive: true });
   await cp(path.join(root, "skills/evaluation-validity-auditor"), path.join(suite, "skills/evaluation-validity-auditor"), { recursive: true });
   await cp(path.join(root, "runtime"), path.join(suite, "runtime"), { recursive: true });
-  await cp(path.join(root, "tests/evaluation-validity-auditor"), path.join(suite, "tests/evaluation-validity-auditor"), { recursive: true });
+  // The installed packages (release/antigravity-package.json, the generated plugins) ship skills/ and runtime/, no tests/.
+  if (withTests) {
+    await mkdir(path.join(suite, "tests"), { recursive: true });
+    await cp(path.join(root, "tests/evaluation-validity-auditor"), path.join(suite, "tests/evaluation-validity-auditor"), { recursive: true });
+  }
   return { directory, suite };
 }
 
@@ -57,4 +60,23 @@ it("does not borrow a missing runtime from the source checkout (D0019)", async (
   expect(result.status).not.toBe(0);
   expect(`${result.stdout}\n${result.stderr}`).toContain("schema-validation.mjs");
   expect(result.stdout).not.toContain("node_modules-free runtime check passed");
+}, 40_000);
+
+it("runs the installed-package layout without tests/ and names the source-only suite as not run (AGS3-D-0019)", async () => {
+  const { suite, directory } = await suiteCopy({ withTests: false });
+  const result = smoke(suite, directory);
+  expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+  expect(result.stderr).not.toContain("ENOENT");
+  expect(result.stdout).toContain("node:test suite NOT_RUN");
+  expect(result.stdout).toContain("node_modules-free import check passed (installed package layout)");
+  expect(result.stdout).not.toContain("node_modules-free runtime check passed");
+}, 40_000);
+
+it("still fails the installed-package layout when its runtime is missing (AGS3-D-0019)", async () => {
+  const { suite, directory } = await suiteCopy({ withTests: false });
+  await rm(path.join(suite, "runtime/schema-validation.mjs"));
+  const result = smoke(suite, directory);
+  expect(result.status).not.toBe(0);
+  expect(`${result.stdout}\n${result.stderr}`).toContain("schema-validation.mjs");
+  expect(result.stdout).not.toContain("check passed");
 }, 40_000);
