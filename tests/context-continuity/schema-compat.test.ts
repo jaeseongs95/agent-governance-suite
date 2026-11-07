@@ -299,7 +299,9 @@ describe("2.7.x continuity schema compatibility", () => {
     const raw = new DatabaseSync(databasePath);
     raw.prepare("UPDATE continuity_current_memory SET updated_at = ?").run(OLD);
     raw.prepare("UPDATE continuity_tasks SET updated_at = ?").run(scope === "snapshot" ? NOW : OLD);
-    raw.prepare("UPDATE continuity_requests SET created_at = ?").run(OLD); raw.close();
+    raw.prepare("UPDATE continuity_requests SET created_at = ?").run(OLD);
+    // The checkpoint also records that its saver holds the body (AGS3-D-0065), at the same time as the save.
+    raw.prepare("UPDATE continuity_observations SET observed_at = ?").run(OLD); raw.close();
     const preview = store.previewCleanup(NOW, OLD);
     expect(scope === "snapshot" ? preview.snapshots.length : preview.tasks.length).toBe(1);
     attachReceiver(databasePath, checkpoint.taskCorrelation);
