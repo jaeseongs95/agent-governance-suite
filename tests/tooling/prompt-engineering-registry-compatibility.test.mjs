@@ -1,22 +1,47 @@
+// engineering-test-plan HC-02 — preserve the independent 22-descriptor historical oracle.
+// Input/precondition: exact advisor successor, approved analyzer removal and pinned retirement history.
+// Procedure: validate the live transition, restore only its predecessor descriptors/order, then apply the old additive projection.
+// Expected/pass criterion: original count/digest unchanged; restored analyzer, changed/rolled-back advisor and all unrelated drift fail.
+// RED: Linux 1aed triage case 7 (21 vs 22). TEST: pnpm exec vitest run tests/tooling/prompt-engineering-registry-compatibility.test.mjs
+// Actual: NOT_RUN locally; only static checks are authorized.
+
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
-import { checkRegistryContextCompatibility } from "../../scripts/check-skill-context-optimization.mjs";
+import { checkRegistryContextCompatibility, checkSkillContextOptimization } from "../../scripts/check-skill-context-optimization.mjs";
 
 const readRegistry = () => JSON.parse(readFileSync(new URL("../../skills/registry.json", import.meta.url), "utf8"));
 // Independently frozen from c53ad5947bc5cc6a4e076eb9931e454e300d5c3b:skills/registry.json.
 // The current registry-contract fixture is deliberately not the oracle for old descriptors.
 const BASELINE_DIGEST = "4b470ad0e10d748d59b359aaa96e1c81653e748e4a272cc3bf96ab107133e9c5";
 const digest = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
-// Preserve the original 22-descriptor oracle; only the approved preflight
-// version successor is projected, so every other field still affects its hash.
+const approvedHistory = checkSkillContextOptimization();
+const purpose = approvedHistory.currentPurposeChange;
+const retirement = approvedHistory.retiredSkills.find(entry => entry.skillIds.includes("codex-token-usage-analyzer"));
+const previous = JSON.parse(execFileSync("git", ["show", `${retirement.revision}:skills/registry.json`], {
+  cwd: new URL("../../", import.meta.url), encoding: "utf8",
+}));
+// Restore only the approved removal/purpose predecessors, then the preflight version successor.
+// Every unrelated descriptor, field and ordering change still affects the original 22-descriptor hash.
 // Later additive specialists are excluded explicitly without rewriting that oracle.
-const historicalRegistry = (registry) => ({
-  ...registry,
-  skills: registry.skills.filter((entry) => !["prompt-engineering", "ui-ux-design"].includes(entry.skillId)).map((entry) =>
-    entry.skillId === "mutation-risk-preflight" && entry.version === "1.0.3"
-      ? { ...entry, version: "1.0.1" } : entry),
-});
+const historicalRegistry = (registry) => {
+  expect(registry.skills.filter(entry => retirement.skillIds.includes(entry.skillId))).toHaveLength(0);
+  const advisors = registry.skills.filter(entry => entry.skillId === "model-effort-advisor");
+  expect(advisors).toHaveLength(1);
+  expect(digest(advisors[0])).toBe(purpose.registryDescriptorSha256);
+  const skills = registry.skills.map(entry => entry.skillId === "model-effort-advisor"
+    ? previous.skills.find(source => source.skillId === entry.skillId) : entry);
+  const retiredIndex = previous.skills.findIndex(entry => retirement.skillIds.includes(entry.skillId));
+  expect(retiredIndex).toBeGreaterThanOrEqual(0);
+  skills.splice(retiredIndex, 0, previous.skills[retiredIndex]);
+  return {
+    ...registry,
+    skills: skills.filter((entry) => !["prompt-engineering", "ui-ux-design"].includes(entry.skillId)).map((entry) =>
+      entry.skillId === "mutation-risk-preflight" && entry.version === "1.0.3"
+        ? { ...entry, version: "1.0.1" } : entry),
+  };
+};
 
 describe("additive prompt-engineering registry integration", () => {
   it("preserves all 22 original descriptors and registry-level fields", () => {
@@ -36,6 +61,16 @@ describe("additive prompt-engineering registry integration", () => {
     if (change === "bindings") descriptor.providers[0].inputBindings[0].sources = ["untrusted:approval"];
     expect(digest(historicalRegistry(registry))).not.toBe(BASELINE_DIGEST);
     expect(checkRegistryContextCompatibility(registry)).toContain("registry differs from the 3.0 contract");
+  });
+
+  it.each(["retired-analyzer", "advisor-rollback", "advisor-drift"])("rejects an unapproved live transition before historical projection: %s", change => {
+    const registry = readRegistry();
+    const advisorIndex = registry.skills.findIndex(entry => entry.skillId === "model-effort-advisor");
+    if (change === "retired-analyzer") registry.skills.push(previous.skills.find(entry => entry.skillId === "codex-token-usage-analyzer"));
+    if (change === "advisor-rollback") registry.skills[advisorIndex] = previous.skills.find(entry => entry.skillId === "model-effort-advisor");
+    if (change === "advisor-drift") registry.skills[advisorIndex].priority += 1;
+    expect(() => historicalRegistry(registry)).toThrow();
+    expect(checkRegistryContextCompatibility(registry)).not.toEqual([]);
   });
 
   it("exposes one optional workflow provider whose direct descriptor matches the registry", () => {

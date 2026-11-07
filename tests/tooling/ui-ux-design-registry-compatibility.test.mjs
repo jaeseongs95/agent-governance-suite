@@ -1,10 +1,18 @@
+// engineering-test-plan HC-03 — preserve the independent 23-descriptor historical oracle.
+// Input/precondition: exact advisor successor, approved analyzer removal and pinned retirement history.
+// Procedure: validate the live transition, restore only its predecessor descriptors/order, then remove the UI/UX addition.
+// Expected/pass criterion: original count/digest unchanged; restored analyzer, changed/rolled-back advisor and all unrelated drift fail.
+// RED: Linux 1aed triage case 28 (22 vs 23). TEST: pnpm exec vitest run tests/tooling/ui-ux-design-registry-compatibility.test.mjs
+// Actual: NOT_RUN locally; only static checks are authorized.
+
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
-import { checkRegistryContextCompatibility } from "../../scripts/check-skill-context-optimization.mjs";
+import { checkRegistryContextCompatibility, checkSkillContextOptimization } from "../../scripts/check-skill-context-optimization.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const readRegistry = () => JSON.parse(readFileSync(new URL("../../skills/registry.json", import.meta.url), "utf8"));
@@ -12,10 +20,24 @@ const digest = (value) => createHash("sha256").update(JSON.stringify(value)).dig
 // Independently frozen from c6f76414cbd07cd3ffe213bb1049a2779cf877c4:skills/registry.json.
 // Never derive this oracle from the current comparison fixture or a new descriptor.
 const BASELINE_DIGEST = "af305760e575a0774ba6c45edd0391d73405dcb90ee4ba5c0fca1e53c7278965";
-const withoutAddition = (registry) => ({
-  ...registry,
-  skills: registry.skills.filter((entry) => entry.skillId !== "ui-ux-design"),
-});
+const approvedHistory = checkSkillContextOptimization();
+const purpose = approvedHistory.currentPurposeChange;
+const retirement = approvedHistory.retiredSkills.find(entry => entry.skillIds.includes("codex-token-usage-analyzer"));
+const previous = JSON.parse(execFileSync("git", ["show", `${retirement.revision}:skills/registry.json`], {
+  cwd: root, encoding: "utf8",
+}));
+const withoutAddition = (registry) => {
+  expect(registry.skills.filter(entry => retirement.skillIds.includes(entry.skillId))).toHaveLength(0);
+  const advisors = registry.skills.filter(entry => entry.skillId === "model-effort-advisor");
+  expect(advisors).toHaveLength(1);
+  expect(digest(advisors[0])).toBe(purpose.registryDescriptorSha256);
+  const skills = registry.skills.map(entry => entry.skillId === "model-effort-advisor"
+    ? previous.skills.find(source => source.skillId === entry.skillId) : entry);
+  const retiredIndex = previous.skills.findIndex(entry => retirement.skillIds.includes(entry.skillId));
+  expect(retiredIndex).toBeGreaterThanOrEqual(0);
+  skills.splice(retiredIndex, 0, previous.skills[retiredIndex]);
+  return { ...registry, skills: skills.filter((entry) => entry.skillId !== "ui-ux-design") };
+};
 
 describe("additive UI/UX specialist integration", () => {
   it("preserves all 23 main descriptors and registry-level fields", () => {
@@ -24,6 +46,16 @@ describe("additive UI/UX specialist integration", () => {
     expect(digest(withoutAddition(registry))).toBe(BASELINE_DIGEST);
     expect(registry.skills.filter((entry) => entry.skillId === "ui-ux-design")).toHaveLength(1);
     expect(checkRegistryContextCompatibility(registry)).toEqual([]);
+  });
+
+  it.each(["retired-analyzer", "advisor-rollback", "advisor-drift"])("rejects an unapproved live transition before historical projection: %s", change => {
+    const registry = readRegistry();
+    const advisorIndex = registry.skills.findIndex(entry => entry.skillId === "model-effort-advisor");
+    if (change === "retired-analyzer") registry.skills.push(previous.skills.find(entry => entry.skillId === "codex-token-usage-analyzer"));
+    if (change === "advisor-rollback") registry.skills[advisorIndex] = previous.skills.find(entry => entry.skillId === "model-effort-advisor");
+    if (change === "advisor-drift") registry.skills[advisorIndex].priority += 1;
+    expect(() => withoutAddition(registry)).toThrow();
+    expect(checkRegistryContextCompatibility(registry)).not.toEqual([]);
   });
 
   it("exposes one optional design provider with an external request and matching direct contract", () => {

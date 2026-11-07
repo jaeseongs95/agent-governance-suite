@@ -1,6 +1,14 @@
+// engineering-test-plan HC-04 — historical source integrity, not current model behavior.
+// Input/precondition: original 26-skill specialist contract plus exact retirement/purpose-change records.
+// Procedure: verify approved live bytes/absence before reading a digest-checked historical predecessor.
+// Expected/pass criterion: 26 skills and old pins remain; missing live source, changed history, restored retired source or unrelated bytes fail.
+// RED: Linux 1aed triage case 27 (retired source ENOENT). TEST: pnpm exec vitest run tests/tooling/specialist-behavior-source.test.mjs
+// Actual: NOT_RUN locally; only static checks are authorized.
+
 import { describe, expect, it, vi } from "vitest";
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -15,14 +23,24 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const base = "480b8dfc143d15c7fb9fdab349d698d75f009893";
 const common = "skills/independent-audit-gate/references/specialist-behavior.md";
 const current = relative => readFileSync(path.join(root, relative));
-// context-continuity is retired (continuity is MCP tools and hooks): its pinned sources are gone from the tree and
-// the checker reads them at the retirement revision.
-const retirement = "e6e313864a4fe1be15ac2b199fb56284dbc327a9";
-const retired = relative => relative.startsWith("skills/context-continuity/");
-const currentOrRetired = relative => {
-  if (!retired(relative)) return current(relative);
-  expect(() => current(relative), relative).toThrow();
-  return execFileSync("git", ["show", `${retirement}:${relative}`], { cwd: root });
+const approvedHistory = checkSkillContextOptimization();
+const hash = bytes => createHash("sha256").update(bytes).digest("hex");
+const sourceBeforeApprovedChanges = relative => {
+  const retirement = approvedHistory.retiredSkills.find(entry => Object.hasOwn(entry.hashes, relative));
+  if (retirement) {
+    expect(existsSync(path.join(root, relative)), relative).toBe(false);
+    const before = execFileSync("git", ["show", `${retirement.revision}:${relative}`], { cwd: root });
+    expect(hash(before), relative).toBe(retirement.hashes[relative]);
+    return before;
+  }
+  const bytes = current(relative);
+  const purpose = approvedHistory.currentPurposeChange;
+  const pins = purpose.hashes[relative];
+  if (!pins) return bytes;
+  expect(hash(bytes), relative).toBe(pins[1]);
+  const before = execFileSync("git", ["show", `${purpose.baselineRevision}:${relative}`], { cwd: root });
+  expect(hash(before), relative).toBe(pins[0]);
+  return before;
 };
 const original = relative => execFileSync("git", ["show", `${base}:${relative}`], { cwd: root });
 
@@ -61,7 +79,7 @@ describe("specialist behavior source successor", () => {
     expect(contract.skillIds).toHaveLength(26);
     expect(Object.keys(contract.hashes).filter(relative => relative.endsWith("/SKILL.md"))).toHaveLength(26);
     for (const relative of Object.keys(contract.hashes)) {
-      const bytes = currentOrRetired(relative);
+      const bytes = sourceBeforeApprovedChanges(relative);
       expect(matchesSpecialistBehaviorSuccessor(relative, bytes), relative).toBe(true);
       const before = beforeSpecialistBehaviorSuccessor(relative, bytes);
       expect(before, relative).toEqual(original(relative));

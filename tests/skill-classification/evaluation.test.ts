@@ -1,3 +1,10 @@
+// engineering-test-plan HC-01 — source binding only, not current-purpose model quality.
+// Input/precondition: frozen corpus, unchanged binding chain, seven approved purpose/removal records.
+// Procedure: verify exact live tail/absence, then hash-bound 14549 predecessor against the old binding.
+// Expected/pass criterion: old oracle stays fixed; altered live bytes, wrong predecessor or unrelated drift fails.
+// RED: Linux 1aed triage case 6 (source ENOENT). TEST: pnpm exec vitest run tests/skill-classification/evaluation.test.ts
+// Actual: NOT_RUN locally; only static checks are authorized.
+
 import { existsSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
@@ -10,6 +17,7 @@ import { tmpdir } from "node:os";
 import { resolve, join, dirname, basename } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
+import { PROVIDER_RETENTION_SOURCE_CHANGES } from "./live-bootstrap/provider-retention-sources.mjs";
 
 const corpus = JSON.parse(readFileSync(new URL("./fixtures.json", import.meta.url), "utf8")) as {
   targetRelease: string; oracleDigest: string; oracleRevision: string; sourceSpecDigest: string;
@@ -42,10 +50,24 @@ describe("pre-live frozen specification mapping", () => {
     expect(oracleDigest(corpus)).toBe(corpus.oracleDigest);
     expect(corpus.split.independentHoldoutClaim).toBe(false);
   });
-  it("binds oracle to actual source bytes and preserves O boundaries", () => {
+  it("checks exact live transitions and binds the frozen oracle to historical source bytes and O boundaries", () => {
     const binding = loadCurrentSourceBindings(fileURLToPath(new URL("../../", import.meta.url)));
+    const purposeChanges = new Map(PROVIDER_RETENTION_SOURCE_CHANGES.map(source => [source.path, source]));
     for (const s of corpus.sourceSkills) {
       const file = new URL(`../../${s.path}`, import.meta.url), expected = binding.resolveDigest(s.path, s.digest);
+      const change = purposeChanges.get(s.path);
+      if (change) {
+        // Validate the current purpose separately; it cannot replace the frozen model-quality oracle.
+        expect(expected, s.path).toBe(change.previousDigest);
+        if (change.digest === null) expect(existsSync(file), s.path).toBe(false);
+        else expect(`sha256:${createHash("sha256").update(readFileSync(file)).digest("hex")}`, s.path).toBe(change.digest);
+        const predecessor = spawnSync("git", ["show", `14549a2e83fd9143cf8184bd71979db23fd43172:${s.path}`], {
+          cwd: fileURLToPath(new URL("../../", import.meta.url)),
+        });
+        expect(predecessor.status, s.path).toBe(0);
+        expect(`sha256:${createHash("sha256").update(predecessor.stdout).digest("hex")}`, s.path).toBe(expected);
+        continue;
+      }
       // A retired source (null) must be absent; every other source must have its current bound bytes.
       if (expected === null) { expect(existsSync(file)).toBe(false); continue; }
       expect(`sha256:${createHash("sha256").update(readFileSync(file)).digest("hex")}`).toBe(expected);
