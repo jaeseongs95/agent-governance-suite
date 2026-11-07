@@ -41,6 +41,8 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(state, "trust.sqlite3"),
       AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(state, "shared"),
       AGENT_GOVERNANCE_HOST_ATTESTATION: host,
+      // The copied runtime/ carries the package locale (ko); this test reads the English messages.
+      AGENT_GOVERNANCE_LOCALE: "en",
     };
     await mkdir(path.join(isolated, "mcp-server", "dist"), { recursive: true });
     await mkdir(state, { recursive: true });
