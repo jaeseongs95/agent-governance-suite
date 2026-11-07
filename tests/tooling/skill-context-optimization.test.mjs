@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
 import { checkSkillContextOptimization, checkRegistryContextCompatibility, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, matchesSkillPolicyWordingSuccessorBytes, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
-import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin, matchesTaskContractAuthorizationSuccessor } from "../../scripts/check-skill-context-optimization.mjs";
+import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin, beforeSpecialistBehaviorSuccessor } from "../../scripts/check-skill-context-optimization.mjs";
 
 // The checker prefetches history with `ls-tree` + `cat-file --batch`; a path left out of the listing is read by
 // `git show`, so a test that intercepts `git show` for a path also drops it from the listing.
@@ -615,13 +615,14 @@ describe("skill context optimization", () => {
   // tampered bytes and unlisted paths must not gain the trusted predecessor's acceptance.
   // Product/red-green execution is NOT_RUN locally; root runs the existing Vitest suite on TEST.
   // D38 consumer repair cases, planned before changing the matcher/wording:
-  // C01: exact manifest + five current sources -> existing public policy-wording (classification),
-  // authorization (task-contract) or reviewed-reference matcher -> true, with both manifest digests unchanged.
+  // C01: exact manifest + five current sources -> existing public successor projection,
+  // compared with the frozen predecessor through the same verified chain -> true; both digests stay fixed.
   // C02: flip one byte or append .unreviewed to each path -> the same selected matcher -> false.
   // C03: root/Claude audit protocol -> exact current "변경 작업에 참여한" prohibition -> no reused auditor;
   // preserve its FAIL/BLOCKED wording, independence/fresh rules and all other assertions.
   // Preconditions: integrated D38 sources/current pins. Oracle: existing positives and negatives, no new pins.
-  // Actual: root reports Linux05f 135 PASS/2 FAIL; local syntax/diff only, TEST/model execution NOT_RUN.
+  // Prior actual: root reports Linux05f 135 PASS/2 FAIL and Linux3935 315 PASS/2 FAIL/1 skip.
+  // Current actual: local syntax/JSON/ESLint/diff checks only; TEST/red-green/mutation/model NOT_RUN.
   it("accepts only the exact D38 reference successor while preserving historical context checks", () => {
     const root = fileURLToPath(new URL("../../", import.meta.url));
     const manifest = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.d38-reference-source-successor.json"), "utf8"));
@@ -635,8 +636,8 @@ describe("skill context optimization", () => {
       const current = readFileSync(path.join(root, binding.path));
       const digest = bytes => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
       expect([digest(old), digest(current)]).toEqual([binding.previousDigest, binding.digest]);
-      const accepts = binding.path.endsWith("/classification.json") ? matchesSkillPolicyWordingSuccessorBytes
-        : binding.path.startsWith("skills/task-contract/") ? matchesTaskContractAuthorizationSuccessor : matchesReviewedImplementationUpdate;
+      const predecessor = beforeSpecialistBehaviorSuccessor(binding.path, old);
+      const accepts = (relative, bytes) => beforeSpecialistBehaviorSuccessor(relative, bytes).equals(predecessor);
       expect(accepts(binding.path, current), binding.path).toBe(true);
       const altered = Buffer.from(current); altered[altered.length - 1] ^= 1;
       expect(accepts(binding.path, altered), binding.path).toBe(false);
