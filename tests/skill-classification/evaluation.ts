@@ -431,17 +431,24 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, delivery.frozenPredecessor.path) !== writtenCasesPath || writtenCasesBytes.length !== delivery.frozenPredecessor.bytes || hashBytes(writtenCasesBytes) !== delivery.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings, ...intakeLength.bindings, ...writtenCases.bindings, ...delivery.bindings];
+  const d38ReferencesPath = resolve(repo, "tests/skill-classification/fixtures.d38-reference-source-successor.json");
+  const d38ReferencesBytes = readFileSync(d38ReferencesPath);
+  if (hashBytes(d38ReferencesBytes) !== "sha256:6cbc88426ec49553e19642a10dfa64e490a440fb1fa42b0881bd724abbe64eae") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const d38References = JSON.parse(d38ReferencesBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, d38References.frozenPredecessor.path) !== deliveryPath || deliveryBytes.length !== d38References.frozenPredecessor.bytes || hashBytes(deliveryBytes) !== d38References.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings, ...intakeLength.bindings, ...writtenCases.bindings, ...delivery.bindings, ...d38References.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: delivery.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath, intakeLengthPath, writtenCasesPath, deliveryPath);
+  const currentManifest = {...manifest, revision: d38References.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath, intakeLengthPath, writtenCasesPath, deliveryPath, d38ReferencesPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(deliveryBytes),
+    manifest: currentManifest, files, digest: hashBytes(d38ReferencesBytes),
     /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
     resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);

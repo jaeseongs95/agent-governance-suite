@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
 import { checkSkillContextOptimization, checkRegistryContextCompatibility, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, matchesSkillPolicyWordingSuccessorBytes, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
-import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin } from "../../scripts/check-skill-context-optimization.mjs";
+import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin, matchesTaskContractAuthorizationSuccessor } from "../../scripts/check-skill-context-optimization.mjs";
 
 // The checker prefetches history with `ls-tree` + `cat-file --batch`; a path left out of the listing is read by
 // `git show`, so a test that intercepts `git show` for a path also drops it from the listing.
@@ -610,6 +610,30 @@ describe("skill context optimization", () => {
       expect(matchesEngineeringReferenceUpdate(name, altered), name).toBe(false);
     }
     expect(matchesEngineeringReferenceUpdate("unreviewed.md", Buffer.from("extra"))).toBe(false);
+  });
+  // D38 DR06: exact five-context r37 bytes map through the existing guidance chain;
+  // tampered bytes and unlisted paths must not gain the trusted predecessor's acceptance.
+  // Product/red-green execution is NOT_RUN locally; root runs the existing Vitest suite on TEST.
+  it("accepts only the exact D38 reference successor while preserving historical context checks", () => {
+    const root = fileURLToPath(new URL("../../", import.meta.url));
+    const manifest = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.d38-reference-source-successor.json"), "utf8"));
+    expect(manifest.bindings.map(binding => binding.path)).toEqual([
+      "skills/independent-audit-gate/classification.json", "skills/task-contract/references/entry-details.md",
+      "skills/independent-audit-gate/references/entry-details.md", "skills/independent-audit-gate/references/audit-protocol.md",
+      "skills/independent-audit-gate/references/orchestrator-integration.md",
+    ]);
+    for (const binding of manifest.bindings) {
+      const old = execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${binding.path}`], { cwd: root });
+      const current = readFileSync(path.join(root, binding.path));
+      const digest = bytes => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+      expect([digest(old), digest(current)]).toEqual([binding.previousDigest, binding.digest]);
+      const accepts = binding.path.startsWith("skills/task-contract/")
+        ? matchesTaskContractAuthorizationSuccessor : matchesReviewedImplementationUpdate;
+      expect(accepts(binding.path, current), binding.path).toBe(true);
+      const altered = Buffer.from(current); altered[altered.length - 1] ^= 1;
+      expect(accepts(binding.path, altered), binding.path).toBe(false);
+      expect(accepts(`${binding.path}.unreviewed`, current), binding.path).toBe(false);
+    }
   });
   it("pins every reviewed classification source and rejects one-byte changes or an unreviewed path", () => {
     const report = checkSkillContextOptimization();

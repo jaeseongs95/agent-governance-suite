@@ -20,6 +20,8 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const file = "tests/skill-classification/fixtures.intake-delivery-source-successor.json";
 const bytes = readFileSync(path.join(root, file));
 const manifest = JSON.parse(bytes.toString("utf8"));
+const d38ReferencesBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.d38-reference-source-successor.json"));
+const d38References = JSON.parse(d38ReferencesBytes.toString("utf8"));
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], {cwd: root});
 const oldCase = "만들거나 바꾸기 전에 무엇을·어디서·어떤 결과면 성공인지 사례를 적는다.";
@@ -47,7 +49,7 @@ it("D36 ID01-04 appends exact delivery sources after frozen r35 and rebinds only
   const descriptor = "skills/orchestrator/classification.json", intake = "skills/orchestrator/references/intake.md";
   expect(manifest.bindings.map((row: {path: string}) => row.path)).toEqual([descriptor, intake, "skills/orchestrator/references/entry-details.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: manifest.revision}, digest: hash(bytes)});
+  expect(current).toMatchObject({manifest: {revision: d38References.revision}, digest: hash(d38ReferencesBytes)});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = readFileSync(path.join(root, binding.path));

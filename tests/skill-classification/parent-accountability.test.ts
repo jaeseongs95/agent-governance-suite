@@ -28,8 +28,9 @@ it("binds parent accountability after frozen r27 without changing prior source-s
   const intakeLength = JSON.parse(read("tests/skill-classification/fixtures.intake-length-source-successor.json").toString("utf8"));
   const writtenCases = JSON.parse(read("tests/skill-classification/fixtures.intake-written-cases-source-successor.json").toString("utf8"));
   const delivery = JSON.parse(read("tests/skill-classification/fixtures.intake-delivery-source-successor.json").toString("utf8"));
+  const d38References = JSON.parse(read("tests/skill-classification/fixtures.d38-reference-source-successor.json").toString("utf8"));
   const current = loadCurrentSourceBindings(rootDirectory);
-  expect(current.manifest).toMatchObject({revision: delivery.revision});
+  expect(current.manifest).toMatchObject({revision: d38References.revision});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(previous.bindings.map((binding: {path: string}) => binding.path));
   for (const binding of manifest.bindings) {
     expect(binding.previousDigest).toBe(previous.bindings.find((row: {path: string}) => row.path === binding.path).digest);

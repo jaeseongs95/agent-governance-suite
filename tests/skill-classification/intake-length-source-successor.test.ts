@@ -17,6 +17,8 @@ const previous = (file: string) => execFileSync("git", ["show", `${manifest.sour
 const writtenCases = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-written-cases-source-successor.json"), "utf8"));
 const deliveryBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-delivery-source-successor.json"));
 const delivery = JSON.parse(deliveryBytes.toString("utf8"));
+const d38ReferencesBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.d38-reference-source-successor.json"));
+const d38References = JSON.parse(d38ReferencesBytes.toString("utf8"));
 /** r34 assertions read its exact sources at the later r35 ancestor. */
 function intakeLengthSource(file: string): Buffer {
   const binding = writtenCases.bindings.find((row: {path: string}) => row.path === file);
@@ -63,7 +65,7 @@ it("D32 IL02-04 appends exact r34 bindings after frozen r33 and reselects only t
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.test-engineering-cli-source-successor.json", bytes: frozen.length, digest: hash(frozen)});
   expect(manifest.bindings.map((row: {path: string}) => row.path)).toEqual(["skills/orchestrator/classification.json", "skills/orchestrator/references/intake.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: delivery.revision}, digest: hash(deliveryBytes)});
+  expect(current).toMatchObject({manifest: {revision: d38References.revision}, digest: hash(d38ReferencesBytes)});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = intakeLengthSource(binding.path);

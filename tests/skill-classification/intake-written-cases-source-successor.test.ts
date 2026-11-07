@@ -16,6 +16,8 @@ const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).dig
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], {cwd: root});
 const deliveryBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-delivery-source-successor.json"));
 const delivery = JSON.parse(deliveryBytes.toString("utf8"));
+const d38ReferencesBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.d38-reference-source-successor.json"));
+const d38References = JSON.parse(d38ReferencesBytes.toString("utf8"));
 /** Preserve the r35 one-verb oracle at the hash-bound predecessor of r36. */
 function writtenCasesSource(file: string): Buffer {
   const binding = delivery.bindings.find((row: {path: string}) => row.path === file);
@@ -57,7 +59,7 @@ it("D36 WR02-04 appends r35 after frozen r34 and changes only the selected case-
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.intake-length-source-successor.json", bytes: frozen.length, digest: hash(frozen)});
   expect(manifest.bindings.map((row: {path: string}) => row.path)).toEqual(["skills/orchestrator/classification.json", "skills/orchestrator/references/intake.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: delivery.revision}, digest: hash(deliveryBytes)});
+  expect(current).toMatchObject({manifest: {revision: d38References.revision}, digest: hash(d38ReferencesBytes)});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = writtenCasesSource(binding.path);

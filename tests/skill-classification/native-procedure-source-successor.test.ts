@@ -16,6 +16,8 @@ const cli = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/
 const intakeLength = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-length-source-successor.json"), "utf8"));
 const writtenCases = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-written-cases-source-successor.json"), "utf8"));
 const delivery = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-delivery-source-successor.json"), "utf8"));
+const d38ReferencesBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.d38-reference-source-successor.json"));
+const d38References = JSON.parse(d38ReferencesBytes.toString("utf8"));
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], { cwd: root });
 /** r32 assertions read r32 bytes at the first later binding ancestor, never current successor bytes. */
@@ -47,7 +49,7 @@ it("NP04 appends exactly four current sources without rewriting frozen r31 or ch
     "skills/test-engineering/classification.json", "skills/test-engineering/SKILL.md",
   ]);
   const current = loadCurrentSourceBindings(root);
-  expect(current.manifest).toMatchObject({ revision: delivery.revision });
+  expect(current.manifest).toMatchObject({ revision: d38References.revision });
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = nativeProcedureSource(binding.path);

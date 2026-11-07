@@ -302,6 +302,17 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/orchestrator/references/intake.md": ["afad5fabebd6dbc31d0f4622727a16bfa5b62ccefafa5137454352eada38b7db", "1e1bddfaa4c294815a2ab2da4b071ecd2281a72c7b1e8f7bc72bb5ac585a6c71"],
     }),
   }),
+  Object.freeze({
+    // D38 required-reference wording keeps the r36 producer and every historical oracle frozen.
+    revision: "1aed980a829d2328fffe96695d635c0fc058b29a",
+    hashes: Object.freeze({
+      "skills/independent-audit-gate/classification.json": ["9e5773f0b7eec9d9d8b4cf3ef5cc3d7eea00a737832c5a82a9d9394f130faeb3", "815aacf8b682844c54f8d1ddd14401aa422b169a3e890f607e4056ec1e0fe3ea"],
+      "skills/task-contract/references/entry-details.md": ["401c494535eb2d62d0ec80810f1610c12071fcf5e3ed2c1cef23b23ba09440c2", "68fc79a16f61c7fa6b3a4409dee4f2ddccd6cb2a8bf5ea5739cec0575247313b"],
+      "skills/independent-audit-gate/references/entry-details.md": ["61297d9377a5dc3ed9765f52bb5c96cea40fe7c2e8476ba8544540d99d015c84", "35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a"],
+      "skills/independent-audit-gate/references/audit-protocol.md": ["a34c9e5f9d82f5e0257614a119c05ac966bea04ee8fa374c88b010faea549dc4", "1d6e57296f14bdc0f99d2b7bcf02d5dfeb8becef8f268532a2204e0ddf0b2d3a"],
+      "skills/independent-audit-gate/references/orchestrator-integration.md": ["3d14b4944f34c5e071cec027dcf483adf6fe5229e1a6ad17ea39202aa17d2fef", "ab82ba48be44d622dbed30412712ba4138e22e87f1bede5c82adb78b370782f0"],
+    }),
+  }),
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
 // Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes, or
@@ -615,6 +626,7 @@ export function matchesSpecialistBehaviorSuccessor(path, bytes) {
 
 /** An exact current successor may be projected; altered bytes are never replaced with trusted history. */
 export function beforeSpecialistBehaviorSuccessor(path, bytes) {
+  bytes = beforeMultiWorkflowGuidance(path, bytes);
   if (!matchesSpecialistBehaviorSuccessor(path, bytes)) return bytes;
   const original = git("show", `${SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision}:${path}`);
   if (contextDigest(original) !== SPECIALIST_BEHAVIOR_SUCCESSOR.hashes[path][0]) {
