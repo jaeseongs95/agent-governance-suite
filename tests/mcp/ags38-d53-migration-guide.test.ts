@@ -10,14 +10,15 @@ import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { bytes, histories, legacyFixture, memory, NEW_B, OLD, OLD_A, sizedMemory, sql } from "./fixtures/ags38-d53-fixture.js";
 
 // D55 / case218: actual documented commands, TEST-owned fixtures, no model calls.
-// The immutable technical draft has prose edits later; protected fence bytes stay fixed.
+// The r1 technical fences are retained in the plan evidence. The r2 sizes block
+// changes only to mask administrative input failures; all other fence bytes stay fixed.
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const GUIDE = join(ROOT, "docs", "migrate-to-v3.8.0.md");
 const HELPERS = ["backup-sqlite.mjs", "check-continuity-schema.mjs", "memory-sizes.mjs"];
 const JS_HASHES = [
   "5f7fe1c0388cb0de5c53e430d1a9c62d7631137d19f1ea1a47284224e451b5ed",
   "b1b0df4444a4ae9ec2fed48c6b8543fbb03e9ee5ef1e6a415ad1131f90dd7c10",
-  "b13218a1c0ccfa3b87cf87208a62643581632a7938665b3ea0af7eb8086cd9e5",
+  "1c571b1622f6046c32a05eb892a13ff7846a4b78cc7b18c67c99f85815886985",
 ];
 const TEXT_HASHES = [
   "df60f858ea64ef948bff7d5f52b9662b0a32401168b4db55480aa9ead692ce2b",
@@ -206,9 +207,63 @@ describe("D55 기존 사용자 migration 가이드 실제 명령", () => {
     expect(successful(command(t.lines(3)[0]!, values))).toEqual({ ok: true, schema: 99 });
     const rejected = command(t.lines(4)[0]!, values);
     expect(rejected.status).toBe(1);
-    expect(JSON.parse(rejected.stdout)).toMatchObject({ ok: false, reason: "UNSUPPORTED_SCHEMA" });
+    expect(JSON.parse(rejected.stdout)).toEqual({ ok: false, code: "MIGRATION_CLI_FAILED", reason: "UNSUPPORTED_SCHEMA" });
     expect(state(unknown)).toEqual(before);
     expect(existsSync(values["<new-current-mapping.json>"])).toBe(false);
+  });
+
+  it("D55-SIZE-ERROR: malformed JSON·누락 memory·잘못된 배열은 본문/ID 없이 exit1이며 부분통계도 성공이 아니다", () => {
+    const f = legacy(2), t = tools(f.directory), input = join(f.directory, "private malformed mapping.json");
+    const bodyCanary = "FAKE_PRIVATE_BODY_D55_321c", idCanary = "FAKE_PRIVATE_TASK_ID_D55_ae91";
+    const prefix = memory("VALID_SAFE_PREFIX");
+    const cases = [
+      { raw: `[{"taskCorrelation":"${idCanary}","memory":"${bodyCanary}"`, output: "" },
+      { raw: JSON.stringify([{ taskCorrelation: idCanary }]), output: "" },
+      { raw: JSON.stringify({ privateBody: bodyCanary, taskCorrelation: idCanary }), output: "" },
+      { raw: JSON.stringify([{ memory: prefix }, { taskCorrelation: idCanary, privateBody: bodyCanary }]),
+        output: JSON.stringify({ index: 0, bytes: bytes(prefix), withinLimit: true }) + "\n" },
+    ];
+    for (const item of cases) {
+      writeFileSync(input, item.raw, "utf8");
+      const before = state(input);
+      const result = command(t.lines(5)[0]!, { ...t.values, "<new-current-mapping.json>": input });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toBe("MEMORY_SIZE_CHECK_FAILED\n");
+      expect(result.stdout).toBe(item.output);
+      for (const canary of [bodyCanary, idCanary]) expect(result.stdout + result.stderr).not.toContain(canary);
+      expect(state(input)).toEqual(before);
+    }
+    writeFileSync(input, "[]", "utf8");
+    const empty = command(t.lines(5)[0]!, { ...t.values, "<new-current-mapping.json>": input });
+    expect(empty.status).toBe(0);
+    expect(empty.stdout).toBe("");
+    expect(empty.stderr).toBe("");
+  });
+
+  it("D55-RECEIVER: 과거 epoch receiver 소유 제외를 빈 current와 구분하고 잘못 만든 mapping은 원형 보존 거부", () => {
+    const f = own(legacyFixture(3, memory(OLD_A), true)), t = tools(f.directory);
+    sql(f.databasePath, db => db.exec("UPDATE continuity_delta_state SET epoch=1"));
+    const exported = join(f.directory, "excluded receiver.json"), prepared = join(f.directory, "unsupported mapping.json");
+    const values = { ...t.values, "<existing-continuity.sqlite3>": f.databasePath,
+      "<new-current-mapping.json>": exported, "<prepared-mapping.json>": prepared };
+    const before = state(f.databasePath), logical = legacyState(f.databasePath);
+    const delta = readonly(f.databasePath, db => db.prepare("SELECT * FROM continuity_delta_state").all());
+    expect(successful(command(t.lines(4)[0]!, values))).toEqual({ ok: true, code: "EXPORTED_CURRENT", count: 0,
+      excludedReceiverTasks: 1, exclusionReason: "RECEIVER_STATE_UNSUPPORTED" });
+    expect(JSON.parse(readFileSync(exported, "utf8"))).toEqual([]);
+    expect(state(f.databasePath)).toEqual(before);
+    const exportedBefore = state(exported);
+    // The guide stops on this exclusion. A manually supplied receiver mapping must also fail closed.
+    writeFileSync(prepared, JSON.stringify([{ taskCorrelation: f.task, expectedSnapshotDigest: f.current.snapshotDigest,
+      memory: memory(NEW_B) }]), "utf8");
+    const rejected = command(t.lines(6)[0]!, values);
+    expect(rejected.status).toBe(1);
+    noBody(rejected);
+    expect(JSON.parse(rejected.stdout)).toEqual({ ok: false, code: "MIGRATION_CLI_FAILED", reason: "RECEIVER_STATE_UNSUPPORTED" });
+    expect(state(f.databasePath)).toEqual(before);
+    expect(legacyState(f.databasePath)).toEqual(logical);
+    expect(readonly(f.databasePath, db => db.prepare("SELECT * FROM continuity_delta_state").all())).toEqual(delta);
+    expect(state(exported)).toEqual(exportedBefore);
   });
 
   it.each([2, 3] as const)("D55-SIZES/MIGRATE/ROLLBACK schema%i: 실제 안내 순서로 각 current 크기·최적화·실패보존·구버전 복구", version => {
@@ -225,7 +280,8 @@ describe("D55 기존 사용자 migration 가이드 실제 명령", () => {
     expect(successful(command(t.lines(2)[0]!, values))).toEqual({ ok: true, schema: version });
     const backupState = state(backup);
     expect(successful(command(t.lines(3)[0]!, values))).toEqual({ ok: true, schema: version });
-    expect(successful(command(t.lines(4)[0]!, values))).toEqual({ ok: true, code: "EXPORTED_CURRENT", count: 3 });
+    expect(successful(command(t.lines(4)[0]!, values))).toEqual({ ok: true, code: "EXPORTED_CURRENT", count: 3,
+      excludedReceiverTasks: 0, exclusionReason: null });
     const exportedState = state(exported);
     const mappings = JSON.parse(exportedState.bytes.toString("utf8")) as Array<{
       taskCorrelation: string; expectedSnapshotDigest: string; memory: ContinuityMemoryBodyV1;
@@ -246,14 +302,14 @@ describe("D55 기존 사용자 migration 가이드 실제 명령", () => {
     const beforeParseFailure = state(f.databasePath);
     const invalid = command(t.lines(6)[0]!, { ...values, "<prepared-mapping.json>": badFile });
     expect(invalid.status).toBe(1);
-    expect(JSON.parse(invalid.stdout)).toMatchObject({ ok: false, reason: "INVALID_MAPPING_JSON" });
+    expect(JSON.parse(invalid.stdout)).toEqual({ ok: false, code: "MIGRATION_CLI_FAILED", reason: "INVALID_MAPPING_JSON" });
     expect(state(f.databasePath)).toEqual(beforeParseFailure);
     writeFileSync(badFile, JSON.stringify(prepared.map((item, index) => index === 0
       ? { ...item, expectedSnapshotDigest: `sha256:${"0".repeat(64)}` } : item)));
     const beforeFailure = legacyState(f.databasePath);
     const failed = command(t.lines(6)[0]!, { ...values, "<prepared-mapping.json>": badFile });
     expect(failed.status).toBe(1);
-    expect(JSON.parse(failed.stdout)).toMatchObject({ ok: false, reason: "MIGRATION_INCOMPLETE" });
+    expect(JSON.parse(failed.stdout)).toEqual({ ok: false, code: "MIGRATION_CLI_FAILED", reason: "MIGRATION_INCOMPLETE" });
     noBody(failed);
     // Closing a writable connection may checkpoint pre-existing WAL even after rollback.
     // Preserve the complete logical legacy state; archive/export files remain byte/mtime identical.
