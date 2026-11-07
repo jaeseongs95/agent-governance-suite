@@ -15,7 +15,7 @@
 
 ## 시험 입력과 실행
 
-요구별 선행 사례는 작업 산출물 `v380-host-discovery-cases.md`에 고정했다. 새 suite는 production 기본 gateway를 사용하여 상태·root·중복·형식·오류·disable/requery를 확인한다. Linux 한 사례는 `fixtures/ags38-host-discovery/cli.mjs`를 실행 파일로 놓고 실제 `execFile` → production observer → inventory loader를 통과한다. 이것은 공개 CLI 프로토콜 fixture이며 실제 vendor CLI나 모델 턴 실행을 주장하지 않는다. 기존 Claude 회귀 suite도 함께 실행한다.
+새 suite는 production 기본 gateway를 사용하여 상태·root·중복·형식·오류·disable/requery를 확인한다. Linux 한 사례는 `fixtures/ags38-host-discovery/cli.mjs`를 실행 파일로 놓고 실제 `execFile` → production observer → inventory loader를 통과한다. 이것은 공개 CLI 프로토콜 fixture이며 실제 vendor CLI나 모델 턴 실행을 주장하지 않는다. 기존 Claude 회귀 suite도 함께 실행한다.
 
 ```sh
 pnpm exec vitest run tests/mcp/ags38-host-discovery-native.test.ts tests/mcp/ags38-core-boundary.test.ts
