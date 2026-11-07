@@ -3,7 +3,6 @@
 // Messaging is optional and must never block the host, but each launcher stage failure is
 // reported with its stage and a bounded code (no message, path or input) instead of vanishing.
 import { readFileSync, writeSync } from "node:fs";
-import { types } from "node:util";
 
 const LAUNCHER = "session-message-hook";
 
@@ -20,15 +19,18 @@ function ownRelay(child) {
   });
 }
 
-function reportLauncherFailure(stage, cause) {
-  try {
-    let code;
-    if (cause && (typeof cause === "object" || typeof cause === "function") && !types.isProxy(cause)) {
-      const descriptor = Object.getOwnPropertyDescriptor(cause, "code");
-      if (descriptor && "value" in descriptor && typeof descriptor.value === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(descriptor.value)) code = descriptor.value;
-    }
-    writeSync(2, `[agent-governance-suite] launcher-failure ${JSON.stringify({ launcher: LAUNCHER, stage, ...(code ? { code } : {}) })}\n`);
-  } catch { /* A broken diagnostic sink cannot block the host. */ }
+// One stderr format for every product diagnostic (AGS3-D-0023): the shared runtime writes the record; a package
+// missing that module still reports the failed stage in the same one-line {component, event} format.
+const diagnostics = await import("../runtime/diagnostic-record.mjs").catch(() => null);
+
+/** Names the failed launcher stage with a bounded code; never messages, paths or input. */
+function reportLauncherFailure(stage, cause, observed = {}) {
+  if (diagnostics) {
+    diagnostics.writeStageFailure(LAUNCHER, "launcher-failure", stage, cause, observed);
+    return;
+  }
+  try { writeSync(2, `${JSON.stringify({ component: LAUNCHER, event: "launcher-failure", stage, reason: "DIAGNOSTIC_RUNTIME_UNAVAILABLE" })}\n`); }
+  catch { /* A broken diagnostic sink cannot block the host. */ }
 }
 
 let stage = "stdin";

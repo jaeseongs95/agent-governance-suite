@@ -10,15 +10,15 @@ MCP에 기록할 때는 전체 record를 `StageResult.v1.output.decisionRecord`�
 
 ### 독립 감사 handoff
 
-`independent-audit` provider에는 현재 단계, 구현자 ID, fresh auditor ID, 최종 대상 식별자, 변경 범위, 원시 검증 위치, rollback 근거와 알려진 제한을 전달한다. 감사 결과의 일곱 섹션을 보존하고 다음처럼 `StageResult.v1.output`에 투영한다.
+`independent-audit` provider에는 현재 단계, 작업자 ID, fresh auditor ID, 최종 대상 식별자, 변경 범위, 원시 검증 위치, rollback 근거와 알려진 제한을 전달한다. 감사 결과의 일곱 섹션을 보존하고 다음처럼 `StageResult.v1.output`에 투영한다.
 
 - `gateVerdict`: `Gate`의 `PASS | FAIL | BLOCKED`
 - `auditorId`: `Independence`에서 확인한 fresh auditor ID
-- `implementationActorIds`: `Independence`에서 확인한 구현자 ID 목록
+- `implementationActorIds`: `Independence`에서 확인한 작업자 ID 목록
 - `auditTarget`: `Audit Target`의 최종 대상. 같은 결과의 `gate-verdict` 산출물 `targetDigest`(서명된 계획의 대상)와 같아야 한다.
 - `phase`: `pre-execution | post-execution | pre-deploy | post-deploy`
 - `freshContext`, `delegationAllowed`, `blockingFindings`, `stale`, `postExecutionVerified`: 감사 결과에서 직접 확인한 값
 
-서명된 계획의 대상과 `auditTarget`이 다르거나, fresh context가 아니거나, 재위임이 허용됐거나, 열린 blocking finding이 있거나, 판정이 stale하면 `passed`로 기록하지 않는다. 실제 상태 변경 뒤에는 `post-execution` 또는 `post-deploy` 확인이 끝난 경우에만 완료할 수 있다. MCP의 구조적 필드 검사는 감사 사실이나 신원을 인증하지 않으므로 오케스트레이터가 원자료를 직접 대조한다. MCP는 독립성·fresh context·재위임 금지·실행 후 확인을 receipt의 `unverifiedClaims`에 미검증으로 남긴다. 호스트가 감사자·구현자 신원을 관측한 경우(`host-observed`)에는 서버가 독립성과 재위임을 직접 비교한다.
+서명된 계획의 대상과 `auditTarget`이 다르거나, fresh context가 아니거나, 재위임이 허용됐거나, 열린 blocking finding이 있거나, 판정이 stale하면 `passed`로 기록하지 않는다. 실제 상태 변경 뒤에는 `post-execution` 또는 `post-deploy` 확인이 끝난 경우에만 완료할 수 있다. MCP의 구조적 필드 검사는 감사 사실이나 신원을 인증하지 않으므로 오케스트레이터가 원자료를 직접 대조한다. MCP는 독립성·fresh context·재위임 금지·실행 후 확인을 receipt의 `unverifiedClaims`에 미검증으로 남긴다. 호스트가 감사자·작업자 신원을 관측한 경우(`host-observed`)에는 서버가 독립성과 재위임을 직접 비교한다.
 
 계획에서 생산 단계가 없는 필수 입력 artifact와 서버가 hash하지 못한 필수 산출물은 `unverifiedClaims`에 `evidence-content`로 남는다. 로컬 파일 산출물·근거에 `digest`를 적으면 서버가 그 파일을 hash해 `artifactChecks`에 기록한다.

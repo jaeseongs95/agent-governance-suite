@@ -42,15 +42,15 @@
       "path": "skills/session-board/references/entry-details.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:4c0571608a124e96da1b27510a8c42775b3c84396c46abb11a915f57f103a196",
+      "digest": "sha256:7120d21bac24b73f86222a213aaeb269d2603e6ab946a28f37a8856f991cf676",
       "startByte": 0,
-      "endByte": 258
+      "endByte": 310
     },
     {
       "path": "skills/session-board/references/entry-details.md",
       "startLine": 9,
       "endLine": 11,
-      "digest": "sha256:4c0571608a124e96da1b27510a8c42775b3c84396c46abb11a915f57f103a196",
+      "digest": "sha256:7120d21bac24b73f86222a213aaeb269d2603e6ab946a28f37a8856f991cf676",
       "startByte": 0,
       "endByte": 152
     }
@@ -76,7 +76,7 @@
       "path": "skills/session-board/references/entry-details.md",
       "startLine": 12,
       "endLine": 12,
-      "digest": "sha256:4c0571608a124e96da1b27510a8c42775b3c84396c46abb11a915f57f103a196",
+      "digest": "sha256:7120d21bac24b73f86222a213aaeb269d2603e6ab946a28f37a8856f991cf676",
       "startByte": 0,
       "endByte": 163
     },
@@ -84,7 +84,7 @@
       "path": "skills/session-board/references/entry-details.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:4c0571608a124e96da1b27510a8c42775b3c84396c46abb11a915f57f103a196",
+      "digest": "sha256:7120d21bac24b73f86222a213aaeb269d2603e6ab946a28f37a8856f991cf676",
       "startByte": 0,
       "endByte": 463
     },
@@ -92,7 +92,7 @@
       "path": "skills/session-board/references/entry-details.md",
       "startLine": 14,
       "endLine": 14,
-      "digest": "sha256:4c0571608a124e96da1b27510a8c42775b3c84396c46abb11a915f57f103a196",
+      "digest": "sha256:7120d21bac24b73f86222a213aaeb269d2603e6ab946a28f37a8856f991cf676",
       "startByte": 0,
       "endByte": 84
     }

@@ -38,6 +38,6 @@
 
 MCP의 정식 provider 결과는 descriptor의 `outputSchema`와 `stateMapping`으로 구조와 단계 상태를 검사한다. 알 수 없는 상태, 승인 필드, 근거·환경 없는 실행 성공 선언은 schema가 거부한다. `ANALYZED`와 `NOT_APPLICABLE`의 provider `passed`는 이 전문 단계의 종료만 뜻한다.
 
-이 스킬은 별도 실행 CLI나 semantic validator를 추가하지 않는다. request schema와 report schema만으로 두 문서의 ID·revision·대상 목록이 같은지, 참조가 실제로 존재하는지, 결과물이 대상 사용자에게 통하는지 검증되지는 않는다. 호출자와 검토자는 입력·출력의 결속 및 원자료를 직접 대조하라. schema 통과를 검증 완료로 보고하지 마라.
+이 스킬은 별도 실행 스크립트나 semantic validator를 추가하지 않는다. request schema와 report schema만으로 두 문서의 ID·revision·대상 목록이 같은지, 참조가 실제로 존재하는지, 결과물이 대상 사용자에게 통하는지 검증되지는 않는다. 호출자와 검토자는 입력·출력의 결속 및 원자료를 직접 대조하라. schema 통과를 검증 완료로 보고하지 마라.
 
-정식 workflow에서는 외부 artifact `task:ui-ux-design-request`를 제공하고 필요한 capability에 `ui-ux-design`을 포함한다. 이 선택형 단계의 설계·리뷰 결과를 기존 변경 점검과 구현 흐름에 전달한다. 독립 감사·수용·배포 권한은 기존 담당에 남는다.
+정식 workflow에서는 외부 artifact `task:ui-ux-design-request`를 제공하고 필요한 capability에 `ui-ux-design`을 포함한다. 이 선택형 단계의 설계·리뷰 결과를 기존 변경 점검과 구현·제작 흐름에 전달한다. 독립 감사·수용·배포 권한은 기존 담당에 남는다.

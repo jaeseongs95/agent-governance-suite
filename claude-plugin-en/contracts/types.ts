@@ -744,6 +744,8 @@ export interface SkillProviderV2 {
   failureHandling: string | Record<string, unknown>;
   gate: GateDescriptorV2;
   receiptPolicy?: ReceiptPolicyV1;
+  /** Plugin-relative CLI inside this skill that implements the core stage-bundle check for the provider's stage. */
+  stageValidator?: string;
 }
 
 export interface SkillDescriptorV2 {

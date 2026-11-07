@@ -4,7 +4,7 @@
 
 검토자는 `IterationFrameAuditRequest.v1`에 포함된 artifact와 locator만 근거로 사용한다. 최소한 contract, control frame, target frame 비교 근거와 reviewer 분리 근거가 각각 하나 있어야 하며, 이전 attempt가 하나라도 있으면 attempt outcome 근거도 필요하다. 첫 attempt 전에 frame 변경이 감지된 경우 `attemptHistory`와 `implementationActorIds`는 빈 배열이어야 한다. locator가 존재한다는 사실만으로 내용을 확인했다고 간주하지 않는다. 읽을 수 없거나 digest가 맞지 않는 근거는 누락된 근거로 취급하고 review를 발행하지 않는다.
 
-`requestArtifactDigest`는 검토자가 받은 request 전체의 canonical JSON digest다. orchestrator가 검토 전에 보관한 digest와 `IterationFrameComparison.v1` sidecar의 digest를 함께 검사해 중간 입력 교체를 막는다. 최종 판정은 저장소 공개 계약인 `ConvergenceReview.v1`으로 반환하고 sidecar는 그 판정의 비교 근거를 보존한다.
+`requestArtifactDigest`는 검토자가 받은 request 전체의 canonical JSON digest다. orchestrator가 검토 전에 보관한 digest와 `IterationFrameComparison.v1` sidecar의 digest를 함께 검사해 중간 입력 교체를 막는다. 최종 판정은 AGS 공개 계약인 `ConvergenceReview.v1`으로 반환하고 sidecar는 그 판정의 비교 근거를 보존한다.
 
 ## Comparison vocabulary
 
@@ -16,7 +16,7 @@
   - `uncertain`: 차이의 사용자 가치 영향을 근거로 결정할 수 없다.
 - Control impact
   - `unchanged`: canonical control frame이 동일하다.
-  - `semantics-preserving`: 표현이나 구현은 달라졌지만 같은 입력에 같은 평가 의미와 pass/fail 경계를 유지함을 직접 근거로 확인했다.
+  - `semantics-preserving`: 표현이나 수행 방식은 달라졌지만 같은 입력에 같은 평가 의미와 pass/fail 경계를 유지함을 직접 근거로 확인했다.
   - `semantics-changing`: verifier, rubric, oracle, aggregation, pass condition 또는 evaluation input의 의미가 달라졌다.
   - `uncertain`: 동등성 또는 변경의 영향을 결정할 근거가 부족하거나 해석이 충돌한다.
 - Target impact
@@ -40,7 +40,7 @@ target digest가 달라도 실패 조건과 무관한 metadata·이름·주석�
 
 ## Separation of duties
 
-검토자 ID는 request에 기록된 모든 implementation actor ID와 달라야 한다. `freshContext: true`는 cooperative-sealed assertion이며 악의적인 ID 위조를 방지하는 attestation은 아니다. 이 assertion을 제공할 수 없는 환경에서는 fail-closed로 유지한다.
+검토자 ID는 request에 기록된 모든 작업자 actor ID(`implementationActorIds`)와 달라야 한다. `freshContext: true`는 cooperative-sealed assertion이며 악의적인 ID 위조를 방지하는 attestation은 아니다. 이 assertion을 제공할 수 없는 환경에서는 fail-closed로 유지한다.
 
 ## Handoffs
 

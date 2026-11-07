@@ -191,7 +191,6 @@ export interface MessageParams {
   "workflow.service.evaluationValidityPlanningRequiresStructured": Record<string, never>;
   "workflow.service.everyPlannedStagePassBefore": Record<string, never>;
   "workflow.service.executionContextMalformed": { "subject": string; "stageId": NestedMessage | number | string; };
-  "workflow.service.executionProfileBelowFloor": { "subject": string; "stageId": NestedMessage | number | string; };
   "workflow.service.expectedRevisionMatchConvergenceRoot": Record<string, never>;
   "workflow.service.expectedRevisionMatchCurrentRunRevision": Record<string, never>;
   "workflow.service.failedBlockedStagesRequireError": Record<string, never>;
@@ -246,7 +245,6 @@ export interface MessageParams {
   "workflow.service.selectedProviderArtifactDependenciesContain": Record<string, never>;
   "workflow.service.selectedProvidersProduceSameArtifact": Record<string, never>;
   "workflow.service.selectedStageNeedsUnambiguousArtifact": Record<string, never>;
-  "workflow.service.semanticRequirementIncomplete": { "subject": string; "stageId": NestedMessage | number | string; };
   "workflow.service.semanticsChangingReviewsReturnProposed": Record<string, never>;
   "workflow.service.semanticsPreservingReviewChangeWorkspace": Record<string, never>;
   "workflow.service.semanticsPreservingReviewIncompatibleRoute": Record<string, never>;
@@ -1179,7 +1177,7 @@ export interface MessageParams {
   "skillTools.modelRouting.providerRequired": Record<string, never>;
   "skillTools.modelRouting.reasonCombinationUnavailable": Record<string, never>;
   "skillTools.modelRouting.reasonInheritanceRequired": Record<string, never>;
-  "skillTools.modelRouting.reasonNoFloor": Record<string, never>;
+  "skillTools.modelRouting.reasonNoSupportedConfiguration": Record<string, never>;
   "skillTools.modelRouting.reasonNotConfirmed": Record<string, never>;
   "skillTools.modelRouting.reasonSettingsNotObservable": Record<string, never>;
   "skillTools.modelRouting.selectionReasonRequired": Record<string, never>;

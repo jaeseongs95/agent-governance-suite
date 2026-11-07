@@ -157,7 +157,8 @@
         "kind": "none",
         "policy": "none",
         "validator": null
-      }
+      },
+      "stageValidator": "skills/cs-engineering/scripts/validate.mjs"
     }
   ]
 }

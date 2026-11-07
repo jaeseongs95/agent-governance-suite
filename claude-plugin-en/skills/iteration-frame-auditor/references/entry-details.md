@@ -5,7 +5,7 @@
 - 불변 `root.contract`, 기준 `root.frame.controlArtifacts`와 `root.frame.targetArtifacts`, 서버가 계산한 각 digest
 - append-only attempt history와 각 attempt의 evidence locator
 - 제안 contract와 공개 `ConvergenceFrame.v1`, 각 digest와 변경 요약
-- fresh-context reviewer ID와 모든 implementation actor ID
+- fresh-context reviewer ID와 모든 작업자 actor ID(`implementationActorIds`)
 - contract/control/target 비교와 attempt 결과를 직접 확인할 evidence inventory
 
 검토 전에 [references/review-protocol.md](review-protocol.md)를 읽는다. 원 request를 받은 뒤 먼저 digest를 외부 workflow 상태에 동결한다.
@@ -29,8 +29,8 @@ node scripts/validate-review.mjs --request audit-request.json --request-digest "
 
 ## 경계
 
-- 구현, 파일 변경, 검사 재실행, lease 발급 또는 epoch 개방을 수행하지 않는다.
-- 자신의 구현 결과를 검토하거나 구현 actor ID를 바꿔 독립성을 가장하지 않는다.
+- 구현·제작, 파일 변경, 검사 재실행, lease 발급 또는 epoch 개방을 수행하지 않는다.
+- 자신의 작업 결과를 검토하거나 작업자 actor ID를 바꿔 독립성을 가장하지 않는다.
 - 누락된 근거를 추정하거나 reviewer 선언만으로 semantic equivalence를 증명하지 않는다.
 - 사용자의 목표·범위·수용 기준·권한 변경을 의미 보존 교정으로 재분류하지 않는다.
 - 두 번째 epoch 허용 여부와 남은 budget 같은 정책 상태는 convergence guard가 결정한다. 이 스킬의 `resume-new-epoch`는 검토 권고일 뿐이다.

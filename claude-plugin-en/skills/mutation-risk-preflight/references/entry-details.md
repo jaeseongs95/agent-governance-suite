@@ -9,9 +9,9 @@
 
 ## 절차
 
-1. `MutationIntent.v1`에서 operation, action, 정확한 target과 현재 fingerprint를 확인한다.
+1. 실행할 operation, action, 정확한 target과 현재 상태를 확인한다. 직접 호출은 이 대조를 응답에 적고, 아래 5·6은 하지 않는다.
 2. [위험 분류](risk-matrix.md)에서 행동별 필수 승인과 복구 조건을 확인한다.
 3. [승인·권한 규칙](approval-and-authority.md)에 따라 근거가 같은 operation, action, target, environment를 가리키는지 대조한다.
 4. [복구 요건](recovery-requirements.md)에 따라 backup 존재와 restore 검증을 구분한다.
-5. `scripts/evaluate-preflight.mjs`로 `MutationPreflightReport.v1`과 action·target digest를 만든다.
-6. 실제 변경을 수행할 주체는 직전에 대상의 현재 상태를 다시 관측해 그 fingerprint를 intent에 넣고, `scripts/verify-preflight-receipt.mjs`로 receipt와 그 intent가 같은지 확인해야 한다. 검증기는 실제 대상을 읽지 않으므로, 다시 관측하지 않은 intent로 받은 `valid`는 현재 상태를 증명하지 않는다. 검증기는 원 `observedAt` 시점으로 보고서 전체를 재생성해 비교하고, 현재 시점으로 다시 평가해 행동·대상·환경·승인·fingerprint·복구 계획·영향 범위가 그대로인지 확인한다. 시간 경과만으로는 receipt를 거부하지 않는다. 승인 증거 자체의 `expiresAt`은 그대로 적용된다.
+5. AGS workflow 단계로 연결됐거나 호출자가 receipt를 요구할 때만, 확인한 내용을 `MutationIntent.v1`로 적고 `scripts/evaluate-preflight.mjs`로 `MutationPreflightReport.v1`과 action·target digest를 만든다.
+6. receipt를 받은 경우 실제 변경을 수행할 주체는 직전에 대상의 현재 상태를 다시 관측해 그 fingerprint를 intent에 넣고, `scripts/verify-preflight-receipt.mjs`로 receipt와 그 intent가 같은지 확인해야 한다. 검증기는 실제 대상을 읽지 않으므로, 다시 관측하지 않은 intent로 받은 `valid`는 현재 상태를 증명하지 않는다. 검증기는 원 `observedAt` 시점으로 보고서 전체를 재생성해 비교하고, 현재 시점으로 다시 평가해 행동·대상·환경·승인·fingerprint·복구 계획·영향 범위가 그대로인지 확인한다. 시간 경과만으로는 receipt를 거부하지 않는다. 승인 증거 자체의 `expiresAt`은 그대로 적용된다.

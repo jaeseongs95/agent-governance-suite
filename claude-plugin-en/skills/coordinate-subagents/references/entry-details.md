@@ -2,7 +2,7 @@
 
 At the start of a task, identify execution units and their dependencies. A unit is independent when it can begin without another unit's intermediate result and has its own responsibility, completion condition, and verification criterion.
 
-Implementation delegation is allowed only when the user explicitly requests it or every net-benefit condition below is satisfied:
+Work delegation is allowed only when the user explicitly requests it or every net-benefit condition below is satisfied:
 
 <!-- policy-contract: delegation.explicit-request -->
 <!-- policy-contract: delegation.independent-parallel -->
@@ -13,12 +13,12 @@ Implementation delegation is allowed only when the user explicitly requests it o
 - File and external-state ownership can remain disjoint and single-writer.
 - Handoff, waiting, review, integration, and likely rework still cost less than direct execution.
 
-A required high-risk audit justifies a separate auditor, not implementation delegation. Record the positive delegation reason before dispatch; the number of work units, task size, complexity, or `orchestration.requested` alone is not a positive reason.
+A required high-risk audit justifies a separate auditor, not work delegation. Record the positive delegation reason before dispatch; the number of work units, task size, complexity, or `orchestration.requested` alone is not a positive reason.
 
 <!-- policy-contract: delegation.atomic-local -->
 <!-- policy-contract: delegation.allowed-exceptions -->
 
-Without an explicit delegation request, check the net-benefit conditions whenever an independent unit exists instead of keeping work local by default. Keep work local when a checked condition does not hold, including multi-unit work that is sequential, shares a writer, needs the coordinator's full context, or would cost more to hand off and integrate, and name that condition. An explicit request waives the parallel-speedup and net-benefit requirements, not independent completion, sufficient context, single-writer ownership, available inputs, tools, slots, or permissions. When approved delegation cannot run because dependencies, exclusive state, slots, tools, or permissions make it impossible, keep the work local and disclose the concrete reason. Task size and coordinator convenience do not override the net-benefit check. No implementation-delegation decision waives a required high-risk audit.
+Without an explicit delegation request, check the net-benefit conditions whenever an independent unit exists instead of keeping work local by default. Keep work local when a checked condition does not hold, including multi-unit work that is sequential, shares a writer, needs the coordinator's full context, or would cost more to hand off and integrate, and name that condition. An explicit request waives the parallel-speedup and net-benefit requirements, not independent completion, sufficient context, single-writer ownership, available inputs, tools, slots, or permissions. When approved delegation cannot run because dependencies, exclusive state, slots, tools, or permissions make it impossible, keep the work local and disclose the concrete reason. Task size and coordinator convenience do not override the net-benefit check. No work-delegation decision waives a required high-risk audit.
 
 ## Resolve the delegation preference
 
@@ -36,11 +36,11 @@ Read [the provider-neutral model-routing presets and host adapters](model-routin
 <!-- policy-contract: allocation.keep-one-and-fill-slots -->
 <!-- policy-contract: allocation.batch-reuse -->
 
-When implementation delegation has been approved and two or more implementation units exist, keep one independent unit with the coordinator and assign the others across available slots. If the user explicitly asks to delegate the only implementation unit, assign that unit to a subagent and keep coordination and evidence review with the coordinator. Interpret slot counts from the host contract: when the host reports a total team capacity, the coordinator occupies one slot; when it reports subagent slots, those are all available to delegated work. When independent units exceed the usable slot count, run them in batches and reuse completed subagents with a fresh brief. For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`). Do not create artificial units merely to increase parallelism.
+When work delegation has been approved and two or more work units exist, keep one independent unit with the coordinator and assign the others across available slots. If the user explicitly asks to delegate the only work unit, assign that unit to a subagent and keep coordination and evidence review with the coordinator. Interpret slot counts from the host contract: when the host reports a total team capacity, the coordinator occupies one slot; when it reports subagent slots, those are all available to delegated work. When independent units exceed the usable slot count, run them in batches and reuse completed subagents with a fresh brief. For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`). Do not create artificial units merely to increase parallelism.
 
 <!-- policy-contract: audit.reserve-identity -->
 
-When high-risk work requires an independent auditor and later access to a fresh agent identity is uncertain, reserve a non-implementing subagent and its slot before filling implementation assignments.
+When high-risk work requires an independent auditor and later access to a fresh agent identity is uncertain, reserve an uninvolved subagent and its slot before filling work assignments.
 
 Every brief must include:
 
@@ -59,7 +59,7 @@ Use a limited-history or no-history fork by default. Supply the brief, source lo
 
 <!-- policy-contract: ownership.single-writer -->
 
-Give one writer ownership of each shared file or external state. Sequence work when ownership cannot be separated safely. A subagent owns investigation, implementation, deliverable preparation, and verification inside its assigned scope and must coordinate before changing another owner's area.
+Give one writer ownership of each shared file or external state. Sequence work when ownership cannot be separated safely. A subagent owns investigation, execution, deliverable preparation, and verification inside its assigned scope and must coordinate before changing another owner's area.
 
 Read [the delegation playbook](delegation-playbook.md) when preparing briefs, batching work, resolving ownership conflicts, handling failed dispatch, or running an audit.
 
@@ -80,13 +80,13 @@ Read [the delegation playbook](delegation-playbook.md) when preparing briefs, ba
 - Keep each assignment's owner, scope, input/candidate reference, and observed state in the existing task record. Do not create a second ledger merely for coordination.
 - When the user corrects scope, withdraws an action, or pauses work, stop dispatching affected units and send the changed constraint to their active owners. A sent cancellation is not proof that a worker or its child process stopped.
 - Confirm release of write ownership from the worker's response and available host/process state before assigning the same files or external state to a replacement. If that state is unknown, keep the conflicting write pending and continue disjoint work; do not turn an unreachable worker into a free slot by assumption.
-- Compare late results against the latest scope and current target before integration. Preserve useful evidence, but do not apply a stale patch, resume cancelled work, or accept a superseded completion claim just because the assignment originally allowed it.
+- Compare late results against the latest scope and current target before integration. Preserve useful evidence, but do not apply a stale change, resume cancelled work, or accept a superseded completion claim just because the assignment originally allowed it.
 
 ## Require independent audits for high-risk work
 
 <!-- policy-contract: audit.independent-required -->
 
-Assess the actual security, permission, payment, data-loss, migration, deployment and global-configuration impact under `independent-audit-gate`. A topic label, test environment, ordinary branch push or project setting alone does not establish a high-risk effect. When that gate applies, require an independent audit. Assign an auditor who did not implement the change. Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge eligibility and non-reuse. The auditor must inspect the requirements, final change, verification evidence, and plausible failure modes directly.
+Assess the actual security, permission, payment, data-loss, migration, deployment and global-configuration impact under `independent-audit-gate`. A topic label, test environment, an ordinary reversible save of a working copy (for example, a work-branch push) or project setting alone does not establish a high-risk effect. When that gate applies, require an independent audit. Assign an auditor who did not make the change. Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge eligibility and non-reuse. The auditor must inspect the requirements, final change, verification evidence, and plausible failure modes directly.
 
 <!-- policy-contract: audit.no-completion-without-auditor -->
 <!-- policy-contract: audit.reaudit-after-change -->

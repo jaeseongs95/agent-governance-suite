@@ -316,16 +316,87 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
   // 3.9.0 WP-F (AGS3-D-0032/0038/0042-0055) successor: start
   // Intake shortened and moved to its delivery paths, field-neutral targets and references; historical budgets and
   // oracles stay frozen because these exact bytes project onto the 3.8.0 release bytes at BASE.
+  // The same 3.9.0 successor carries the AGS3-D-0038 reference wording (c90c78ca..e885dc90), the AGS3-D-0058
+  // model-effort-advisor wording (6a313725), the AGS3-D-0062 direct-call section (8ff0fc37) and their span digests.
   Object.freeze({
     revision: "a50fbc2c20c20f52dd59643bb929b5b4c88d6f3a",
     hashes: Object.freeze({
-      "skills/acceptance-evidence-validator/classification.json": ["4ce9af6edc26969b41c776135e591bc0674f5d366445207083baf73d2899aff7", "9a7834459843cd6c945f40fa11869610cebce2a62a251cd33edde3db211dbef0"],
+      "skills/acceptance-evidence-validator/classification.json": ["4ce9af6edc26969b41c776135e591bc0674f5d366445207083baf73d2899aff7", "4667c120a88582c292863a36d4406e68d54f3e4eb2286082ad00d4cc1e03cd1c"],
+      "skills/acceptance-evidence-validator/references/entry-details.md": ["34b8087c91fbd8b253e8753b62c5216c8a75d65dd40f0952b0929c87456d1a81", "aa2a6feb72601bb9f660c9e561fd5772d1e8c7e767b7c56c9e11655c47a8d343"],
+      "skills/acceptance-evidence-validator/references/evidence-protocol.md": ["85105dae431ae773e6f845c1b206b5f8098a7a08402db3d7ad1842d03b5fe094", "82d197ab17abef4c94b59c3ef92186a3a0bdbfe865cd38bb4f94e0df7de0f9e2"],
+      "skills/blocker-diagnostician/classification.json": ["84fefbfb294d72598f48b1c63832f7e3594bcec7caef899b1b0c595ddadabbce", "d406a448dc61ddfe51db6d715cee4c492e42a4204a77888bf0e3350a9c8ed762"],
+      "skills/blocker-diagnostician/references/diagnosis-protocol.md": ["a57d43df0a69b58a952f985b53c454b8d91159eb6a77f1fd151986fcb76e7a0f", "bbf76b4453c82267d12e3910f3110b13f3d7518a8e6641bb3b25f920b950164f"],
+      "skills/blocker-diagnostician/references/entry-details.md": ["ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01", "97eba0cfb2b0ac8e8116c2f8c8e2adca5ae3982530c26c6f46bc103b13357da1"],
+      "skills/coordinate-subagents/classification.json": ["c899d68736407ed7f351345eb620bc0167e15ae93a1c3aa0cf3b010ddd99ae5f", "1353938a8500fd23852ac71d64adcde2a9cd1275c22958823bf3d5c1dccc94af"],
+      "skills/coordinate-subagents/references/delegation-playbook.md": ["55b9b7fe79d90096c3af3a8ad1fbdd71c7f58c96ceea88fed457595c525c03d0", "6aaa7414327ff93a36fc3732441c92ee8054ffdf7d6b4ecfa43f7b2a1b9022e8"],
+      "skills/coordinate-subagents/references/entry-details.md": ["0bca6a11311aedec9bb7c9d4583092ff246452a664686a51041d0c90c6a5b404", "301054a8d9a4a6e254315fbcc8eef1068cbed627afccc4d2f1dfc8e6bb799e46"],
+      "skills/coordinate-subagents/references/live-dispatch-check.md": ["873ee07aa7176464bb88e8bb402ce29e704308378d01c0fd36f68880dd5e74e4", "54cb457af763fc54507afae0667f80e3977cbb97ce03e936ee82c65cd76df5be"],
+      "skills/coordinate-subagents/references/model-routing.md": ["92f50c1b7a3d9ac204baaa903f1a4589ad1c48cacb0f0cf2b4e7d14d13a7ac2e", "6db965eac7706480206d8558a83fd3d6cd4d1e83be5ef3800871d18491067b3d"],
+      "skills/evaluation-validity-auditor/classification.json": ["9c3a46c657096918959313cf29ea86482a0d893e381f1b10348c482dee2ca01b", "53aa8cb62e1caf1972224de5d8b1cdc80e4e4687f3f0fec467f7db59371aabf7"],
+      "skills/evaluation-validity-auditor/references/entry-details.md": ["3788c88d6522139cdbd18c34a2386b0706d0ecf3fe47f51824708c01e289b184", "80150164f5027060fc0bc0b6b38ebdfb3636d565677430fe56bf6452eee6506b"],
+      "skills/independent-audit-gate/classification.json": ["815aacf8b682844c54f8d1ddd14401aa422b169a3e890f607e4056ec1e0fe3ea", "95dc4179c5f20b705957f236b377c5356cce183906fbaeb37745695a658e8332"],
+      "skills/independent-audit-gate/references/audit-protocol.md": ["1d6e57296f14bdc0f99d2b7bcf02d5dfeb8becef8f268532a2204e0ddf0b2d3a", "f76af34c1f01d278550cdffc80b938ad76220668f16022ef687cbc18b63fff6c"],
+      "skills/independent-audit-gate/references/entry-details.md": ["35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a", "723250bab67020e2d5d35461266cb2d0bc6c579606748b7f952fa3e3e82d5b88"],
+      "skills/independent-audit-gate/references/orchestrator-integration.md": ["ab82ba48be44d622dbed30412712ba4138e22e87f1bede5c82adb78b370782f0", "f44ddb31071f86b7c6974a2b1008c7ebe2131fbb4b35d8d39fa3a224039ac207"],
+      "skills/independent-audit-gate/references/specialist-behavior.md": ["fc1107c28eac3dc9d2bb69442b695a4164c6d4d9980a237fc1967fe39a5ac50d", "812bceeae2dab14fc0928a282189c8e9bed6a02d29074aab47865d4a9a65b236"],
+      "skills/independent-deliberation-panel/references/entry-details.md": ["6d8bf85e8701dedbd5a5e4e0304011e516c0f8e81369756bc1aa5b2ab858502e", "f7a944dd3d412ffd1efe44d0487f6ff8e1218cdf6211d6ad2951074c7e656642"],
+      "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md": ["644fe1ead2962af0968ffa06fb248b55fb68d0ba15f229e9b9218e0696653336", "814ad622d94024f9a2e7b54cc90e353cae9102baf4806edb25269bb1c83ec234"],
+      "skills/independent-deliberation-panel/references/integration-contract.md": ["39a8746dd1358baf81d1b7242810c970c8fcf98152a5b3155975f9e75019421f", "0d5b82187fadab3b20fc2c321cb9d03890ff8d561787625953ce9a1a68f0ba0f"],
+      "skills/independent-deliberation-panel/references/orchestration-policy.md": ["ff72d35b11196ccb73e85fe73eda04caf26380f7c264fb800357c9f55c0b62c1", "07916ebd3d5c66f0f46fc66583226673d9a8ec62d055a46e48dae9f0e5138649"],
+      "skills/independent-deliberation-panel/references/role-catalog.md": ["18d8d9b6c65bc6925c1dfe3cbce86055bbf44f274a1c406ab4be5cf7c7a6ada5", "68b346e02a3b192697dea12def59323172f7a21e8003b747484932833ba92152"],
+      "skills/iteration-frame-auditor/classification.json": ["2b418a3da47aa4b07170cfb4b357a54a98a4b7747b3c9385b4158bddf948730f", "b8e50685024cbc3c9be4d37141ae377aa9aa383e1fcd511ddb59d029d04c7063"],
+      "skills/iteration-frame-auditor/references/entry-details.md": ["e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432", "3e48e57f226faa44deaaaa72bd55d82c80598b29d92dc80087c091b4d2e4d35d"],
+      "skills/iteration-frame-auditor/references/review-protocol.md": ["ff51d095ccb9a2ce3484c818986f03a37d5e6dd73d6c8af94f288cf751047658", "c839836656ff61e925297b7c6db9004a48a9616564d3e976ea4e97686047de2f"],
+      "skills/model-effort-advisor/SKILL.md": ["3e47fe6b94f671e9b7e91dc57c074078e582556e056b2d66889ec61ea850453d", "5d554bb4fdb11ca9a2c833ff0a3403f23aaf28d5a9c459005a5222fb21cdd0ce"],
+      "skills/model-effort-advisor/classification.json": ["fec98b3623b3f8984dcf780beb2f535eb9c22eb25953c44d38efbda8af6f4590", "0e9f097f63f79e27dde80b433eb469df1fbe1a6decbbba2ad39c973f3c52eb21"],
+      "skills/model-effort-advisor/references/entry-details.md": ["3ac91a94b02ae8dc775702dfe611215106e2718bc1f3f922327655df34ef2b9d", "d73c768994f308913637771057c8a5f2459a24bbd868a926703c0d66d1a1af8b"],
+      "skills/mutation-risk-preflight/SKILL.md": ["65647ea80f4d7546f76f8691def730b240ca2e8a892aeb69cfd10d855ff1f557", "f029843b9eb899e3aa47f732db76476ba557e7f5d4604db6229fd260ca8acbc1"],
+      "skills/mutation-risk-preflight/classification.json": ["d4ec110556065740a3469c894f48781ac673a13c46cd46bf8e75fe953f92fdff", "57535b32573ddc20846c419ce6c40700436e2e5b162b6ec5bcb97a29f1d6902a"],
+      "skills/mutation-risk-preflight/references/entry-details.md": ["027c08a08a559af62f945c00dab640e79deb88d6d9afe2042d1271d6ddd04f54", "05f835e73dbd23850c18bbb4753cae299d787fe3ad6c25c51a990826f9847855"],
+      "skills/mutation-risk-preflight/references/recovery-requirements.md": ["eea0b3129263b17d12d7f05ecd823b6882ca35cc6211e5613431b429875e3842", "91bc05994088688a37a439b76b06b6427eae86a4734b5d6cd6ee1105418de55e"],
       "skills/orchestrator/classification.json": ["d49407e5fe8f6b2db407a52aedaddd90f3ba4d9ece5cc0fc2371982820647843", "5b8de6fc0098d655565391c8c32cee91322680c862890df8c21ca00fccd17d5f"],
+      "skills/orchestrator/references/collaboration.md": ["5f4aa4dedb3019a4c3f3515dd1fdfd03f78e136de0bded19c3b0ce46b99ce22a", "6099020a85f6ac170909163483d589e633318c4ee3df75854868b6c820e88402"],
+      "skills/orchestrator/references/convergence-guard.md": ["ad162b606d35a84995b579902f523e1a0ff426b6988fddf93cf263141466aca5", "3081f282b5c458c807ef7a36251b42e0cfc16dfe6a8b6a64ce1c801e7f7d3b8c"],
+      "skills/orchestrator/references/entry-details.md": ["bb5cc33814cf9e83a6255e40bc368937e40b7123990bc9507818cd9f906f8d85", "423e73afae8256f9834d149967aba3c818ef896597b08a3dd7c7fd67ae41cc20"],
+      "skills/orchestrator/references/input-origin.md": ["d5375c58b657dfb35e07c465ab7220056c59af51330b24239448851463248927", "81ac4e225c2d4b50f525b90001afc95a5e2085c5c52023319597cc9d9aac034a"],
       "skills/orchestrator/references/intake.md": ["1e1bddfaa4c294815a2ab2da4b071ecd2281a72c7b1e8f7bc72bb5ac585a6c71", "9ee68b514bd98613dc37bb1fbabe5616f452035470dd40409e1b951c7c6b71d2"],
+      "skills/orchestrator/references/mcp-execution.md": ["d32a61ac3c1da7017e2f1bcc312c6e412a32de7e7107b437b53fb80574444dd1", "1f515f4c853ad49495f72b179db699ead1ce34bd849c22a646a90180aa93f9f3"],
+      "skills/orchestrator/references/skill-classification.md": ["ccf0c8829325f2874447c67993f2c04edb02ea462713de10f3733eabc892c6ac", "7bb370144a5aeb3f67b7920e4d0d9ac415020ca6bc69a4816f6d39aece07ad8a"],
+      "skills/orchestrator/references/specialist-handoffs.md": ["9767d9d899acdd3fabf57d094c16bf64788dddf324a1bf001d6b970d285fecd9", "2c8b01c5bad7c58446ce42ca613f866fc6fa0a97665e6dac021735978938d455"],
+      "skills/prompt-engineering/references/ags-boundaries.md": ["4d8f6e357d9d65c4723571e3ec1d14ca62f56365fb58c61b43b1cd0bf475c7df", "5f6dc08235b68e904c8d9624d28741d2bc4b4a18eed0d8903d21da59b8023807"],
+      "skills/prompt-engineering/references/design-playbook.md": ["4b12f2d3c7a2a8e18dd08384aa6a1748c2396b82326219f5660e305f3eb4c163", "cf98a3499e19371d5cdb4f603a126de9fdb71418ebf47dfbbfbcdc30502d666e"],
+      "skills/prompt-engineering/references/evaluation.md": ["43d7922227cfe4f2b119fb6b0de30e4ec940d3f7b7da8cf789a07dcbf6d01827", "48f176ccca6f5a9e8221cee57bb4398063a3f6bef69d7ff4bcee7fe0a55649b4"],
+      "skills/prompt-engineering/references/output-contract.md": ["5ce53a4df15c966d626fbbe5d57bb0dd5a2e687e51b9ef1f3ffbced6b21366cb", "e9cad265f27720f13d400389fa478c94c6d4fd1eb03b6f709b23ba95f8ec5101"],
+      "skills/prompt-engineering/references/provider-notes.md": ["cb64f823fda37e612fe25eab0cb0d8b2a332fc7e2fdeb196c080a57f585da6a7", "a5fede8f65728d5f8caff52f0c71bc49f967119a1ddf8e6c35c46350b7a195d9"],
+      "skills/prompt-engineering/references/sources.md": ["3f3f7b5280b8648ae6fce77ad2fabf69be1f07aa506e7fb0fc91046fc148f93e", "766e4ff87327afe0f841ae93d6a3107a3fb62d62d079fa49d1b7b587c8f0acf6"],
+      "skills/recovery-strategy-selector/classification.json": ["cbf6dda5aca35fe316599f673c0ab09f9915af931f0cc0c41e386cc8d473b7d4", "18879dd13ad1211d37bde3d4f8b24431e593947278cd0277f97d4c0c6500ada7"],
+      "skills/recovery-strategy-selector/references/entry-details.md": ["5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a", "27a03ac5e76c4d0ed75c2b7389ce10e7b1ae5bfa5b9219a32f8b8466aadc0b49"],
+      "skills/session-board/classification.json": ["858968497e4d721fb34328db0ac67b3d27c19d97fe7bf9837b4ccfc4f6653e8a", "b5ba10e642f740e0b40acab750c0909a88bfc6de2bfe5b24388863cd6334d63c"],
+      "skills/session-board/references/entry-details.md": ["4c0571608a124e96da1b27510a8c42775b3c84396c46abb11a915f57f103a196", "7120d21bac24b73f86222a213aaeb269d2603e6ab946a28f37a8856f991cf676"],
+      "skills/task-contract/references/acceptance-criteria.md": ["55e07c6e2ea67a566f08644668b806b2ed50acca067f39969dd6f6738a9d37fe", "0876de396aa9e1b84cea25a4f84be3edd3d9f3e9a28344412991b5a017bbb9a1"],
+      "skills/task-contract/references/field-guide.md": ["09083264f2f4746dcda5e9f342d0a0ec27ca21cb692965d036121dc882bc1ac7", "127ff992eb575496b18fd2457603dd1988c630b72da7612fd63c2a11e06e2f26"],
+      "skills/task-contract/references/risk-and-authorization-rubric.md": ["cb68f324145df13772be3abd6429971afdf85f1385c53bb98e63e3c59c43a254", "0a1e9a349c3f815aff80ee21d2cddb8854490934459783caaedee42d078f69c8"],
+      "skills/ui-ux-design/references/ags-boundaries.md": ["cd5f6b287aa418ffe60ad258b56313ee8c5ee3420ce351c3f221717536b6ae9f", "4f0dca70982e3a43760e05dcfc6e3f983800d06673c9beed0ac4af8d5044489d"],
+      "skills/ui-ux-design/references/design-workflow.md": ["b117ce1dadc278a8a213560115c54795a3a2ffd12d26736037021bfa4ddfa2fd", "1b83751e365fe409e2614c61ef695fc7ecd8a2d1a0589e1c8aee68dd620090b2"],
+      "skills/ui-ux-design/references/output-contract.md": ["c8f4d41577a6c3078b161c47fdde520be6e913315762d284cdbbeac1474ffeee", "074039649403d5f3e735dc0be3b6ae395e6c3221eab96f692153da67d06fe65d"],
+      "skills/ui-ux-design/references/sources.md": ["6f7bded1b18cf47b89092fe18cc005bd23befb3df40527c73f72161bae2b842d", "05b52f392b8d6168702c7ae5db81684c4da3005b9b92c7f91311e30803240522"],
+      "skills/ui-ux-design/references/verification.md": ["703b4a1ebebb9c0b355e1db13484953b2dac87f518915469a4da9fbe0d8d46ac", "d9fe565ef5a969cdfb3fe79f48caf4f255c15baeeaeb84d5b2a5a2dcc58976ae"],
     }),
   }),
   // 3.9.0 WP-F successor: end
 ]);
+// 3.9.0 (AGS3-D-0007, AGS3-D-0018): core owns these former skill files. A removal is allowed only while the skill
+// path is absent and core holds the file, so a copy left in the skill or a lost core file is still reported.
+const MOVED_TO_CORE = Object.freeze({
+  "skills/coordinate-subagents/references/model-routing-presets.json": "runtime/model-routing-presets.json",
+  "skills/korean-prose-editor/resources/glossary.seed.jsonl": "runtime/korean-prose-glossary/glossary.seed.jsonl",
+  "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3": "runtime/korean-prose-glossary/korean-prose-glossary.sqlite3",
+});
+function movedToCore(relative) {
+  if (!Object.hasOwn(MOVED_TO_CORE, relative)) return false;
+  const present = path => { try { readFileBytes(join(ROOT, path)); return true; } catch (error) { if (error?.code !== "ENOENT") throw error; return false; } };
+  return !present(relative) && present(MOVED_TO_CORE[relative]);
+}
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
 // Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes, or
 // reviewed successor bytes that project onto them.
@@ -432,7 +503,8 @@ export function checkPurposeChangeSources() {
   const errors = [];
   for (const relative of [...Object.keys(PURPOSE_CHANGE_SUCCESSOR.hashes), ...Object.keys(PURPOSE_CHANGE_SUCCESSOR.additions)]) {
     let bytes;
-    try { bytes = readFileBytes(join(ROOT, relative)); }
+    // A later reviewed guidance successor stands for the exact purpose-change bytes it replaced.
+    try { bytes = beforeMultiWorkflowGuidance(relative, readFileBytes(join(ROOT, relative))); }
     catch (error) {
       if (error?.code !== "ENOENT") throw error;
       errors.push(`purpose change source missing: ${relative}`); continue;
@@ -472,7 +544,7 @@ function projectRetiredChanges(base, paths) {
   return paths.filter(relative => {
     if (Object.hasOwn(PURPOSE_CHANGE_SUCCESSOR.hashes, relative) || Object.hasOwn(PURPOSE_CHANGE_SUCCESSOR.additions, relative)) {
       try {
-        if (matchesPurposeChange(relative, readFileBytes(join(ROOT, relative)))) return changedBetween(base, PURPOSE_CHANGE_SUCCESSOR.baselineRevision, relative);
+        if (matchesPurposeChange(relative, beforeMultiWorkflowGuidance(relative, readFileBytes(join(ROOT, relative))))) return changedBetween(base, PURPOSE_CHANGE_SUCCESSOR.baselineRevision, relative);
       } catch (error) { if (error?.code !== "ENOENT") throw error; }
     }
     const retirement = retirementFor(relative);
@@ -513,10 +585,22 @@ function beforeMultiWorkflowGuidance(relative, bytes) {
   return beforeMultiWorkflowGuidance(relative, projected);
 }
 
+/**
+ * Projects exact reviewed successors onto their predecessors until none applies. A guidance successor can follow the
+ * purpose change (3.9.0 rewords model-effort-advisor and coordinate-subagents after it), so neither order is fixed.
+ */
+function beforeReviewedSuccessors(relative, bytes) {
+  for (;;) {
+    const projected = beforeMultiWorkflowGuidance(relative, beforePurposeChange(relative, bytes));
+    if (projected.equals(bytes)) return projected;
+    bytes = projected;
+  }
+}
+
 /** Reads a file as the pinned checks see it: a reviewed guidance successor reads as its exact predecessor. */
 function readFileSync(path, encoding) {
   const relative = relativePath(ROOT, String(path)).replaceAll("\\", "/");
-  const projected = beforeMultiWorkflowGuidance(relative, beforePurposeChange(relative, readTracked(path, relative)));
+  const projected = beforeReviewedSuccessors(relative, readTracked(path, relative));
   return encoding ? projected.toString(typeof encoding === "string" ? encoding : encoding.encoding) : projected;
 }
 const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
@@ -1419,7 +1503,7 @@ export function readHistoricalSource(relative) {
 
 /** Test hook: whether the bytes are the reviewed skill policy wording successor. */
 export function matchesSkillPolicyWordingSuccessorBytes(path, bytes) {
-  bytes = beforeMultiWorkflowGuidance(path, beforePurposeChange(path, bytes));
+  bytes = beforeReviewedSuccessors(path, bytes);
   return matchesSkillPolicyWordingSuccessor(path, bytes)
     || (Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path) && matchesPreflightPrivatePreparationChain(path, bytes));
 }
@@ -1800,6 +1884,7 @@ export function checkSkillContextOptimization() {
       }
     }
     if (skillId === "model-effort-advisor") allowed.add("skills/model-effort-advisor/scripts/support-guard.mjs");
+    for (const movedPath of Object.keys(MOVED_TO_CORE)) if (movedPath.startsWith(`skills/${skillId}/`) && movedToCore(movedPath)) allowed.add(movedPath);
     if (skillId === "orchestrator") {
       allowed.add("skills/orchestrator/references/mcp-execution.md");
       for (const name of Object.keys(ENGINEERING_REFERENCES)) {

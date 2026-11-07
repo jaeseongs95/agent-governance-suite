@@ -27,6 +27,36 @@
       ],
       "sourceRevision": "a50fbc2c20c20f52dd59643bb929b5b4c88d6f3a",
       "observation": "공통 접수 기준을 전달 경로별 책임에 맞게 줄이고 행동 전 확인 다섯 항목으로 묶었다. 범용 스킬의 대상 목록·참고 문서를 분야 중립 표현으로 바꿨다. 원 평가 fixture·예산·라벨은 바꾸지 않는다."
+    },
+    {
+      "defectIds": [
+        "AGS3-D-0038"
+      ],
+      "sourceRevision": "d53a0eaab10539ca22b52ab46a615ac04de38f6f",
+      "commits": [
+        "c90c78ca115a430d11b0d69f2f47070cdb126ddd",
+        "c67607042e97b68f01b3788f966108ef75d38e2c",
+        "8e5f34556b306a94b855c49a9890a1b8f17b0a4c",
+        "6b87904e501b33fce76aec4632323b3f21528014",
+        "e915f866a66b626557ba4776185eff8e9aa4edf1",
+        "e885dc901682d0670e4bb743ba6b29b1125fef8e",
+        "d53a0eaab10539ca22b52ab46a615ac04de38f6f"
+      ],
+      "observation": "범용 스킬 참고 문서의 분야 한정 낱말(구현·테스트·diff·CLI·브랜치 등)을 분야 중립 낱말로 바꿨다. 줄은 옮기지 않아 모든 span이 같은 줄 경계를 유지하고 digest와 줄 끝 byte만 다시 맞췄다. 선택 문구가 바뀐 span: acceptance-evidence-validator:exclusions[5](테스트→시험), blocker-diagnostician:exclusions[6](diff→변경분), evaluation-validity-auditor:applicability[2](CLI→검사 스크립트), independent-audit-gate:exclusions[6](diff·테스트→변경분·시험)은 낱말만 바뀌었다. 적용 범위가 넓어진 span: iteration-frame-auditor:exclusions[3](구현→구현·제작), iteration-frame-auditor:exclusions[4](구현 결과·구현 actor→작업 결과·작업자 actor), session-board:applicability[3](main 병합·push를 공유 상태 반영의 예로 바꾸고 Git이 아닌 작업 폴더도 포함), coordinate-subagents:applicability[4]·exclusions[3]·exclusions[4](implementation delegation→work delegation). 통합 뒤 남은 네 문장(evaluation-validity-auditor 고정 schema·코드, orchestrator capability 제외 문장, session-board repo 필드 설명, prompt-engineering 인용 제목은 검사기에서 인용 이름으로 처리)도 같은 기준으로 맞췄고 해당 span 선택 문구는 그대로다. coordinate-subagents 원문은 provider-retention 목적 변경 표에서 현재 바이트로 결속한다."
+    },
+    {
+      "defectIds": [
+        "AGS3-D-0058"
+      ],
+      "sourceRevision": "6a3137256217d6658dc5bb406685bb6c67842caf",
+      "observation": "model-effort-advisor SKILL.md 마지막 문단에서 저위험·하한 한정어를 뺐다. 분류 span(줄 3·13·17·18-19)의 선택 문구는 그대로이고 digest만 바뀌었다. 이 원문은 provider-retention 목적 변경 표에서 현재 바이트로 결속한다."
+    },
+    {
+      "defectIds": [
+        "AGS3-D-0062"
+      ],
+      "sourceRevision": "8ff0fc37bb17f7dfe8446baa9dace85b296d965b",
+      "observation": "mutation-risk-preflight SKILL.md 끝에 직접 호출 절을 더하고 entry-details 절차 1·5·6을 바꿨다. 분류 span(줄 3·13·22-31·33)의 선택 문구는 그대로이고 digest만 바뀌었다."
     }
   ],
   "fixtureFileRewritten": false,
@@ -37,7 +67,7 @@
     {
       "path": "skills/acceptance-evidence-validator/classification.json",
       "previousDigest": "sha256:4ce9af6edc26969b41c776135e591bc0674f5d366445207083baf73d2899aff7",
-      "digest": "sha256:9a7834459843cd6c945f40fa11869610cebce2a62a251cd33edde3db211dbef0",
+      "digest": "sha256:4667c120a88582c292863a36d4406e68d54f3e4eb2286082ad00d4cc1e03cd1c",
       "bytes": 3942
     },
     {
@@ -51,6 +81,114 @@
       "previousDigest": "sha256:1e1bddfaa4c294815a2ab2da4b071ecd2281a72c7b1e8f7bc72bb5ac585a6c71",
       "digest": "sha256:9ee68b514bd98613dc37bb1fbabe5616f452035470dd40409e1b951c7c6b71d2",
       "bytes": 6044
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+      "previousDigest": "sha256:34b8087c91fbd8b253e8753b62c5216c8a75d65dd40f0952b0929c87456d1a81",
+      "digest": "sha256:aa2a6feb72601bb9f660c9e561fd5772d1e8c7e767b7c56c9e11655c47a8d343",
+      "bytes": 2853
+    },
+    {
+      "path": "skills/blocker-diagnostician/classification.json",
+      "previousDigest": "sha256:84fefbfb294d72598f48b1c63832f7e3594bcec7caef899b1b0c595ddadabbce",
+      "digest": "sha256:d406a448dc61ddfe51db6d715cee4c492e42a4204a77888bf0e3350a9c8ed762",
+      "bytes": 3078
+    },
+    {
+      "path": "skills/blocker-diagnostician/references/entry-details.md",
+      "previousDigest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01",
+      "digest": "sha256:97eba0cfb2b0ac8e8116c2f8c8e2adca5ae3982530c26c6f46bc103b13357da1",
+      "bytes": 4852
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/classification.json",
+      "previousDigest": "sha256:9c3a46c657096918959313cf29ea86482a0d893e381f1b10348c482dee2ca01b",
+      "digest": "sha256:53aa8cb62e1caf1972224de5d8b1cdc80e4e4687f3f0fec467f7db59371aabf7",
+      "bytes": 1584
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+      "previousDigest": "sha256:3788c88d6522139cdbd18c34a2386b0706d0ecf3fe47f51824708c01e289b184",
+      "digest": "sha256:80150164f5027060fc0bc0b6b38ebdfb3636d565677430fe56bf6452eee6506b",
+      "bytes": 3277
+    },
+    {
+      "path": "skills/independent-audit-gate/classification.json",
+      "previousDigest": "sha256:815aacf8b682844c54f8d1ddd14401aa422b169a3e890f607e4056ec1e0fe3ea",
+      "digest": "sha256:95dc4179c5f20b705957f236b377c5356cce183906fbaeb37745695a658e8332",
+      "bytes": 3638
+    },
+    {
+      "path": "skills/independent-audit-gate/references/audit-protocol.md",
+      "previousDigest": "sha256:1d6e57296f14bdc0f99d2b7bcf02d5dfeb8becef8f268532a2204e0ddf0b2d3a",
+      "digest": "sha256:f76af34c1f01d278550cdffc80b938ad76220668f16022ef687cbc18b63fff6c",
+      "bytes": 12083
+    },
+    {
+      "path": "skills/independent-audit-gate/references/entry-details.md",
+      "previousDigest": "sha256:35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a",
+      "digest": "sha256:723250bab67020e2d5d35461266cb2d0bc6c579606748b7f952fa3e3e82d5b88",
+      "bytes": 9056
+    },
+    {
+      "path": "skills/independent-audit-gate/references/orchestrator-integration.md",
+      "previousDigest": "sha256:ab82ba48be44d622dbed30412712ba4138e22e87f1bede5c82adb78b370782f0",
+      "digest": "sha256:f44ddb31071f86b7c6974a2b1008c7ebe2131fbb4b35d8d39fa3a224039ac207",
+      "bytes": 4843
+    },
+    {
+      "path": "skills/iteration-frame-auditor/classification.json",
+      "previousDigest": "sha256:2b418a3da47aa4b07170cfb4b357a54a98a4b7747b3c9385b4158bddf948730f",
+      "digest": "sha256:b8e50685024cbc3c9be4d37141ae377aa9aa383e1fcd511ddb59d029d04c7063",
+      "bytes": 3366
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "previousDigest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+      "digest": "sha256:3e48e57f226faa44deaaaa72bd55d82c80598b29d92dc80087c091b4d2e4d35d",
+      "bytes": 3213
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "previousDigest": "sha256:65647ea80f4d7546f76f8691def730b240ca2e8a892aeb69cfd10d855ff1f557",
+      "digest": "sha256:f029843b9eb899e3aa47f732db76476ba557e7f5d4604db6229fd260ca8acbc1",
+      "bytes": 5422
+    },
+    {
+      "path": "skills/mutation-risk-preflight/classification.json",
+      "previousDigest": "sha256:d4ec110556065740a3469c894f48781ac673a13c46cd46bf8e75fe953f92fdff",
+      "digest": "sha256:57535b32573ddc20846c419ce6c40700436e2e5b162b6ec5bcb97a29f1d6902a",
+      "bytes": 1840
+    },
+    {
+      "path": "skills/orchestrator/references/entry-details.md",
+      "previousDigest": "sha256:bb5cc33814cf9e83a6255e40bc368937e40b7123990bc9507818cd9f906f8d85",
+      "digest": "sha256:423e73afae8256f9834d149967aba3c818ef896597b08a3dd7c7fd67ae41cc20",
+      "bytes": 25125
+    },
+    {
+      "path": "skills/recovery-strategy-selector/classification.json",
+      "previousDigest": "sha256:cbf6dda5aca35fe316599f673c0ab09f9915af931f0cc0c41e386cc8d473b7d4",
+      "digest": "sha256:18879dd13ad1211d37bde3d4f8b24431e593947278cd0277f97d4c0c6500ada7",
+      "bytes": 2917
+    },
+    {
+      "path": "skills/recovery-strategy-selector/references/entry-details.md",
+      "previousDigest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a",
+      "digest": "sha256:27a03ac5e76c4d0ed75c2b7389ce10e7b1ae5bfa5b9219a32f8b8466aadc0b49",
+      "bytes": 3419
+    },
+    {
+      "path": "skills/session-board/classification.json",
+      "previousDigest": "sha256:858968497e4d721fb34328db0ac67b3d27c19d97fe7bf9837b4ccfc4f6653e8a",
+      "digest": "sha256:b5ba10e642f740e0b40acab750c0909a88bfc6de2bfe5b24388863cd6334d63c",
+      "bytes": 2817
+    },
+    {
+      "path": "skills/session-board/references/entry-details.md",
+      "previousDigest": "sha256:4c0571608a124e96da1b27510a8c42775b3c84396c46abb11a915f57f103a196",
+      "digest": "sha256:7120d21bac24b73f86222a213aaeb269d2603e6ab946a28f37a8856f991cf676",
+      "bytes": 4463
     }
   ]
 }

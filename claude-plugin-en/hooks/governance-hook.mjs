@@ -2,17 +2,21 @@
 // Claude Code PreToolUse entry for every AGS tool. Other events use their existing launchers.
 import { mkdirSync, readFileSync, writeSync } from "node:fs";
 import path from "node:path";
-import { types } from "node:util";
 
-function reportLauncherFailure(stage, cause) {
-  try {
-    let code;
-    if (cause && (typeof cause === "object" || typeof cause === "function") && !types.isProxy(cause)) {
-      const descriptor = Object.getOwnPropertyDescriptor(cause, "code");
-      if (descriptor && "value" in descriptor && typeof descriptor.value === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(descriptor.value)) code = descriptor.value;
-    }
-    writeSync(2, `[agent-governance-suite] launcher-failure ${JSON.stringify({ launcher: "governance-hook", stage, ...(code ? { code } : {}) })}\n`);
-  } catch { /* Diagnostic failure cannot change the nonzero verdict. */ }
+const LAUNCHER = "governance-hook";
+
+// One stderr format for every product diagnostic (AGS3-D-0023): the shared runtime writes the record; a package
+// missing that module still reports the failed stage in the same one-line {component, event} format.
+const diagnostics = await import("../runtime/diagnostic-record.mjs").catch(() => null);
+
+/** Names the failed launcher stage with a bounded code; never messages, paths or input. */
+function reportLauncherFailure(stage, cause, observed = {}) {
+  if (diagnostics) {
+    diagnostics.writeStageFailure(LAUNCHER, "launcher-failure", stage, cause, observed);
+    return;
+  }
+  try { writeSync(2, `${JSON.stringify({ component: LAUNCHER, event: "launcher-failure", stage, reason: "DIAGNOSTIC_RUNTIME_UNAVAILABLE" })}\n`); }
+  catch { /* A broken diagnostic sink cannot block the host. */ }
 }
 
 let stage = "stdin";

@@ -32,7 +32,7 @@
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 1,
       "endLine": 1,
-      "digest": "sha256:35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a",
+      "digest": "sha256:723250bab67020e2d5d35461266cb2d0bc6c579606748b7f952fa3e3e82d5b88",
       "startByte": 0,
       "endByte": 26
     },
@@ -40,7 +40,7 @@
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 4,
       "endLine": 4,
-      "digest": "sha256:35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a",
+      "digest": "sha256:723250bab67020e2d5d35461266cb2d0bc6c579606748b7f952fa3e3e82d5b88",
       "startByte": 0,
       "endByte": 101
     },
@@ -48,7 +48,7 @@
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 7,
       "endLine": 7,
-      "digest": "sha256:35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a",
+      "digest": "sha256:723250bab67020e2d5d35461266cb2d0bc6c579606748b7f952fa3e3e82d5b88",
       "startByte": 0,
       "endByte": 161
     }
@@ -82,7 +82,7 @@
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a",
+      "digest": "sha256:723250bab67020e2d5d35461266cb2d0bc6c579606748b7f952fa3e3e82d5b88",
       "startByte": 0,
       "endByte": 140
     },
@@ -90,7 +90,7 @@
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 5,
       "endLine": 5,
-      "digest": "sha256:35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a",
+      "digest": "sha256:723250bab67020e2d5d35461266cb2d0bc6c579606748b7f952fa3e3e82d5b88",
       "startByte": 0,
       "endByte": 194
     },
@@ -98,7 +98,7 @@
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 6,
       "endLine": 6,
-      "digest": "sha256:35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a",
+      "digest": "sha256:723250bab67020e2d5d35461266cb2d0bc6c579606748b7f952fa3e3e82d5b88",
       "startByte": 0,
       "endByte": 308
     },
@@ -106,15 +106,15 @@
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 8,
       "endLine": 8,
-      "digest": "sha256:35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a",
+      "digest": "sha256:723250bab67020e2d5d35461266cb2d0bc6c579606748b7f952fa3e3e82d5b88",
       "startByte": 0,
-      "endByte": 178
+      "endByte": 180
     },
     {
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 19,
       "endLine": 19,
-      "digest": "sha256:35b187b6351a72930ccc859fda06e416371ff60cb2c35832bce7ed2ee776d46a",
+      "digest": "sha256:723250bab67020e2d5d35461266cb2d0bc6c579606748b7f952fa3e3e82d5b88",
       "startByte": 0,
       "endByte": 231
     }

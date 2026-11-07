@@ -83,6 +83,6 @@ fresh Judge를 만들 수 없으면 reviewer를 Judge로 재사용하지 않는�
 
 `DecisionRecord.v1`과 Judge dossier에는 raw reviewer/Judge output, raw chain-of-thought, 내부 프롬프트, 대화 transcript, 비밀 또는 불필요한 개인 데이터를 저장하지 않는다. schema와 validator가 기계적으로 확인하는 것은 명시적 금지 필드 부재와 record shape다. briefing·dossier 경계와 자유문자열 안의 개인정보·raw output 배제는 Coordinator의 절차 의무이며 기계적으로 증명하지 않는다. keyword 검사로 프라이버시를 보장하거나, 이 프로토콜만으로 플랫폼의 외부 저장을 부정할 수는 없다.
 
-worker ID, 격리, blind Round 1, 참여 단계와 freshness는 Coordinator가 기록한다. validator는 이 필드의 내부 일관성을 확인하고 live eval runner는 실제 spawn·completion의 aggregate count, 실행 중 ID 집합, 관찰 가능한 Judge 생성 순서를 대조한다. 이는 플랫폼에 결속된 participant identity, 숨은 시스템 지시 또는 실제 격리의 외부 증명이 아니다.
+worker ID, 격리, blind Round 1, 참여 단계와 freshness는 Coordinator가 기록한다. validator는 이 필드의 내부 일관성을 확인하고 live eval 하네스는 실제 spawn·completion의 aggregate count, 실행 중 ID 집합, 관찰 가능한 Judge 생성 순서를 대조한다. 이는 플랫폼에 결속된 participant identity, 숨은 시스템 지시 또는 실제 격리의 외부 증명이 아니다.
 
 `DecisionRecord.v1`은 선택적 로컬 실행 기록이다. 외부 orchestration은 [integration contract](integration-contract.md)에 따라 이를 검증된 뒤에도 비신뢰 입력으로 취급하고 자체 권한, lifecycle과 handoff를 관리한다.

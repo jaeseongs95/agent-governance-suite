@@ -40,8 +40,8 @@ OBSERVED는 실제 출력 기록이 있을 때만 사용한다. run은 후보 di
 node skills/prompt-engineering/scripts/check-report.mjs --request REQUEST.json --report REPORT.json
 ```
 
-검사는 `valid`, `errors`, `validationScope: structure-and-binding-only`를 반환한다. 구조·요구 ID·출처의 선언된 참조·후보 텍스트 digest·요청 결속을 검사한다. 참조 파일을 자동 열거나 외부 모델을 호출하지 않는다. 실제 자료의 존재·진위·의미 보존·평가 공정성·주장의 강도는 이 CLI의 검증 범위가 아니다.
+검사는 `valid`, `errors`, `validationScope: structure-and-binding-only`를 반환한다. 구조·요구 ID·출처의 선언된 참조·후보 텍스트 digest·요청 결속을 검사한다. 참조 파일을 자동 열거나 외부 모델을 호출하지 않는다. 실제 자료의 존재·진위·의미 보존·평가 공정성·주장의 강도는 이 검사 스크립트의 검증 범위가 아니다.
 
-MCP는 정식 workflow의 descriptor outputSchema와 stateMapping을 사용한다. 이 CLI가 MCP provider semantic validator로 자동 등록되지는 않는다. CLI 결과가 필요한 작업에서는 명시적으로 실행하고 결과를 기존 검증 증거로 연결하라.
+MCP는 정식 workflow의 descriptor outputSchema와 stateMapping을 사용한다. 이 검사 스크립트가 MCP provider semantic validator로 자동 등록되지는 않는다. 검사 스크립트 결과가 필요한 작업에서는 명시적으로 실행하고 결과를 기존 검증 증거로 연결하라.
 
 정식 workflow는 외부 artifact `task:prompt-engineering-request`를 제공하고 required capability에 `prompt-engineering`을 포함한다. 기존 task 계약·권한·위험/수용/감사 단계는 유지한다. provider의 passed는 이 전문 단계 완료만 나타내며 실제 모델 평가·배포 승인이 아니다.

@@ -13,7 +13,11 @@ function hostText(key, params = {}) {
   return Object.keys(params).length ? `${key} ${JSON.stringify(params)}` : key;
 }
 
-const presets = JSON.parse(readFileSync(new URL("../references/model-routing-presets.json", import.meta.url), "utf8"));
+// The routing catalog is shared AGS runtime data beside this skill. A skill folder copied alone has no bundled catalog:
+// it still resolves host-supported, user and inherited settings, and `--presets` supplies adapter data explicitly.
+const bundledPresets = fileURLToPath(new URL("../../../runtime/model-routing-presets.json", import.meta.url));
+const presets = existsSync(bundledPresets) ? JSON.parse(readFileSync(bundledPresets, "utf8")) : {};
+const fallbackProfile = presets.default_profile ?? "balanced";
 const defaultRoles = Object.freeze(["discovery", "general-implementation", "complex-reasoning", "independent-audit"]);
 
 // The message is a catalog key rendered only on failure.
@@ -64,7 +68,6 @@ function resolveSupportedSetting(setting, options, currentPresets = presets) {
   const resolvedModel = providerEntry?.catalog
     ? resolveCatalogModel(providerEntry.catalog, setting.model, { allowProfileKeys: true })
     : setting.model;
-  if (providerEntry?.catalog && !resolvedModel) return null;
   const directCapability = options.supported.find((item) => item.model === setting.model);
   const canonicalCapability = !directCapability && resolvedModel && resolvedModel !== setting.model
     ? options.supported.find((item) => item.model === resolvedModel)
@@ -81,15 +84,6 @@ function resolveSupportedSetting(setting, options, currentPresets = presets) {
     ?? (resolvedModel ? providerEntry?.minimum_efforts?.[resolvedModel] : undefined)
     ?? catalogEntry?.minimum_effort;
   if (minimum && efforts.indexOf(setting.effort) < efforts.indexOf(minimum)) return null;
-  if (
-    options.highRisk && (
-      classes.indexOf(capability.modelClass) < classes.indexOf(HIGH_RISK_MINIMUM.modelClass)
-      || (catalogEntry && classes.indexOf(catalogEntry.model_class) < classes.indexOf(HIGH_RISK_MINIMUM.modelClass))
-      || efforts.indexOf(setting.effort) < efforts.indexOf(HIGH_RISK_MINIMUM.reasoningEffort)
-    )
-  ) {
-    return null;
-  }
   return { model: capability.model, effort: setting.effort };
 }
 
@@ -109,7 +103,7 @@ function validateOptions(options, currentPresets = presets) {
   }
   check(currentRoles.includes(options.role), "skillTools.modelRouting.unknownRole");
   check(options.role !== "independent-audit" || options.highRisk, "skillTools.modelRouting.auditNeedsHighRisk");
-  check(["economy", "balanced", "quality"].includes(options.profile ?? currentPresets.default_profile ?? presets.default_profile), "skillTools.modelRouting.unknownProfile");
+  check(["economy", "balanced", "quality"].includes(options.profile ?? currentPresets.default_profile ?? fallbackProfile), "skillTools.modelRouting.unknownProfile");
   check(options.inheritOnly === undefined || typeof options.inheritOnly === "boolean", "skillTools.modelRouting.inheritOnlyBoolean");
   check(options.inheritanceSupported === undefined || typeof options.inheritanceSupported === "boolean", "skillTools.modelRouting.inheritanceSupportedBoolean");
   if (options.user) {
@@ -120,29 +114,39 @@ function validateOptions(options, currentPresets = presets) {
 }
 
 // This checks a supplied host capability snapshot; it does not discover capabilities or launch workers.
+// Model class and effort only order recommendations. Any combination the host supports stays selectable, so a user
+// choice, an inherited setting or an unregistered or lightweight model is never refused for its class or effort.
 export function resolveModelSelection(options, customPresets = presets) {
   const currentPresets = activePresets(customPresets);
   validateOptions(options, currentPresets);
   const provider = Object.hasOwn(currentPresets.providers ?? {}, options.provider)
     ? currentPresets.providers[options.provider]
     : null;
-  const profile = options.profile ?? currentPresets.default_profile ?? presets.default_profile;
-  let recommendation = provider?.profiles?.[profile]?.[options.role];
+  const profile = options.profile ?? currentPresets.default_profile ?? fallbackProfile;
+  const roleRecommendation = provider?.profiles?.[profile]?.[options.role];
+  // High-risk work first tries the shared recommendation (HIGH_RISK_MINIMUM), then the role's own preset.
+  let recommendation = roleRecommendation;
   if (recommendation && options.highRisk) {
     if (classes.indexOf(recommendation.model_class) < classes.indexOf(HIGH_RISK_MINIMUM.modelClass)) {
-      recommendation = provider.profiles[profile]["general-implementation"];
+      recommendation = provider.profiles[profile]["general-implementation"] ?? recommendation;
     }
     if (efforts.indexOf(recommendation.effort) < efforts.indexOf(HIGH_RISK_MINIMUM.reasoningEffort)) {
       recommendation = { ...recommendation, effort: HIGH_RISK_MINIMUM.reasoningEffort };
     }
   }
-  const baseline = recommendation ?? options.inherited;
-  const requested = baseline || options.user
+  const request = (baseline) => baseline || options.user
     ? { model: options.user?.model ?? baseline?.model ?? null, effort: options.user?.effort ?? baseline?.effort ?? null }
     : null;
-  const explicitSelection = !options.inheritOnly ? resolveSupportedSetting(requested, options, currentPresets) : null;
-  if (explicitSelection) {
-    return { requested, selection: explicitSelection, delivery: "explicit", fallbackReason: null };
+  const requested = request(recommendation ?? options.inherited);
+  const candidates = recommendation === roleRecommendation ? [requested] : [requested, request(roleRecommendation)];
+  if (!options.inheritOnly) {
+    for (const [index, candidate] of candidates.entries()) {
+      const selection = resolveSupportedSetting(candidate, options, currentPresets);
+      if (selection) {
+        return { requested, selection, delivery: "explicit",
+          fallbackReason: index === 0 ? null : hostText("skillTools.modelRouting.reasonCombinationUnavailable") };
+      }
+    }
   }
   const inheritedSelection = resolveSupportedSetting(options.inherited, options, currentPresets);
   if (inheritedSelection) {
@@ -151,10 +155,10 @@ export function resolveModelSelection(options, customPresets = presets) {
       fallbackReason: options.inheritOnly ? hostText("skillTools.modelRouting.reasonInheritanceRequired") : hostText("skillTools.modelRouting.reasonCombinationUnavailable"),
     };
   }
-  if (!options.highRisk && options.inheritanceSupported && !options.inherited) {
+  if (options.inheritanceSupported && !options.inherited) {
     return { requested, selection: null, delivery: "inherited", fallbackReason: hostText("skillTools.modelRouting.reasonSettingsNotObservable") };
   }
-  return { requested, selection: null, delivery: "blocked", fallbackReason: hostText("skillTools.modelRouting.reasonNoFloor") };
+  return { requested, selection: null, delivery: "blocked", fallbackReason: hostText("skillTools.modelRouting.reasonNoSupportedConfiguration") };
 }
 
 // Observations are caller-visible evidence, not cryptographic execution attestation.

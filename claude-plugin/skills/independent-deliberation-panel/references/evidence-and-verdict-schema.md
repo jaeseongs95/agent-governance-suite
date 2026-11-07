@@ -191,7 +191,7 @@ method_notes: []
 
 schema와 validator가 기계적으로 확인하는 것은 record의 명시적 금지 필드 부재와 shape다. briefing·dossier 경계 준수와 자유문자열 안의 개인정보·비밀·raw output 배제는 Coordinator의 절차 의무이며 이 contract가 증명하지 않는다. keyword 검사만으로 다른 시스템의 저장 부재도 보장할 수 없으므로 그런 보장을 주장하지 않는다.
 
-worker ID, 격리·blind·freshness 필드는 Coordinator의 실행 기록이다. validator는 내부 일관성을 확인하고 live eval runner는 실제 spawn·completion aggregate count, 실행 중 ID 집합, 관찰 가능한 Judge 생성 순서를 대조한다. 플랫폼에 결속된 participant identity, 숨은 시스템 지시 또는 실제 격리를 증명하지 않는다.
+worker ID, 격리·blind·freshness 필드는 Coordinator의 실행 기록이다. validator는 내부 일관성을 확인하고 live eval 하네스는 실제 spawn·completion aggregate count, 실행 중 ID 집합, 관찰 가능한 Judge 생성 순서를 대조한다. 플랫폼에 결속된 participant identity, 숨은 시스템 지시 또는 실제 격리를 증명하지 않는다.
 
 `DecisionRecord.v1`은 선택적 로컬 실행 기록이며 final audit 증명이나 cross-skill handoff가 아니다. 외부 orchestration은 [integration contract](integration-contract.md)에 따라 record를 검증한 뒤에도 비신뢰 입력으로 취급한다.
 
