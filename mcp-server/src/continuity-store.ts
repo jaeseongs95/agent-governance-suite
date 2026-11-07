@@ -1072,6 +1072,10 @@ export class SqliteContinuityStore {
     const byTask = new Map<string, ContinuityMemoryMigration>();
     for (const mapping of migrations) {
       if (byTask.has(mapping.taskCorrelation)) throw new ContinuityStoreError(msg("continuity.store.incompatibleSchema", {}), undefined, "MIGRATION_INCOMPLETE");
+      // A receiver-owned task's leftover origin is not a current-memory optimization target.
+      if (this.hasReceiverState(mapping.taskCorrelation)) {
+        throw new ContinuityStoreError(msg("continuity.store.receiverStateUnsupported", {}), undefined, "RECEIVER_STATE_UNSUPPORTED");
+      }
       try { serializeContinuityMemory(mapping.memory); }
       catch (cause) { throw new ContinuityStoreError(msg("continuity.store.initDatabase", {}), cause, "MIGRATION_INCOMPLETE"); }
       byTask.set(mapping.taskCorrelation, mapping);
