@@ -30,5 +30,5 @@ node scripts/validate-report.mjs --request failures.json --request-digest "sha25
 
 - 진단 결과를 근거로 수정, 설정 변경, 배포를 수행하지 않는다.
 - 비슷한 메시지만으로 다른 환경이나 오류 코드를 같은 cluster로 합치지 않는다.
-- 최종 diff, rollback과 릴리스 가능성을 판정하지 않는다.
+- 최종 변경분, rollback과 릴리스 가능성을 판정하지 않는다.
 - 실패한 기존 workflow의 저장된 상태나 receipt를 수정하거나 되살리지 않는다. 기존 사용자 요청·goal·프로젝트 지침이 허용한 진단·수정·재시도는 그 권한으로 계속하며, 첫 실패나 진단 결과만으로 새 계약·별도 recovery workflow·다중감사를 요구하지 않는다. 새 승인 대상 행위에는 필요한 승인을 유지한다.
