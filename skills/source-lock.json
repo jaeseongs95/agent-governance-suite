@@ -61,7 +61,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:dc49e4064387ae78238dfa119e958c5e6504a60e5c47a7ef700cb5f99cbd553b",
+      "integratedChecksum": "sha256:2607688b6e25a222ec2bbe99e15f7ef713c8fd0db4a4c189c3df3840a3eaa50f",
       "checksumScope": "relative paths and normalized text bytes under skills/workspace-convention-profiler"
     },
     {

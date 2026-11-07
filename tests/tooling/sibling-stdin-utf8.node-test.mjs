@@ -50,8 +50,9 @@ async function boundary(kind, distribution, directory) {
       check: value => { assert.equal(value.ok, true); assert.equal(value.output.taskEnvelope.objective, text); } };
   }
   if (kind === "profile-workspace") {
-    // 저장소 안의 fixture를 쓰면 자식마다 git을 네 번 띄운다. 이 경계는 Git 상태와 무관하고, Windows에서 git 시작은
-    // CPU 경합 때 한 번에 수 초까지 늘어 자식 제한 10초를 넘겼다(AGS3-D-0016). 작업 트리 밖 사본은 Git 확인 한 번만 한다.
+    // 저장소 안의 fixture를 쓰면 자식마다 git을 네 번 띄운다. 이 경계는 Git 상태와 무관하고, Windows에서 프로세스 시작은
+    // CPU 경합 때 한 번에 수 초까지 늘어 이 자식만 제한 10초를 넘겼다(AGS3-D-0016). 저장소 표식이 없는 사본에서는
+    // profile-workspace가 git을 띄우지 않으므로, 이 자식도 다른 형제처럼 node 프로세스 하나만 시작한다.
     const workspace = path.join(directory, "workspace");
     await cp(profileFixture, workspace, { recursive: true });
     return { argv: [path.join(scripts, "workspace-convention-profiler/scripts/profile-workspace.mjs")], input: profileRequest(workspace),

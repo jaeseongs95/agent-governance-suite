@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { access, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -50,8 +51,9 @@ function formatContinuityHookFailure(result) {
   const statusToken = Number.isInteger(result.status) ? String(result.status) : "null";
   const signalToken = typeof result.signal === "string" && SAFE_POSIX_SIGNALS.has(result.signal) ? result.signal : "null";
   const elapsedToken = Number.isInteger(result.elapsedMs) ? String(result.elapsedMs) : "null";
+  const limitToken = Number.isInteger(result.limitMs) ? String(result.limitMs) : "null";
   return `error=${errorToken} status=${statusToken} signal=${signalToken} stdout=${formatBoundedStream(result.stdout)} stderr=${formatBoundedStream(result.stderr)}`
-    + ` elapsedMs=${elapsedToken} earlierChildren=${JSON.stringify(result.earlierChildren ?? null)}`;
+    + ` elapsedMs=${elapsedToken} limitMs=${limitToken} earlierChildren=${JSON.stringify(result.earlierChildren ?? null)}`;
 }
 
 // Wall times of the clean-room children run before this one. A timeout then shows whether every child was slow (a slow
@@ -60,6 +62,21 @@ function summarizeElapsed(elapsed) {
   if (elapsed.length === 0) return { count: 0 };
   const sorted = [...elapsed].sort((left, right) => left - right);
   return { count: sorted.length, medianMs: sorted[Math.floor((sorted.length - 1) / 2)], maxMs: sorted.at(-1) };
+}
+
+// A host stops a hook at the timeout its manifest declares, so the hook check runs under that same limit. The codex
+// manifest of this checkout starts the bundle exactly as the smoke does (AGS3-D-0014: a 30s limit raised without a
+// cause let the check pass a hook that the host would have stopped at 10s).
+function declaredHookTimeoutMs(event, bundle) {
+  const manifest = JSON.parse(readFileSync(path.join(import.meta.dirname, "..", "hooks", "hooks.json"), "utf8"));
+  const timeouts = new Set((manifest.hooks?.[event] ?? []).flatMap(group => group.hooks ?? [])
+    .filter(hook => typeof hook.command === "string" && hook.command.includes(`/mcp-server/dist/${bundle}`))
+    .map(hook => hook.timeout));
+  const [seconds] = timeouts;
+  if (timeouts.size !== 1 || !Number.isInteger(seconds) || seconds <= 0) {
+    throw new Error(`hooks/hooks.json must declare one positive timeout for ${bundle} on ${event}.`);
+  }
+  return seconds * 1000;
 }
 
 async function assertMissing(target) {
@@ -112,7 +129,8 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = path.join(cleanRoot, "state", "messaging");
     // Runs a clean-room script (a path relative to the clean root) with the given stdin text.
     const childElapsedMs = [];
-    const runNode = (script, input, args = [], env = environment) => {
+    // Children without a host limit get 30s only so that a hung child cannot hang the smoke.
+    const runNode = (script, input, args = [], env = environment, timeout = 30_000) => {
       const started = performance.now();
       const result = spawnSync(process.execPath, [path.join(cleanRoot, ...script.split("/")), ...args], {
         cwd: cleanRoot,
@@ -120,13 +138,13 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
         env,
         input,
         maxBuffer: 5 * 1024 * 1024,
-        timeout: 30_000,
+        timeout,
         windowsHide: true,
       });
       const elapsedMs = Math.round(performance.now() - started);
       const earlierChildren = summarizeElapsed(childElapsedMs);
       childElapsedMs.push(elapsedMs);
-      return Object.assign(result, { elapsedMs, earlierChildren });
+      return Object.assign(result, { elapsedMs, limitMs: timeout, earlierChildren });
     };
 
     // Missing arguments/operation validate startup without starting a broker or relay.
@@ -186,6 +204,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     const hookResult = runNode(
       "mcp-server/dist/continuity-hook.mjs",
       `${JSON.stringify({ hook_event_name: "SessionStart", session_id: "clean-room-session", source: "startup" })}\n`,
+      [], environment, declaredHookTimeoutMs("SessionStart", "continuity-hook.mjs"),
     );
     if (hookResult.error || hookResult.status !== 0 || hookResult.stdout !== "") {
       const failure = new Error(`continuity hook failed its node_modules-free startup smoke check.\n${formatContinuityHookFailure(hookResult)}`);

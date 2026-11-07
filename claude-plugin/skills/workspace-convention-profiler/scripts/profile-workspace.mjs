@@ -115,9 +115,28 @@ function directoryEvidenceFor(directory, directories, fileLocators) {
   return { locator, digest, size: 0, kind: "directory", ref: `${locator}#${digest}` };
 }
 
+const noRepository = () => ({ vcsType: "none", currentRef: null, dirtyState: "unknown", status: [] });
+
+// Git finds a repository through a `.git` entry in the workspace or a parent directory, or through GIT_DIR/GIT_WORK_TREE.
+// With neither there is no repository to ask about, so no git process is started (AGS3-D-0016: on a busy Windows machine
+// one process start takes seconds). The walk follows the real path, as git does after changing into the directory. A
+// parent that cannot be read leaves the answer to git.
+async function mayBeInGitRepository(rootReal) {
+  if (process.env.GIT_DIR || process.env.GIT_WORK_TREE) return true;
+  for (let directory = rootReal; ; directory = path.dirname(directory)) {
+    try {
+      await lstat(path.join(directory, ".git"));
+      return true;
+    } catch (error) {
+      if (error?.code !== "ENOENT" && error?.code !== "ENOTDIR") return true;
+    }
+    if (path.dirname(directory) === directory) return false;
+  }
+}
+
 function gitInfo(root) {
   const probe = spawnSync("git", ["-C", root, "rev-parse", "--is-inside-work-tree"], { encoding: "utf8", windowsHide: true });
-  if (probe.status !== 0 || probe.stdout.trim() !== "true") return { vcsType: "none", currentRef: null, dirtyState: "unknown", status: [] };
+  if (probe.status !== 0 || probe.stdout.trim() !== "true") return noRepository();
   const ref = spawnSync("git", ["-C", root, "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8", windowsHide: true });
   const revision = spawnSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8", windowsHide: true });
   const status = spawnSync("git", ["-C", root, "status", "--porcelain=v1", "--untracked-files=all", "--", "."], { encoding: "utf8", windowsHide: true });
@@ -243,7 +262,7 @@ export async function profileWorkspace(input) {
       };
     });
     const generatedOrVendoredPaths = [...new Set(excludedDirectories)].sort();
-    const git = gitInfo(root);
+    const git = await mayBeInGitRepository(rootReal) ? gitInfo(root) : noRepository();
     const workspace = { root: portablePath(root), vcsType: git.vcsType, currentRef: git.currentRef, dirtyState: git.dirtyState };
     const evidenceIndex = [...evidence, ...directoryEvidence].map(({ locator, digest, size, kind }) => ({ locator, digest, size, kind })).sort((a, b) => a.locator.localeCompare(b.locator));
     const conventionsAs = (field) => conventions.map((item) => ({ ...item, observedPattern: item.observedPattern[field] }));
