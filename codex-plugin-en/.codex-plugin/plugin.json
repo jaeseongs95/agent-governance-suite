@@ -1,7 +1,7 @@
 {
   "id": "agent-governance-suite-en",
   "name": "agent-governance-suite-en",
-  "version": "3.8.2",
+  "version": "3.9.0",
   "description": "Route governance and engineering specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
   "author": {
     "name": "jaeseongs95",
