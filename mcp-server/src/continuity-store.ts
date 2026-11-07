@@ -7,6 +7,7 @@ import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-sta
 import { retainCleanupFailure } from "./failure-diagnostics.js";
 
 import type { ContinuityMemoryBodyV1, ContinuitySnapshotV1, LegacyContinuitySnapshotV1, StateCleanupPlanV1 } from "../../contracts/types.js";
+import { WorkflowContractError } from "../../contracts/types.js";
 import { convergenceDigest } from "./convergence-logic.js";
 import { serializeContinuityMemory } from "./continuity-memory.js";
 export { serializeContinuityMemory, CURRENT_MEMORY_MAX_BYTES } from "./continuity-memory.js";
@@ -163,6 +164,14 @@ function ownStoreError(error: unknown): ContinuityStoreError | null {
   } catch {
     return null;
   }
+}
+
+/** Domain validation is distinct from a failed SQLite operation; retain its public code after rollback. */
+function ownOperationError(error: unknown): ContinuityStoreError | WorkflowContractError | null {
+  try {
+    if (error !== null && typeof error === "object" && !types.isProxy(error) && error instanceof WorkflowContractError) return error;
+  } catch { /* Opaque failures are handled as storage failures. */ }
+  return ownStoreError(error);
 }
 
 /**
@@ -410,9 +419,18 @@ export class SqliteContinuityStore {
     let memory: ContinuityMemoryBodyV1 | null;
     try {
       memory = row.memory_json === null ? null : JSON.parse(row.memory_json) as ContinuityMemoryBodyV1;
-      if (memory !== null && serializeContinuityMemory(memory).digest !== row.memory_digest
-        || (memory === null) !== (row.memory_digest === null)) throw new Error("CURRENT_MEMORY_INTEGRITY_FAILED");
-    } catch (cause) { throw new ContinuityStoreError(msg("continuity.snapshot.digestInvalid", {}), cause, "CORRUPT_DATABASE"); }
+      if ((memory === null) !== (row.memory_digest === null)) {
+        throw new WorkflowContractError("INTEGRITY_FAILED", msg("continuity.snapshot.digestInvalid", {}), {reasonCode: "CONTINUITY_MEMORY_NULL_MISMATCH"});
+      }
+      if (memory !== null && serializeContinuityMemory(memory).digest !== row.memory_digest) {
+        throw new WorkflowContractError("INTEGRITY_FAILED", msg("continuity.snapshot.digestInvalid", {}), {reasonCode: "CONTINUITY_MEMORY_DIGEST_MISMATCH"});
+      }
+    } catch (cause) {
+      const failure = ownOperationError(cause);
+      if (failure instanceof WorkflowContractError && failure.code === "INTEGRITY_FAILED") throw failure;
+      // No row, body, raw parser message or history content is attached to this public failure.
+      throw new WorkflowContractError("INTEGRITY_FAILED", msg("continuity.snapshot.digestInvalid", {}), {reasonCode: "CONTINUITY_MEMORY_INVALID"});
+    }
     return { schemaVersion: "1.0.0", source: "direct", taskCorrelation: row.task_correlation, epoch: row.epoch,
       stateToken: row.state_token, memory,
       memoryDigest: row.memory_digest, createdAt: row.created_at, updatedAt: row.updated_at };
@@ -839,7 +857,7 @@ export class SqliteContinuityStore {
   private archiveCurrent(current: ContinuitySnapshotV1, now: string, reason: string): void {
     if (current.memory === null) return;
     const body = serializeContinuityMemory(current.memory);
-    if (body.digest !== current.memoryDigest) throw new ContinuityStoreError(msg("continuity.snapshot.digestInvalid", {}));
+    if (body.digest !== current.memoryDigest) throw new WorkflowContractError("INTEGRITY_FAILED", msg("continuity.snapshot.digestInvalid", {}), {reasonCode: "CONTINUITY_MEMORY_DIGEST_MISMATCH"});
     this.database.prepare(`INSERT INTO continuity_memory_history(task_correlation,state_token,epoch,memory_json,memory_digest,
       created_at,updated_at,archived_at,reason,format) VALUES(?,?,?,?,?,?,?,?,?,'memory-v1')`)
       .run(current.taskCorrelation, current.stateToken, current.epoch, body.json, body.digest, current.createdAt, current.updatedAt, now, reason);
@@ -857,7 +875,7 @@ export class SqliteContinuityStore {
           return operation();
         });
       } catch (cause) {
-        throw ownStoreError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
+        throw ownOperationError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
       }
     }
     // Fork adoption runs under the parent's read barrier on this same connection.
@@ -870,7 +888,7 @@ export class SqliteContinuityStore {
         this.database.exec(`RELEASE ${savepoint}`);
         return result;
       } catch (cause) {
-        const failure = ownStoreError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
+        const failure = ownOperationError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
         retainCleanupFailure(failure, "CONTINUITY_SAVEPOINT_ROLLBACK_FAILED", () => this.database.exec(`ROLLBACK TO ${savepoint}; RELEASE ${savepoint};`));
         throw failure;
       }
@@ -884,7 +902,7 @@ export class SqliteContinuityStore {
       return result;
     } catch (cause) {
       // The wrapped failure keeps its stable reason (CORRUPT_DATABASE), not only the default (D0057).
-      const failure = ownStoreError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
+      const failure = ownOperationError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
       // The primary failure wins; a failed ROLLBACK is kept only as a tagged secondary diagnostic.
       retainCleanupFailure(failure, "CONTINUITY_ROLLBACK_FAILED", () => this.database.exec("ROLLBACK;"));
       throw failure;
