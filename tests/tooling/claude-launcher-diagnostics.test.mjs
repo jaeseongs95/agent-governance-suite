@@ -42,7 +42,8 @@ function diagnostics(stderr) {
   return stderr.split(/\r?\n/u).flatMap((line) => {
     try { const record = JSON.parse(line); return record && typeof record === "object" && !Array.isArray(record) ? [record] : []; }
     catch { return []; }
-  }).filter((record) => record.event === "launcher-failure").map(({ component, event, ...rest }) => {
+  }).filter((record) => record.event === "launcher-failure").map(({ component, ...rest }) => {
+    delete rest.event;
     expect(typeof component).toBe("string");
     return { launcher: component, ...rest };
   });
