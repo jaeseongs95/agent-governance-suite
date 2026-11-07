@@ -206,17 +206,18 @@
 
 ### 로컬 task continuity
 
-컨텍스트 연속성은 전문 provider registry에 넣지 않고 기존 MCP 프로세스의 도구(`checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`)와 lifecycle Hook으로 구현했다. 처음에는 `context-continuity` 인프라 스킬로 호출 시점을 안내했으나 모델이 그 스킬을 고르지 않아 쓰이지 않았으므로 3.6.0에서 스킬을 없애고 호출 조건을 도구 설명과 턴별 hook 안내에 적었다. Workflow DB schema v6과 분리해 optional 상태는 같은 로컬 상태 디렉터리의 schema v2 `continuity.sqlite3`에 저장한다. snapshot에는 최소한 다음 내용을 포함한다.
+컨텍스트 연속성은 전문 provider registry에 넣지 않고 기존 MCP 프로세스의 도구(`checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`)와 lifecycle Hook으로 구현했다. 처음에는 `context-continuity` 인프라 스킬로 호출 시점을 안내했으나 모델이 그 스킬을 고르지 않아 쓰이지 않았으므로 3.6.0에서 스킬을 없애고 호출 조건을 도구 설명과 턴별 hook 안내에 적었다. Workflow DB schema v6과 분리한 schema v4 `continuity.sqlite3`에서 current와 history를 두 테이블로 관리한다. 압축 뒤 이어 갈 핵심 현재 상태만 유지하며 상황이 바뀌면 기존 유효 핵심을 최적화해 갱신하고 대화·로그·완료 내역을 누적하지 않는다. 현재 본문 `JSON(status/core/evidenceRefs)` 전체의 UTF-8 2000 byte는 hard 상한이며 채울 목표 분량이 아니다. core에는 다음 핵심을 담는다.
 
 - objective와 completion criteria
 - constraints와 decisions
 - progress와 evidence refs
 - blockers와 next actions
-- task correlation, epoch, revision, digest와 updated time
 
-Direct task의 resume과 compact에는 본문 없이 metadata와 서명된 restore token만 `DEFER`로 제공하며, 본문은 명시적인 `load_context` 호출에서만 반환한다. Orchestrated workflow는 기존 `TaskEnvelope`, receipt와 convergence root에서 marker와 revision·digest가 일치하는 bounded 구조 카드만 compact 뒤 한 번 `INJECT`한다. Startup은 복원하지 않고, clear는 epoch를 회전해 이전 snapshot을 억제하되 payload를 자동 삭제하지 않는다. 현재 목표나 revision과 충돌하는 snapshot은 자동 병합하지 않는다.
+Current 교체와 이전 내용의 history 보관은 같은 transaction에서 처리한다. 에이전트는 history를 조회할 수 없으며 같은 OS 사용자의 직접 DB 파일 접근은 별도 권한 격리 대상이 아니다. 자기 current는 `load_context`에 `schemaVersion`만 보내 읽고, 쓰기·삭제는 반환된 `stateToken`을 `expectedStateToken`으로 대조한다. 명시적 `purge_direct_context`는 current만 지우며 비공개 history와 workflow 원장은 삭제하지 않는다.
 
-Hook은 transcript를 읽지 않고 설치별 HMAC으로 session·turn·request 식별자를 결속한다. `checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`와 `open_convergence_root`의 correlation에는 task·epoch·도구·canonical input digest·만료 시간이 포함된 stateless token을 쓴다. Continuity 초기화나 lifecycle 처리 실패는 기존 workflow와 compaction을 막지 않는다.
+Direct task의 resume과 compact에는 기존 hook이 원자적 읽기 시점 L의 최신 current 본문을 주입한다. Codex·Claude Code의 일반 입력은 본문 없는 짧은 cue만 받으며, AGY turn0는 native ephemeral current+cue로 주입문을 durable 대화 이력에 쌓지 않는다. 호스트 수락 ACK 없이 crash 이후까지 exactly-once 전달이나 모델 첫 행동까지의 최신성을 보장하지 않으며 실제 native 시험의 호스트·이벤트별 관측 범위와 구분한다. Orchestrated workflow는 기존 `TaskEnvelope`, receipt와 convergence root에서 marker와 revision·digest가 일치하는 bounded 구조 카드 복원을 유지한다. Startup은 복원하지 않고 clear는 epoch를 회전하며, 상태 충돌은 자동 병합하지 않는다.
+
+Hook은 transcript 본문을 checkpoint에 저장하지 않고 설치별 HMAC으로 session·turn·request 식별자를 결속한다. `checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`와 `open_convergence_root`의 correlation에는 task·epoch·도구·canonical input digest·만료 시간이 포함된 stateless token을 쓴다. Continuity 초기화나 lifecycle 처리 실패는 기존 workflow와 compaction을 막지 않으며 bounded diagnostic에 원인을 구분해 남긴다.
 
 ### 종료 기준
 

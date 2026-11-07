@@ -62,11 +62,13 @@ check_for_updates { "force": false }
 
 ## 작업 연속성
 
-작업 연속성은 스킬이 아니라 MCP 도구와 lifecycle Hook으로 제공합니다. 예전 `context-continuity` 인프라 스킬은 모델이 스스로 고르지 않아 쓰이지 않았으므로 없앴고, 호출할 때를 각 도구 설명에 적었습니다. 사용자 교정, 새 결정·승인·금지, 추가 작업, 범위 변경이 생기면 그 턴에 `checkpoint_context`로 사용자 원문과 바뀐 남은 일을 저장합니다. workflow 진행 중에도 저장하며 workflow 원장을 복제하지 않습니다. 압축·재개·fork 뒤 앞의 결정·남은 일이 보이지 않으면 `inspect_context`로 후보를 확인하고 `load_context`로 정확한 후보를 불러옵니다. 턴마다 hook이 같은 도구를 안내합니다. checkpoint에는 잃으면 범위·권한·분기·검증 판단이 달라질 상태만 선별해 replacement snapshot으로 씁니다. Resume과 direct compact에서는 본문을 자동 주입하지 않고 metadata와 restore token만 제공하며, 본문은 `load_context`를 명시적으로 호출할 때만 반환합니다. Orchestrated workflow의 compact 복원은 기존 `TaskEnvelope`, receipt와 convergence root에서 투영한 bounded 구조 카드를 함께 보여 줍니다. 연속성 도구는 `skills/registry.json`과 위 전문 스킬 수에 포함되지 않습니다.
+작업 연속성은 스킬이 아니라 MCP 도구와 lifecycle Hook으로 제공합니다. 예전 `context-continuity` 인프라 스킬은 모델이 스스로 고르지 않아 쓰이지 않았으므로 없앴고, 호출할 때와 목적을 각 도구 설명·hook cue에 적었습니다. `checkpoint_context`는 압축·재개 뒤 이어 갈 핵심 현재 상태를 유지합니다. 상황이 바뀌면 목표, 최신 결정·권한·제약, 미완료·다음 행동과 필요한 실패·근거를 자율적으로 갱신합니다. 현재 행동을 바꾸는 필요한 사용자 원문과 기존 유효 핵심은 보존하되 중복·폐기·불필요한 완료 내역은 정리하고, 대화·로그·workflow 원장을 쌓아 넣지 않습니다. 변화가 없으면 불필요하게 저장하지 않습니다. 저장하는 `JSON(status/core/evidenceRefs)` 전체는 UTF-8 2000 byte 이하여야 하며, 상한을 채우는 것이 목표가 아닙니다. 연속성 도구는 `skills/registry.json`과 위 전문 스킬 수에 포함되지 않습니다.
 
-Lifecycle Hook은 raw transcript를 읽거나 저장하지 않으며 raw session·turn·request 식별자 대신 설치별 HMAC correlation을 기록합니다. `clear`는 epoch를 회전해 이전 snapshot 복원을 억제하지만 payload를 자동 삭제하지 않습니다. `suppress_context_restore`는 후보 제공만 멈추고, 명시적인 `purge_direct_context`만 direct payload를 지우고 hash tombstone을 남깁니다. Continuity DB 오류는 workflow나 compaction을 막지 않습니다.
+자기 current는 `load_context`에 `{"schemaVersion":"1.0.0"}`만 보내 읽습니다. 반환된 `stateToken`을 저장·삭제의 `expectedStateToken`에 그대로 넣으며, 상태가 바뀌어 충돌하면 최신 current를 다시 읽어 재구성합니다. 서명된 fork·workflow 후보는 제공받은 `candidateToken`으로 선택하지만 임의의 과거 버전·다른 세션·history를 조회하지는 못합니다. `clear`는 epoch를 회전하고 `suppress_context_restore`는 자동 복원을 억제합니다. 사용자 명시 삭제 요청에만 쓰는 `purge_direct_context`는 current만 지우고 hash tombstone을 남기며, 비공개 history와 workflow receipt·convergence root는 삭제하지 않습니다.
 
-Continuity snapshot의 `core`와 `evidenceRefs`는 로컬 `continuity.sqlite3`에 평문 JSON으로 저장되며 자동 만료되지 않습니다. 비밀값, 개인정보, 원시 로그·코드나 chain-of-thought를 checkpoint에 넣지 말고, DB 파일의 접근 권한과 보존 기간을 직접 관리해야 합니다.
+Resume과 direct compact에서는 기존 hook이 원자적 읽기 시점 L의 현재 메모리 본문을 주입합니다. Codex·Claude Code의 일반 사용자 입력에는 짧은 cue만 보내며 본문을 반복 주입하지 않습니다. AGY turn0는 native ephemeral current+cue를 사용해 그 주입문을 durable 대화 이력에 누적하지 않습니다. 본문이 없거나 토큰이 필요하면 `load_context`로 읽고 최신 사용자 요청과 대조합니다. Orchestrated workflow의 revision과 기존 `TaskEnvelope`, receipt·convergence root에서 투영한 bounded 구조 카드는 별도 계약을 유지합니다. 호스트 수락 ACK가 없는 상태에서 crash 이후까지 exactly-once 전달이나 모델 첫 행동까지의 최신성은 보장하지 않습니다. 실제 native 시험은 해당 호스트·후보·이벤트에서 관측한 범위로만 보고해야 합니다.
+
+Current와 history는 로컬 `continuity.sqlite3` schema v4의 `continuity_current_memory`·`continuity_memory_history`에 평문 JSON으로 저장하며, 현재 내용 교체와 이전 내용의 history 보관은 원자적으로 처리합니다. History는 에이전트 API에 노출하지 않으며, 같은 OS 사용자의 직접 파일 접근을 막는 별도 권한 격리는 없습니다. 비밀값, 개인정보, 원시 로그·코드나 chain-of-thought를 checkpoint에 넣지 말고 DB 파일 접근 권한과 보존 기간을 관리해야 합니다. Lifecycle Hook은 transcript 본문을 checkpoint에 저장하지 않고 raw session·turn·request 식별자 대신 설치별 HMAC correlation을 기록합니다. Continuity 초기화·lifecycle 실패는 workflow나 compaction을 막지 않으며, bounded diagnostic에 단계와 원인을 구분해 남깁니다.
 
 ## 검사 범위와 한계
 

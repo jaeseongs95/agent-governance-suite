@@ -58,13 +58,13 @@ run, revision, run ID sequence, 계획 서명 키, 업데이트 상태, 정리 c
 
 ## 로컬 task continuity
 
-Continuity는 같은 MCP 서버 프로세스 안의 별도 서비스이며 workflow DB와 분리된 SQLite schema v2를 사용합니다. Direct-task replacement snapshot, session epoch, compact marker, HMAC binding, hash-only 관측과 보존 기간 조회 index는 기본적으로 workflow DB 옆의 `continuity.sqlite3`에 저장합니다. Orchestrated 상태의 원장은 계속 `workflows.sqlite3`의 `TaskEnvelope`, `WorkflowReceipt`와 convergence root이고 continuity DB에는 root 결속과 marker만 둡니다.
+Continuity는 같은 MCP 서버 프로세스 안의 별도 서비스이며 workflow DB와 분리된 SQLite schema v4를 사용합니다. Direct-task current·history, session epoch, compact marker, HMAC binding, hash-only 관측과 보존 기간 조회 index는 기본적으로 workflow DB 옆의 `continuity.sqlite3`에 저장합니다. Orchestrated 상태의 원장은 계속 `workflows.sqlite3`의 `TaskEnvelope`, `WorkflowReceipt`와 convergence root이고 continuity DB에는 root 결속과 marker만 둡니다.
 
-Direct snapshot의 `core`와 `evidenceRefs`는 `continuity.sqlite3`에 평문 JSON으로 저장되고 자동 만료되지 않습니다. 호출자는 비밀값, 개인정보, 원시 로그·코드와 chain-of-thought를 checkpoint에서 제외하고 DB 파일의 접근 권한과 보존 기간을 관리합니다. `purge_direct_context`는 지정한 epoch의 direct payload와 idempotency 결과에 남을 수 있는 본문을 제거하고 hash-only tombstone만 유지하며 workflow receipt와 convergence root는 변경하지 않습니다.
+Direct 메모리는 `continuity_current_memory`와 `continuity_memory_history`로 나눕니다. 현재 본문 `JSON(status/core/evidenceRefs)` 전체에는 UTF-8 2000 byte의 hard 상한이 있으며 채울 목표 분량이 아닙니다. 갱신은 이전 현재 내용을 history에 보관하고 current를 교체하는 같은 transaction으로 처리합니다. 에이전트 API는 history를 노출하지 않지만 같은 OS 사용자의 DB 파일 직접 접근을 차단하는 별도 권한 격리는 없습니다. 본문은 평문 JSON이므로 비밀값, 개인정보, 원시 로그·코드와 chain-of-thought를 제외하고 파일 접근 권한과 보존 기간을 관리합니다. `load_context`는 `schemaVersion`만으로 자기 current와 `stateToken`을 읽으며, 쓰기·삭제는 반환된 토큰을 `expectedStateToken`으로 대조합니다. 명시적 `purge_direct_context`는 current만 지우고 hash tombstone을 남기며 비공개 history, workflow receipt와 convergence root는 삭제하지 않습니다.
 
 Codex lifecycle Hook은 MCP 준비 여부에 의존하지 않고 bundled continuity runtime을 직접 실행합니다. `PreToolUse`는 continuity 도구와 `open_convergence_root` 입력에 task correlation, epoch, 도구 이름, canonical input digest와 만료 시간을 HMAC으로 결속한 stateless token을 추가합니다. Raw session·turn·request ID와 transcript는 저장하지 않습니다.
 
-`SessionStart(resume)`과 direct-task `SessionStart(compact)`는 snapshot 본문 없이 `DEFER` 후보 metadata만 추가합니다. 본문은 token·epoch·revision·digest를 다시 검사하는 `load_context`의 tool result로만 반환됩니다. Workflow compact는 `PreCompact` marker와 현재 projection이 일치할 때 bounded 구조 카드만 한 번 `INJECT`합니다. Startup은 복원하지 않고 clear는 epoch를 회전합니다. 모든 Hook 저장 오류는 exit 0과 빈 출력으로 끝나며, MCP 서버도 continuity 초기화 실패 시 workflow를 계속 제공하고 continuity 도구에만 `CONTINUITY_UNAVAILABLE`을 반환합니다.
+`SessionStart(resume)`과 direct-task `SessionStart(compact)`는 기존 hook으로 현재 메모리 본문을 주입합니다. 최신성은 원자적 읽기 시점 L의 current를 뜻하며, 호스트 수락 ACK 없이 crash 이후까지 exactly-once 전달이나 모델 첫 행동까지의 최신성을 보장하지 않습니다. Codex·Claude Code의 일반 입력은 본문 없는 짧은 갱신 cue만 받습니다. AGY turn0는 native ephemeral current+cue 경로를 사용해 주입문을 durable 대화 이력에 누적하지 않습니다. Workflow의 revision·digest 검증과 marker에 결속된 bounded 구조 카드 복원은 유지합니다. Startup은 복원하지 않고 clear는 epoch를 회전합니다. Continuity hook 실패는 bounded diagnostic에 원인을 구분해 남기고 exit 0·빈 출력으로 통과하며, MCP 서버도 continuity 초기화 실패 시 workflow를 계속 제공하고 continuity 도구에만 `CONTINUITY_UNAVAILABLE`을 반환합니다.
 
 ## 세션 현황판
 
