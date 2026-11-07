@@ -20,8 +20,46 @@ function hostCommand(file: string, args: string[]): Promise<string> {
   });
 }
 
+const claudeNpmManifest = z.object({name: z.literal("@anthropic-ai/claude-code"),
+  bin: z.object({claude: z.literal("bin/claude.exe")})}).passthrough();
+
+/**
+ * A Windows npm install of Claude Code puts only the claude.cmd/claude.ps1 shims on PATH. execFile without a shell
+ * starts only .com/.exe names (and cmd.exe would reparse arguments), so `claude` is ENOENT there. The official shim runs
+ * its package's native bin/claude.exe; run that one exactly, when PATH names one verified installation.
+ */
+async function windowsNpmClaudeExecutable(): Promise<string | null> {
+  const matches = new Set<string>();
+  for (const directory of (process.env.PATH ?? "").split(path.delimiter)) {
+    const location = directory.replace(/^"|"$/gu, "");
+    if (!path.isAbsolute(location)) continue;
+    try {
+      const shim = await readFile(path.join(location, "claude.cmd"), "utf8");
+      if (shim.length > 64 * 1024 || !shim.replaceAll("\\", "/").includes("node_modules/@anthropic-ai/claude-code/bin/claude.exe")) continue;
+      const packageRoot = path.join(location, "node_modules/@anthropic-ai/claude-code");
+      const bytes = await readFile(path.join(packageRoot, "package.json"));
+      if (bytes.length > 64 * 1024 || !claudeNpmManifest.safeParse(JSON.parse(bytes.toString("utf8"))).success) continue;
+      const executable = await realpath(path.join(packageRoot, "bin/claude.exe"));
+      if (path.dirname(executable) !== path.join(await realpath(packageRoot), "bin")) continue;
+      matches.add(executable);
+    } catch { /* A missing or unverified npm installation is not a launch candidate. */ }
+  }
+  return matches.size === 1 ? [...matches][0]! : null;
+}
+
+/** `claude` as installed: the native executable on PATH, or on Windows the one a verified npm shim runs. */
+async function claudeCommand(args: string[]): Promise<string> {
+  try { return await hostCommand("claude", args); }
+  catch (error) {
+    if (process.platform !== "win32" || (error as {code?: unknown}).code !== "ENOENT") throw error;
+    const executable = await windowsNpmClaudeExecutable();
+    if (!executable) throw error;
+    return hostCommand(executable, args);
+  }
+}
+
 async function observeClaudeInstalledPlugin(root: string) {
-  const bytes = await hostCommand("claude", ["plugin", "list", "--json"]);
+  const bytes = await claudeCommand(["plugin", "list", "--json"]);
   const plugins = z.array(plugin).max(1000).parse(JSON.parse(bytes));
   const manifestBytes = await readFile(path.join(root, ".claude-plugin/plugin.json"));
   if (manifestBytes.length > 64 * 1024) throw new Error("HOST_PLUGIN_MANIFEST_TOO_LARGE");
