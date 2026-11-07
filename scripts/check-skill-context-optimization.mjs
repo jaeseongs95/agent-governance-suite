@@ -294,6 +294,14 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/orchestrator/references/intake.md": ["acc512bfe3a6ff383ce66d0a937a79017b4c568e59aaba1644e5a2420dd7c045", "afad5fabebd6dbc31d0f4622727a16bfa5b62ccefafa5137454352eada38b7db"],
     }),
   }),
+  Object.freeze({
+    // Canonical r35 ancestor; r36 exposes shared case preparation without changing historical budgets or oracles.
+    revision: "14a7278b396542db073e4a48314ab1cec182edf9",
+    hashes: Object.freeze({
+      "skills/orchestrator/classification.json": ["18dcd746b815d7e07d6948e2e7ed7fda064b4a2749a698f0a47b7efff657cfb1", "d49407e5fe8f6b2db407a52aedaddd90f3ba4d9ece5cc0fc2371982820647843"],
+      "skills/orchestrator/references/intake.md": ["afad5fabebd6dbc31d0f4622727a16bfa5b62ccefafa5137454352eada38b7db", "1e1bddfaa4c294815a2ab2da4b071ecd2281a72c7b1e8f7bc72bb5ac585a6c71"],
+    }),
+  }),
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
 // Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes, or
