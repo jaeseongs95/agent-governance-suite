@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 import { persistRelayFailure, recordWakeHookObservation } from "./session-message-wake-port.js";
 import { sessionMessageRequest } from "./session-message-client.js";
-import { resolveTrustDatabasePath } from "./runtime-config.js";
+import { resolveSessionMessageStateDirectory, resolveTrustDatabasePath } from "./runtime-config.js";
 import type { SessionMessageTransport } from "./session-message-relay.js";
 import type { SessionMessage } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
@@ -204,6 +204,20 @@ const RELAY_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
 function relayEnvironment(relayEnv?: Readonly<Record<string, string | undefined>>): NodeJS.ProcessEnv {
   return relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env;
 }
+
+/**
+ * AGS3-D-0064: a relay outlives its hook, so it must not keep the hook's working directory. A host can run hooks from
+ * the plugin's install folder (agy: `node ./antigravity-connector/...`), and Windows cannot remove a folder that is a
+ * live process's working directory, so a plugin update emptied the folder and then failed. The relay runs in its state
+ * directory instead; the two state paths it resolves against the working directory (runtime-config.ts) are pinned to
+ * what they mean for this hook. AGENT_GOVERNANCE_SHARED_STATE_DIR is absolute by contract.
+ */
+function relayLaunch(relayEnv?: Readonly<Record<string, string | undefined>>): { cwd: string; env: NodeJS.ProcessEnv } {
+  const env = { ...relayEnvironment(relayEnv) };
+  if (env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim()) env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = resolveSessionMessageStateDirectory(env);
+  if (env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim()) env.AGENT_GOVERNANCE_TRUST_DB_PATH = resolveTrustDatabasePath(env);
+  return { cwd: resolveSessionMessageStateDirectory(env), env };
+}
 type ClaimWithRecovery = { messages: SessionMessage[] } & RelayRecoveryHint;
 
 /** The relay installed beside this hook; its digest names the code a grant is for (D0348). */
@@ -224,17 +238,17 @@ function windowsPowerShell(): string {
 
 /** Windows: starts node with these arguments through Start-Process without -NoNewWindow, i.e. ShellExecuteEx, so the
  * process gets this process's environment and job but none of its handles. */
-function launchWithoutInheritedHandles(args: readonly string[], environment: NodeJS.ProcessEnv, timeoutMs: number,
+function launchWithoutInheritedHandles(args: readonly string[], launch: { cwd: string; env: NodeJS.ProcessEnv }, timeoutMs: number,
   done: (error: Error | null, pid?: number) => void): void {
   // PowerShell also closes a single-quoted string at U+2018-U+201B.
   const literal = (value: string) => `'${value.replace(/['\u2018\u2019\u201a\u201b]/gu, "$&$&")}'`;
   const script = `$p = Start-Process -FilePath ${literal(process.execPath)} -ArgumentList ${literal(args.map(windowsArgument).join(" "))}`
-    + " -WindowStyle Hidden -PassThru; [Console]::Out.Write($p.Id)";
+    + ` -WorkingDirectory ${literal(launch.cwd)} -WindowStyle Hidden -PassThru; [Console]::Out.Write($p.Id)`;
   const powershell = windowsPowerShell();
   try {
     // execFile accepts only an unsigned integer timeout, and 0 would mean no timeout.
     execFile(powershell, ["-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(script, "utf16le").toString("base64")],
-      { env: environment, windowsHide: true, timeout: Math.max(1, Math.floor(timeoutMs)) }, (error, stdout) => {
+      { env: launch.env, windowsHide: true, timeout: Math.max(1, Math.floor(timeoutMs)) }, (error, stdout) => {
         const pid = Number(String(stdout).trim());
         if (error) done(error);
         else if (!Number.isSafeInteger(pid) || pid < 1) done(hookFailure("LAUNCHER_PID_MISSING", "The launcher reported no process."));
@@ -275,8 +289,8 @@ export function readParentProcessId(pid: number, timeoutMs: number, platform: No
 
 /** The launcher exits before this hook does, so the host sees its hook pipes close when the hook exits. A budgeted hook
  * waits for it no longer than its remaining budget: the host would end the hook, with the launcher in its job, first. */
-function launchRelayWithoutInheritedHandles(args: readonly string[], environment: NodeJS.ProcessEnv, budget: HookBudget): void {
-  launchWithoutInheritedHandles(args, environment, budgetedTimeout(budget, RELAY_LAUNCHER_TIMEOUT_MS), (error) => {
+function launchRelayWithoutInheritedHandles(args: readonly string[], launch: { cwd: string; env: NodeJS.ProcessEnv }, budget: HookBudget): void {
+  launchWithoutInheritedHandles(args, launch, budgetedTimeout(budget, RELAY_LAUNCHER_TIMEOUT_MS), (error) => {
     if (!error) return;
     const expired = budgetExpiredOr(budget, error);
     const { code, signal } = error as { code?: unknown; signal?: unknown };
@@ -302,7 +316,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   const startToken = hostProcess?.startToken;
   const hostAliveAt = hostAliveAtBound();
   assertHookBudget(budget);
-  const environment = relayEnvironment(relayEnv);
+  const launch = relayLaunch(relayEnv);
   const relayArgs = [
     "--import", relayGuard,
     relayPath,
@@ -316,14 +330,15 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     ...(startToken ? ["--parent-start-token", startToken] : []),
   ];
   if (isolateHandles && !relayOwner && process.platform === "win32") {
-    launchRelayWithoutInheritedHandles(relayArgs, environment, budget);
+    launchRelayWithoutInheritedHandles(relayArgs, launch, budget);
     return;
   }
   const child = spawn(process.execPath, relayArgs, {
     detached: !relayOwner,
     windowsHide: true,
     stdio: "ignore",
-    env: environment,
+    cwd: launch.cwd,
+    env: launch.env,
   });
   // stdio stays ignored so a healthy detached relay never depends on this short-lived hook. An abnormal relay end
   // (module load failure, rejected arguments, early crash) is recorded by the preloaded guard inside the relay.

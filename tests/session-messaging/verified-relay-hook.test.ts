@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import path from "node:path";
 import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
@@ -13,6 +14,7 @@ import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/ho
 import { dispatchSessionMessageOperation } from "../../mcp-server/src/session-message-operations.js";
 import { hostAliveAtBound } from "../../mcp-server/src/host-process-watch.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
+import { resolveSessionMessageStateDirectory } from "../../mcp-server/src/runtime-config.js";
 
 import type { ActorObservation } from "../../mcp-server/src/input-observation.js";
 
@@ -86,6 +88,33 @@ it("uses a single non-replayed ensure grant without emitting claim observations"
     stdio: "ignore",
     env: expect.objectContaining({ ANTIGRAVITY_CSRF_TOKEN: "isolated-relay-token" }),
   });
+});
+
+// AGS3-D-0064: agy runs hooks from the plugin's install folder, and a relay that kept that working directory made a
+// Windows plugin update empty the folder and then fail. The relay runs in its state directory; the state paths it
+// resolves against the working directory keep the meaning they have for the hook.
+it("starts the relay outside the hook's working directory with its relative state paths pinned", async () => {
+  const hookDirectory = process.cwd();
+  vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", "relative-state");
+  vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", "relative-trust.sqlite3");
+  await handleSessionMessageHook(input, syntheticHost, 424242, options());
+  const launched = f.spawn.mock.calls[0]![2] as { cwd: string; env: NodeJS.ProcessEnv };
+  const state = path.resolve(hookDirectory, "relative-state");
+  expect(launched.cwd).toBe(state);
+  expect(launched.cwd).not.toBe(hookDirectory);
+  expect(launched.env).toMatchObject({ AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: state,
+    AGENT_GOVERNANCE_TRUST_DB_PATH: path.resolve(hookDirectory, "relative-trust.sqlite3") });
+  expect(process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR).toBe("relative-state");
+});
+
+it("starts the relay in the default state directory when no state path is configured", async () => {
+  vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", "");
+  vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", "");
+  await handleSessionMessageHook(input, syntheticHost, 424242, options());
+  const launched = f.spawn.mock.calls[0]![2] as { cwd: string; env: NodeJS.ProcessEnv };
+  expect(launched.cwd).toBe(resolveSessionMessageStateDirectory(launched.env));
+  expect(path.isAbsolute(launched.cwd)).toBe(true);
+  expect(launched.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR).toBe("");
 });
 
 it("어댑터가 소유한 시작 자식의 참조와 살아 있는 훅 계보를 유지한다", async () => {
