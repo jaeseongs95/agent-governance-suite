@@ -1756,15 +1756,14 @@ export function reportStageFailure(stage, cause, writeStderr = streamStderr) {
  * moved or kept on stderr and never changes the hook's result.
  */
 function runLegacyServerKeyCleanup(options) {
-  const writeStderr = options?.writeStderr ?? ((line) => process.stderr.write(line));
+  const writeStderr = options?.writeStderr ?? streamStderr;
   try {
     const report = cleanupLegacyServerKey({
       pluginRoot: fileURLToPath(new URL("../..", import.meta.url)),
       ...(options?.homeDir ? { homeDir: options.homeDir } : {}),
     });
-    if (legacyCleanupActed(report)) {
-      writeStderr(`${JSON.stringify({ component: "antigravity-connector", event: "legacy-server-key-cleanup", ...report })}\n`);
-    }
+    // AGS3-D-0023: the report goes through the shared writer like every other record of this runner.
+    if (legacyCleanupActed(report)) writeDiagnostic(COMPONENT, "legacy-server-key-cleanup", report, (line) => writeStderr(`${line}\n`));
   } catch (cause) {
     reportStageFailure("legacy-server-key-cleanup", cause, options?.writeStderr);
   }

@@ -16,9 +16,6 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
  * shrink; an entry that no longer occurs fails CB-07 so it cannot hide a later regression at the same place.
  */
 const KNOWN = new Set([
-  // WP-A (model catalog path, AGS3-D-0007).
-  "runtime/model-catalog-adapter.mjs <- ../skills/coordinate-subagents/references/model-routing-presets.json",
-  "<input> <- skills/coordinate-subagents/references/model-routing-presets.json",
   // Not yet owned: skill contract schemas imported by shared runtime, orchestrator references read by core.
   "runtime/collaboration-decision.mjs <- ../skills/orchestrator/contracts/collaboration-decision.v1.schema.json",
   "<input> <- skills/orchestrator/contracts/collaboration-decision.v1.schema.json",

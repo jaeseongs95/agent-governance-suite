@@ -354,12 +354,12 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/mutation-risk-preflight/classification.json": ["d4ec110556065740a3469c894f48781ac673a13c46cd46bf8e75fe953f92fdff", "57535b32573ddc20846c419ce6c40700436e2e5b162b6ec5bcb97a29f1d6902a"],
       "skills/mutation-risk-preflight/references/entry-details.md": ["027c08a08a559af62f945c00dab640e79deb88d6d9afe2042d1271d6ddd04f54", "05f835e73dbd23850c18bbb4753cae299d787fe3ad6c25c51a990826f9847855"],
       "skills/mutation-risk-preflight/references/recovery-requirements.md": ["eea0b3129263b17d12d7f05ecd823b6882ca35cc6211e5613431b429875e3842", "91bc05994088688a37a439b76b06b6427eae86a4734b5d6cd6ee1105418de55e"],
-      "skills/orchestrator/classification.json": ["d49407e5fe8f6b2db407a52aedaddd90f3ba4d9ece5cc0fc2371982820647843", "3a588728a9a0a77fc505349942b10343168b989c56677a34d3969611e078a365"],
+      "skills/orchestrator/classification.json": ["d49407e5fe8f6b2db407a52aedaddd90f3ba4d9ece5cc0fc2371982820647843", "3babc3ae9ac95db05b189f636504b6e1793b93f3a87ea5ec886275a57cafe43f"],
       "skills/orchestrator/references/collaboration.md": ["5f4aa4dedb3019a4c3f3515dd1fdfd03f78e136de0bded19c3b0ce46b99ce22a", "6099020a85f6ac170909163483d589e633318c4ee3df75854868b6c820e88402"],
       "skills/orchestrator/references/convergence-guard.md": ["ad162b606d35a84995b579902f523e1a0ff426b6988fddf93cf263141466aca5", "3081f282b5c458c807ef7a36251b42e0cfc16dfe6a8b6a64ce1c801e7f7d3b8c"],
       "skills/orchestrator/references/entry-details.md": ["bb5cc33814cf9e83a6255e40bc368937e40b7123990bc9507818cd9f906f8d85", "423e73afae8256f9834d149967aba3c818ef896597b08a3dd7c7fd67ae41cc20"],
       "skills/orchestrator/references/input-origin.md": ["d5375c58b657dfb35e07c465ab7220056c59af51330b24239448851463248927", "81ac4e225c2d4b50f525b90001afc95a5e2085c5c52023319597cc9d9aac034a"],
-      "skills/orchestrator/references/intake.md": ["1e1bddfaa4c294815a2ab2da4b071ecd2281a72c7b1e8f7bc72bb5ac585a6c71", "37b2c63f10da332d1371d64eecc2c76b4fbc87a65fa4c090a2e54d44c285f1dd"],
+      "skills/orchestrator/references/intake.md": ["1e1bddfaa4c294815a2ab2da4b071ecd2281a72c7b1e8f7bc72bb5ac585a6c71", "61cf157c10c870a49f32062cecccaac28b4b2b4e299591c7a6be720a06b3ff2c"],
       "skills/orchestrator/references/mcp-execution.md": ["d32a61ac3c1da7017e2f1bcc312c6e412a32de7e7107b437b53fb80574444dd1", "1f515f4c853ad49495f72b179db699ead1ce34bd849c22a646a90180aa93f9f3"],
       "skills/orchestrator/references/skill-classification.md": ["ccf0c8829325f2874447c67993f2c04edb02ea462713de10f3733eabc892c6ac", "7bb370144a5aeb3f67b7920e4d0d9ac415020ca6bc69a4816f6d39aece07ad8a"],
       "skills/orchestrator/references/specialist-handoffs.md": ["9767d9d899acdd3fabf57d094c16bf64788dddf324a1bf001d6b970d285fecd9", "2c8b01c5bad7c58446ce42ca613f866fc6fa0a97665e6dac021735978938d455"],
@@ -592,7 +592,8 @@ function beforeMultiWorkflowGuidance(relative, bytes) {
 function beforeReviewedSuccessors(relative, bytes) {
   for (;;) {
     const projected = beforeMultiWorkflowGuidance(relative, beforePurposeChange(relative, bytes));
-    if (projected.equals(bytes)) return projected;
+    // A read may hand text instead of a Buffer (an injected fs); compare the bytes either way.
+    if (Buffer.from(projected).equals(Buffer.from(bytes))) return projected;
     bytes = projected;
   }
 }
@@ -1866,8 +1867,11 @@ export function checkSkillContextOptimization() {
     for (const { hashes } of GUIDANCE_SUCCESSORS) {
       for (const [currentPath, [, successor]] of Object.entries(hashes)) {
         if (!currentPath.startsWith(`skills/${skillId}/`)) continue;
-        const digest = createHash("sha256").update(readFileBytes(join(ROOT, ...currentPath.split("/")))).digest("hex");
-        if (digest === successor) allowed.add(currentPath);
+        let bytes;
+        // A missing reference is not allowed here; the checks that pin it report it as missing.
+        try { bytes = readFileBytes(join(ROOT, ...currentPath.split("/"))); }
+        catch (error) { if (error?.code === "ENOENT") continue; throw error; }
+        if (createHash("sha256").update(bytes).digest("hex") === successor) allowed.add(currentPath);
       }
     }
     for (const currentPath of Object.keys(CONTEXT_CONTRACT_PINS.hashes)) {

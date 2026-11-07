@@ -108,7 +108,7 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
     }]);
   });
 
-  it("exposes mcp_config.json with short 'ags' server key so all 32 MCP tool names stay within Antigravity's 64-char limit (AGS-D-0322)", () => {
+  it("exposes mcp_config.json with short 'ags' server key so all 33 MCP tool names stay within Antigravity's 64-char limit (AGS-D-0322)", () => {
     const manifest = JSON.parse(readFileSync(path.join(ROOT, "plugin.json"), "utf8"));
     const mcpConfigPath = path.join(ROOT, "mcp_config.json");
     expect(existsSync(mcpConfigPath)).toBe(true);
@@ -127,7 +127,7 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
     const serverSource = readFileSync(path.join(ROOT, "mcp-server", "src", "server.ts"), "utf8");
     const advertiseBlock = serverSource.split("return advertise([")[1]?.split("], locale);")[0] ?? "";
     const toolNames = [...advertiseBlock.matchAll(/^\s*name:\s*"([^"]+)"/gmu)].map((m) => m[1]);
-    expect(toolNames.length).toBe(32);
+    expect(toolNames.length).toBe(33);
     expect(toolNames).toContain("validate_collaboration_decision");
 
     const serverKey = Object.keys(mcpConfig.mcpServers)[0];
@@ -162,8 +162,8 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
       expect(direct.canonicalName).toBe(`mcp__agent-governance-suite__${toolName}`);
       expect(direct.isMcpWrapperCall).toBe(false);
     }
-    // Red-to-green proof: with the legacy 22-char server key, 28 of the 32 tools exceeded 64 chars (3.6.0 added release_convergence_root).
-    expect(legacyOverflowTools.length).toBe(28);
+    // Red-to-green proof: with the legacy 22-char server key, 29 of the 33 tools exceed 64 chars (3.6.0 added release_convergence_root, 3.9.0 recall_session_message).
+    expect(legacyOverflowTools.length).toBe(29);
 
     // Backward compatibility for legacy long server names.
     const legacyWrapped = normalizeAntigravityToolCall({

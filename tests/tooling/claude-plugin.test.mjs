@@ -154,7 +154,7 @@ describe("generated Claude plugin", () => {
     const sharedIntake = await orchestrator(root, "references", "intake.md");
     const generatedIntake = await orchestrator(pluginRoot, "references", "intake.md");
     // 2913050c shortened the common wording; assert the current clauses, not its historical predecessor.
-    for (const sentence of ["키워드·파일 종류·`complex`만으로 고르지 않는다.", "사용자 지정 스킬을 우선해 대체하지 않되 승인·검증·독립성 gate 생략 권한으로 보지 않는다.", "선택·이름 언급·호출 시작 응답·문서 읽기는 실행이 아니다."]) {
+    for (const sentence of ["키워드·파일 종류·`complex`만으로 고르지 않는다.", "사용자가 지정한 스킬을 우선해 대체하지 않되 승인·검증·독립성 gate를 생략할 권한으로 보지 않는다.", "선택·이름 언급·호출 시작 응답·문서 읽기는 실행이 아니다."]) {
       expect(sharedIntake.split(sentence)).toHaveLength(2);
       expect(generatedIntake.split(sentence)).toHaveLength(2);
       expect(generated).not.toContain(sentence);
@@ -202,7 +202,8 @@ describe("generated Claude plugin", () => {
       if (file === "tests/skill-classification/intake-length-source-successor.test.ts") {
         // Its r34 assertions read hash-bound historical sources at the r35 ancestor.
         // Exempt only that exact anchor Map, not the rest of this file or other tests.
-        expect(createHash("sha256").update(text).digest("hex"), file).toBe("b0a437e5ded26920a95011c12c2227c6fc6c0da2d4de60b69bbeaab296c286aa");
+        // 3.9.0: 0e8c40ff chained it to the v390 successor manifest; that change adds no intake sentence.
+        expect(createHash("sha256").update(text).digest("hex"), file).toBe("7ce019267c8848f8509582495ad8310b1310081481220be1d993b4725e211f8a");
         const historicalAnchors = text.match(/ {2}const anchors = new Map\(\[\n[\s\S]*?\n {2}\]\);/u);
         expect(historicalAnchors, file).not.toBeNull();
         text = text.replace(historicalAnchors[0], "");

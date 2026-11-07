@@ -1122,6 +1122,18 @@ describe("in-process messaging and vendor-neutral adapter", () => {
       expect(instructions).not.toMatch(/available이 아니면 상대는 지금 깨어나지|깨어날 때 전달된다|대개 상대가 작업 중|앞선 깨우기가 이미 상대에게 넘어가/u);
     }
   });
+  it("keeps the send-act rules where a send is prepared (AGS3-D-0032)", () => {
+    // 3.9.0: the once-only, one-recipient and no-re-query rules moved from the MCP guide to prepare_session_message,
+    // which every send starts with; the guide no longer repeats them.
+    for (const [locale, rules] of [["ko", ["새 결과·막힘·결정 요청이 있을 때만 필요한 상대 한 곳에 한 번 보내고", "정상 전송 뒤에는 영수증·status 조회를 되풀이하지 않는다"]],
+      ["en", ["Message one needed recipient once, only for a new result, blocker or decision", "do not re-query receipts/status after a normal send"]]] as const) {
+      const prepare = (JSON.parse(readFileSync(new URL(`../../locales/${locale}/tools.json`, import.meta.url), "utf8")) as Record<string, string>)["tools.prepare_session_message.description"]!;
+      for (const rule of rules) {
+        expect(prepare).toContain(rule);
+        expect(serverInstructions(locale)).not.toContain(rule);
+      }
+    }
+  });
 
   it("notifies the user when an unavailable AGS wake path needs action now (AGS-D-0311)", () => {
     for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions("ko")]) {

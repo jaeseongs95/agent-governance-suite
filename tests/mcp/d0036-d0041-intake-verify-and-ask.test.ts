@@ -30,7 +30,7 @@ const vendors = /\b(?:Codex|Claude|Gemini|GPT-[0-9]|Cloudflare|SSH)/u;
 // instructions within the size a host delivers. The rules and their boundaries below are the same; the markers and
 // the order checks follow the new grouping (the request target, the approval ask and the no-ask list share one line).
 const casesFirst = sentence("먼저 사례로 적고");
-const realEntryPoint = sentence("끝나면 사용자의 실제 진입점");
+const realEntryPoint = sentence("끝나면 그 사례를 사용자의 실제 진입점");
 const runnableChecks = sentence("가능한 검증을 사용자에게 넘기지 않고");
 const userOnly = sentence("사용자만 할 승인·비밀값 입력·본인 조작이 남으면");
 const blockedStep = sentence("다른 담당의 수정 대기는");
@@ -43,7 +43,7 @@ describe("shared intake: verification cases first (AGS3-D-0036)", () => {
   it("has any work that makes or changes something fix what, where and which result is success before it starts", () => {
     expect(casesFirst).not.toBe("");
     // Not limited to code: any work that changes something, before the change and before the report.
-    expect(casesFirst).toContain("바꾸기 전과 보고 전");
+    expect(casesFirst).toContain("만들거나 바꾸기 전과 보고 전");
     for (const field of ["요구별", "대상", "경로", "환경", "검증 방법", "통과 조건을 먼저 사례로 적고"]) expect(casesFirst).toContain(field);
     expect(casesFirst).toContain("정의→실행→같은 사례 확인");
     expect(casesFirst).not.toMatch(/코드|테스트/u);

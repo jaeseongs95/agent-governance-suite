@@ -205,8 +205,10 @@ for (const comparisonTarget of ["index", "commit"]) {
     const blob = join(root, ".git", "objects", oid.slice(0, 2), oid.slice(2));
     chmodSync(blob, 0o600);
     writeFileSync(blob, "corrupt synthetic blob\n");
-    assert.throws(() => baselineFor(root, comparisonTarget, options), /Git command failed:.*(?:corrupt|inflate|unable)/s);
-    assert.throws(() => compareScope(verificationFor(root, baseline, envelope(), { comparisonTarget, ...options })), /Git command failed:.*(?:corrupt|inflate|unable)/s);
+    // Newer Git reports a corrupt loose object as missing in --batch-check, so the checker fails with its own
+    // "could not read blob" detail instead of passing Git's inflate error through; both fail closed.
+    assert.throws(() => baselineFor(root, comparisonTarget, options), /Git command failed:.*(?:corrupt|inflate|unable|could not read blob)/s);
+    assert.throws(() => compareScope(verificationFor(root, baseline, envelope(), { comparisonTarget, ...options })), /Git command failed:.*(?:corrupt|inflate|unable|could not read blob)/s);
   });
 }
 

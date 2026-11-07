@@ -12,6 +12,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  beforeGuidanceSuccessor,
   beforeSpecialistBehaviorSuccessor,
   checkSkillContextOptimization,
   checkSpecialistBehaviorSources,
@@ -33,7 +34,9 @@ const sourceBeforeApprovedChanges = relative => {
     expect(hash(before), relative).toBe(retirement.hashes[relative]);
     return before;
   }
-  const bytes = current(relative);
+  // 3.9.0 guidance successors (GUIDANCE_SUCCESSORS) come after the purpose change; the checker reads their exact
+  // predecessor, so this does too before the purpose pins apply.
+  const bytes = beforeGuidanceSuccessor(relative, current(relative));
   const purpose = approvedHistory.currentPurposeChange;
   const pins = purpose.hashes[relative];
   if (!pins) return bytes;
@@ -69,7 +72,8 @@ describe("specialist behavior source successor", () => {
       validationScope: "source-bytes-links-and-historical-binding", modelBehaviorValidated: false,
     });
     expect(report.currentSpecialistBehavior.currentEntryBytes).toBeGreaterThan(0);
-    expect(report.currentSpecialistBehavior.sharedReferenceBytes).toBe(current(common).length);
+    // The pinned checks read a reviewed 3.9.0 guidance successor as its exact predecessor; so does the byte count.
+    expect(report.currentSpecialistBehavior.sharedReferenceBytes).toBe(beforeGuidanceSuccessor(common, current(common)).length);
     expect(report.currentSpecialistBehaviorSuccessors).toEqual([getSpecialistBehaviorSuccessor()]);
     expect(getSpecialistBehaviorSuccessor().baselineRevision).toBe(base);
   });
