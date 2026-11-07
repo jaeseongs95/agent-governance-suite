@@ -265,7 +265,9 @@ describe("state cleanup", () => {
     expect(continuity.getSchemaVersion()).toBe(4);
     expect(continuity.getOrCreateSecret(() => "replacement")).toBe("preserved-secret");
     expect(continuity.getTask("preserved")).toMatchObject({ currentEpoch: 2, rootId: "root-preserved", suppressed: true });
-    expect(continuity.getCurrent("preserved")?.memory).toBeNull();
+    const current = continuity.getCurrent("preserved")!;
+    expect(current).toMatchObject({ epoch: 2, memory: null, memoryDigest: null, stateToken: expect.any(String) });
+    expect(current.stateToken).not.toBe("");
     const history = new DatabaseSync(continuityPath, { readOnly: true });
     try {
       const row = history.prepare("SELECT memory_json FROM continuity_memory_history WHERE task_correlation='preserved' AND epoch=1").get() as { memory_json: string };
@@ -273,7 +275,11 @@ describe("state cleanup", () => {
       expect(history.prepare("SELECT value FROM continuity_metadata WHERE key='legacy-tombstone:preserved:2'").get()).toMatchObject({ value: expect.stringContaining(`sha256:${"d".repeat(64)}`) });
     } finally { history.close(); }
     expect(continuity.getRequest("preserved", 1, "request")).toEqual({ commandDigest: "command", resultJson: '{"schemaVersion":"1.0.0","kind":"legacy-receipt-unavailable"}' });
-    expect(continuity.getTombstone("preserved", 2)).toBeNull();
+    const tombstone = continuity.getTombstone("preserved", 2)!;
+    expect(tombstone).toEqual({ stateToken: expect.any(String), emptyStateToken: current.stateToken,
+      payloadDigest: `sha256:${"d".repeat(64)}`, purgedAt: OLD });
+    expect(tombstone.stateToken).not.toBe("");
+    expect(tombstone.stateToken).not.toBe(current.stateToken);
     continuity.close();
     const migratedContinuity = new DatabaseSync(continuityPath, { readOnly: true });
     expect((migratedContinuity.prepare("SELECT COUNT(*) AS count FROM continuity_observations").get() as { count: number }).count).toBe(1);
