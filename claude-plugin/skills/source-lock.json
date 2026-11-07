@@ -16,7 +16,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:31f168ca13118e0a61d9fa04ba3b28289083200d0b917e0d77c00cff06dc3f08",
+      "integratedChecksum": "sha256:97037b28a6a24a4565b94d2bf6151d8bbce92e49b2defc23544d6e7afe35ad7a",
       "checksumScope": "relative paths and normalized text bytes under skills/independent-audit-gate"
     },
     {
