@@ -23,3 +23,14 @@ CS 적용: CONC-CLAIM-001 원단일승자/실제child경합을보존, CONC-FENCE
 원RED: server-1aed.log SHA092c532fa028fcc053dcd22583d7a3639817ff70793691802d27d9cd8f3360b6, case29–31/33–34/41–45는prepare275 ORACLE_SOURCE_MISMATCH, case32는PRECISION_BOUNDARIES_FAILED·12개ASSERTION_OR_SETUP_FAILED/assertion:null. 기존oracle를바꾸는RED/GREEN쌍을만들지않는다.
 
 향후명령: Node24/동일lockfile을갖춘TEST/Actions에서 `pnpm exec vitest run tests/skill-classification/live-bootstrap/bootstrap-contract.test.mjs tests/skill-classification/live-bootstrap/bootstrap-fixture-reuse.test.ts tests/skill-classification/live-bootstrap/prepared-bootstrap.test.ts tests/skill-classification/live-bootstrap/provider-observation-retention.test.ts`. 실행환경의공용heavy.lock·원owner슬롯은root가결정한다. 이번구현자TEST/모델실행0.
+
+## 구현 후 정적 결과
+
+- 계획8da4be9ccab1a1fcaff5d4339c2509e2dc7b9101, current 목적전달85892d21d36bd24ec20cca6b60fcfe7cbead4730, 기본역사핀projection f0239fbec53d3a05bc78948e3ebc21611d8645c7을각각commit/push했다.
+- Node24.19.0 `node --check` 변경10코드파일전부exit0, `git diff --check` exit0. 원assertion 줄200개(15+28+7+71+30+5+31+13)는명시purpose인자추가만정규화해값·순서동일을정적대조했다. 220개라고중간메시지에쓴것은합산오기이며200개가정본이다.
+- current5caller의prepare/run26곳(14+4+2+4+2)과dynamic3곳readyEstimateMock의명시purpose전달을정적으로확인했다. budget의실제worker분기도같은파일내전달대상이다.
+- 보호경로 mcp-server/src·evaluation.ts·bootstrap.mts·provider-retention-sources.mts·frozen corpus·budget/precision oracle·history-r04 archive/oldbudgetscript·independent-wire-mutations.mts는1aed대비diff0. 원contract-selfcheck/expiry/prepared-regression/prepared-child/PRS시험도byte동일이다.
+- 기본fixture는과거역할3skill과registry를자기scratch에만복원한다. 현재모듈·기존61핀/manifest·corpus를사용하므로원C2의manifest변조·context-continuity복귀거부도유효한입력에서검사한다. provenance용git show는currentRepo에서만읽고변조대상은fixture뿐이다. 실제bootstrap admission이이전체경로를통과했다는결과는아직NOT_RUN이다.
+- 원r04CLI의archive지문·예전돈정책/기대·기존timeout은그대로다. 새export를import만해도r04시험이자동실행되지않게기존CLIentry경계를명시했다. 자기fixture는callback종료뒤finally에서만회수하고 prepared wrapper는child close뒤에정리한다.
+- 정적검사도중조회경로에`../`를정규화하지않은검사기1건과purpose옵션추가를정규화하지않은assertion비교기1건이실패했다. 경로/비교정규화를고쳐동일보호파일/원assertion을대조완료했으며이를제품RED나회귀PASS로세지않는다.
+- 전제: TEST/Actions의기존Git역사objects(14549a2e포함)·tar·동일lockdeps. 새설치/전역설정/auth/HOME변경0. TEST/Actions실행·typecheck/lint·CS정형CLI검증은NOT_RUN이며구문/정적근거를행동·수용PASS로승격하지않는다.
