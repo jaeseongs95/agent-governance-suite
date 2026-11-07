@@ -1,6 +1,9 @@
 import { WorkflowContractError } from "../../contracts/types.js";
 import type { CallerIngress, IngressResult, ObservedCaller } from "./caller-identity.js";
+import { antigravityConversationRootDirectory, recordAntigravityConversationRoot } from "./antigravity-conversation-roots.js";
 import { antigravityCallKey, readClaudeLineage } from "./builtin-hook-host-adapters.js";
+import { failureReason } from "./failure-diagnostics.js";
+import { writeDiagnostic } from "./hook-error-diagnostics.js";
 import { HOST_ATTESTATION_TOOLS, hostActorId } from "./host-attestation.js";
 import type { WorkflowStore } from "./workflow-store.js";
 import { msg } from "./i18n.js";
@@ -67,7 +70,8 @@ const AGY = "antigravity.google/";
  * The caller comes from `_meta` alone. The model and effort come from the PreToolUse hook's row, keyed by what the
  * host writes on both sides: this conversation, the tool and the arguments. Without a store nothing is observed.
  */
-export function antigravityMetaIngress(store: WorkflowStore | null = null, host = "antigravity"): CallerIngress {
+export function antigravityMetaIngress(store: WorkflowStore | null = null, host = "antigravity",
+  rootDirectory: string | null = null): CallerIngress {
   return (tool, meta, args) => {
     const conversation = text(meta?.[`${AGY}conversation_id`]), root = text(meta?.[`${AGY}root_conversation_id`]);
     if (!conversation || !root) return unavailable("ANTIGRAVITY_CALL_META_MISSING");
@@ -90,6 +94,12 @@ export function antigravityMetaIngress(store: WorkflowStore | null = null, host 
     const result = observed(host, root, conversation, parent, callId, execution);
     // agy runs a subagent's hooks under its own conversation, with no child marker (session binding design 1.5).
     if (result.provenance === "host-observed") result.caller.hookSessionId = conversation;
+    // Those hooks find the root here from the subagent's next hook on (AGS3-D-0068). A failed record leaves them on
+    // their own conversation, as before this call; the call itself is still observed.
+    if (rootDirectory !== null) {
+      try { recordAntigravityConversationRoot(rootDirectory, conversation, root); }
+      catch (cause) { writeDiagnostic("server", "antigravity-conversation-root-unrecorded", { reason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" }); }
+    }
     return result;
   };
 }
@@ -113,7 +123,7 @@ export function claudeAdmissionIngress(store: WorkflowStore, host = "claude-code
 /** Installation selects one ingress by AGENT_GOVERNANCE_HOST_ATTESTATION; an unknown host has none. */
 export function builtinCallerIngress(host: string | undefined, store: WorkflowStore): CallerIngress | null {
   if (host === "codex") return codexMetaIngress();
-  if (host === "antigravity") return antigravityMetaIngress(store);
+  if (host === "antigravity") return antigravityMetaIngress(store, host, antigravityConversationRootDirectory());
   if (host === "claude-code") return claudeAdmissionIngress(store);
   return null;
 }

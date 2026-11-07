@@ -5,6 +5,7 @@ import { hookFailure, retainHookFailureCause, retainHookFailureSecondary } from 
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
 import path from "node:path";
 import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle, type ContinuityAction, type LineageRead, type ForkOriginRead } from "./host-input-adapter.js";
+import { antigravityConversationRootDirectory, readAntigravityConversationRoot } from "./antigravity-conversation-roots.js";
 import { claudeForkHostRead } from "./claude-fork-host.js";
 import { parseWakeMessages } from "./session-message-client.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
@@ -335,7 +336,31 @@ function adaptAntigravityHookInput(input: Record<string, unknown>, host: string)
     // so the server finds this row for its tools/call; the random suffix keeps each call's observation distinct.
     observation.callId = `${antigravityCallKey(observation.sessionId, observation.toolName ?? "", observation.toolInput ?? {}).call}:${randomUUID()}`;
   }
+  inheritRecordedRoot(adapted);
   return adapted;
+}
+
+/**
+ * A subagent's hooks carry only its own conversation (agy 1.5.3 capture, AGS3-D-0068). Once its first AGS tool call
+ * recorded the root the host wrote in `_meta`, its hooks name the root session and the subagent as the child agent,
+ * as Claude Code and Codex hooks do. Its turn start is that child's context start. Hooks before that call stay on the
+ * subagent's own conversation.
+ */
+function inheritRecordedRoot(adapted: AdaptedHostInput): void {
+  const { observation } = adapted;
+  const conversation = observation.sessionId;
+  if (observation.actor.role !== "root" || !conversation.trim()) return;
+  const root = readAntigravityConversationRoot(antigravityConversationRootDirectory(), conversation);
+  if (root === null) return;
+  observation.sessionId = root;
+  observation.agentKey = conversation;
+  observation.actor = { role: "child", basis: "observed", reasonCode: "ANTIGRAVITY_RECORDED_ROOT_CONVERSATION" };
+  if (observation.kind === "user-input") {
+    observation.kind = "subagent-start";
+    delete observation.wakeCandidates;
+    delete observation.wakeOnly;
+    adapted.restoreCurrentAtTurnStart = false;
+  }
 }
 
 const digest = (value: string) => createHash("sha256").update(value, "utf8").digest("hex").slice(0, 32);
