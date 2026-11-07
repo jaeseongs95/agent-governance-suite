@@ -117,23 +117,38 @@ node "<check-continuity-schema.mjs>" "<existing-continuity.sqlite3>"
 
 ## 5. current만 내보내고 크기별로 mapping 준비
 
-다음 명령은 **당시 current만** 관리자 파일로 내보냅니다. history를 내보내거나 열람하지 않습니다. 출력 파일은 아직 없는 새 경로여야 합니다.
+다음 명령은 **이관이 지원되는 당시 current만** 관리자 파일로 내보냅니다. history를 내보내거나 열람하지 않습니다. 출력 파일은 아직 없는 새 경로여야 합니다.
 
 ```text
 node mcp-server/dist/continuity-memory-migration.mjs export-current --database "<existing-continuity.sqlite3>" --output "<new-current-mapping.json>"
 ```
 
-종료 코드 0과 `EXPORTED_CURRENT`를 확인합니다. 내보낸 JSON 배열의 각 항목에는 정확히 세 키 `taskCorrelation`, `expectedSnapshotDigest`, `memory`가 있습니다. 별도 새 파일 `prepared-mapping.json`을 만들어 배열을 준비하십시오. `taskCorrelation`과 `expectedSnapshotDigest`는 내보낸 값 그대로 둡니다. `memory`에도 정확히 `status`, `core`, `evidenceRefs` 세 키가 있어야 합니다. `core`에는 `objective`, `completionCriteria`, `constraints`, `decisions`, `progress`, `blockers`, `nextActions`가 있고, 근거에는 `artifactId`, `locator`, `digest`, `verified`가 있습니다. 키를 덧붙이거나 이름을 바꾸지 않습니다.
+종료 코드 0과 `EXPORTED_CURRENT`를 확인하고 응답의 다음 항목을 함께 확인합니다.
+
+| 항목 | 뜻 |
+| --- | --- |
+| `count` | 지원되는 current를 내보낸 수입니다. |
+| `excludedReceiverTasks` | current 후보 중 기존 `continuity_delta_state`가 있어 제외한 작업 수입니다. 과거 epoch의 수신 상태가 남아 있어도 작업 전체를 제외하며 해당 snapshot 본문은 내보내지 않습니다. |
+| `exclusionReason` | 제외한 작업이 있으면 `RECEIVER_STATE_UNSUPPORTED`, 없으면 `null`입니다. |
+
+`excludedReceiverTasks`가 1 이상이면 작은 `count`나 빈 출력 배열을 모든 current의 부재 또는 이관 준비 완료로 해석하지 마십시오. 이 가이드는 제외된 수신 상태를 새 current로 변환하지 않습니다. 적용을 진행하지 말고 원래 DB와 사전 백업을 유지한 채 오류 코드로 지원을 요청하십시오. 제외된 작업을 임의 mapping으로 추가하거나 수신 상태·예전 snapshot 본문을 읽어 current를 재구성하지 않습니다.
+
+내보낸 JSON 배열의 각 항목에는 정확히 세 키 `taskCorrelation`, `expectedSnapshotDigest`, `memory`가 있습니다. 별도 새 파일 `prepared-mapping.json`을 만들어 배열을 준비하십시오. `taskCorrelation`과 `expectedSnapshotDigest`는 내보낸 값 그대로 둡니다. `memory`에도 정확히 `status`, `core`, `evidenceRefs` 세 키가 있어야 합니다. `core`에는 `objective`, `completionCriteria`, `constraints`, `decisions`, `progress`, `blockers`, `nextActions`가 있고, 근거에는 `artifactId`, `locator`, `digest`, `verified`가 있습니다. 키를 덧붙이거나 이름을 바꾸지 않습니다.
 
 각 항목의 크기는 보기 좋게 들여쓴 파일 전체가 아니라 **공백 없이 직렬화한 `memory` JSON 전체의 UTF-8 byte**로 판단합니다. 다음 코드를 개인 관리 폴더의 새 UTF-8 파일 `memory-sizes.mjs`로 저장합니다. current 본문이나 식별자를 출력하지 않고 배열 순번과 byte 수만 출력합니다.
 
 ```js
 import { readFileSync } from 'node:fs';
-const mappings = JSON.parse(readFileSync(process.argv[2], 'utf8'));
-if (!Array.isArray(mappings)) throw new Error('Expected a mapping array');
-for (const [index, item] of mappings.entries()) {
-  const bytes = Buffer.byteLength(JSON.stringify(item.memory), 'utf8');
-  console.log(JSON.stringify({ index, bytes, withinLimit: bytes <= 2000 }));
+try {
+  const mappings = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+  if (!Array.isArray(mappings)) throw new Error('Expected a mapping array');
+  for (const [index, item] of mappings.entries()) {
+    const bytes = Buffer.byteLength(JSON.stringify(item.memory), 'utf8');
+    console.log(JSON.stringify({ index, bytes, withinLimit: bytes <= 2000 }));
+  }
+} catch {
+  console.error('MEMORY_SIZE_CHECK_FAILED');
+  process.exitCode = 1;
 }
 ```
 
@@ -141,10 +156,12 @@ for (const [index, item] of mappings.entries()) {
 node "<memory-sizes.mjs>" "<new-current-mapping.json>"
 ```
 
+읽기·JSON 파싱·크기 계산에 실패하면 원문이나 오류 객체 대신 `MEMORY_SIZE_CHECK_FAILED`만 출력하고 종료 코드 1을 반환합니다. 이때는 출력된 일부 항목만으로 전체 확인에 성공했다고 보지 말고 입력 파일과 JSON 형식을 확인하십시오.
+
 - **2000 byte 이하:** 해당 current의 `memory`를 그대로 유지하십시오. 작다는 이유로 내용을 다시 요약하지 않습니다.
 - **2000 byte 초과:** 해당 current만 사람이 읽고 의미를 최적화합니다. 목표, 완료 조건, 현재 유효한 사용자 교정, 제약과 결정, 미완료 상태와 blocker, 다음 행동에 필요한 근거를 보존합니다. 중복과 이미 효력이 없는 완료 내역을 정리하되 판단에 필요한 연결을 잃지 않게 합니다. 필수 근거의 hash·ID를 바꾸거나 긴 refs 목록으로 본문을 대신하지 않습니다. 무작정 앞부분만 자르기, 빈 `core`·빈 값으로 대체하기, 필요한 항목·근거를 버려 통과시키기는 금지합니다. 의미를 보존한 채 상한 안에 넣지 못하면 적용하지 말고 기존 버전과 백업을 유지합니다.
 
-편집한 파일에도 같은 크기 명령을 실행해 **모든 항목**이 상한 안인지 확인합니다. 크기 확인은 의미 보존이나 계약 검증을 대신하지 않습니다. JSON 문법, 필드 계약과 digest 일치는 `apply`가 검사합니다. 원본 digest를 새로 계산해 써 넣어 불일치를 무시하지 마십시오. 출력이 빈 배열 `[]`이면 current가 없는 경우이므로 임의 항목을 만들지 않습니다.
+편집한 파일에도 같은 크기 명령을 실행해 **모든 항목**이 상한 안인지 확인합니다. 크기 확인은 의미 보존이나 계약 검증을 대신하지 않습니다. JSON 문법, 필드 계약과 digest 일치는 `apply`가 검사합니다. 원본 digest를 새로 계산해 써 넣어 불일치를 무시하지 마십시오. 출력이 빈 배열 `[]`이고 `excludedReceiverTasks`도 0이면 내보낼 current가 없는 상태입니다. 제외한 작업이 있으면 위의 수신 상태 안내를 따르고 임의 항목을 만들지 않습니다.
 
 ## 6. 준비한 mapping 적용
 
@@ -177,6 +194,7 @@ CLI 실패는 종료 코드 1과 `MIGRATION_CLI_FAILED`의 `reason`으로 확인
 | --- | --- |
 | `ALREADY_MIGRATED` | schema 4 경로입니다. export/apply를 반복하지 말고 7절을 진행합니다. |
 | `MIGRATION_INCOMPLETE` | 원 schema와 백업을 유지하고 current mapping의 누락, 원본 digest 변경, 초과 크기를 확인합니다. writer가 다시 실행됐다면 종료 후 새 이름으로 current를 다시 내보내고 mapping을 준비합니다. |
+| `RECEIVER_STATE_UNSUPPORTED` | 수신 상태가 있는 작업의 mapping 적용은 지원하지 않아 거절됩니다. 이관을 중단하고 원래 DB와 사전 백업을 보존합니다. 새 export 응답의 `excludedReceiverTasks`와 `exclusionReason`을 확인하고 지원을 요청하십시오. 해당 작업의 mapping을 임의로 만들거나 원본·수신 상태를 SQL로 바꾸지 않습니다. |
 | `MEMORY_TOO_LARGE`, `INVALID_MEMORY` | 해당 `memory`의 크기 또는 필드 계약을 고칩니다. 빈 값이나 항목 삭제로 의미 손실을 숨기지 않습니다. |
 | `INVALID_MAPPING_JSON`, `INVALID_MAPPING`, `DUPLICATE_MAPPING` | JSON 배열, 정확한 세 키, 중복 없는 `taskCorrelation`, 원본 digest 형식을 확인합니다. |
 | `DATABASE_PATH_NOT_ABSOLUTE`, `DATABASE_NOT_FILE`, 파일 없음·접근 거부 | 호스트의 실제 DB와 절대 경로·권한을 다시 확인합니다. 관리자 권한으로 임의 우회하거나 새 DB를 만들지 않습니다. |
