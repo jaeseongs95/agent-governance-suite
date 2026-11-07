@@ -116,7 +116,8 @@ describe("AGS3-D-0068 agy subagent hooks inherit the root session", () => {
     expect(step()?.hookSpecificOutput.additionalContext ?? "").not.toContain("ROLE-BODY-D0068");
     serverCall(new InMemoryWorkflowStore(), meta(A, S, S));
     expect(step()).toMatchObject({ hookSpecificOutput: { hookEventName: "PostInvocation", additionalContext: expect.stringContaining("ROLE-BODY-D0068") } });
-    expect(step()).toBeNull();
+    // The role is given once; the step check every step carries is not the role (AGS3-D-0065).
+    expect(step()?.hookSpecificOutput.additionalContext ?? "").not.toContain("ROLE-BODY-D0068");
   });
 
   it("reports a record that is not this conversation's instead of treating the subagent as a root", () => {

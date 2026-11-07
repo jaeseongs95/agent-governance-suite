@@ -154,6 +154,8 @@ function adaptCodexHookInput(input: Record<string, unknown>, host: string): Adap
     const dialect = /(?:powershell|pwsh)(?:\.exe)?$/iu.test(text(toolInput.shell)) || (!toolInput.shell && process.platform === "win32") ? "powershell" : "posix";
     return shellEditTargets(toolInput.cmd ?? toolInput.command, dialect);
   });
+  // Codex PostToolUse additionalContext reaches the next model call, the subagent's included: its step boundary.
+  if (adapted.outputEventName === "PostToolUse") adapted.observation.step = true;
   // Codex Stop reports a turn its Stop hook already continued; a second continuation could loop without a host limit.
   if (adapted.observation.kind === "turn-end" && adapted.lifecycle === "none" && input.stop_hook_active === true) adapted.observation.stopHookActive = true;
   if (adapted.observation.actor.role !== "root") return adapted;
@@ -232,6 +234,8 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
   });
   const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown" || adapted.continuityAction !== undefined;
   if (!knownEvent) return adapted;
+  // Claude Code PostToolUse additionalContext reaches the next model call, a subagent's included: its step boundary.
+  if (adapted.outputEventName === "PostToolUse") adapted.observation.step = true;
   if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CLAUDE_NATIVE_SESSION_ID_INVALID";
   else if (Object.hasOwn(input, "agent_type") && (typeof input.agent_type !== "string" || !input.agent_type.trim())) {
     actor.reasonCode = "CLAUDE_NATIVE_AGENT_TYPE_INVALID";
@@ -334,6 +338,8 @@ function adaptAntigravityHookInput(input: Record<string, unknown>, host: string)
     return tool === "PowerShell" ? shellEditTargets(toolInput.CommandLine ?? toolInput.command, "powershell") : null;
   });
   const { observation } = adapted;
+  // agy delivers a hook's injected step from PostInvocation, after each model call, not from PostToolUse (AGS3-D-0068).
+  if (observation.kind === "turn-step") observation.step = true;
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && !observation.callId) {
     // agy gives the hook no call ID. The key holds what the host writes on both sides (conversation, tool, arguments)
     // so the server finds this row for its tools/call; the random suffix keeps each call's observation distinct.

@@ -28,6 +28,9 @@ export interface InputObservation {
   editTargets?: string[];
   /** With a non-empty editTargets: the call also writes a file it does not name (a shell write), counted as one more. */
   editTargetsIncomplete?: boolean;
+  /** The adapter marks the step boundary: a model call of the turn ended and context a hook adds here reaches the next
+   * one (AGS3-D-0065). Every actor, the session's own or a subagent, gets its step check here. */
+  step?: boolean;
   /** Turn end only: the host reports that this turn was already continued by its Stop hook. */
   stopHookActive?: boolean;
   wakeCandidates?: string[];

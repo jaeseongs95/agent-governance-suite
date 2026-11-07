@@ -194,7 +194,6 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(start_workflow|start_guarded_workflow|record_stage_result|finalize_workflow|abort_workflow|release_convergence_root)$",
         "hooks": [{
           "type": "command", "command": "node",
           "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
