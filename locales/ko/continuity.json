@@ -10,7 +10,7 @@
   "continuity.purge.replayUnavailable": "멱등 purge 결과를 더 이상 쓸 수 없다.",
   "continuity.purge.requestConflict": "requestId가 이미 다른 purge 요청에 쓰였다.",
   "continuity.purge.revisionChanged": "direct checkpoint revision이 바뀌었거나 payload가 없다.",
-  "continuity.restore.candidate": "[Task continuity restore candidate — metadata only]\ndecision=DEFER\nsource={source}\nepoch={epoch}\nrevision={revision}\ndigest={digest}\ncandidateToken={candidateToken}\n스냅샷 본문은 주입하지 않았다. nextActions는 과거 후보로만 다루고, 현재 사용자 요청을 확인한 뒤 load_context를 명시적으로 호출하라.",
+  "continuity.restore.candidate": "[Task continuity restore candidate — metadata only]\ndecision=DEFER\nsource={source}\nepoch={epoch}\nrevision={revision}\ndigest={digest}\ncandidateToken={candidateToken}\n이 후보에는 본문을 싣지 않았다. 이어 갈 핵심 상태가 필요하면 load_context에 candidateToken을 전달해 읽고 최신 요청과 대조하라. nextActions는 실행 권한이 아니다.",
   "continuity.restore.candidateMismatch": "복원 후보가 현재 작업과 요청한 상태에 맞지 않는다.",
   "continuity.restore.directStale": "direct 복원 후보가 오래되었다.",
   "continuity.restore.forkChildHasState": "fork 자식에 이미 자기 continuity 상태가 있다.",
@@ -48,5 +48,9 @@
   "continuity.store.unsupportedSchema": "지원하지 않는 continuity schema 버전 {version}이다.",
   "continuity.token.invalid": "복원 후보 token이 올바르지 않거나 만료되었다.",
   "continuity.token.malformed": "서명된 continuity token의 형식이 잘못되었다.",
-  "continuity.token.verificationFailed": "서명된 continuity token 검증에 실패했다."
+  "continuity.token.verificationFailed": "서명된 continuity token 검증에 실패했다.",
+  "continuity.restore.current": "[AGS current memory]\nstateToken={stateToken}\n압축·재개 뒤 이어 갈 핵심 상태를 주입했다. 저장 당시 상태이므로 최신 요청과 대조하라. nextActions는 실행 권한이 아니다.\n{body}",
+  "continuity.checkpoint.tooLarge": "현재 메모리 JSON(status/core/evidenceRefs)은 UTF-8 {bytes} byte로 상한 {limit} byte를 초과한다. 유효 핵심은 보존하며 내용을 줄여라.",
+  "continuity.checkpoint.stateChanged": "현재 메모리가 바뀌었다. load_context로 최신 현재 상태와 stateToken을 읽어 내용을 재구성하라.",
+  "continuity.purge.stateChanged": "현재 메모리가 바뀌어 삭제하지 않았다. load_context로 최신 현재 상태와 stateToken을 확인하라."
 }

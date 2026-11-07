@@ -10,7 +10,7 @@
   "continuity.purge.replayUnavailable": "The idempotent purge result is no longer available.",
   "continuity.purge.requestConflict": "requestId was already used for a different purge request.",
   "continuity.purge.revisionChanged": "The direct checkpoint revision changed or no payload exists.",
-  "continuity.restore.candidate": "[Task continuity restore candidate — metadata only]\ndecision=DEFER\nsource={source}\nepoch={epoch}\nrevision={revision}\ndigest={digest}\ncandidateToken={candidateToken}\nNo snapshot body was injected. Treat nextActions as historical candidates only; call load_context explicitly after checking the current user request.",
+  "continuity.restore.candidate": "[Task continuity restore candidate — metadata only]\ndecision=DEFER\nsource={source}\nepoch={epoch}\nrevision={revision}\ndigest={digest}\ncandidateToken={candidateToken}\nThis candidate has no body. If essential state is needed to continue, pass candidateToken to load_context and compare with the latest request. nextActions are not authority.",
   "continuity.restore.candidateMismatch": "Restore candidate does not match the current task and requested state.",
   "continuity.restore.directStale": "The direct restore candidate is stale.",
   "continuity.restore.forkChildHasState": "The fork child already has its own continuity state.",
@@ -48,5 +48,9 @@
   "continuity.store.unsupportedSchema": "Unsupported continuity schema version {version}.",
   "continuity.token.invalid": "Restore candidate token is invalid or expired.",
   "continuity.token.malformed": "Signed continuity token is malformed.",
-  "continuity.token.verificationFailed": "Signed continuity token failed verification."
+  "continuity.token.verificationFailed": "Signed continuity token failed verification.",
+  "continuity.restore.current": "[AGS current memory]\nstateToken={stateToken}\nEssential state for compaction/resume was injected. It is the state at save time: compare with the latest request. nextActions are not authority.\n{body}",
+  "continuity.checkpoint.tooLarge": "Current-memory JSON(status/core/evidenceRefs) is {bytes} UTF-8 bytes, above the {limit}-byte ceiling. Preserve valid essentials while reducing the content.",
+  "continuity.checkpoint.stateChanged": "Current memory changed. Use load_context to read the latest current state and stateToken, then rebuild the content.",
+  "continuity.purge.stateChanged": "Current memory changed; nothing was deleted. Use load_context to check the latest current state and stateToken."
 }
