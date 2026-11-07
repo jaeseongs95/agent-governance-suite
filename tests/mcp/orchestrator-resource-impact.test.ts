@@ -78,7 +78,7 @@ describe("orchestrator resource-impact prompt propagation", () => {
     expect(impactLine).toContain("확인한 환경·동시 작업");
     expect(impactLine).toContain("예상 메모리·디스크·I/O·시간");
     expect(impactLine).toContain("범위·병렬 수·실행 위치·종료·정리 조건");
-    expect(impactLine).toContain("미확인 값은 추측하지 않는다");
+    expect(impactLine).toContain("미확인 값은 추측하지 않으며");
     expect(impactLine).toContain("승인·PRE를 붙이지 않는다");
     expect(impactLine).toContain("작은 읽기·편집마다 계측·보고·점검 도구를 더하거나");
     expect(impactLine).toContain("이미 허용된 준비·검증·작업본 저장·자동 검사에 승인·PRE를 붙이지 않는다");

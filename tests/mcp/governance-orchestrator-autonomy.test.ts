@@ -80,7 +80,7 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     for (const field of ["대상", "경로", "환경", "검증 방법", "통과 조건을 먼저 사례로 적고"]) expect(casesFirst).toContain(field);
     expect(casesFirst).toContain("정의→실행→같은 사례 확인");
     expect(intake).toContain("끝나면 그 사례를 사용자의 실제 진입점·대상 환경에서");
-    expect(preparation).toContain("비코드 작업과 작은 직접 편집을 포함해");
+    expect(preparation).toContain("작업 분야와 관계없이 작은 직접 편집을 포함해"); // 3.9.0 (AGS3-D-0038) field-neutral wording
     expect(preparation).toContain("[공통 접수·선택 기준의 사례 준비·실행·확인 순서](intake.md#공통-접수선택-기준)를 먼저 따른다");
     expect(preparation.replaceAll(" ", "")).not.toContain("사례정의→실행→동일사례확인");
     expect(preparation).not.toContain("capability 선택·계획 때 먼저 요구마다");
