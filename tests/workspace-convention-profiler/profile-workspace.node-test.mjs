@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
-import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -92,6 +92,57 @@ test("Git currentRef와 관측한 디렉터리 구조 변경은 fingerprint를 �
   await mkdir(path.join(workspace, "new-area", "nested"), { recursive: true });
   const changedStructure = await profileWorkspace(request(workspace, { targetPaths: [] }));
   assert.notEqual(changedStructure.profileFingerprint, alternate.profileFingerprint);
+});
+
+// Counts the git processes one profile run starts, through the real module in a fresh process (the module binds
+// spawnSync at import, so this test file's own import cannot be observed).
+function profileCountingGit(workspace, env = {}) {
+  const moduleUrl = new URL("../../skills/workspace-convention-profiler/scripts/profile-workspace.mjs", import.meta.url).href;
+  const source = `import childProcess from "node:child_process"; import { syncBuiltinESMExports } from "node:module";
+    let git = 0; const original = childProcess.spawnSync;
+    childProcess.spawnSync = (file, ...rest) => { if (file === "git") git += 1; return original(file, ...rest); };
+    syncBuiltinESMExports();
+    const { profileWorkspace } = await import(${JSON.stringify(moduleUrl)});
+    const output = await profileWorkspace(JSON.parse(process.argv[1]));
+    console.log(JSON.stringify({ verdict: output.verdict, vcsType: output.workspace.vcsType, git }));`;
+  const childEnv = { ...process.env, ...env };
+  for (const name of ["GIT_DIR", "GIT_WORK_TREE"]) if (!env[name]) delete childEnv[name];
+  const child = spawnSync(process.execPath, ["--input-type=module", "-e", source, JSON.stringify(request(workspace, { targetPaths: [] }))], {
+    encoding: "utf8", env: childEnv, windowsHide: true });
+  assert.equal(child.status, 0, child.stderr);
+  return JSON.parse(child.stdout);
+}
+
+function initRepository(directory) {
+  execFileSync("git", ["init", "-b", "main"], { cwd: directory, stdio: "ignore" });
+}
+
+// AGS3-D-0016: every git start costs a process start, which on a busy Windows machine takes seconds.
+test("저장소 표식이 없는 작업 공간에서는 git을 띄우지 않고, 저장소 안에서는 git으로 확인한다", async (context) => {
+  const parent = await mkdtemp(path.join(tmpdir(), "workspace-profiler-git-probe-"));
+  context.after(() => rm(parent, { recursive: true, force: true }));
+  const plain = path.join(parent, "plain");
+  await cp(path.join(fixtures, "sparse"), plain, { recursive: true });
+  assert.deepEqual(profileCountingGit(plain), { verdict: "PASS", vcsType: "none", git: 0 });
+
+  const repository = path.join(parent, "repository");
+  await cp(path.join(fixtures, "sparse"), path.join(repository, "nested", "workspace"), { recursive: true });
+  initRepository(repository);
+  const nested = profileCountingGit(path.join(repository, "nested", "workspace"));
+  assert.equal(nested.vcsType, "git");
+  assert.ok(nested.git >= 1);
+
+  // git resolves the directory it changes into to its real path; a link outside the repository still reaches it.
+  const link = path.join(parent, "link");
+  await symlink(path.join(repository, "nested"), link, "junction");
+  const linked = profileCountingGit(path.join(link, "workspace"));
+  assert.equal(linked.vcsType, "git");
+  assert.ok(linked.git >= 1);
+
+  // GIT_DIR names a repository without any `.git` entry in the workspace's parents; git answers.
+  const named = profileCountingGit(plain, { GIT_DIR: path.join(repository, ".git") });
+  assert.equal(named.vcsType, "git");
+  assert.ok(named.git >= 1);
 });
 
 test("confirmed 관례와 모든 criterion ref는 checksum evidence index에 결속된다", async () => {
