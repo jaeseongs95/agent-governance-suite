@@ -104,10 +104,11 @@ const BRANCH_HEADING = /^#{2,}\s.*(?:일 때|인 경우|이면)\s*$|^#{2,}\s+Whe
 // Explicit examples: "(예: PR이면 ...)", "예를 들어 ...", "e.g. ...".
 const EXAMPLE_GROUP = /\((?:예|e\.g\.|for example)[^)]*\)/gu;
 const EXAMPLE_LEAD = /예를 들어|예컨대|\be\.g\.|\bfor example\b|\bsuch as\b/u;
-// Names that contain a field word but are not about that field: link targets,
+// Names that contain a field word but are not about that field: link targets, the
+// title of a cited external source,
 // hyphenated identifiers (skill names), the UI/UX discipline, the Claude
 // Code host, a command's exit or status code and a screenshot of the agent host.
-const NAMES = /\]\([^)]*\)|\bUI\/UX\b|\b[a-z]+(?:-[a-z]+)+\b|\bClaude Code\b|(?:종료|오류|상태|응답|원인|이유) 코드|화면 캡처/gu;
+const NAMES = /\[[^\]]*\]\(https?:\/\/[^)]*\)|\]\([^)]*\)|\bUI\/UX\b|\b[a-z]+(?:-[a-z]+)+\b|\bClaude Code\b|(?:종료|오류|상태|응답|원인|이유) 코드|화면 캡처/gu;
 // Inline markup alone does not turn a field word into an identifier.
 const INLINE_IDENTIFIER = /^(?:[^\s]+[/\\]|[./\\]|\{|\[|v?\d+\.\d+|(?:node|python3?|git|pnpm|npm|npx)(?:\s|$))|^[^\s]+\.[a-zA-Z][a-zA-Z0-9]{0,7}$/u;
 // ponytail: these explicit clause markers are a wording heuristic, not a language parser.

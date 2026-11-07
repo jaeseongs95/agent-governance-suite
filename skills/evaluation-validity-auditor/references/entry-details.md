@@ -24,4 +24,4 @@ node scripts/validate-report.mjs --request request.json --request-artifact reque
 - 누락·중복·unknown case/run/criterion과 malformed JSONL이 있으면 전체 결과를 집계하지 않는다.
 - 평가 시작 뒤 관측된 control artifact가 입력에 영향을 주면 `FAIL`, 독립적인 timing provenance가 없으면 `BLOCKED`다.
 - 감사자와 의미 판정자를 작성자·실행자와 분리한다. actor ID와 provenance source는 협력적 호출자가 제공한 주장임을 limitation으로 보존한다. 현재 v1 입력은 실제 작업자 신원을 관찰하지 못하므로 서로 다른 UUID만으로 독립성을 통과시키지 않는다. 역할 충돌은 `FAIL`, 신원 관찰 불가는 `ROLE_INDEPENDENCE/BLOCKED`로 판정하며 품질·릴리스 근거 자격은 부여하지 않는다. 다른 정적 검사와 계산 가능한 집계 결과는 보존한다.
-- 기계 보고서 JSON에는 corpus, 정답, prompt, 모델 출력 또는 자유형 finding을 넣지 않는다. 고정 schema·코드·원래 분모와 수량·digest·opaque evidence reference를 보존한다. 사람용 설명은 이 경계를 유지하며 고정 코드의 뜻과 한계를 한국어 문장으로 전달한다. 증거 원문이나 비밀을 설명에 복사하지 않는다.
+- 기계 보고서 JSON에는 corpus, 정답, prompt, 모델 출력 또는 자유형 finding을 넣지 않는다. 고정 schema·코드·원래 분모와 수량·digest·opaque evidence reference를 보존한다. 사람용 설명은 이 경계를 유지하며 고정 schema·코드의 뜻과 한계를 한국어 문장으로 전달한다. 증거 원문이나 비밀을 설명에 복사하지 않는다.
