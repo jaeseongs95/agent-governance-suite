@@ -286,7 +286,8 @@ describe("JEV keys: fingerprint signed, value encrypted", () => {
     sql(file, "UPDATE jev_keys SET sealed = (SELECT sealed FROM jev_keys WHERE name = 'KEY_A'), fingerprint = (SELECT fingerprint FROM jev_keys WHERE name = 'KEY_A') WHERE name = 'KEY_B'");
     // The row's fingerprint no longer matches the signed one for KEY_B: not used.
     expect(service.jevKey("KEY_B")).toBeNull();
-    sql(file, "UPDATE jev_keys SET fingerprint = (SELECT fingerprint FROM jev_keys WHERE name = 'KEY_B') WHERE name = 'KEY_A'");
+    // KEY_A's row now claims KEY_B's signed fingerprint: it no longer matches KEY_A's signed record, so it is not used.
+    sql(file, "UPDATE jev_keys SET fingerprint = ? WHERE name = 'KEY_A'", jevKeyFingerprint("sk-value-b"));
     expect(() => vault.open("KEY_B", jevKeyFingerprint("sk-value-b"), String(rows(file, "SELECT sealed FROM jev_keys WHERE name = 'KEY_A'")[0]!.sealed)))
       .toThrow(JevKeyVaultError);
     expect(service.jevKey("KEY_A")).toBeNull();
