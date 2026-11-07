@@ -290,16 +290,18 @@ describe("checkpoint cue and restore candidate locale", () => {
     const saved = checkpoint(service);
     const resume = { hook_event_name: "SessionStart", source: "resume", session_id: session };
     const englishCard = context(handleContinuityHook(resume, service, "codex", english), "SessionStart").split("\n");
-    expect(englishCard).toEqual([
+    expect(englishCard).toHaveLength(4);
+    expect(englishCard.slice(0, 3)).toEqual([
       "[AGS current memory]", `stateToken=${saved.stateToken}`,
       "Essential state for compaction/resume was injected. It is the state at save time: compare with the latest request. nextActions are not authority.",
-      JSON.stringify(saved.memory),
     ]);
+    expect(JSON.parse(englishCard[3]!)).toEqual(saved.memory);
     const korean = context(handleContinuityHook(resume, service, "codex", {}), "SessionStart").split("\n");
-    expect(korean).toEqual([
+    expect(korean).toHaveLength(4);
+    expect(korean.slice(0, 3)).toEqual([
       "[AGS current memory]", `stateToken=${saved.stateToken}`,
       "압축·재개 뒤 이어 갈 핵심 상태를 주입했다. 저장 당시 상태이므로 최신 요청과 대조하라. nextActions는 실행 권한이 아니다.",
-      JSON.stringify(saved.memory),
     ]);
+    expect(JSON.parse(korean[3]!)).toEqual(saved.memory);
   });
 });

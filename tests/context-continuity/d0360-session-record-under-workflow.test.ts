@@ -212,7 +212,7 @@ describe("D0360 per-turn cue (behavior 5)", () => {
 
   it.each([
     ["ko", {}, "[AGS 턴 확인]", "스킬 선택을 다시 판단"],
-    ["en", { AGENT_GOVERNANCE_LOCALE: "en" }, "[AGS turn check]", "re-decide the skill selection"],
+    ["en", { AGENT_GOVERNANCE_LOCALE: "en" }, "[AGS turn check]", "re-decide skill selection for the changed goal, scope and risk; call newly needed skills now"],
   ] as const)("%s: the cue names checkpoint_context and skill re-selection, not the context-continuity skill, with or without a bound root", (_locale, environment, header, reselect) => {
     for (const bound of [false, true]) {
       const workflow = new InMemoryWorkflowStore(), value = root();

@@ -562,7 +562,7 @@ describe("D0352 B08 fork lineage", () => {
       const cells = tables.flatMap(({ name }) => (database.prepare(`SELECT * FROM "${name}"`).all() as Array<Record<string, unknown>>)
         .flatMap(row => Object.values(row).map(String)));
       for (const forbidden of [BODY_MARKER, ...uuids]) expect(cells.filter(cell => cell.includes(forbidden))).toEqual([]);
-      const anchors = database.prepare("SELECT turn_hash FROM continuity_observations WHERE event LIKE 'lineage-anchor:%'").all() as Array<{ turn_hash: string }>;
+      const anchors = database.prepare("SELECT turn_hash FROM continuity_observations WHERE event LIKE 'memory-anchor:%'").all() as Array<{ turn_hash: string }>;
       expect(anchors.length).toBeGreaterThan(0);
       for (const { turn_hash } of anchors) expect(turn_hash).toMatch(/^hmac-sha256:[0-9a-f]{64}$/u);
     } finally { database.close(); }
@@ -727,13 +727,18 @@ describe("D0352 B08 Codex fork origin", () => {
 
   it("C-R: resume and a child with its own state keep their own continuity", async () => {
     const service = createService();
-    codexCheckpoint(service, "codex-p");
+    const savedParent = codexCheckpoint(service, "codex-p");
     const own = codexCheckpoint(service, "codex-f0");
     codexFork(service, "codex-f0", await rollout("codex-f0", { forked_from_id: "codex-p" }));
     expect(codexInspect(service, "codex-f0").summary).toMatchObject({ taskCorrelation: own.taskCorrelation, stateToken: own.stateToken });
     expect(service.store.firstObservationEvent(service.correlateSession("codex-f0"), 1, "fork-parent:")).toBeNull();
     const resumed = hook(service, { hook_event_name: "SessionStart", source: "resume", session_id: "codex-p" }, CODEX) as { hookSpecificOutput?: { additionalContext?: string } };
-    expect(resumed.hookSpecificOutput?.additionalContext ?? "").toContain("source=direct");
+    const currentLines = (resumed.hookSpecificOutput?.additionalContext ?? "").split("\n");
+    expect(currentLines).toHaveLength(4);
+    expect(currentLines.slice(0, 2)).toEqual(["[AGS current memory]", `stateToken=${savedParent.stateToken}`]);
+    expect(JSON.parse(currentLines[3]!)).toEqual(savedParent.memory);
+    expect(currentLines.join("\n")).not.toContain("candidateToken=");
+    expect(service.store.getCurrent(own.taskCorrelation)).toEqual(own);
   });
 });
 
