@@ -975,12 +975,13 @@ export class ContinuityService implements ContinuityGateway {
    * (absolute paths outside version control, design 7.3) meet only the gated check: they are never counted or recorded.
    */
   gateEditForSession(rawSessionId: string, targets: readonly string[], shown: readonly string[] = targets,
-    example = minimalWorkflowStartExample(ROOT_LOCALE), unversioned: readonly string[] = []):
+    example = minimalWorkflowStartExample(ROOT_LOCALE), unversioned: readonly string[] = [], bySubagent = false):
     MessageRef<"hooks.editGate.denied" | "hooks.editGate.outsideScope" | "hooks.editGate.gatedRoot"> | null {
     const now = this.now().toISOString();
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     const { taskCorrelation: c, currentEpoch: e } = task;
-    if (targets.length > 0) this.recordEdit(c, e, now);
+    // Only the session's own edits arm its turn-end phase check (AGS3-D-0060); a subagent's edit is still gated below.
+    if (targets.length > 0 && !bySubagent) this.recordEdit(c, e, now);
     const windowStart = this.windowStart(c, e);
     const unavailable = (code: string): null => {
       const event = GATE_UNAVAILABLE_PREFIX + code;

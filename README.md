@@ -61,7 +61,7 @@ AGS에는 전문 스킬 23개와 흐름을 연결하는 `orchestrator`, 현황�
 필요한 것은 Node.js **24.0.0 이상**과 호스트의 플러그인 기능입니다. 협업할 호스트마다 설치합니다. 플러그인을 쓰는 데 이 저장소를 clone하거나 `pnpm install`을 실행할 필요는 없습니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v3.8.0`이며 아래 설치 예시는 이 버전 기준입니다. 3.x는 2.x와 호환하지 않습니다. 버전별 변경 사항은 [GitHub 릴리스](https://github.com/jaeseongs95/agent-governance-suite/releases)와 `docs/release-notes-v<버전>.md`에 있습니다.
+현재 공개 릴리스는 `v3.8.1`이며 아래 설치 예시는 이 버전 기준입니다. 3.x는 2.x와 호환하지 않습니다. 버전별 변경 사항은 [GitHub 릴리스](https://github.com/jaeseongs95/agent-governance-suite/releases)와 `docs/release-notes-v<버전>.md`에 있습니다.
 <!-- release-version:end -->
 
 ### 패키지 고르기
@@ -91,7 +91,7 @@ Claude Code 안에서 실행하고, 설치 후 새 세션을 시작합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.8.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.8.1
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -106,8 +106,8 @@ codex plugin add agent-governance-suite@agent-governance
 
 <!-- release-agy:start -->
 ```bash
-curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v3.8.0/agent-governance-suite-antigravity-v3.8.0.zip
-unzip agent-governance-suite-antigravity-v3.8.0.zip
+curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v3.8.1/agent-governance-suite-antigravity-v3.8.1.zip
+unzip agent-governance-suite-antigravity-v3.8.1.zip
 agy plugin install ./agent-governance-suite
 agy plugin list
 ```

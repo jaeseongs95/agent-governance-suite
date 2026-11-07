@@ -186,11 +186,11 @@ function stopOutput(host: string, eventName: string, cue: string | null): Record
 
 /** A file edit before it runs: the workflow gate (design ags30-phase-check 7.2). Exempt-only edits are not recorded. */
 function gateEdit(observation: InputObservation, service: ContinuityService, host: string, environment: NodeJS.ProcessEnv,
-  locale: SupportedLocale): Record<string, unknown> {
+  locale: SupportedLocale, bySubagent = false): Record<string, unknown> {
   const { product: targets, unversioned } = productEditTargets(observation, host, environment, locale);
   if (targets.size === 0 && unversioned.length === 0) return {};
   const refusal = service.gateEditForSession(observation.sessionId, [...targets.keys()], [...targets.values()],
-    minimalWorkflowStartExample(locale), unversioned);
+    minimalWorkflowStartExample(locale), unversioned, bySubagent);
   return refusal ? deniedEdit(render(refusal, locale)) : {};
 }
 
@@ -215,8 +215,9 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
   // A subagent's edit counts in its parent session's window (the host names the parent in session_id). Nothing else
-  // a child does pins or binds continuity state.
-  if (isObservedSubagent(observation)) return isEditBoundary(observation) ? gateEdit(observation, service, host, environment, locale) : {};
+  // a child does pins or binds continuity state, and it does not re-arm the parent's turn-end phase check: a parent
+  // waiting on background subagents was otherwise continued at every Stop with nothing to do (AGS3-D-0060).
+  if (isObservedSubagent(observation)) return isEditBoundary(observation) ? gateEdit(observation, service, host, environment, locale, true) : {};
   if (!actorAccess(observation.actor).allowed) return {};
   switch (action?.kind) {
     case "startup": service.ensureSession(sessionId); return {};
