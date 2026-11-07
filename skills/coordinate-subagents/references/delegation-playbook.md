@@ -2,7 +2,7 @@
 
 Read this reference when a task needs concrete assignment briefs, batching, shared-state coordination, failure recovery, or an independent audit.
 
-## Build the task graph
+## Lay out the task graph
 
 For each execution unit, record:
 
@@ -40,18 +40,18 @@ When reusing a completed agent, send a complete new brief. Do not assume the old
 
 <!-- policy-contract: allocation.explicit-single-delegation-playbook -->
 
-- After the net-benefit decision approves implementation delegation, keep one useful implementation unit with the coordinator when two or more implementation units exist. If the user explicitly delegates the only implementation unit, give it to the subagent and keep coordination and evidence review with the coordinator.
+- After the net-benefit decision approves work delegation, keep one useful work unit with the coordinator when two or more work units exist. If the user explicitly delegates the only work unit, give it to the subagent and keep coordination and evidence review with the coordinator.
 - Interpret the host's slot contract before allocating work. A reported total team capacity includes the coordinator unless the host says otherwise; a reported subagent count does not.
 
 <!-- policy-contract: audit.reserve-identity-playbook -->
 
-- When a required high-risk audit may not have access to a fresh identity later, reserve a non-implementing subagent and slot before assigning all implementation work.
+- When a required high-risk audit may not have access to a fresh identity later, reserve an uninvolved subagent and slot before assigning all delegated work.
 - Fill only currently available subagent slots after that calculation.
-- If more units remain, queue the next independent batch and reuse completed agents. When reusing completed agents across implementation batches, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge non-reuse.
+- If more units remain, queue the next independent batch and reuse completed agents. When reusing completed agents across work batches, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge non-reuse.
 - Use a single writer for shared files. Other agents return proposed changes or evidence to that writer.
 - Start dependent work only after validating the upstream result it consumes.
 - After dispatch, the coordinator works on its own ready unit; it does not immediately wait while useful independent work remains. Collect finished results and refill available slots without a whole-batch barrier.
-- Reserving an auditor does not disable implementation delegation. Keep the auditor out of implementation and begin its audit only after the final candidate and verification evidence are available.
+- Reserving an auditor does not disable work delegation. Keep the auditor out of the work being checked and begin its audit only after the final candidate and verification evidence are available.
 - The MCP workflow records stage results in plan order. Run independent units inside the appropriate stage with host collaboration tools, then integrate their results before recording the stage. Parallel execution does not permit out-of-order stage receipts.
 - Do not ask multiple agents to solve the same unit unless independent comparison or audit is the stated purpose.
 
@@ -70,7 +70,7 @@ Do not infer a permanent agent limit from a single failure. Do not switch models
 
 ## Run an independent audit
 
-The auditor must be separate from every implementer whose work is in scope. Provide the request, final artifacts or diff, verification evidence, and the minimum raw context needed to judge the outcome. Do not provide a preferred verdict or hide known failures.
+The auditor must be separate from every worker whose work is in scope. Provide the request, final artifacts or their changes, verification evidence, and the minimum raw context needed to judge the outcome. Do not provide a preferred verdict or hide known failures.
 
 Ask the auditor to check:
 
@@ -84,6 +84,6 @@ Resolve every finding. If a fix changes an audited area, re-audit the affected r
 
 ## Integrate results
 
-The coordinator reviews returned artifacts and evidence without repeating the assigned implementation. Accept or reject a result against requirements and current state. When results conflict, compare their evidence and validation rather than model names.
+The coordinator reviews returned artifacts and evidence without repeating the assigned work. Accept or reject a result against requirements and current state. When results conflict, compare their evidence and validation rather than model names.
 
 The final report must distinguish completed work, checks actually run, unresolved findings, and unavailable verification.
