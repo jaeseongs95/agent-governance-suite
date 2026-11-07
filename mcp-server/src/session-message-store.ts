@@ -907,9 +907,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       const prepared = this.database.prepare("SELECT prepared_at, expires_at, receipt FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?")
         .get(messageId, sender.host, sender.sessionId, iso(nowMs)) as { prepared_at: string; expires_at: string; receipt: string | null } | undefined;
       if (!prepared) return null;
-      return prepared.receipt === null
-        ? { messageId, state: "prepared", preparedAt: prepared.prepared_at, expiresAt: prepared.expires_at }
-        : { ...JSON.parse(prepared.receipt) as Record<string, unknown>, state: "submitted", deliveryState: "unknown", receiptExpiresAt: prepared.expires_at };
+      if (prepared.receipt === null) return { messageId, state: "prepared", preparedAt: prepared.prepared_at, expiresAt: prepared.expires_at };
+      const receipt = JSON.parse(prepared.receipt) as Record<string, unknown>;
+      return typeof receipt.recalledAt === "string"
+        ? { ...receipt, state: "recalled", receiptExpiresAt: prepared.expires_at }
+        : { ...receipt, state: "submitted", deliveryState: "unknown", receiptExpiresAt: prepared.expires_at };
     }
     return {
       messageId: row.message_id,
@@ -926,6 +928,43 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         { startedFrom: String(row.created_at), startedUntil: row.acknowledged_at === null ? null : String(row.acknowledged_at) }),
       autoWake: row.acknowledged_at ? null : this.autoWakeOutlook({ host: String(row.target_host), sessionId: String(row.target_session_id) }, nowMs),
     };
+  }
+
+  /**
+   * The sender takes back a submitted message no recipient has received, as an e-mail send is cancelled. In this one
+   * writer transaction the queue row leaves only while no claim has taken it (claimed_at IS NULL), so a claim either
+   * took it first (refused, with its delivery facts) or never sees it; a wake already rung then arrives empty. The
+   * receipt keeps recalledAt, so status reads recalled and a repeat answers the same; its retention shortens as an ACK's.
+   * Another sender's or an unknown ID answers status null, the same as get_session_message_status.
+   */
+  recall(sender: SessionIdentity, messageId: string, nowMs = AUTHORITY_NOW): {
+    recalled: boolean; duplicate?: true; reason?: "delivered" | "expired" | "not-sent" | "unknown"; status: Record<string, unknown> | null;
+  } {
+    boundedIdentity(sender);
+    if (!this.inTransaction) return this.transaction(() => this.recall(sender, messageId, nowMs));
+    nowMs = this.time(nowMs);
+    this.prune(nowMs);
+    const now = iso(nowMs);
+    const owned = this.database.prepare(`SELECT receipt FROM prepared_messages
+      WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?`)
+      .get(messageId, sender.host, sender.sessionId, now) as { receipt: string | null } | undefined;
+    if (!owned) return { recalled: false, reason: "unknown", status: null };
+    if (owned.receipt === null) return { recalled: false, reason: "not-sent", status: this.status(sender, messageId, nowMs) };
+    const receipt = JSON.parse(owned.receipt) as { messageId: string; createdAt: string; expiresAt: string; recalledAt?: string };
+    if (receipt.recalledAt !== undefined) return { recalled: true, duplicate: true, status: this.status(sender, messageId, nowMs) };
+    const removed = this.database.prepare(`DELETE FROM messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ?
+      AND claimed_at IS NULL AND acknowledged_at IS NULL AND expires_at > ?`).run(messageId, sender.host, sender.sessionId, now).changes === 1;
+    if (!removed) {
+      const status = this.status(sender, messageId, nowMs);
+      const reason = status?.state === "delivered" || status?.state === "acknowledged" ? "delivered"
+        : receipt.expiresAt <= now ? "expired" : "unknown";
+      return { recalled: false, reason, status };
+    }
+    const recalledReceipt = JSON.stringify({ ...receipt, recalledAt: now });
+    this.database.prepare(`UPDATE prepared_messages SET receipt = ?, expires_at = min(expires_at, ?), record_bytes = record_bytes + ?
+      WHERE message_id = ?`).run(recalledReceipt, iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS),
+      Buffer.byteLength(recalledReceipt, "utf8") - Buffer.byteLength(owned.receipt, "utf8"), messageId);
+    return { recalled: true, status: this.status(sender, messageId, nowMs) };
   }
 
   /** Metadata only; peer relation is not work completion or permission. */

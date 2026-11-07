@@ -10,6 +10,9 @@ stateDiagram-v2
     Prepared --> Submitted: 같은 발신자의 send(ID) / 원자 삽입·영수증
     Prepared --> Removed: 준비 만료
     Submitted --> Submitted: 같은 ID 재시도 / 최초 영수증
+    Submitted --> Recalled: 수신 전 같은 발신자의 recall(ID) / 큐 행 삭제
+    Recalled --> Recalled: 같은 ID recall 재요청 / 같은 결과
+    Recalled --> Removed: 영수증 보존 만료
     Submitted --> Removed: 영수증 보존 만료
     Removed --> Removed: old ID send 거절
 ```
@@ -39,6 +42,16 @@ ACK는 해당 수신 대상에 대해 broker에 claim 이력이 기록되고 원
 ACK는 처음 성공한 ACK에서만 영수증 만료를 줄인다. 두 번째 ACK, 대상이 아닌 세션의 ACK, 모르는 ID의 ACK는 만료를 바꾸지 않으며, 줄인 만료는 다시 늘지 않는다. 따라서 ACK 후 1시간이 지난 ID는 status가 unknown(`null`)이고 같은 ID의 send도 발급 ID 없음으로 거절한다. 이 규칙은 새로 기록되는 ACK에만 적용하며, 이전 버전이 ACK한 기존 영수증의 만료를 소급해 바꾸지 않는다. 영구 tombstone이나 별도 DB·daemon은 없다. status는 준비 상태, 기존 queued/delivered/acknowledged 상태 또는 큐 행이 정리된 뒤 제출 영수증과 `deliveryState: "unknown"`을 구별한다.
 
 ACK 전 lease 재전달은 정상이며 같은 ID·본문을 유지한다. 중복 ACK는 최초 ACK 시각을 늘리지 않는다. ACK는 처리 확인으로, 업무 완료나 승인이 아니다. wake의 전달 결과가 불명확하면 기존 예약을 유지하고 새 wake 효과로 바꾸지 않는다. [peer 대기 판정](peer-wait-policy.md)의 nonce·generation·복귀 증거 만료 계약은 유지한다.
+
+## 회수(3.9.0)
+
+보낸 세션은 수신자가 아직 받지 않은 자기 메시지를 `recall_session_message`(`schemaVersion`, `messageId`)로 회수할 수 있다. 메일 발송 취소와 같은 정책이며 호스트와 관계없이 같은 MCP 도구다. 발신자는 send와 같이 서버가 검증한 호출자이고, child 호출은 root 세션을 대신한다. hook 없는 CLI에서는 `{"operation":"recall","payload":{"sender":{...},"messageId":"<ID>"}}`로 같은 연산을 부른다.
+
+- **받지 않음**: 아직 어떤 claim(MCP claim, 도구 경계, 턴 끝, 깨우기 도착)도 가져가지 않은 큐 행(`claimed_at`이 비어 있음)이다. 회수는 한 `BEGIN IMMEDIATE` transaction에서 이 조건으로 큐 행을 지우고 제출 영수증에 `recalledAt`을 적는다. claim도 같은 writer lock 아래에서 행을 다시 읽으므로 회수와 claim이 겹치면 먼저 lock을 잡은 쪽 하나만 이긴다. 회수된 메시지는 대기 수와 깨우기 후보에서 빠지며 수신자에게 영영 전달되지 않는다.
+- **이미 울린 깨우기**: 깨우기 신호가 이미 나간 뒤 claim 전에 회수하면 그 깨우기는 검증된 깨우기로 인식되고 메시지 0건으로 끝난다. 이는 기존 빈 깨우기 경로(`peer.wake.noMessage`)이며 hook 실패로 보고하지 않는다. 아직 울리지 않고 예약만 된 시도는 다음 정리에서 `not-delivered`로 끝나고, 다른 받을 메시지가 없으면 새 시도는 울리지 않는다.
+- **응답**: 성공하면 `recalled: true`와 `status`(`state: "recalled"`, `recalledAt`, `receiptExpiresAt`)를 돌려준다. 같은 요청을 다시 보내면 같은 `recalledAt`과 `duplicate: true`를 돌려주고 아무것도 바꾸지 않는다. 회수할 수 없으면 `recalled: false`와 `reason`을 돌려주며 아무것도 쓰지 않는다. `delivered`는 수신자가 이미 받았다는 뜻이고 `status`에 `claimedAt`·`firstDeliveredAt`·`acknowledgedAt`이 있다. `expired`는 메시지 TTL이 지났다는 뜻이다. `not-sent`는 준비만 하고 보내지 않은 ID다. `unknown`은 `status: null`이며 다른 발신자의 메시지와 모르는 ID를 구별하지 않는다(`get_session_message_status`와 같은 관례).
+- **보존**: 회수된 메시지의 제출 영수증은 ACK와 같이 `min(기존 보존 기한, 회수 시각+1시간)`까지 남고, 그동안 `get_session_message_status`는 `recalled`를 보여 준다. 같은 ID의 send는 큐에 다시 넣지 않고 기존 영수증(`recalledAt` 포함)을 `duplicate: true`로 돌려준다. 영수증 상한·바이트 합 계산은 기존과 같다.
+- **혼합 버전**: 저장소 형식은 바뀌지 않는다(`recalledAt`은 영수증 JSON 안의 필드다). 같은 컴퓨터의 3.8.x 이하 연결은 회수된 메시지를 `submitted`·`deliveryState: "unknown"`으로 보이며, 큐 행이 없으므로 전달하지 않는다. 3.8.x 이하에는 회수 도구가 없다.
 
 ## 회차 영수증과 혼합 버전의 제약
 

@@ -108,6 +108,16 @@ export class SessionMessageService {
     }
   }
 
+  /** Takes back the caller's own message while no recipient has received it; the reply says why when it cannot. */
+  async recall(args: Record<string, unknown>, caller: VerifiedCaller): Promise<ApiResultV1<unknown>> {
+    const sender = address(caller);
+    try {
+      return ok(await sessionMessageRequest("recall", { sender, messageId: args.messageId }, this.stateDirectory));
+    } catch (error) {
+      return unavailable(error);
+    }
+  }
+
   /** The session board's liveness view: one broker request whose reply the store keeps inside the response limit. */
   async listCurrentPresence(self: SessionBindingV1): Promise<{ sessions: CurrentPresence[]; truncated: number }> {
     return sessionMessageRequest("list-current-presence", { self }, this.stateDirectory);

@@ -72,6 +72,7 @@
   "services.sessionMessage.operation.hostWakeReceiptRequired": "호스트 wake claim에는 권한을 주지 않는 hook 출처 영수증이 필요하다.",
   "services.sessionMessage.operation.prepareFields": "prepare는 sender, target, body, ttlSeconds만 받는다. ID는 시스템이 발급한다.",
   "services.sessionMessage.operation.sendFields": "send는 sender와 prepare가 돌려준 ID만 받는다. 메시지 내용은 바뀌지 않는다. 전달 여부를 모르면 알고 있는 ID로 다시 보내거나 저장한 영수증·status와 대조한다.",
+  "services.sessionMessage.operation.recallFields": "recall은 sender와 이 발신자가 보낸 messageId만 받는다.",
   "services.sessionMessage.operation.unknown": "알 수 없는 세션 메시지 작업이다.",
   "services.sessionMessage.peerWait.queryRevisionTooLong": "queryRevision이 너무 길다.",
   "services.sessionMessage.peerWait.targetsRange": "targets에는 식별 정보가 1..8개 있어야 한다.",

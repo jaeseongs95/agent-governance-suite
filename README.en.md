@@ -151,7 +151,7 @@ in a PEER message, and report the ACK and the actual review result separately.
 Do not modify files or run tests.
 ```
 
-If a message does not arrive, check `get_session_message_status` with the same `messageId`. Do not resend a message with an uncertain outcome under a new ID. The [message lifecycle](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/session-message-lifecycle.md) explains each status.
+If a message does not arrive, check `get_session_message_status` with the same `messageId`. The sending session can take back a message the recipient has not received yet with `recall_session_message`, as an e-mail send is cancelled. Do not resend a message with an uncertain outcome under a new ID. The [message lifecycle](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/session-message-lifecycle.md) explains each status.
 
 ## State and updates
 

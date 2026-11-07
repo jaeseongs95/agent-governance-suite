@@ -1420,6 +1420,30 @@ describe("session message MCP tools", () => {
       expect(unknown.error?.message).toContain("saved receipts/status");
     } finally { await client.close(); }
   }, 30_000);
+  it("RC10: recalls through the bound MCP tool; another session gets the same null answer as status", async () => {
+    const directory = stateDirectory();
+    const client = await connect(directory);
+    try {
+      const sender = { host: "grok", sessionId: "grok-recall" };
+      const target = { host: "spark", sessionId: "spark-recall" };
+      const prepared = payload(await client.callAs(sender, { name: "prepare_session_message", arguments: { schemaVersion: "1.0.0", targetHost: target.host, targetSessionId: target.sessionId, body: "take me back" } }));
+      const { messageId } = prepared.data as { messageId: string };
+      expect(payload(await client.callAs(sender, { name: "send_session_message", arguments: { schemaVersion: "1.0.0", messageId } }))).toMatchObject({ ok: true });
+      const foreign = payload(await client.callAs(target, { name: "recall_session_message", arguments: { schemaVersion: "1.0.0", messageId } }));
+      expect(foreign).toMatchObject({ ok: true, error: null });
+      expect(foreign.data).toEqual({ recalled: false, reason: "unknown", status: null });
+      const recalled = payload(await client.callAs(sender, { name: "recall_session_message", arguments: { schemaVersion: "1.0.0", messageId } }));
+      expect(recalled, recalled.error?.message).toMatchObject({ ok: true, data: { recalled: true, status: { messageId, state: "recalled" } } });
+      expect(payload(await client.callAs(sender, { name: "recall_session_message", arguments: { schemaVersion: "1.0.0", messageId } })))
+        .toMatchObject({ ok: true, data: { recalled: true, duplicate: true, status: { recalledAt: (recalled.data.status as { recalledAt: string }).recalledAt } } });
+      expect(payload(await client.callAs(sender, { name: "get_session_message_status", arguments: { schemaVersion: "1.0.0", messageId } }))).toMatchObject({ ok: true, data: { status: { state: "recalled" } } });
+      expect(await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target } }), directory)).toMatchObject({ data: { messages: [] } });
+      expect(payload(await client.callAs(sender, { name: "recall_session_message", arguments: { schemaVersion: "1.0.0", messageId: "x" } }))).toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
+      const listed = await client.listTools();
+      expect(listed.tools.find(tool => tool.name === "recall_session_message")?.annotations).toMatchObject({ readOnlyHint: false, idempotentHint: true, destructiveHint: true });
+    } finally { await client.close(); }
+  }, 30_000);
+
   it("acknowledges processed peers in one bound batch without dropping foreign or unclaimed messages", async () => {
     const directory = stateDirectory();
     const client = await connect(directory);

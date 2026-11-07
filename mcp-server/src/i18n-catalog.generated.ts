@@ -422,6 +422,7 @@ export interface MessageParams {
   "services.sessionMessage.operation.hostWakeReceiptRequired": Record<string, never>;
   "services.sessionMessage.operation.prepareFields": Record<string, never>;
   "services.sessionMessage.operation.sendFields": Record<string, never>;
+  "services.sessionMessage.operation.recallFields": Record<string, never>;
   "services.sessionMessage.operation.unknown": Record<string, never>;
   "services.sessionMessage.peerWait.queryRevisionTooLong": Record<string, never>;
   "services.sessionMessage.peerWait.targetsRange": Record<string, never>;
@@ -533,6 +534,7 @@ export interface MessageParams {
   "tools.send_session_message.description": Record<string, never>;
   "tools.acknowledge_session_messages.description": Record<string, never>;
   "tools.get_session_message_status.description": Record<string, never>;
+  "tools.recall_session_message.description": Record<string, never>;
   "tools.plan_workflow.inlineInput": Record<string, never>;
   "tools.start_workflow.input.stages": Record<string, never>;
   "tools.start_workflow.input.workspace": Record<string, never>;

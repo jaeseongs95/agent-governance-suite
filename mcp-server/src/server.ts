@@ -852,6 +852,12 @@ export function createMcpServer(
         inputSchema: contracts.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
+      {
+        name: "recall_session_message",
+        description: description("tools.recall_session_message.description"),
+        inputSchema: contracts.recallSessionMessageRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: true, openWorldHint: false },
+      },
     ], locale);
   };
   // ponytail: each locale's list is built once and kept; the bound is the shipped locale count.
@@ -1125,6 +1131,14 @@ export function createMcpServer(
           try {
             validator.getSessionMessageStatusRequest(args);
             result = await sessionMessages.status(args, caller);
+          } catch (error) {
+            result = failureResult(error);
+          }
+          break;
+        case "recall_session_message":
+          try {
+            validator.recallSessionMessageRequest(args);
+            result = await sessionMessages.recall(args, caller);
           } catch (error) {
             result = failureResult(error);
           }

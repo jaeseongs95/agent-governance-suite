@@ -382,6 +382,11 @@ export interface GetSessionMessageStatusRequestV1 {
   messageId: string;
 }
 
+export interface RecallSessionMessageRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  messageId: string;
+}
+
 /** Advisory recipient auto-wake snapshot; never delivery, completion or permission evidence. */
 export interface SessionAutoWakeOutlookV2 {
   state: "available" | "degraded" | "unsupported" | "no-live-relay";

@@ -149,7 +149,7 @@ ACK를 남기고 결과와 근거를 별도 PEER 메시지로 회신해 줘. 파
 ACK와 실제 검토 결과를 구분해서 알려 줘. 파일 수정과 테스트 실행은 하지 마.
 ```
 
-메시지가 오지 않으면 같은 `messageId`로 `get_session_message_status`를 확인합니다. 결과가 불명확한 메시지를 새 ID로 다시 보내지 않습니다. 자세한 상태 해석은 [메시지 수명](docs/session-message-lifecycle.md)에 있습니다.
+메시지가 오지 않으면 같은 `messageId`로 `get_session_message_status`를 확인합니다. 수신자가 아직 받지 않은 메시지는 보낸 세션이 `recall_session_message`로 회수할 수 있습니다(메일 발송 취소와 같음). 결과가 불명확한 메시지를 새 ID로 다시 보내지 않습니다. 자세한 상태 해석은 [메시지 수명](docs/session-message-lifecycle.md)에 있습니다.
 
 ## 상태 저장과 업데이트
 
