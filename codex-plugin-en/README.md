@@ -42,7 +42,7 @@ To name a skill yourself, use `$orchestrator` in Codex or `/agent-governance-sui
 
 | When | What AGS does |
 | --- | --- |
-| Start, resume, and after compaction | Offers the skill-selection and workflow rules. It lists saved work-record candidates; the agent calls `load_context` to load a body. Workflow summaries help it continue. Guidance output and actual model consumption or compliance are separate evidence. |
+| Start, resume, and after compaction | Offers the skill-selection and workflow rules. On resume or after compaction, existing hooks inject the current-memory body; `load_context` can read the caller's current body and token when needed. Workflow summaries and structural cards keep their separate contract. Guidance output and actual model consumption or compliance are separate evidence. |
 | Every user message | Adds a turn check and the installed skills' targets to prompt reconsideration. The notice also asks the agent to save corrections, decisions, approvals, prohibitions, and remaining work with `checkpoint_context`. |
 | Subagent start | Claude Code and Codex SubagentStart hooks supply skill targets and a reminder to respect the assignment's scope, forbidden areas, and write ownership. agy has no equivalent start hook. |
 | File changes | Compares paths reported by the host with workflow write scopes. Product files without a workflow, and product files outside active workflow scopes, count in a window between workflow starts or turn-end checks; calls reaching the third distinct file are refused. A root waiting for review or a user decision has a separate refusal rule. See the limits below. |
