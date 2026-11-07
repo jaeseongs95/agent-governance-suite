@@ -196,6 +196,8 @@ it("RC09: two processes racing recall against claim on one database: every messa
   expect(claimReply!.error).toBeUndefined();
   const recalled = new Set(recallReply!.results.filter(result => result.recalled).map(result => result.id));
   const claimed = new Set(claimReply!.claimed);
+  // The split depends on scheduling and is reported, not asserted; the invariant below holds for every split.
+  console.info(`RC09 split: recalled ${recalled.size}, claimed ${claimed.size}`);
   expect([...recalled].filter(id => claimed.has(id))).toEqual([]);
   expect(recalled.size + claimed.size).toBe(ids.length);
   for (const result of recallReply!.results.filter(item => !item.recalled)) {

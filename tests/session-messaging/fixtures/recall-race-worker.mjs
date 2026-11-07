@@ -8,7 +8,8 @@ process.send({ type: 'ready' });
 process.once('message', () => {
   try {
     if (mode === 'recall') {
-      const results = ids.map((id) => {
+      // Newest first while the claimer takes oldest first, so the two meet inside the queue instead of one trailing the other.
+      const results = [...ids].reverse().map((id) => {
         const result = store.recall(sender, id);
         return { id, recalled: result.recalled, ...(result.reason ? { reason: result.reason } : {}) };
       });
