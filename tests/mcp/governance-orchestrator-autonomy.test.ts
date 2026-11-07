@@ -68,6 +68,36 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     expect(result.data!.stages[0]!.requiredInputArtifacts).toContain("edit-decision-set");
     expect(result.data!.stages[0]!.producedArtifacts).not.toContain("edit-decision-set");
   });
+  it("prepares requirement-level cases before routing any result-changing work, including non-code and small direct edits (D36)", () => {
+    const text = instructions("references/entry-details.md");
+    const preparation = text.split("## 초기 라우팅")[1]!.split("선택 결과에는")[0]!;
+    expect(preparation).toContain("비코드 작업과 작은 직접 편집도");
+    expect(preparation).toContain("사례 정의 → 실행 → 동일 사례 확인");
+    expect(preparation).toContain("capability 선택·계획 때 먼저 요구마다");
+    for (const field of ["검증 대상", "사용자의 실제 진입점", "대상 환경", "검증 방법", "통과 조건을 적고"]) expect(preparation).toContain(field);
+    expect(preparation).toContain("변경 뒤 그 사례를 같은 경로·환경에서 실행해 실제 결과를 대조한다");
+    expect(preparation).toContain("목표나 일반 완료 조건만 적은 것은 사례 정의를 대신하지 않는다");
+  });
+  it("reuses the existing AC evidence plan and validator while keeping small direct work free of new workflow or gate obligations (D36)", () => {
+    const text = instructions("references/entry-details.md");
+    const preparation = text.split("## 초기 라우팅")[1]!.split("선택 결과에는")[0]!;
+    for (const field of ["AcceptanceEvidencePlan.v1", "verificationMethod", "대상·실제 경로·환경·방법", "passCondition", "criterionId", "statement", "TaskEnvelope.v1.acceptanceCriteria", "일대일로 연결한다"]) expect(preparation).toContain(field);
+    expect(preparation).toContain("../../task-contract/references/entry-details.md#작성-절차");
+    expect(preparation).toContain("AC 대응 검사를 재사용한다");
+    expect(preparation).toContain("작은 직접 작업은 기존 작업 기록에 필요한 사례와 결과를 적고");
+    expect(preparation).toContain("이를 위해 새 workflow·gate·산출물 형식을 만들지 않는다");
+    expect(preparation).toContain("조회·설명만 하는 요청에 변경 작업용 사례를 요구하지 않는다");
+  });
+  it("uses the assigned subtask and host-supported choices in bootstrap without weakening authoritative workflow observations (T21)", () => {
+    const text = instructions("references/entry-details.md");
+    const bootstrap = text.split("\n").find(line => line.startsWith("- `bootstrap`:")) ?? "";
+    expect(bootstrap).toContain("하위 배정이 있으면 호출 전에 담당 작업과 호스트가 제공한 지원 조합에 맞는 모델·추론 수준을 선택하며");
+    expect(bootstrap).not.toContain("신뢰할 수 있는 현재 선택값이 있을 때");
+    expect(text).toContain("메인 세션의 현재 모델 관측을 이 선택의 전제로 삼지 않는다");
+    expect(text).toContain("호스트가 서버 측 `TrustedExecutionContextProvider`를 통해 authoritative observation으로 제공해야 한다");
+    expect(text).toContain("`BINDING_REQUIRED` 또는 `BINDING_INVALID`를 반환하면 값을 임의로 보정·추정하지 않고 해당 workflow를 시작하지 않는다");
+    expect(text).toContain("semantic stage의 `passed`에 필요한 신뢰 관측이 없거나 결속이 잘못되면");
+  });
   it("removes the first-failure diagnosis mandate from the actual loaded entry while preserving repeated-failure discrimination", () => {
     const text = instructions("references/entry-details.md");
     expect(text).not.toMatch(/첫 수정 실패[^\n]*일반 재시도 대신[^\n]*blocker-diagnosis/u);
