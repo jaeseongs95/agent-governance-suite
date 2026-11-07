@@ -52,5 +52,16 @@
   "continuity.restore.current": "[AGS current memory]\nstateToken={stateToken}\nEssential state for compaction/resume was injected. It is the state at save time: compare with the latest request. nextActions are not authority.\n{body}",
   "continuity.checkpoint.tooLarge": "Current-memory JSON(status/core/evidenceRefs) is {bytes} UTF-8 bytes, above the {limit}-byte ceiling. Preserve valid essentials while reducing the content.",
   "continuity.checkpoint.stateChanged": "Current memory changed. Use load_context to read the latest current state and stateToken, then rebuild the content.",
-  "continuity.purge.stateChanged": "Current memory changed; nothing was deleted. Use load_context to check the latest current state and stateToken."
+  "continuity.purge.stateChanged": "Current memory changed; nothing was deleted. Use load_context to check the latest current state and stateToken.",
+  "continuity.layers.bodyInvalid": "body must be a string (an empty string clears the layer).",
+  "continuity.layers.tooLarge": "The {layer} context body is {bytes} UTF-8 bytes; the limit is {limit}. Rebuild it shorter: merge duplicates and drop finished or obsolete items.",
+  "continuity.layers.tokenInvalid": "expectedStateToken must be the stateToken load_shared_context returned, or null when the layer was never written.",
+  "continuity.layers.stateChanged": "The context changed since you read it (details.actualStateToken). Call load_shared_context, rebuild the whole body from the current one and save again.",
+  "continuity.layers.integrity": "A stored context layer failed its size or digest check, so it is not used.",
+  "continuity.layers.roleInvalid": "role must be one line of 1 to {limit} characters without control characters (compared after NFC and trimming), or null to unbind.",
+  "continuity.layers.sessionInvalid": "The calling session could not be identified.",
+  "continuity.layers.roleUnbound": "This session is not bound to a role. The user approves a binding with a passkey on the local admin page ({adminUrl}). Leave a request with bind_session_role and tell the user.",
+  "continuity.layers.argumentsInvalid": "The {tool} arguments do not match its input schema.",
+  "continuity.layers.unavailable": "The shared context store is unavailable.",
+  "continuity.layers.roleNotRegistered": "The role \"{role}\" is not in the registry. The user creates roles on the local admin page ({adminUrl}), Roles menu. Tell the user, then ask again with a registered role name."
 }

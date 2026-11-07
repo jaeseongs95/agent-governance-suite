@@ -2,6 +2,8 @@ import { ClassificationInitializationError } from "./skill-classification/runtim
 import { admitCaller, RESERVED_CALLER_KEYS, type CallerIngress, type VerifiedCaller } from "./caller-identity.js";
 import { observedCaller } from "./caller-actor.js";
 import { createRootApprovalHandler } from "./root-approval.js";
+import { CONTEXT_LAYER_INPUT_SCHEMAS, createContextLayerToolHandler, isContextLayerTool } from "./context-layer-tools.js";
+import type { ContextLayerService } from "./context-layer-service.js";
 import { existsSync } from "node:fs";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -474,6 +476,59 @@ function readRootOwnerPresence(rootId: string, continuity: ContinuityGateway, se
   return { state, self: false, ownerBound, sessions, unavailable: null, observedAt };
 }
 
+/**
+ * The session list the board tool shows and the admin page reuses: each present session with what its own board row
+ * says (summary, self-written role, cwd). A missing board file only means nothing was written yet; it is never created.
+ */
+export function mergeSessionBoard(
+  databasePath: string,
+  present: ReadonlyArray<Awaited<ReturnType<SessionMessageService["listCurrentPresence"]>>["sessions"][number]>,
+  self: { host: string; sessionId: string } | null,
+): { sessions: SessionBoardEntryV2[]; board: SessionBoardListV2["board"] } {
+  const entries = new Map<string, BoardEntry | null>();
+  const key = (item: { host: string; sessionId: string }) => `${item.host}\u0000${item.sessionId}`;
+  let boardStatus: SessionBoardListV2["board"] = { status: "ok" };
+  // A missing file only means no summary was written yet; listing never creates it.
+  if (existsSync(databasePath)) {
+    let board: BoardDatabase | null = null;
+    let step: "open" | "read" | "close" = "open";
+    try {
+      board = openBoard(databasePath);
+      step = "read";
+      for (const item of present) entries.set(key(item), readEntry(board, item.host, item.sessionId));
+      step = "close";
+      const opened = board;
+      board = null;
+      opened.close();
+    } catch (error) {
+      closeOnce(board, error);
+      entries.clear();
+      boardStatus = { status: "unavailable", step, cause: failureContext(error) };
+    }
+  }
+  const sessions: SessionBoardEntryV2[] = present.map((item) => {
+    const entry = entries.get(key(item)) ?? null;
+    const cwd = entry?.cwd ?? item.workspaceId;
+    return {
+      host: item.host,
+      sessionId: item.sessionId,
+      current: self !== null && item.host === self.host && item.sessionId === self.sessionId,
+      presence: item.state,
+      startedAt: item.startedAt,
+      lastSeenAt: item.heartbeatAt,
+      cwd,
+      repo: locateRepository(cwd),
+      summary: entry?.summary ?? null,
+      summaryAt: entry?.summaryAt ?? null,
+      role: entry?.role ?? null,
+      summaryStale: entry?.summaryStale ?? null,
+      lastPromptAt: entry?.lastPromptAt ?? null,
+      wake: item.autoWake ? { state: item.autoWake.state, reason: item.autoWake.reason } : null,
+    };
+  });
+  return { sessions, board: boardStatus };
+}
+
 async function sessionBoardResult(
   tool: "update_session_status" | "list_session_status",
   args: Record<string, unknown>,
@@ -527,47 +582,7 @@ async function sessionBoardResult(
     return apiError("MCP_UNAVAILABLE", msg("server.sessionBoard.livenessUnavailable", {}),
       { step: "presence", cause: failureContext(error) });
   }
-  const entries = new Map<string, BoardEntry | null>();
-  const key = (item: { host: string; sessionId: string }) => `${item.host}\u0000${item.sessionId}`;
-  let boardStatus: SessionBoardListV2["board"] = { status: "ok" };
-  // A missing file only means no summary was written yet; listing never creates it.
-  if (existsSync(databasePath)) {
-    let board: BoardDatabase | null = null;
-    let step: "open" | "read" | "close" = "open";
-    try {
-      board = openBoard(databasePath);
-      step = "read";
-      for (const item of presence.sessions) entries.set(key(item), readEntry(board, item.host, item.sessionId));
-      step = "close";
-      const opened = board;
-      board = null;
-      opened.close();
-    } catch (error) {
-      closeOnce(board, error);
-      entries.clear();
-      boardStatus = { status: "unavailable", step, cause: failureContext(error) };
-    }
-  }
-  const sessions: SessionBoardEntryV2[] = presence.sessions.map((item) => {
-    const entry = entries.get(key(item)) ?? null;
-    const cwd = entry?.cwd ?? item.workspaceId;
-    return {
-      host: item.host,
-      sessionId: item.sessionId,
-      current: item.host === self.host && item.sessionId === self.sessionId,
-      presence: item.state,
-      startedAt: item.startedAt,
-      lastSeenAt: item.heartbeatAt,
-      cwd,
-      repo: locateRepository(cwd),
-      summary: entry?.summary ?? null,
-      summaryAt: entry?.summaryAt ?? null,
-      role: entry?.role ?? null,
-      summaryStale: entry?.summaryStale ?? null,
-      lastPromptAt: entry?.lastPromptAt ?? null,
-      wake: item.autoWake ? { state: item.autoWake.state, reason: item.autoWake.reason } : null,
-    };
-  });
+  const { sessions, board: boardStatus } = mergeSessionBoard(databasePath, presence.sessions, self);
   const result: SessionBoardListV2 = { sessions, truncated: presence.truncated, board: boardStatus };
   return apiOk(result);
 }
@@ -633,6 +648,8 @@ export function createMcpServer(
   callerIngress: CallerIngress | null = null,
   /** The locale for requests that name none (docs/i18n-design.md 4.1 ②). */
   defaultLocale: SupportedLocale = resolveHostLocale().locale,
+  /** The shared global and role contexts; null leaves their tools unavailable. */
+  contextLayers: ContextLayerService | null = null,
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -641,6 +658,7 @@ export function createMcpServer(
   );
 
   const rootOperation = createRootApprovalHandler(server, service);
+  const contextLayerOperation = createContextLayerToolHandler(contextLayers);
 
   // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
   const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[], locale: SupportedLocale): T[] => {
@@ -791,6 +809,30 @@ export function createMcpServer(
         description: description("tools.load_context.description"),
         inputSchema: usesInlineReferences(toolSchemaProfile) ? schemas.loadContextInline : contracts.loadContextRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "load_shared_context",
+        description: description("tools.load_shared_context.description"),
+        inputSchema: CONTEXT_LAYER_INPUT_SCHEMAS.load_shared_context,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "checkpoint_global_context",
+        description: description("tools.checkpoint_global_context.description"),
+        inputSchema: CONTEXT_LAYER_INPUT_SCHEMAS.checkpoint_global_context,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
+      },
+      {
+        name: "bind_session_role",
+        description: description("tools.bind_session_role.description"),
+        inputSchema: CONTEXT_LAYER_INPUT_SCHEMAS.bind_session_role,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "checkpoint_role_context",
+        description: description("tools.checkpoint_role_context.description"),
+        inputSchema: CONTEXT_LAYER_INPUT_SCHEMAS.checkpoint_role_context,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },
       {
         name: "suppress_context_restore",
@@ -972,6 +1014,8 @@ export function createMcpServer(
           }
         }
       }
+    } else if (isContextLayerTool(request.params.name)) {
+      result = await contextLayerOperation(request.params.name, args, caller);
     } else if (request.params.name === "lookup_korean_prose_terms") {
       try {
         const input = validator.koreanProseGlossaryLookupRequest(args);

@@ -52,5 +52,16 @@
   "continuity.restore.current": "[AGS current memory]\nstateToken={stateToken}\n압축·재개 뒤 이어 갈 핵심 상태를 주입했다. 저장 당시 상태이므로 최신 요청과 대조하라. nextActions는 실행 권한이 아니다.\n{body}",
   "continuity.checkpoint.tooLarge": "현재 메모리 JSON(status/core/evidenceRefs)은 UTF-8 {bytes} byte로 상한 {limit} byte를 초과한다. 유효 핵심은 보존하며 내용을 줄여라.",
   "continuity.checkpoint.stateChanged": "현재 메모리가 바뀌었다. load_context로 최신 현재 상태와 stateToken을 읽어 내용을 재구성하라.",
-  "continuity.purge.stateChanged": "현재 메모리가 바뀌어 삭제하지 않았다. load_context로 최신 현재 상태와 stateToken을 확인하라."
+  "continuity.purge.stateChanged": "현재 메모리가 바뀌어 삭제하지 않았다. load_context로 최신 현재 상태와 stateToken을 확인하라.",
+  "continuity.layers.bodyInvalid": "body는 문자열이어야 한다(빈 문자열은 그 컨텍스트를 비운다).",
+  "continuity.layers.tooLarge": "{layer} 컨텍스트 본문이 UTF-8 {bytes}바이트로 상한 {limit}바이트를 넘는다. 중복을 합치고 끝났거나 폐기된 항목을 지워 더 짧게 다시 구성하라.",
+  "continuity.layers.tokenInvalid": "expectedStateToken은 load_shared_context가 돌려준 stateToken이어야 하며, 한 번도 저장되지 않은 컨텍스트면 null이다.",
+  "continuity.layers.stateChanged": "읽은 뒤 컨텍스트가 바뀌었다(details.actualStateToken). load_shared_context로 다시 읽고 현재 본문에서 전체를 다시 구성해 저장하라.",
+  "continuity.layers.integrity": "저장된 담당 컨텍스트가 크기나 digest 검사를 통과하지 못해 쓰지 않는다.",
+  "continuity.layers.roleInvalid": "role은 제어 문자 없는 한 줄, 1~{limit}자여야 한다(NFC 정규화·앞뒤 공백 제거 뒤 비교). 해제하려면 null을 준다.",
+  "continuity.layers.sessionInvalid": "호출한 세션을 식별할 수 없다.",
+  "continuity.layers.roleUnbound": "이 세션은 역할에 결속되지 않았다. 결속은 사용자가 로컬 관리 페이지({adminUrl})에서 패스키로 승인한다. bind_session_role로 요청을 남기고 사용자에게 알려라.",
+  "continuity.layers.argumentsInvalid": "{tool} 인자가 입력 스키마와 맞지 않는다.",
+  "continuity.layers.unavailable": "공유 컨텍스트 저장소를 쓸 수 없다.",
+  "continuity.layers.roleNotRegistered": "역할 「{role}」은 등록표에 없다. 역할은 사용자가 로컬 관리 페이지({adminUrl})의 「역할」 메뉴에서 만든다. 사용자에게 알리고, 등록된 역할 이름으로 다시 요청하라."
 }

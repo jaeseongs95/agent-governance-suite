@@ -959,6 +959,23 @@ export class ContinuityService implements ContinuityGateway {
     return selected.kind === "available" ? selected.value : null;
   }
 
+  /**
+   * A subagent's start: the latest verified current body of the session that started it (the situational context is
+   * the session's and its subagents'). Read only: no session is created, rotated or bound, and a suppressed or empty
+   * current gives nothing.
+   */
+  currentForSubagent(rawSessionId: string): HookText | null {
+    const task = this.store.getTask(this.correlateSession(rawSessionId));
+    if (!task) return null;
+    const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", current => {
+      const snapshot = this.store.getCurrent(current.taskCorrelation, current.currentEpoch);
+      if (!snapshot?.memory) return null;
+      this.verifyCurrentMemory(snapshot);
+      return [msg("hooks.contextLayers.parentSituation", { stateToken: snapshot.stateToken, body: JSON.stringify(snapshot.memory) })];
+    });
+    return selected.kind === "available" ? selected.value : null;
+  }
+
   compactContext(rawSessionId: string): HookText | null {
     const task = this.ensureSession(rawSessionId);
     if (task.suppressed) return null;

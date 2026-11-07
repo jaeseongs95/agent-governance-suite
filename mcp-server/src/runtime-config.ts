@@ -162,6 +162,36 @@ export function resolveSessionBoardDatabasePath(
   return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-board.sqlite3");
 }
 
+/**
+ * The global and role contexts and the session-to-role bindings every host on this computer shares (the situational
+ * context stays in each host's continuity store). Same directory as the session board unless explicitly overridden.
+ */
+export function resolveContextLayerDatabasePath(
+  environment: NodeJS.ProcessEnv = process.env,
+  homeDirectory: string = homedir(),
+  currentWorkingDirectory: string = process.cwd(),
+): string {
+  const configured = environment.AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH?.trim();
+  if (configured) return path.resolve(currentWorkingDirectory, configured);
+  return path.join(sharedUserStateDirectory(environment, homeDirectory), "context-layers.sqlite3");
+}
+
+/** The fixed local port of the admin page (AGS3-T-0024); 0 turns the page off. */
+export const DEFAULT_ADMIN_PORT = 47615;
+
+export function resolveAdminPort(environment: NodeJS.ProcessEnv = process.env): number {
+  const configured = environment.AGENT_GOVERNANCE_ADMIN_PORT?.trim();
+  if (!configured) return DEFAULT_ADMIN_PORT;
+  const port = Number(configured);
+  if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error("AGENT_GOVERNANCE_ADMIN_PORT must be an integer from 0 to 65535.");
+  return port;
+}
+
+/** The page address agents give the user; always `localhost` (a WebAuthn relying party ID cannot be an IP address). */
+export function adminPageUrl(port: number): string {
+  return `http://localhost:${port}/`;
+}
+
 function canonicalDatabasePath(databasePath: string, platform: NodeJS.Platform): string | null {
   if (databasePath === ":memory:") return null;
   const absolute = path.resolve(databasePath);
