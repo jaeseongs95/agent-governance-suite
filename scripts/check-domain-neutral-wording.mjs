@@ -2,8 +2,11 @@
 // work (video, ads, documents, operations, code), so its wording must not tie
 // where it applies to one field. This check finds field-limited words in the
 // description and body of every general SKILL.md, in the source tree and in the
-// generated Claude package (which carries the Claude overlay descriptions), and
-// in the shared intake block and the four mandatory reference boundaries below.
+// generated Claude package (which carries the Claude overlay descriptions), in
+// the shared intake block and the four mandatory reference boundaries below,
+// and (3.9.0) in every other reference of a general skill, the classification
+// targets every session and subagent start lists, and the hook, tool and
+// instruction messages of every locale.
 //
 // Usage: node scripts/check-domain-neutral-wording.mjs
 import { existsSync, readFileSync, readdirSync } from "node:fs";
@@ -104,7 +107,7 @@ const EXAMPLE_LEAD = /예를 들어|예컨대|\be\.g\.|\bfor example\b|\bsuch as
 // Names that contain a field word but are not about that field: link targets,
 // hyphenated identifiers (skill names), the UI/UX discipline, the Claude
 // Code host, a command's exit or status code and a screenshot of the agent host.
-const NAMES = /\]\([^)]*\)|\bUI\/UX\b|\b[a-z]+(?:-[a-z]+)+\b|\bClaude Code\b|(?:종료|오류|상태|응답) 코드|화면 캡처/gu;
+const NAMES = /\]\([^)]*\)|\bUI\/UX\b|\b[a-z]+(?:-[a-z]+)+\b|\bClaude Code\b|(?:종료|오류|상태|응답|원인|이유) 코드|화면 캡처/gu;
 // Inline markup alone does not turn a field word into an identifier.
 const INLINE_IDENTIFIER = /^(?:[^\s]+[/\\]|[./\\]|\{|\[|v?\d+\.\d+|(?:node|python3?|git|pnpm|npm|npx)(?:\s|$))|^[^\s]+\.[a-zA-Z][a-zA-Z0-9]{0,7}$/u;
 // ponytail: these explicit clause markers are a wording heuristic, not a language parser.
@@ -254,6 +257,53 @@ const REFERENCE_RULES = {
   ],
 };
 
+/**
+ * References of a general skill that exist for one field, with that field. Every
+ * other reference of a general skill is scanned in full (3.9.0, AGS3-D-0038).
+ */
+export const REFERENCE_FIELDS = Object.freeze({
+  "skills/orchestrator/references/engineering-practices/": "소프트웨어 엔지니어링 실무 모듈(코딩·시험·코드 검토 단계 담당에게만 전달)",
+});
+
+/**
+ * Locale messages whose subject is one field, with that field. Every other hook,
+ * tool and instruction message is scanned: it reaches sessions of every kind of work.
+ */
+export const LOCALE_FIELDS = Object.freeze({
+  "tools.check_for_updates.description": "AGS 자체 배포 저장소의 판 확인",
+  "tools.list_session_status.description": "세션 현황판이 보고하는 작업 공간 Git 상태",
+});
+
+const LOCALE_DOMAINS = Object.freeze(["hooks", "tools", "instructions"]);
+
+/** English field words a hyphenated classification target can carry ("test-evidence"). */
+const TARGET_TERMS = Object.freeze([
+  ...FIELD_TERMS.filter(([term]) => /^[A-Za-z]/u.test(term)),
+  ["test", /\btests?\b/giu],
+  ["code", /\bcoding\b/giu],
+]);
+
+/** Field words in classification `targets`: these lists reach every session and subagent start. */
+export function findTargetWording(targets) {
+  const findings = [];
+  for (const target of targets) {
+    const words = String(target).replace(/-/gu, " ");
+    for (const [term, pattern] of TARGET_TERMS) {
+      if (new RegExp(pattern.source, pattern.flags.replace("g", "")).test(words)) findings.push({ term, text: target });
+    }
+  }
+  return findings;
+}
+
+function markdownFiles(directory) {
+  if (!existsSync(directory)) return [];
+  return readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap((entry) => {
+    const full = path.join(directory, entry.name);
+    if (entry.isDirectory()) return markdownFiles(full);
+    return entry.name.endsWith(".md") ? [full] : [];
+  });
+}
+
 /** Reuse the existing lines boundary; missing/empty structural selections fail. */
 function referenceLines(markdown, rules) {
   const all = markdown.replace(/<!--[\s\S]*?-->/gu, blank).split(/\r?\n/u);
@@ -319,6 +369,56 @@ export function checkRepository(root = ROOT) {
       for (const finding of findFieldWording(text, { lines })) findings.push({ file, ...finding });
     }
   }
+  // 3.9.0: every other reference of a general skill, in full (the intake file is scanned above).
+  const seen = new Set(findings.map(({ file, line, term }) => `${file}:${line}:${term}`));
+  for (const id of general) {
+    for (const prefix of ["", "claude-plugin/"]) {
+      const directory = path.join(root, prefix, "skills", id, "references");
+      for (const full of markdownFiles(directory)) {
+        const source = path.relative(path.join(root, prefix), full).split(path.sep).join("/");
+        if (source === INTAKE_FILE) continue;
+        if (Object.keys(REFERENCE_FIELDS).some((field) => source.startsWith(field))) continue;
+        const file = prefix + source;
+        for (const finding of findFieldWording(readFileSync(full, "utf8"))) {
+          const key = `${file}:${finding.line}:${finding.term}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          findings.push({ file, ...finding });
+        }
+      }
+    }
+  }
+  for (const field of Object.keys(REFERENCE_FIELDS)) {
+    if (!existsSync(path.join(root, field))) problems.push(`${field}: field-specific reference listed but missing`);
+  }
+  // 3.9.0: classification targets of general skills (every session and subagent start lists them).
+  for (const id of general) {
+    const file = `skills/${id}/classification.json`;
+    if (!existsSync(path.join(root, file))) continue;
+    const { targets = [] } = JSON.parse(readFileSync(path.join(root, file), "utf8"));
+    for (const finding of findTargetWording(targets)) findings.push({ file, line: 0, ...finding });
+  }
+  // 3.9.0: hook, tool and instruction messages of every locale.
+  const localeRoot = path.join(root, "locales");
+  if (existsSync(localeRoot)) {
+    for (const locale of readdirSync(localeRoot, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort()) {
+      for (const domain of LOCALE_DOMAINS) {
+        const file = `locales/${locale}/${domain}.json`;
+        if (!existsSync(path.join(root, file))) continue;
+        for (const [key, value] of Object.entries(JSON.parse(readFileSync(path.join(root, file), "utf8")))) {
+          if (Object.hasOwn(LOCALE_FIELDS, key) || typeof value !== "string") continue;
+          for (const finding of findFieldWording(value)) findings.push({ file, ...finding, line: 0, text: `${key}: ${finding.text}` });
+        }
+      }
+    }
+    for (const key of Object.keys(LOCALE_FIELDS)) {
+      const found = readdirSync(localeRoot).some((locale) => LOCALE_DOMAINS.some((domain) => {
+        const file = path.join(localeRoot, locale, `${domain}.json`);
+        return existsSync(file) && Object.hasOwn(JSON.parse(readFileSync(file, "utf8")), key);
+      }));
+      if (!found) problems.push(`${key}: field-specific locale message listed but missing`);
+    }
+  }
   return { general, findings, problems };
 }
 
@@ -327,9 +427,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   for (const problem of problems) console.error(problem);
   for (const { file, line, term, text } of findings) console.error(`${file}:${line}: field-limited word "${term}": ${text}`);
   if (problems.length || findings.length) {
-    console.error(`domain-neutral wording: ${findings.length} finding(s), ${problems.length} problem(s) in ${general.length} general skills, the intake block and four required references`);
+    console.error(`domain-neutral wording: ${findings.length} finding(s), ${problems.length} problem(s) in ${general.length} general skills, their references and targets, the intake block and the locale messages`);
     process.exitCode = 1;
   } else {
-    console.log(`domain-neutral wording: ${general.length} general skills, the intake block and four required references pass`);
+    console.log(`domain-neutral wording: ${general.length} general skills, their references and targets, the intake block and the locale messages pass`);
   }
 }
