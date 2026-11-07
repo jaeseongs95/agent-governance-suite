@@ -1,3 +1,4 @@
+import {PROVIDER_RETENTION_PURPOSE} from "./provider-retention-sources.mjs";
 import assert from "node:assert/strict";
 import {appendFile, cp, mkdir, mkdtemp, realpath, rm, symlink, unlink} from "node:fs/promises";
 import os from "node:os";
@@ -31,12 +32,12 @@ try {
     await mkdir(path.dirname(target), {recursive: true});
     await cp(source, target);
   }
-  const {config} = await readyEstimateMock(api, root, path.join(root, "out"), "current-stale-registry");
-  const baseline = await api.preflight(config, await api.prepare(config));
+  const {config} = await readyEstimateMock(api, root, path.join(root, "out"), "current-stale-registry", {sourcePurpose: PROVIDER_RETENTION_PURPOSE});
+  const baseline = await api.preflight(config, await api.prepare(config, PROVIDER_RETENTION_PURPOSE));
   assert(!baseline.blocked.includes("ESTIMATE_SOURCE_OR_INPUT_UNBOUND"), "BASELINE_ESTIMATE_BOUND");
   await appendFile(path.join(root, "skills/registry.json"), "\n");
   let envReads = 0, calls = 0;
-  const result = await api.run(config, {executionKind: "offline-mock", env: new Proxy({}, {get() {envReads++; throw new Error("UNEXPECTED_ENV_READ");}}),
+  const result = await api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, executionKind: "offline-mock", env: new Proxy({}, {get() {envReads++; throw new Error("UNEXPECTED_ENV_READ");}}),
     fetcher: async () => {calls++; throw new Error("UNEXPECTED_FETCH");}});
   assert.equal(result.status, "BLOCKED");
   if (result.status !== "BLOCKED") throw new Error("Expected stale source to block");

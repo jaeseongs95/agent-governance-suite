@@ -1,3 +1,4 @@
+import {PROVIDER_RETENTION_PURPOSE} from "./provider-retention-sources.mjs";
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
 import {mkdtemp, mkdir, readFile, writeFile, rm, cp, access, readdir} from "node:fs/promises";
@@ -66,7 +67,7 @@ const exists = async (file: string) => {try {await access(file); return true;} c
         priorRunUnknownReservedUsd: 0, accountBalanceUsd: null, accountPriorSpendUsd: null, accountUnknownReservedUsd: null,
         observedAt: new Date(Date.now() - 1000).toISOString(), validUntil: new Date(Date.now() + 60000).toISOString()},
       evidence: {route: null, price: null, priorLedger: null, remaining: null, hardTokenCaps: null, operatorAuthorization: null}};
-    const prepared = rebindPreparedFixture(fixturePrepared ??= await api.prepare(config), config.runId);
+    const prepared = rebindPreparedFixture(fixturePrepared ??= await api.prepare(config, PROVIDER_RETENTION_PURPOSE), config.runId);
     config.profile = {profileId: "mock-profile", providerKind: "jev", vendorId: "mock-vendor", modelId: "mock-model", modelRevision: "mock-revision", reasoningEffort: null,
       supportedOptions: {reasoningEfforts: [null], structuredOutput: true}, approvedRouteRef: config.approvedRouteRef, qualificationRevision: "mock-not-qualified",
       qualification: {status: "NOT_RUN", inventoryDigest: prepared.inventory.inventoryDigest, taxonomyRevision: prepared.inventory.taxonomyRevision, modelRevision: "mock-revision", promptRevision: "mock-question-v1", validUntil: config.budget!.validUntil, profileConfigurationDigest: ""},
@@ -130,18 +131,18 @@ try {
         const pico = spec.expectedMaxPicoUsd === null ? 0n : BigInt(spec.expectedMaxPicoUsd);
         config.profile!.maximumCostUsd = Number(pico <= BigInt(Number.MAX_SAFE_INTEGER) ? pico : BigInt(Number.MAX_SAFE_INTEGER)) / 1e12;
       }
-      const prepared = await api.prepare(config);
+      const prepared = await api.prepare(config, PROVIDER_RETENTION_PURPOSE);
       (config.profile!.qualification as Record<string, unknown>).profileConfigurationDigest = prepared.api.profiles.digestProviderProfileConfiguration(config.profile);
       await bind(config);
       const budgetBefore = JSON.stringify(config.budget);
       const syntheticUnknownLedger = JSON.stringify({schemaVersion: "2.0.0", runId: config.runId, configDigest: hash(JSON.stringify(config)), budgetScope: "run", initialRemainingUsd: 0.15 - Number(precision.unknownUsd), entries: [{requestId: "historical-unknown-sentinel", requestDigest: hash("historical synthetic unknown sentinel"), state: "unknown", reservedUsd: Number(precision.unknownUsd), actualCostUsd: null, estimatedCostUsd: null, dispatchState: "unknown", resultDigest: null}]});
       const ledgerFile = path.join(caseDirectory, "ledger.json"), lockFile = path.join(caseDirectory, "bootstrap.lock");
       await writeFile(ledgerFile, syntheticUnknownLedger, {flag: "wx"});
-      const checked = await api.preflight(config, await api.prepare(config));
+      const checked = await api.preflight(config, await api.prepare(config, PROVIDER_RETENTION_PURPOSE));
       await writeFile(path.join(caseDirectory, "preflight.json"), JSON.stringify(checked, null, 2) + "\n", {flag: "wx"});
       let blockedResult: Awaited<ReturnType<typeof api.run>> | null = null;
       if (spec.expectedStatus === "BLOCKED") {
-        blockedResult = await api.run(config, {env: forbiddenEnv, executionKind: "offline-mock", fetcher: async () => {fetches++; assert.fail("PRECISION_PREFLIGHT_MUST_NOT_FETCH");}});
+        blockedResult = await api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, env: forbiddenEnv, executionKind: "offline-mock", fetcher: async () => {fetches++; assert.fail("PRECISION_PREFLIGHT_MUST_NOT_FETCH");}});
         await writeFile(path.join(caseDirectory, "blocked-return.json"), JSON.stringify(blockedResult, null, 2) + "\n", {flag: "wx"});
       }
       await writeFile(path.join(caseDirectory, "boundary-observation.json"), JSON.stringify({caseId: spec.id, phase: "preflight-only", actualReturn: checked, blockedRunReturn: blockedResult, classificationResponse: null, transportAttempts: fetches, environmentReads, credentialReads, ledgerBytesUnchanged: (await readFile(ledgerFile, "utf8")) === syntheticUnknownLedger, lockExists: await exists(lockFile), qualification: "NOT_RUN", selectedReadAppliedVerified: "NOT_RUN"}, null, 2) + "\n", {flag: "wx"});

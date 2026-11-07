@@ -1,3 +1,4 @@
+import {PROVIDER_RETENTION_PURPOSE} from "./provider-retention-sources.mjs";
 import assert from "node:assert/strict";
 import {mkdtemp, readFile, readdir, rm} from "node:fs/promises";
 import {createHash} from "node:crypto";
@@ -27,7 +28,7 @@ function validateReservations(expected: {caseId: string; pico: bigint}[], actual
 const repo = path.resolve(process.argv[2] ?? ".");
 const root = await mkdtemp(path.join(os.tmpdir(), "ags-dynamic-oracle-"));
 try {
-  const {config, prepared, measurements} = await readyEstimateMock(api, repo, root, "dynamic-current-inventory");
+  const {config, prepared, measurements} = await readyEstimateMock(api, repo, root, "dynamic-current-inventory", {sourcePurpose: PROVIDER_RETENTION_PURPOSE});
   const dirs = (await readdir(path.join(repo, "skills"), {withFileTypes: true})).filter(d => d.isDirectory()).map(d => d.name).sort();
   const inventoryIds = prepared.inventory.skills.map(s => s.skillId).sort();
   assert.deepEqual(inventoryIds, dirs, "INVENTORY_SOURCE_MEMBERSHIP");
@@ -92,7 +93,7 @@ try {
   });
   config.limits!.requests = 21;
   await bindMockAuthorityAndEvidence(api, config);
-  const checked = await api.preflight(config, await api.prepare(config));
+  const checked = await api.preflight(config, await api.prepare(config, PROVIDER_RETENTION_PURPOSE));
   const total = expected.reduce((sum, row) => sum + row.pico, 0n);
   validateReservations(expected, checked.requestReservations);
   const wrong = structuredClone(checked.requestReservations); wrong[0]!.reservedUsd += 0.5;
@@ -100,7 +101,7 @@ try {
   if (total <= 150000000000n) {
     assert.equal(checked.status, "READY_FOR_OPERATOR_DISPATCH");
     let dispatched = 0, mismatch = false;
-    const run = await api.run(config, {executionKind:"offline-mock", env:mockEnv, fetcher:async (_url, init) => {
+    const run = await api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, executionKind:"offline-mock", env:mockEnv, fetcher:async (_url, init) => {
       const gold = independent[dispatched++]; const body = typeof init?.body === "string" ? init.body : "";
       if (!gold || Buffer.byteLength(body) !== gold.utf8Bytes || `sha256:${createHash("sha256").update(body).digest("hex")}` !== gold.wireDigest) mismatch = true;
       return mockResponse(init);
@@ -116,7 +117,7 @@ try {
   config.budget!.allocatedUsd = 0.000001; config.limits!.runUsd = 0.000001;
   await bindMockAuthorityAndEvidence(api, config);
   let budgetCalls = 0, budgetEnvReads = 0;
-  const budgetBlocked = await api.run(config, {executionKind: "offline-mock", env: new Proxy({}, {get() {budgetEnvReads++; throw new Error("UNEXPECTED_ENV_READ");}}),
+  const budgetBlocked = await api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, executionKind: "offline-mock", env: new Proxy({}, {get() {budgetEnvReads++; throw new Error("UNEXPECTED_ENV_READ");}}),
     fetcher: async () => {budgetCalls++; throw new Error("UNEXPECTED_FETCH");}});
   assert.equal(budgetBlocked.status, "BLOCKED");
   if (budgetBlocked.status !== "BLOCKED") throw new Error("Expected blocked insufficient budget");
@@ -126,7 +127,7 @@ try {
   config.estimator!.inputArtifact.digest = "sha256:" + "0".repeat(64);
   await bindMockAuthorityAndEvidence(api, config);
   let calls = 0, envReads = 0;
-  const blocked = await api.run(config, {executionKind: "offline-mock", env: new Proxy({}, {get() {envReads++; throw new Error("UNEXPECTED_ENV_READ");}}),
+  const blocked = await api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, executionKind: "offline-mock", env: new Proxy({}, {get() {envReads++; throw new Error("UNEXPECTED_ENV_READ");}}),
     fetcher: async () => {calls++; throw new Error("UNEXPECTED_FETCH");}});
   assert.equal(blocked.status, "BLOCKED");
   if (blocked.status !== "BLOCKED") throw new Error("Expected blocked stale estimate");

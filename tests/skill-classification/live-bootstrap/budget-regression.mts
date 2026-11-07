@@ -1,3 +1,4 @@
+import {PROVIDER_RETENTION_PURPOSE} from "./provider-retention-sources.mjs";
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
 import {mkdtemp, mkdir, readFile, writeFile, rm, cp} from "node:fs/promises";
@@ -32,7 +33,7 @@ const response = (init: RequestInit | undefined, inputTokens: number | null = 10
 if (process.argv[4] === "worker") {
   const config = JSON.parse(await readFile(process.argv[5]!, "utf8")); let calls = 0;
   try {
-    const result = await api.run(config, {executionKind: "offline-mock", env, fetcher: async (_url, init) => {calls++; return response(init);}});
+    const result = await api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, executionKind: "offline-mock", env, fetcher: async (_url, init) => {calls++; return response(init);}});
     console.log(JSON.stringify({winner: result.status === "RAW_EVALUATION_RECORDED", calls}));
   } catch (error) {console.log(JSON.stringify({winner: false, calls, error: (error as NodeJS.ErrnoException).code ?? "RUN_REJECTED"}));}
 } else {
@@ -100,7 +101,7 @@ if (process.argv[4] === "worker") {
         priorRunUnknownReservedUsd: 0, accountBalanceUsd: null, accountPriorSpendUsd: null, accountUnknownReservedUsd: null,
         observedAt: new Date(Date.now() - 1000).toISOString(), validUntil: new Date(Date.now() + 60000).toISOString()},
       evidence: {route: null, price: null, priorLedger: null, remaining: null, hardTokenCaps: null, operatorAuthorization: null}};
-    const prepared = rebindPreparedFixture(fixturePrepared ??= await api.prepare(config), config.runId);
+    const prepared = rebindPreparedFixture(fixturePrepared ??= await api.prepare(config, PROVIDER_RETENTION_PURPOSE), config.runId);
     config.profile = {profileId: "mock-profile", providerKind: "jev", vendorId: "mock-vendor", modelId: "mock-model", modelRevision: "mock-revision", reasoningEffort: null,
       supportedOptions: {reasoningEfforts: [null], structuredOutput: true}, approvedRouteRef: config.approvedRouteRef, qualificationRevision: "mock-not-qualified",
       qualification: {status: "NOT_RUN", inventoryDigest: prepared.inventory.inventoryDigest, taxonomyRevision: prepared.inventory.taxonomyRevision, modelRevision: "mock-revision", promptRevision: "mock-question-v1", validUntil: config.budget!.validUntil, profileConfigurationDigest: ""},
@@ -140,11 +141,11 @@ if (process.argv[4] === "worker") {
     }
     await bind(config); return config;
   }
-    const normal = await ready("unknown-account"); const prepared = await api.prepare(normal);
+    const normal = await ready("unknown-account"); const prepared = await api.prepare(normal, PROVIDER_RETENTION_PURPOSE);
     const checked = await api.preflight(normal, prepared); assert.equal(checked.status, "READY_FOR_OPERATOR_DISPATCH", "R11_RUN_ALLOCATION_015_ACCEPTED");
     assert.equal(checked.billingGuarantee, "NOT_VERIFIED"); assert.deepEqual(checked.accountObservation, {balanceUsd: null, priorSpendUsd: null, unknownReservedUsd: null});
     let calls = 0;
-    const normalResult = await api.run(normal, {env, executionKind: "offline-mock", fetcher: async (_url, init) => {
+    const normalResult = await api.run(normal, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, env, executionKind: "offline-mock", fetcher: async (_url, init) => {
       calls++; const persisted = JSON.parse(await readFile(path.join(normal.outputDirectory, "ledger.json"), "utf8"));
       assert.equal(persisted.entries.length, calls); assert.equal(persisted.entries.at(-1).state, "reserved"); return response(init);
     }});
@@ -154,7 +155,7 @@ if (process.argv[4] === "worker") {
     checks.push("run allocation allows unknown account; reservation persisted before mock fetch; usage estimate never clears unknown reservation");
 
     const full = await ready("full-21-015"); full.limits!.requests = 21; await bind(full);
-    const fullChecked = await api.preflight(full, await api.prepare(full));
+    const fullChecked = await api.preflight(full, await api.prepare(full, PROVIDER_RETENTION_PURPOSE));
     const fullValidatedPico = assertFrozenReservations(fullChecked.requestReservations);
     // A mutated reservation return must be rejected even when the run budget blocks dispatch.
     const corruptReservations = structuredClone(fullChecked.requestReservations); corruptReservations[0]!.reservedUsd += 0.5e-12;
@@ -164,7 +165,7 @@ if (process.argv[4] === "worker") {
     if (fullValidatedPico <= 150000000000n) {
       assert.equal(fullChecked.status, "READY_FOR_OPERATOR_DISPATCH");
       let fullCalls = 0;
-      const fullResult = await api.run(full, {env, executionKind: "offline-mock", fetcher: async (_url, init) => {fullCalls++; return response(init);}});
+      const fullResult = await api.run(full, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, env, executionKind: "offline-mock", fetcher: async (_url, init) => {fullCalls++; return response(init);}});
       if (fullResult.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected full mocked run");
       assert.equal(fullCalls, 21); assert.equal(fullResult.transportAttempts, 21); assert.equal(fullResult.qualificationStatus, "NOT_RUN");
       assert.equal(fullResult.selectedReadAppliedVerified, "NOT_RUN");
@@ -175,7 +176,7 @@ if (process.argv[4] === "worker") {
       }));
       assert.equal(fullLedgerPico, fullValidatedPico);
       const aggregate = await ready("pilot-plus-21"); aggregate.limits!.requests = 21; aggregate.budget!.priorRunUnknownReservedUsd = historicalPilotUnknownUsd; await bind(aggregate);
-      const aggregateChecked = await api.preflight(aggregate, await api.prepare(aggregate));
+      const aggregateChecked = await api.preflight(aggregate, await api.prepare(aggregate, PROVIDER_RETENTION_PURPOSE));
       const preservedPilotPico = 5734722000n;
       assert.equal(aggregate.budget!.priorRunUnknownReservedUsd, Number(preservedPilotPico) / 1e12);
       assert.equal(aggregate.budget!.accountBalanceUsd, null);
@@ -193,7 +194,7 @@ if (process.argv[4] === "worker") {
       assert.equal(fullChecked.status, "BLOCKED");
       assert(fullChecked.blocked.includes("RUN_BUDGET_INSUFFICIENT"));
       let reads = 0, calls = 0;
-      const blocked = await api.run(full, {executionKind: "offline-mock", env: new Proxy({}, {get() {reads++; throw new Error("BUDGET_ENV_READ");}}),
+      const blocked = await api.run(full, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, executionKind: "offline-mock", env: new Proxy({}, {get() {reads++; throw new Error("BUDGET_ENV_READ");}}),
         fetcher: async () => {calls++; throw new Error("BUDGET_FETCH");}});
       assert.equal(blocked.status, "BLOCKED"); assert.equal(reads, 0); assert.equal(calls, 0);
       checks.push("full current inventory exceeds .15 and blocks before env/dispatch");
@@ -225,7 +226,7 @@ if (process.argv[4] === "worker") {
     ] as const;
     for (let offset = 0; offset < blockedCases.length; offset += 4) await Promise.all(blockedCases.slice(offset, offset + 4).map(async ([id, change, code]) => {
       const config = await ready(id); change(config); if (id !== "missing-review" && id !== "changed-price-old-evidence") await bind(config);
-      const result = await api.run(config, {env: forbiddenEnv, executionKind: "offline-mock", fetcher: async () => {forbiddenCalls++; throw new Error("Forbidden call");}});
+      const result = await api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, env: forbiddenEnv, executionKind: "offline-mock", fetcher: async () => {forbiddenCalls++; throw new Error("Forbidden call");}});
       await writeFile(path.join(config.outputDirectory, "blocked-return.json"), JSON.stringify(result, null, 2) + "\n", {flag: "wx"});
       assert.equal(result.status, "BLOCKED", `R11_BOUNDARY_BLOCKED:${id}`); assert(result.blocked.includes(code), `${id}:${code}`);
       if (id === "changed-price-old-evidence") assert(result.blocked.includes("EVIDENCE_UNBOUND:operatorAuthorization"));
@@ -237,7 +238,7 @@ if (process.argv[4] === "worker") {
       const file = path.join(config.outputDirectory, "inputs.json"), artifact = JSON.parse(await readFile(file, "utf8"));
       if (mode === "byte-length") artifact.measurements[0].utf8Bytes++;
       if (mode === "same-length-wire-digest") {
-        const actual = await api.prepare(config);
+        const actual = await api.prepare(config, PROVIDER_RETENTION_PURPOSE);
         const actualWire = JSON.stringify(actual.api.providers.jevNoulWireAdapter.encode(actual.requests[0].request, config.profile));
         const differentWire = actualWire.replace('"model":"mock-model"', '"model":"fake-model"');
         assert.notEqual(differentWire, actualWire); assert.equal(Buffer.byteLength(differentWire), Buffer.byteLength(actualWire));
@@ -248,7 +249,7 @@ if (process.argv[4] === "worker") {
       if (mode === "case-order") [artifact.measurements[0], artifact.measurements[1]] = [artifact.measurements[1], artifact.measurements[0]];
       if (mode === "invented-reservation-field") artifact.measurements[0].reservedUsd = 0;
       const changed = JSON.stringify(artifact); await writeFile(file, changed); config.estimator!.inputArtifact.digest = hash(changed); await bind(config);
-      const result = await api.run(config, {env: forbiddenEnv, executionKind: "offline-mock", fetcher: async () => {forbiddenCalls++; throw new Error("Forbidden call");}});
+      const result = await api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, env: forbiddenEnv, executionKind: "offline-mock", fetcher: async () => {forbiddenCalls++; throw new Error("Forbidden call");}});
       await writeFile(path.join(config.outputDirectory, "blocked-return.json"), JSON.stringify(result, null, 2) + "\n", {flag: "wx"});
       assert.equal(result.status, "BLOCKED"); assert(result.blocked.includes("ESTIMATE_SOURCE_OR_INPUT_UNBOUND"), mode);
     }
@@ -266,7 +267,7 @@ if (process.argv[4] === "worker") {
     ] as const) {
       const config = await ready(id); let attempts = 0, keyReads = 0;
       const fakeEnvironment = {AGS_BOOTSTRAP_ENDPOINT: env.AGS_BOOTSTRAP_ENDPOINT, get AGS_BOOTSTRAP_JEV_KEY() {keyReads++; return env.AGS_BOOTSTRAP_JEV_KEY;}};
-      const result = await api.run(config, {env: fakeEnvironment, executionKind: "offline-mock", fetcher: async (url, init) => {attempts++; return fetcher(url, init);}});
+      const result = await api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, env: fakeEnvironment, executionKind: "offline-mock", fetcher: async (url, init) => {attempts++; return fetcher(url, init);}});
       if (result.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected stopped record");
       assert.equal(attempts, 1); assert.equal(result.stopReason, expected); assert.equal(result.ledger.entries[0]!.state, "unknown");
       assert.equal(keyReads, 1, "NO_SECOND_CREDENTIAL_LOOKUP_AFTER_ERROR");
@@ -277,7 +278,7 @@ if (process.argv[4] === "worker") {
 
     const timeout = await ready("timeout-late"); timeout.limits!.timeoutMs = 10; await bind(timeout);
     let timeoutCalls = 0, release: ((value: Response) => void) | undefined, lateInit: RequestInit | undefined;
-    const timeoutResult = await api.run(timeout, {env, executionKind: "offline-mock", fetcher: async (_url, init) => {
+    const timeoutResult = await api.run(timeout, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, env, executionKind: "offline-mock", fetcher: async (_url, init) => {
       timeoutCalls++; lateInit = init; return new Promise<Response>(resolve => {release = resolve;});
     }});
     if (timeoutResult.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected timeout record");
@@ -290,7 +291,7 @@ if (process.argv[4] === "worker") {
 
     const expired = await ready("run-expiry"); let clock = Date.now(), expiryCalls = 0, credentialReads = 0;
     const expiry = Date.parse(expired.budget!.validUntil);
-    const expiryResult = await api.run(expired, {executionKind: "offline-mock", now: () => clock,
+    const expiryResult = await api.run(expired, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, executionKind: "offline-mock", now: () => clock,
       env: {AGS_BOOTSTRAP_ENDPOINT: env.AGS_BOOTSTRAP_ENDPOINT, get AGS_BOOTSTRAP_JEV_KEY() {credentialReads++; return env.AGS_BOOTSTRAP_JEV_KEY;}},
       fetcher: async (_url, init) => {expiryCalls++; clock = expiry; return response(init);}});
     if (expiryResult.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected expiry record");

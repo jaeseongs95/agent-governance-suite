@@ -1,3 +1,4 @@
+import {PROVIDER_RETENTION_PURPOSE} from "./provider-retention-sources.mjs";
 import assert from "node:assert/strict";
 import {mkdtemp, rm} from "node:fs/promises";
 import os from "node:os";
@@ -10,7 +11,7 @@ import {independentWireRows} from "./independent-wire-oracle.mts";
 
 const repo = path.resolve(process.argv[2] ?? "."), root = await mkdtemp(path.join(os.tmpdir(), "ags-current-precision-"));
 try {
-  const {config, prepared, measurements} = await readyEstimateMock(api, repo, root, "dynamic-current-precision");
+  const {config, prepared, measurements} = await readyEstimateMock(api, repo, root, "dynamic-current-precision", {sourcePurpose: PROVIDER_RETENTION_PURPOSE});
   assert.equal(measurements.length, 21);
   const independent = await independentWireRows(repo, "dynamic-current-precision");
   assert.deepEqual(measurements, independent.map(({caseId,requestDigest,wireDigest,utf8Bytes}) => ({caseId,requestDigest,wireDigest,utf8Bytes})), "INDEPENDENT_PRECISION_WIRE");
@@ -27,7 +28,7 @@ try {
     configuration.maximumCostUsd = Number(maxPico <= BigInt(Number.MAX_SAFE_INTEGER) ? maxPico : BigInt(Number.MAX_SAFE_INTEGER)) / 1e12;
     config.profile = prepared.api.evaluationConfig.createProviderEvaluationConfiguration(configuration, prepared.inventory, config.profile!.preparedAt);
     await bindMockAuthorityAndEvidence(api, config);
-    const check = await api.preflight(config, await api.prepare(config));
+    const check = await api.preflight(config, await api.prepare(config, PROVIDER_RETENTION_PURPOSE));
     assert.equal(check.status, "BLOCKED", `${kind} original .15 budget`);
     if (check.status !== "BLOCKED") throw new Error("Expected blocked preflight");
     if (kind === "below") {
@@ -40,7 +41,7 @@ try {
         assert.equal(check.requestReservations[i]!.reservedUsd, Number(expected) / 1e12);
       }
     } else assert(check.blocked.includes("ESTIMATE_SOURCE_OR_INPUT_UNBOUND"));
-    const result = await api.run(config, {executionKind: "offline-mock", env: new Proxy({}, {get() {envReads++; throw new Error("UNEXPECTED_ENV");}}),
+    const result = await api.run(config, {sourcePurpose: PROVIDER_RETENTION_PURPOSE, executionKind: "offline-mock", env: new Proxy({}, {get() {envReads++; throw new Error("UNEXPECTED_ENV");}}),
       fetcher: async () => {calls++; throw new Error("UNEXPECTED_FETCH");}});
     assert.equal(result.status, "BLOCKED");
   }

@@ -133,8 +133,9 @@ export function rebindPreparedFixture(prepared: Awaited<ReturnType<Api["prepare"
 }
 
 /** Synthetic reviewed-estimate fixture. Its wire observations configure admission; this is not a gold cost/quality oracle. */
-export async function readyEstimateMock(api: Api, repo: string, outputDirectory: string, runId: string) {
-  const {config, prepared} = await readyMock(api, repo, outputDirectory, runId);
+export async function readyEstimateMock(api: Api, repo: string, outputDirectory: string, runId: string,
+  options: Pick<FixtureOptions, "sourcePurpose"> = {}) {
+  const {config, prepared} = await readyMock(api, repo, outputDirectory, runId, options);
   config.reservationMode = "reviewed-estimate";
   config.prices = {billingMode: "token", inputUsdPer1k: 0.000042, outputUsdPer1k: 0, fixedCallMaxUsd: 0};
   const configuration = structuredClone(config.profile!.configuration);
