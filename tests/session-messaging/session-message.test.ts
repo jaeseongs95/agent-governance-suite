@@ -578,9 +578,9 @@ describe("in-process messaging and vendor-neutral adapter", () => {
     await writeFile(file, "secret malformed configuration");
     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).transport).toBe("codex-queue");
     expect(hostDeliveryProfile("claude-code", environment, diagnose).transport).toBe("claude-inbox");
-    // Claude blocks only verified empty markers; Codex keeps its existing fail-open capability.
-    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).blocksEmptyWakePrompt).toBe(false);
-    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" }, diagnose).blocksEmptyWakePrompt).toBe(false);
+    // D0054: Codex 0.166.0 ends a blocked UserPromptSubmit before a model request, so both Codex transports block empty wakes.
+    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).blocksEmptyWakePrompt).toBe(true);
+    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" }, diagnose).blocksEmptyWakePrompt).toBe(true);
     expect(hostDeliveryProfile("claude-code", environment, diagnose).blocksEmptyWakePrompt).toBe(true);
     expect(diagnose).not.toHaveBeenCalled();
     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "true" }, diagnose).transport).toBe("codex-deferred");
