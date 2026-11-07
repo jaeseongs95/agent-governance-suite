@@ -65,13 +65,24 @@ const d38References = JSON.parse(d38ReferencesBytes.toString("utf8"));
 // rebound descriptor's spans are checked against the current inventory in the 3.9.0 successor's own test.
 const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"));
 const v390 = JSON.parse(v390Bytes.toString("utf8"));
-const v390Rebound = (skillId: string) => v390.bindings.some((row: {path: string}) => row.path === `skills/${skillId}/classification.json`);
+const v390Changed = new Map<string, boolean>();
+const v390Rebound = (skillId: string) => {
+  const descriptor = `skills/${skillId}/classification.json`;
+  if (v390.bindings.some((row: {path: string}) => row.path === descriptor)) return true;
+  // A purpose-change descriptor (coordinate-subagents, model-effort-advisor) reworded in 3.9.0 is compared with the
+  // live inventory in the 215-span test's purpose branch.
+  if (!v390Changed.has(descriptor)) {
+    const base = execFileSync("git", ["show", `${v390.sourceBaseRevision}:${descriptor}`], {cwd: root});
+    v390Changed.set(descriptor, !base.equals(readFileSync(path.join(root, descriptor))));
+  }
+  return v390Changed.get(descriptor)!;
+};
 const domainChanged = (skillId: string, group: string, index: number) => domain.spanPreservation.changedSpans.includes(`${skillId}:${group}[${index}]`);
 /** A null digest retires the path: the source no longer exists. */
 type LaterBinding = {path: string; previousDigest: string; digest: string | null};
 /** For each file a successor after specialist behavior rebound: the first rebinding's base and predecessor, the last one's digest. */
 const reboundAfterSpecialist = new Map<string, {sourceBaseRevision: string; previousDigest: string; digest: string | null}>();
-for (const later of [multi, overwrite, premise, retire, role, purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]) {
+for (const later of [multi, overwrite, premise, retire, role, purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References]) {
   for (const binding of later.bindings as LaterBinding[]) {
     const first = reboundAfterSpecialist.get(binding.path);
     reboundAfterSpecialist.set(binding.path, first ? {...first, digest: binding.digest}
@@ -341,7 +352,7 @@ it("chains the exact mutation-risk-preflight overwrite source after the multi-wo
     expect(actual.length).toBe(binding.bytes);
     expect(hash(actual)).toBe(binding.digest);
     expect(hash(specialistSource(binding.path))).toBe(binding.previousDigest);
-    const latest = latestDigest(binding.path, binding.digest, [neutral]);
+    const latest = latestDigest(binding.path, binding.digest, [neutral, v390]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -1036,8 +1047,9 @@ it("appends the exact specialist behavior successor without changing frozen fixt
     expect(actual.length).toBe(binding.bytes);
     expect(hash(actual)).toBe(binding.digest);
     const later = reboundAfterSpecialist.get(binding.path);
-    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(later ? later.digest : binding.digest);
-    if (later) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(later.digest);
+    const latest = latestDigest(binding.path, later ? later.digest : binding.digest, [v390]);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
+    if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     expect(() => currentSourceBinding.resolveDigest(binding.path, "sha256:" + "0".repeat(64))).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
@@ -1098,7 +1110,7 @@ it("rebinds all 215 spans from pinned main to valid current UTF-8 evidence and t
     expect(hash(selected)).toBe(span.current.selectedDigest);
     expect(selected.toString("utf8")).toMatch(/[\p{L}\p{N}]/u);
     // A source a later successor rebound is checked against the current inventory in that successor's test.
-    if (!reboundAfterSpecialist.has(span.current.path) && !purposeChanges.has(span.current.path)) {
+    if (!reboundAfterSpecialist.has(span.current.path) && !purposeChanges.has(span.current.path) && !v390Rebound(span.skillId)) {
       expect(skills.get(span.skillId)![span.group]).toContain(selected.toString("utf8").trim());
     }
     if (span.change === "exact-excerpt") expect(selected.equals(previousSelected)).toBe(true);
