@@ -910,7 +910,8 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
       expect(text).toContain("MCP 계획에 실제 상태 변경에 필요한 stage가 없으면 그 stage를 넣은 새 계획으로 진행하고, 승인이 없으면 대상·영향·실행할 명령을 담아 사용자에게 바로 묻는다. 요청받은 변경을 남은 작업으로 돌려 놓은 채 완료로 보고하지 않는다.");
     }
     for (const text of readBoth("skills/orchestrator/references/mcp-execution.md")) {
-      expect(text).toContain("사용자 입력이나 승인이 필요하면 그 stage에서 멈추고 대상·영향·실행할 명령을 담아 사용자에게 바로 한 번 묻는다. 답을 기다리는 동안 우회 구현이나 대체 산출물을 만들지 않는다.");
+      // 3.9.0 (AGS3-D-0038) field-neutral wording: "우회 구현" became "우회 작업".
+      expect(text).toContain("사용자 입력이나 승인이 필요하면 그 stage에서 멈추고 대상·영향·실행할 명령을 담아 사용자에게 바로 한 번 묻는다. 답을 기다리는 동안 우회 작업이나 대체 산출물을 만들지 않는다.");
     }
     for (const text of readBoth("skills/orchestrator/references/engineering-practices/implementation.md")) {
       expect(text).toContain("현재 변경에 실제로 해당하는 cs-engineering 필수 불변조건은 단순화 대상이 아니라 만족할 조건이다. 해당하지 않는 카드 의무나 권고는 붙이지 않는다.");
