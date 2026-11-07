@@ -212,8 +212,12 @@ describe("D0344 terminal workflow to fresh direct task", () => {
       const oldBoundLoad = loadInput(boundCandidate);
       target.markPreCompact(session);
       const card = renderHookText(target.compactContext(session), "ko");
-      expect(card).toContain(historical.stateToken);
-      expect(card).toContain(JSON.stringify(historical.memory));
+      const lines = card!.split("\n");
+      expect(lines[0]).toBe("[AGS current memory]");
+      expect(lines[1]).toBe(`stateToken=${historical.stateToken}`);
+      // Compare the complete rendered JSON body: persistence canonicalizes object keys.
+      // A bound workflow card may follow this message, so read the body's own full line.
+      expect(JSON.parse(lines[3]!)).toEqual(historical.memory);
       expect(target.compactContext(session)).toBeNull();
       const correlation = target.correlateSession(session);
       expect(target.store.setSuppressed(correlation, 1, now)).toBe(true);
