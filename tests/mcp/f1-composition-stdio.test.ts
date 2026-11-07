@@ -37,7 +37,7 @@ async function fixture(connect: StdioStart["connect"], modelClass: "deep" | "lig
   try {
     await mkdir(path.join(directory, "mcp-server", "dist"), { recursive: true }); await mkdir(state, { recursive: true });
     await Promise.all([
-      ...["contracts", "skills"].map(name => cp(path.join(repository, name), path.join(directory, name), { recursive: true })),
+      ...["contracts", "runtime", "skills"].map(name => cp(path.join(repository, name), path.join(directory, name), { recursive: true })),
       ...["server.mjs", "governance-hook.mjs"].map(name => cp(path.join(repository, "mcp-server", "dist", name), path.join(directory, "mcp-server", "dist", name))),
     ]);
     const environment = { ...getDefaultEnvironment(), AGENT_GOVERNANCE_DB_PATH: database, AGENT_GOVERNANCE_HOST_ATTESTATION: host,
@@ -61,8 +61,8 @@ export const executionAdapters = new Map([[adapter.host, adapter]]);
 `, "utf8");
     const serverWrapper = path.join(directory, "installation-server.mjs");
     await writeFile(serverWrapper, 'import {startMcpServer} from "./mcp-server/dist/server.mjs";\nimport {executionAdapters} from "./authority.mjs";\nawait startMcpServer(new Map(), executionAdapters);\n', "utf8");
-    const catalogPath = path.join(directory, "skills/coordinate-subagents/references/model-routing-presets.json");
-    const protectedFiles = [authority, serverWrapper, catalogPath, path.join(repository, "skills/coordinate-subagents/references/model-routing-presets.json")];
+    const catalogPath = path.join(directory, "runtime/model-routing-presets.json");
+    const protectedFiles = [authority, serverWrapper, catalogPath, path.join(repository, "runtime/model-routing-presets.json")];
     const unchanged = await Promise.all(protectedFiles.map(file => readFile(file)));
     server = await connect("owned-f1-public-entry", { command: process.execPath, args: [serverWrapper], cwd: directory, env: environment });
     const { client } = server;
@@ -97,7 +97,7 @@ const serverTest = stdioServerTests();
 serverTest("uses one explicit trusted producer for two opaque IDs through public hook/startup and guarded finalization", ({ connect }) => fixture(connect), async f => {
   try {
     for (const model of [randomUUID(), randomUUID()]) {
-      expect(await readFile(path.join(f.directory, "skills/coordinate-subagents/references/model-routing-presets.json"), "utf8")).not.toContain(model);
+      expect(await readFile(path.join(f.directory, "runtime/model-routing-presets.json"), "utf8")).not.toContain(model);
       const request = task(`owned-f1-${model}`), args = { schemaVersion: "1.0.0", taskEnvelope: request };
       const planned = await f.call<WorkflowPlanV1>("plan_workflow", args, model); expect(planned.error).toBeNull();
       const plan = planned.data!; expect(plan.bootstrapExecution?.context).toMatchObject({ model, modelClass: "deep", reasoningEffort: "high" });

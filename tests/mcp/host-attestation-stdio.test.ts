@@ -57,7 +57,7 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
     const parameters = { command: process.execPath, args: [path.join(isolated, "mcp-server", "dist", "server.mjs")], cwd: isolated, env: environment };
     return { isolated, state, environment, parameters, server: await connect("packaged-attestation-fixture", parameters) };
   }, async ({ isolated, state, environment, parameters, server }, { restartInTest }) => {
-    const catalogRelative = "skills/coordinate-subagents/references/model-routing-presets.json";
+    const catalogRelative = "runtime/model-routing-presets.json";
     const catalogBefore = await readFile(path.join(root, catalogRelative));
     const catalog = JSON.parse(catalogBefore.toString("utf8"));
     const providerCatalog = catalog.providers["anthropic-claude-code"].catalog;

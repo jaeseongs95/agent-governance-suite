@@ -73,7 +73,7 @@ async function fixture(scope: StdioStart, host: string, modelClass: "deep" | "li
     await mkdir(path.join(directory, "mcp-server/dist"), { recursive: true }); await mkdir(state, { recursive: true });
     trace("copy.begin");
     await Promise.all([
-      ...["contracts", "skills"].map(name => cp(path.join(repository, name), path.join(directory, name), { recursive: true })),
+      ...["contracts", "runtime", "skills"].map(name => cp(path.join(repository, name), path.join(directory, name), { recursive: true })),
       ...["server.mjs"].map(name => cp(path.join(repository, "mcp-server/dist", name), path.join(directory, "mcp-server/dist", name))),
     ]);
     trace("copy.end");
@@ -108,7 +108,7 @@ export function installation(host) {
 }
 `, "utf8");
     await writeFile(serverWrapper, 'import {startMcpServer} from "./mcp-server/dist/server.mjs";\nimport {installation} from "./authority.mjs";\nconst {executionAdapters} = installation(process.env.AGENT_GOVERNANCE_HOST_ATTESTATION);\nawait startMcpServer(new Map(), executionAdapters);\n', "utf8");
-    const protectedFiles = [authority, serverWrapper, ...[directory, repository].map(base => path.join(base, "skills/coordinate-subagents/references/model-routing-presets.json"))];
+    const protectedFiles = [authority, serverWrapper, ...[directory, repository].map(base => path.join(base, "runtime/model-routing-presets.json"))];
     const unchanged = await Promise.all(protectedFiles.map(file => readFile(file)));
     // D0363: connect spans the server's whole start. The disposable preload reports only shaped, path-free startup
     // stages (Windows keygen/TLS/PowerShell calls) as they arrive, so a stalled connect still shows its last stage.
@@ -169,7 +169,7 @@ serverTest("preserves identical installation bytes through public startup and gu
       if (originalInstallationBytes === undefined) originalInstallationBytes = f.installationBytes;
       else expect(f.installationBytes).toEqual(originalInstallationBytes);
       const model = randomUUID(), request = task(`owned-host-${randomUUID()}`), args = { schemaVersion: "1.0.0", taskEnvelope: request };
-      const catalog = await readFile(path.join(f.directory, "skills/coordinate-subagents/references/model-routing-presets.json"), "utf8");
+      const catalog = await readFile(path.join(f.directory, "runtime/model-routing-presets.json"), "utf8");
       expect(catalog).not.toContain(model);
       if (host !== "codex") {
         // Only the built-in hosts have a caller ingress; an unknown host is never presumed to be a root.

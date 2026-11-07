@@ -1,2 +1,2 @@
-// Shared installation adapter data. Skill references remain the public declarative catalog; no skill code is loaded.
-export {default as defaultModelRoutingPresets} from "../skills/coordinate-subagents/references/model-routing-presets.json" with {type: "json"};
+// Shared installation adapter data. The catalog lives here so core never depends on a skill folder; skills read this file.
+export {default as defaultModelRoutingPresets} from "./model-routing-presets.json" with {type: "json"};

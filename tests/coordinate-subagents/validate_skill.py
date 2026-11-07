@@ -171,14 +171,14 @@ POLICY_REQUIRED_CLAUSES = {
         "Use modes such as `Fast` and `Pro`, or effort levels such as `ultra` and `ultracode`, only when the user explicitly requests them and the current host documents and exposes the control.",
     ),
     "routing.adapter-minimum-effort": (
-        "Read the selected adapter's `minimum_efforts` and catalog `minimum_effort` for the chosen model; combine them with the unchanged risk floor.",
+        "Read the selected adapter's `minimum_efforts` and catalog `minimum_effort` for the chosen model; combine them with the high-risk recommendation.",
         "If the required combination is unsupported, choose another observed supported combination instead of lowering the adapter's minimum.",
     ),
     "routing.full-history-inherits": (
         "With `fork_turns=\"all\"`, inherit the parent model and reasoning effort; do not set model or reasoning overrides.",
     ),
     "routing.unsupported-fallback": (
-        "If a preferred override is unavailable but inherited execution is supported and its observed settings satisfy the assignment's risk floor, delegate with the inherited configuration.",
+        "If a preferred override is unavailable but inherited execution is supported, delegate with the inherited configuration.",
     ),
     "routing.no-mechanical-retry": (
         "Do not retry through progressively different models when the failure comes from missing information, permissions, tools, an unsupported setting, or an incomplete specification.",
@@ -446,7 +446,7 @@ def validate_no_sensitive_data() -> None:
 
 
 def load_routing_presets() -> dict[str, object]:
-    path = SKILL_ROOT / "references" / "model-routing-presets.json"
+    path = MONOREPO_ROOT / "runtime" / "model-routing-presets.json"
     try:
         document = json.loads(
             read_utf8(path),
@@ -478,10 +478,6 @@ def validate_routing_presets() -> None:
         require(invariants.get(key) is False, f"routing invariant {key} must remain false")
     for key in ("user_override_precedence", "capability_check_required"):
         require(invariants.get(key) is True, f"routing invariant {key} must remain true")
-    require(invariants.get("high_risk_minimum_model_class") == "general",
-            "high-risk routing must require at least the general model class")
-    require(invariants.get("high_risk_minimum_effort") == "high",
-            "high-risk routing must require at least high effort")
 
     provider_documents = document.get("providers")
     require(isinstance(provider_documents, dict) and set(provider_documents) == providers,
@@ -834,13 +830,7 @@ def evaluate_routing_preset(inputs: dict[str, object]) -> dict[str, object]:
         and isinstance(user_effort, str)
         and user_effort in effort_order
     )
-    user_model_class = str(inputs.get("user_model_class", selection["model_class"]))
-    if high_risk and user_model_class in class_order:
-        override_supported = (
-            override_supported
-            and class_order.index(user_model_class) >= class_order.index("general")
-            and effort_order.index(user_effort) >= effort_order.index("high")
-        )
+    # High risk only orders the recommendation; a supported user choice of any class or effort still applies.
     if override_supported:
         selection["model"] = user_model
         selection["effort"] = user_effort

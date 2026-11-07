@@ -128,33 +128,37 @@ describe("pre-dispatch model and reasoning advice", () => {
     expect(fallback.selectionPlan.selection).toEqual(input.host.inherited);
   });
 
-  it.each(["high", "critical"])("P05 preserves the shared floor for %s risk despite direct verification and economy", (riskLevel) => {
+  it.each(["high", "critical"])("P05 recommends the shared high-risk setting for %s risk yet keeps supported user choices (AGS3-D-0058)", (riskLevel) => {
     const input = { ...request(), preference: "economy" };
     input.assignment.riskLevel = riskLevel;
     expect(adviseSubagentModel(input, policy).selectionPlan.selection).toEqual({ model: "one-standard", effort: "high" });
     input.user = { model: "one-quick", effort: "high" };
-    const blocked = adviseSubagentModel(input, policy);
-    expect(blocked.status).toBe("BLOCKED");
-    expect(blocked.authorityEffect).toBe("none");
-    expect(validateAdvice(blocked)).toBe(true);
+    const ready = adviseSubagentModel(input, policy);
+    expect(ready.status).toBe("READY");
+    expect(ready.selectionPlan.selection).toEqual(input.user);
+    expect(ready.authorityEffect).toBe("none");
+    expect(validateAdvice(ready)).toBe(true);
     const actual = invoke(input);
-    expect(actual.status).toBe(1);
-    expect(JSON.parse(actual.stdout).status).toBe("BLOCKED");
+    expect(actual.status).toBe(0);
+    expect(JSON.parse(actual.stdout).status).toBe("READY");
     input.user = { model: "one-standard", effort: "medium" };
-    expect(adviseSubagentModel(input, policy).status).toBe("BLOCKED");
+    expect(adviseSubagentModel(input, policy).selectionPlan.selection).toEqual(input.user);
     input.host.supported[1].modelClass = null;
     input.user = { model: "one-standard", effort: "high" };
-    expect(adviseSubagentModel(input, policy).status).toBe("BLOCKED");
+    expect(adviseSubagentModel(input, policy).status).toBe("READY");
   });
 
-  it("P05 never lets an independent-audit role opt out of the shared risk floor", () => {
+  it("P05 treats an independent-audit role as high risk and keeps its supported user choice (AGS3-D-0058)", () => {
     const input = request();
     input.assignment.role = "independent-audit";
     input.user = { model: "one-quick", effort: "high" };
-    expect(adviseSubagentModel(input, policy).status).toBe("BLOCKED");
+    const advice = adviseSubagentModel(input, policy);
+    expect(advice.routingOptions.highRisk).toBe(true);
+    expect(advice.status).toBe("READY");
+    expect(advice.selectionPlan.selection).toEqual(input.user);
   });
 
-  it("P06 permits unknown low-risk inheritance without inventing effective settings", () => {
+  it("P06 permits unknown inheritance at any risk without inventing effective settings", () => {
     const input = request();
     input.host.supported = [];
     input.host.inheritOnly = true;
@@ -170,7 +174,7 @@ describe("pre-dispatch model and reasoning advice", () => {
     expect(actual.status).toBe(0);
     expect(JSON.parse(actual.stdout)).toEqual(result);
     input.assignment.riskLevel = "high";
-    expect(adviseSubagentModel(input, policy).status).toBe("BLOCKED");
+    expect(adviseSubagentModel(input, policy).status).toBe("INHERIT_UNVERIFIED");
   });
 
   it("P07 keeps policy behavior equal across two hosts and two opaque vendor adapters", () => {

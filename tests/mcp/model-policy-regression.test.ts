@@ -9,7 +9,7 @@ import { resolveAdapterModelCapability } from "../../mcp-server/src/host-attesta
 import { resolveCatalogModel } from "../../skills/coordinate-subagents/scripts/model-catalog-adapter.mjs";
 import { resolveModelSelection } from "../../skills/coordinate-subagents/scripts/model-routing.mjs";
 import { guardModelSupport } from "../../skills/model-effort-advisor/scripts/support-guard.mjs";
-import presets from "../../skills/coordinate-subagents/references/model-routing-presets.json" with { type: "json" };
+import presets from "../../runtime/model-routing-presets.json" with { type: "json" };
 
 const efforts = ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"];
 const readJson = (relative: string) => JSON.parse(readFileSync(new URL(relative, import.meta.url), "utf8"));
@@ -29,13 +29,13 @@ describe("AGS3-D-0009/0017/0018 shared model policy", () => {
     ["openai-codex", codexExecutionAdapter, "gpt-999-sol"],
     ["anthropic-claude-code", claudeCodeExecutionAdapter, "claude-sonnet-999"],
     ["google-gemini", geminiExecutionAdapter, "gemini-999-pro"],
-  ] as const)("does not infer an unregistered release for %s", (provider, adapter, model) => {
+  ] as const)("does not infer an unregistered release for %s yet still routes it when the host supports it", (provider, adapter, model) => {
     expect(resolveAdapterModelCapability(adapter, model)).toBeNull();
     for (const inheritOnly of [false, true]) {
       expect(resolveModelSelection({ provider, role: "general-implementation", highRisk: true,
         user: { model, effort: "high" }, inherited: { model, effort: "high" }, inheritOnly,
         supported: [{ model, modelClass: "frontier", efforts: ["high"] }],
-      }).delivery).toBe("blocked");
+      })).toMatchObject({ delivery: inheritOnly ? "inherited" : "explicit", selection: { model, effort: "high" } });
     }
   });
 
@@ -68,14 +68,10 @@ describe("AGS3-D-0009/0017/0018 shared model policy", () => {
     expect(result.advice.observation.reasoningEffort).toBe(effort);
   });
 
-  it.each([["general", "high", "explicit"], ["lightweight", "high", "blocked"], ["general", "medium", "blocked"], [null, "high", "blocked"]])("keeps risk floor for %s/%s", (modelClass, effort, delivery) => {
+  it.each([["general", "high"], ["lightweight", "high"], ["general", "medium"], [null, "high"]])("treats the high-risk value as a recommendation for %s/%s (AGS3-D-0058)", (modelClass, effort) => {
     const input = options(effort!, true, modelClass);
-    expect(resolveModelSelection(input).delivery).toBe(delivery);
-    expect(resolveModelSelection({ ...input, inheritOnly: true, inherited: input.user }).delivery).toBe(delivery === "explicit" ? "inherited" : "blocked");
-    const weakened = structuredClone(presets);
-    weakened.invariants.high_risk_minimum_model_class = "lightweight";
-    weakened.invariants.high_risk_minimum_effort = "low";
-    expect(resolveModelSelection(input, weakened).delivery).toBe(delivery);
+    expect(resolveModelSelection(input)).toMatchObject({ delivery: "explicit", selection: input.user });
+    expect(resolveModelSelection({ ...input, inheritOnly: true, inherited: input.user })).toMatchObject({ delivery: "inherited", selection: input.user });
   });
 
   it("keeps the standalone policy snapshot identical to its shared contract", () => {
@@ -83,9 +79,10 @@ describe("AGS3-D-0009/0017/0018 shared model policy", () => {
     expect(readJson("../../skills/coordinate-subagents/references/model-routing-policy.schema.json")).toEqual(modelPolicySchema);
   });
 
-  it("makes execution floors consume the routing policy rather than another literal", () => {
-    expect(modelPolicySchema?.$defs.highRiskModelClass.const).toBe(presets.invariants.high_risk_minimum_model_class);
-    expect(modelPolicySchema?.$defs.highRiskReasoningEffort.const).toBe(presets.invariants.high_risk_minimum_effort);
+  it("keeps one high-risk recommendation in the shared contract rather than another literal (AGS3-D-0018)", () => {
+    expect(modelPolicySchema?.$defs.highRiskModelClass.const).toBe("general");
+    expect(modelPolicySchema?.$defs.highRiskReasoningEffort.const).toBe("high");
+    expect(Object.keys(presets.invariants).filter(key => key.startsWith("high_risk"))).toEqual([]);
     const source = readFileSync(fileURLToPath(new URL("../../mcp-server/src/workflow-service.ts", import.meta.url)), "utf8");
     expect(source).not.toMatch(/minimumModelClass:\s*highRisk\s*\?\s*"general"/u);
     expect(source).not.toMatch(/minimumReasoningEffort:\s*highRisk\s*\?\s*"high"/u);

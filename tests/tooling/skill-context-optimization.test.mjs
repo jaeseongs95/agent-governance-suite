@@ -211,7 +211,7 @@ describe("skill context optimization", () => {
     const report = checkSkillContextOptimization();
     expect(report.contextContractPins).toHaveLength(1);
     expect(report.contextContractPins[0].authorityEffect).toBe("none");
-    expect(Object.keys(report.contextContractPins[0].hashes)).toHaveLength(21);
+    expect(Object.keys(report.contextContractPins[0].hashes)).toHaveLength(20);
     expect(Object.keys(report.contextContractPins[0].hashes).toSorted()).toEqual([
       "contracts/model-policy.v1.schema.json",
       "runtime/collaboration-decision.d.mts",
@@ -221,7 +221,6 @@ describe("skill context optimization", () => {
       "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
       "skills/acceptance-evidence-validator/scripts/core.d.mts",
       "skills/coordinate-subagents/references/model-routing-policy.schema.json",
-      "skills/coordinate-subagents/references/model-routing-presets.json",
       "skills/coordinate-subagents/references/model-routing.md",
       "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts",
       "skills/coordinate-subagents/scripts/model-routing-policy.d.mts",

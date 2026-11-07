@@ -24,9 +24,11 @@
       ]
     },
     "highRiskModelClass": {
+      "description": "Recommended model class for high-risk work. A recommendation only: it never refuses delegation, tool access or result recording.",
       "const": "general"
     },
     "highRiskReasoningEffort": {
+      "description": "Recommended reasoning effort for high-risk work. A recommendation only: it never refuses delegation, tool access or result recording.",
       "const": "high"
     }
   }
