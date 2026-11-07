@@ -155,7 +155,8 @@ describe("D0013 current native installation and running root binding", () => {
   });
   it.skipIf(process.platform !== "win32")("Windows npm shim ENOENT uses the verified official native executable and exact public arguments", async () => {
     const f = await fixture("codex"); const npm = path.join(f.home, "npm");
-    host.launcher = await windowsNpmFixture(npm);
+    const fixtureLauncher = await windowsNpmFixture(npm);
+    host.launcher = await realpath(fixtureLauncher);
     vi.stubEnv("PATH", npm); host.nativeMissing = true;
     try {
       expect((await gateway(f.root).inventory()).discovery).toMatchObject({status: "COMPLETE", scope: "host"});
@@ -169,13 +170,13 @@ describe("D0013 current native installation and running root binding", () => {
     } catch (failure) {
       const packageRoot = path.join(npm, "node_modules/@openai/codex");
       const requestedPackage = `@openai/codex-win32-${process.arch}`;
-      const diagnostic: Record<string, unknown> = {arch: process.arch, fixturePath: host.launcher, requestedPackage, rawCalls: host.rawCalls};
+      const diagnostic: Record<string, unknown> = {arch: process.arch, fixturePath: fixtureLauncher, requestedPackage, rawCalls: host.rawCalls};
       const observe = async (field: string, read: () => Promise<unknown>) => {
         try { diagnostic[field] = await read(); }
         catch (cause) { diagnostic[field] = {code: cause && typeof cause === "object" && "code" in cause && typeof cause.code === "string"
           ? cause.code : "PUBLIC_METADATA_READ_FAILED"}; }
       };
-      await observe("fixtureRealpath", () => realpath(host.launcher));
+      await observe("fixtureRealpath", () => realpath(fixtureLauncher));
       await observe("launcherPackage", async () => {
         const metadata = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
         return {name: metadata.name, version: metadata.version, bin: metadata.bin?.codex};
@@ -197,7 +198,7 @@ describe("D0013 current native installation and running root binding", () => {
       const second = path.join(f.home, "npm-other"); await windowsNpmFixture(second); commandPath += path.delimiter + second;
     }
     vi.stubEnv("PATH", commandPath); host.nativeMissing = true;
-    unavailable(await gateway(f.root).inventory()); expect(host.rawCalls.some(call => call.file === process.execPath || call.file === host.launcher)).toBe(false);
+    unavailable(await gateway(f.root).inventory()); expect(host.rawCalls.filter(call => call.file !== "codex")).toEqual([]);
   });
   it.skipIf(process.platform === "win32")("TEST Linux public CLI fixture crosses actual execFile boundary without shell or model turn", async () => {
     const f = await fixture("codex"); const fixtureRoot = path.dirname(fileURLToPath(new URL("./fixtures/ags38-host-discovery/cli.mjs", import.meta.url)));
