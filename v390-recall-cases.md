@@ -39,4 +39,16 @@
 
 ## 실제 결과
 
-아래에 대상 커밋·명령·종료 코드를 적는다.
+Linux 시험 서버(ssh-test `default`, Node v24.22.1), 격리 worktree `/home/mcpops/ags-tests/v390-recall-r01/wt`, `flock /home/mcpops/ags-tests/.heavy.lock`. 명령은 `node node_modules/vitest/vitest.mjs run <파일> --maxWorkers=1 --reporter=json`.
+
+| 실행 | 대상 커밋 | 범위 | 종료 코드 | 결과 |
+| --- | --- | --- | --- | --- |
+| green | `54f43f13e0c9a606f5f64b688d8b909de8aba7ee` | message-recall, session-message, stdio-integration, d0315-positive-child, ags38-peer-wake, claude-plugin, message-lifecycle, message-retention, wake-doorbell, ack-claim-history(10 파일) | 0 | 237/237 통과 |
+| M1(`claimed_at IS NULL` 제거) | 같음 | message-recall | 1 | RC03·RC09 실패(9 중 2) |
+| M2(`recalledAt` 미기록) | 같음 | message-recall | 1 | RC01·RC02 실패(9 중 2) |
+| green2 ×3 | `c45f8f6d966aed53ea1d11d3a0e4b207b77ca8bb` | message-recall | 0, 0, 0 | 9/9씩. RC09 분포(회수/claim) 40/0, 8/32, 3/37 |
+| M1 재확인 | 같음 | message-recall | 1 | RC03 실패. 이 회차 RC09 분포 40/0이라 RC09는 통과 |
+
+- RC09는 두 프로세스가 실제로 섞인 회차(8/32, 3/37)에서 불변조건(겹침 0, 합 40)을 확인했다. 첫 판(둘 다 앞에서부터)은 claim이 항상 앞서 한쪽 순서만 시험해, 회수를 최신부터 하도록 고쳤다(`c45f8f6d`). 분포는 스케줄에 따라 달라 단정하지 않는다. 그래서 M1을 RC09가 잡는지는 회차에 따라 다르며, M1은 RC03이 결정적으로 잡는다.
+- 원시 결과: 서버 `/home/mcpops/ags-tests/v390-recall-r01/`의 `run.log`, `run2.log`, `green.json`, `m1.json`, `m2.json`, `green2-{1,2,3}.json`, `m1b.json`.
+- 빈 깨우기의 hook 처리(recognized·managed·메시지 0건 → 실패 보고 없이 기존 빈 깨우기 경로)는 기존 `tests/mcp/ags38-peer-wake.test.ts` PE02·PE04가 확인하고, RC08은 회수 뒤 store가 그 모양을 돌려주는지 확인한다. 실제 호스트(Claude·Codex·agy) 시험은 하지 않았다.
