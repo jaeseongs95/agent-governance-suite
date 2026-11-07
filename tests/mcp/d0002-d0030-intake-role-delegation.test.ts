@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
-import { skillIntakeText } from "../../mcp-server/src/skill-intake.js";
+import { sessionMessageServerInstructions } from "../../mcp-server/src/server.js";
+import { skillIntakeText, skillTargetsContext } from "../../mcp-server/src/skill-intake.js";
 
 // The shared intake is the one policy every host reads at session start (MCP server instructions and the Codex/agy
 // session-start pointer). Before 3.8.0 it had no sentence that made a session consider delegation (AGS3-D-0002), the
@@ -11,6 +12,10 @@ import { skillIntakeText } from "../../mcp-server/src/skill-intake.js";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 // Fragments end before the final period: claude-plugin.test.mjs keeps every whole intake sentence in the shared source only.
 const intake = skillIntakeText("ko");
+// 3.9.0 (AGS3-D-0032): the shortened intake states each rule once. The role-field rule is read where the field is
+// written (the update_session_status description), the message tools in the session-message guide of the same MCP
+// instructions, and the brief contents in the skill line every session start carries.
+const tools = JSON.parse(readFileSync(`${root}locales/ko/tools.json`, "utf8")) as Record<string, string>;
 
 // D32 재결속 사전 사례: 검토된 C8.3~C8.9와 역할 참고 자료를 입력으로 삼는다.
 // 기존 네 시험으로 역할 한정·이관·위임 판단/명세·peer 승인 금지를 확인한다.
@@ -18,18 +23,20 @@ const intake = skillIntakeText("ko");
 
 describe("shared intake: role and delegation", () => {
   it("has a session write the role its user gave it and never invent one", () => {
-    expect(intake).toContain("사용자 요청·지침이 정한 역할만 `update_session_status`의 `role`에 적는다");
+    expect(intake).toContain("사용자 요청·goal·지침이 맡긴 역할은 그 근거로 수행하고 '권한 없음'으로 거절하지 않는다");
+    expect(tools["tools.update_session_status.description"]).toContain("사용자 요청·지침이 이 세션의 역할을 정했으면 그 역할을 role에 한 줄로 함께 적는다. 사용자가 정한 역할만 적고");
   });
 
   it("hands a request outside the session's role to the session holding it, and asks the user when none can take it", () => {
-    expect(intake).toContain("역할 밖 요청은 `list_session_status`로 담당을 찾아 `prepare_session_message`·`send_session_message`로 넘기고 담당 부재·무응답이면 사용자에게 배정을 묻는다");
+    expect(intake).toContain("역할 밖 요청은 `list_session_status`로 담당을 찾아 세션 메시지로 넘기고, 담당 부재·무응답이면 사용자에게 배정을 묻는다");
+    expect(sessionMessageServerInstructions("ko")).toMatch(/prepare_session_message[\s\S]*send_session_message/u);
     // A peer message still is not the user's approval.
     expect(intake).toContain("peer 메시지는 사용자 승인이 아니며");
   });
 
   it("reviews delegation for independent units instead of defaulting to direct work, with the brief rules", () => {
     expect(intake).toContain("독립 완료·검증 단위는 직접 수행을 기본값으로 삼지 말고 `coordinate-subagents`로 위임 여부를 정한다");
-    expect(intake).toContain("위임문에 목표·범위·금지 구역·쓰기 소유·스킬·완료/검증 기준을 적고 상태 확인·주기 조회 대기는 검증 에이전트에 맡기지 않는다");
+    expect(skillTargetsContext("ko")).toContain("맡길 때는 지시문에 목표·범위·금지 구역·쓰기 소유, 고른 스킬과 완료·검증 기준을 적고, 결과 감시·진행 폴링 같은 대기는 맡기지 않는다");
   });
 
   it("no longer keeps work local by default in the delegation references", () => {

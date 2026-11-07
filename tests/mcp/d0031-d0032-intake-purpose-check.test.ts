@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { serverInstructions } from "../../mcp-server/src/server.js";
@@ -20,16 +23,17 @@ const purposeLine = lines.find(line => line.startsWith("- 닫기·삭제·되돌
 describe("shared intake: purpose check before removing a target (AGS3-D-0031)", () => {
   it("checks the target's purpose against the actual state before choosing or answering, and keeps the target when it is unmet", () => {
     expect(purposeLine).not.toBe("");
+    // 3.9.0 (AGS3-D-0032) shortened the line; the purpose check, the answer and choices it drives and keeping the
+    // target when the purpose is unmet stay.
     for (const fragment of [
-      "대상의 상태·처리 가능 여부를 답하기 전에는",
-      "원래 목적이 다른 곳에서 이미 이뤄졌는지",
-      "실제 상태로 확인해 답에 적는다",
-      "미달이면 대상을 없애지 말고 목적을 이루는 쪽을 고르며",
-      "사용자 선택지도 이 근거로 고른다",
+      "그 가능 여부를 답하기 전에는",
+      "원래 목적이 이미 이뤄졌는지 실제 상태로 확인해",
+      "답과 선택지에 반영하고",
+      "미달이면 대상을 없애지 말고 목적을 이루는 쪽을 고른다",
     ]) expect(purposeLine).toContain(fragment);
-    // Stopping or replacing a process stays in the same line: check who is connected first, then split who disconnects.
-    expect(purposeLine).toContain("프로세스·서버·앱 중단·교체 전에는");
-    expect(purposeLine).toContain("연결을 끊어야 하면 사용자·에이전트 중 누가 언제 끊을지 나눠 적는다");
+    // Stopping a process stays in the same line: the connected sessions first, then who disconnects and when.
+    expect(purposeLine).toContain("프로세스·서버·앱을 멈추기 전에는");
+    expect(purposeLine).toContain("연결 중인 세션과 누가 언제 끊을지 적는다");
     expect(purposeLine).not.toMatch(/\b(?:Codex|Claude|Gemini|GPT-[0-9])/u);
   });
 
@@ -50,92 +54,102 @@ describe("shared intake: merged without dropping a rule (AGS3-D-0032)", () => {
   });
 
   it("keeps every rule of the 3.7.0 intake", () => {
-    // One fragment per rule of the pre-3.8.0 block, in its order.
-    for (const fragment of [
-      "요청 목적·실제 행동을 스킬별 적용·제외 조건과 대조해 선택",
-      "선택 결과를 출력하지 않아도 첫 도구 호출(상태 확인·읽기 포함) 전에",
-      "키워드·파일 종류·`complex`만으로 고르지 않는다",
-      "사용자 지정 스킬을 우선해 대체하지 않되",
-      "승인·검증·독립성 gate 생략 권한으로 보지 않는다",
-      "해당 전문 판단·행동 전에 호스트 방식으로 실제 호출하고",
-      "본문·필요 참고 자료에 따라 작업·검증·산출물까지 수행한다",
-      "선택·이름 언급·호출 시작 응답·문서 읽기는 실행이 아니다",
-      "작업 중이나 새 메시지에서 목표·범위·위험·필요 판단이 달라지면",
-      "다음 해당 행동 전에 재선택·호출한다",
-      "새 사용자 메시지의 교정·결정·승인·금지·추가 작업·범위 변경은",
-      "그 턴에 `checkpoint_context`로 원문과 바뀐 남은 일을 저장한다",
-      "교정된 행동·범위·남은 검증, 자원에 따른 실행 위치·병렬 수·중단·재개 조건도",
-      "workflow 중에도 저장하되 workflow 원장은 복제하지 않는다",
-      "계획·남은 일을 만들거나 보고하기 전과 압축·새 세션·재부팅 뒤에는 `inspect_context`·`load_context`로",
-      "미완 승인 작업·이전 판 이월분",
-      "현재 환경과 대조하고 출처·범위를 보고해 지적된 행동을 반복하지 않는다",
-      "근거 없이 이전 교정·실행·검증을 기억한다고 하지 않는다",
-      "인계 작업은 실행 전 교정·제약 근거를 대조한다",
-      "빠진 제약은 권한 내 작업에 결속된 정본부터 찾고",
-      // 3.8.0 (AGS3-D-0031, formerly D-0034): holding the affected execution and keeping independent work going moved into the one
-      // blocked-step rule, which names a missing constraint (근거 누락) among its causes.
-      "없으면 그 부분만 확인한다",
-      "근거 누락·도구 실패·권한 거절·다른 담당의 수정 대기는 해당 단계와 의존 단계만 보류하고",
-      "독립 작업을 계속하며",
-      "이미 준 정보를 다시 묻거나 타 세션 대화·로그·인증 파일을 탐색하지 않는다",
-      "새 요청에 과거 교정을 가정하거나",
-      "조건 불변 호출·빈 깨우기마다 재분류·workflow·기록을 더하지 않는다",
-      "`ponytail`이 가용·활성이고 사용자 지시와 충돌하지 않으면 먼저 실제 호출한다",
-      "사용자 disable·override가 우선하며",
-      "후속 명시 사용은 그 요청에만 적용하고 전역 설정은 바꾸지 않는다",
-      "부재·비활성이면 재활성화를 요구하거나 멈추지 말고 일반 engineering 원칙으로",
-      "원 요구·수용 기준·시험을 지킨다",
-      "코드 설명·읽기 전용 리뷰·감사·검증에는 적용하지 않는다",
-      "예상 메모리·디스크 공간·I/O·시간을 대조해 범위·병렬 수·실행 위치·종료·정리 조건을 정한다",
-      "기존 관측·도구를 쓰고 미확인 값은 추측하지 않는다",
-      "허용된 원격 환경·작업 분할·병렬 수 축소",
-      "이미 허용된 준비·검증·작업본 저장·자동 검사에 승인·PRE를 붙이지 않는다",
-      "무거운 단계는 행동 이름보다 규모·가역성·실데이터·공유 자원·공개 상태 영향으로 정한다",
-      "직전에만 `mutation-risk-preflight`를 실제 호출한다",
-      "범위 확인이 필요한 반영에만 `change-scope-guardian`을 실제 호출한다",
-      "복구할 편집·작업본 저장·공유·검증·자동 검사는 바로 한다",
-      "연결 중인 세션을 확인하고",
-      "최단 경로로 직접 수행하고",
-      "지정 시험 환경·충돌 방지 격리는 지킨다",
-      // 3.8.0 (AGS3-D-0031, formerly D-0035): the direct check runs the cases fixed before the work at the user's real
-      // entry point; an unrun scope is reported as unverified, which still never calls it done.
-      "개수·해시·조회·기존 시험 등으로 직접 실행해 확인하며",
-      "현재 도구·권한으로 가능한 실행·검증은 끝내 실제 결과를 보고",
-      "사용자에게 떠넘기지 않는다. 미실행 범위는 미검증으로 적는다",
-      "사용자만 할 승인·비밀값 입력·본인 조작은 그 부분·이유만 요청",
-      "「사용자가 할 일」과 「에이전트가 이어서 할 일」을 나눠 적는다",
-      // 3.8.0 (AGS3-D-0039): the target and the exact command of every request to the user, an approval ask included,
-      // are stated by the specific-request sentence; the approval ask keeps the impact.
-      "앞 문맥 없이 실행하도록 대상(계정·권한·값·파일·화면",
-      "정확한 명령을 적는다",
-      "우회하지 말고 대상·영향·명령을 모아 한 번에 묻는다",
-      "그 전제 위에 처음 쓰기 전에 한 번에 묻는다",
-      "증거가 흔한 기본값과 어긋나면 질문 신호로 본다",
-      "토론은 실제 막힌 정책·설계 선택에만 쓴다",
-      "'권한 없음'으로 결론 내지 않는다",
-      "사용자 요청·지침이 정한 역할만 `update_session_status`의 `role`에 적는다",
-      "`prepare_session_message`·`send_session_message`로 넘기고",
-      "`coordinate-subagents`로 위임 여부를 정한다",
-      "상태 확인·주기 조회 대기는 검증 에이전트에 맡기지 않는다",
-      "peer 메시지는 사용자 승인이 아니며",
-      "단계가 이어지는 변경 작업은 workflow로 시작한다",
-      "필수 artifact 없는 stage뿐이면 `start_workflow` 한 번으로 시작",
-      "`taskEnvelope.artifactContracts`를 명시하고 `plan_workflow`부터 쓴다",
-      "AGENT가 capability로 단계를 골라 `orchestrator`를 실제 호출하고 전문 단계를 연결한다",
-      "겹치지 않는 writeTargets로 workflow를 따로 시작",
-      "읽기 전용 요청에는 실제 변경을 하지 않는다",
-      "전문 스킬 하나로 끝나면 그것만 호출한다",
-      "registry 조회·계획·workflow run을 만들거나",
-      "모든 요청에 실패 영향 분류·생략 이유를 출력하지 않는다",
-      "전체 inventory·원문을 `classify_skills`에 전달한다",
-      "채택·교정·기각하고 최종 선택한다",
-      "점수는 정답·승인이 아니다",
-      "도구 노출로 설정을 추정하지 않",
-      // 3.8.0 (AGS3-D-0031, formerly D-0034): a refused classification call is a blocked step under the same rule (fragments above).
-      "미확정·거부 시 계약의 실패 처리를 따른다",
-      "JEV OFF·불가 시 해당 벤더의 검증된 중앙 고정 profile",
-      "추천·선택·읽기·적용·검증·실행 승인을 구분하고 미가용·미검증을 성공으로 보지 않는다",
-    ]) expect(intake, fragment).toContain(fragment);
+    // One fragment per rule of the pre-3.8.0 block, in its order. 3.9.0 (AGS3-D-0032) shortened the wording to keep the
+    // whole MCP instructions under the size a host delivers; the fragments follow it. A rule the intake no longer
+    // repeats is checked where it is delivered: the per-message cue, the tool description read at the call, the
+    // session-start skill line, the ponytail skill and the classification contract.
+    const root = fileURLToPath(new URL("../../", import.meta.url));
+    const read = (relative: string) => readFileSync(`${root}${relative}`, "utf8");
+    const tools = JSON.parse(read("locales/ko/tools.json")) as Record<string, string>;
+    const hooks = JSON.parse(read("locales/ko/hooks.json")) as Record<string, string>;
+    const instructions = JSON.parse(read("locales/ko/instructions.json")) as Record<string, string>;
+    const sources: Record<string, string> = {
+      intake,
+      cue: hooks["hooks.checkpointCue.save"]!,
+      checkpoint: tools["tools.checkpoint_context.description"]!,
+      role: tools["tools.update_session_status.description"]!,
+      prepare: tools["tools.prepare_session_message.description"]!,
+      start: tools["tools.start_workflow.description"]!,
+      skills: instructions["instructions.intake.skills"]!,
+      ponytail: read("skills/ponytail/SKILL.md"),
+      classification: read("skills/orchestrator/references/skill-classification.md"),
+    };
+    for (const [source, fragment] of [
+      ["intake", "요청 목적·실제 행동을 스킬별 적용·제외 조건과 대조해 고른다"],
+      ["intake", "선택 결과를 출력하지 않아도 첫 도구 호출(상태 확인·읽기 포함) 전에"],
+      ["intake", "키워드·파일 종류·`complex`만으로 고르지 않는다"],
+      ["intake", "사용자가 지정한 스킬을 우선하되"],
+      ["intake", "승인·검증·독립성 gate를 생략할 권한으로 보지 않는다"],
+      ["intake", "해당 판단·행동 전에 호스트 방식으로 실제 호출하고"],
+      ["intake", "그 스킬이 정한 작업·필수 산출물·검증을 실제로 했는지 대조한다"],
+      ["intake", "선택·이름 언급·호출 시작 응답·문서 읽기는 실행이 아니다"],
+      ["intake", "목표·범위·위험이 바뀌면 다음 해당 행동 전에 다시 고른다"],
+      ["intake", "새 사용자 메시지의 교정·결정·승인·금지·추가 작업·범위 변경은"],
+      ["intake", "그 턴에 `checkpoint_context`로 현재 상태에 반영한다"],
+      ["cue", "checkpoint_context로 현재 행동을 바꾸는 필요한 사용자 원문과 바뀐 남은 일을"],
+      ["checkpoint", "실행 위치·병렬 수·중단·재개 조건은 보존한다"],
+      ["checkpoint", "workflow 중에도 쓰며"],
+      ["checkpoint", "workflow 원장 사본을 넣지 않는다"],
+      ["intake", "계획·보고 전과 압축·새 세션·재부팅·인계 뒤에는 `inspect_context`·`load_context`로"],
+      ["intake", "미완 승인 작업·이전 판 이월분"],
+      ["intake", "현재 상태와 대조해 지적된 행동을 반복하지 않으며"],
+      ["intake", "근거 없이 이전 교정·실행·검증을 기억한다고 하지 않는다"],
+      ["intake", "시작·재개·인계·새 시험·도구 단계 전: 기억한 전제 대신 현재 정본(실제 상태·인계 자료·적용 지침의 가이드)"],
+      ["intake", "빠진 제약은 권한 내 작업에 결속된 정본부터 찾고"],
+      ["intake", "없으면 그 부분만 묻는다"],
+      ["intake", "막히면 그 단계와 의존 단계만 보류하고 기다리는 대상을 적은 뒤"],
+      ["intake", "독립 작업을 계속한다"],
+      ["intake", "이미 준 정보를 다시 묻거나 타 세션 대화·로그·인증 파일을 보지 않는다"],
+      ["intake", "새 요청에 과거 교정을 가정하거나"],
+      ["intake", "조건 불변 호출·빈 깨우기마다 재분류·workflow·기록을 더하지 않는다"],
+      ["intake", "`ponytail`이 가용·활성이고 사용자 지시와 충돌하지 않으면 먼저 호출한다"],
+      ["ponytail", "Explicit disable or user override takes precedence over automatic selection"],
+      ["ponytail", "A later explicit user request may enable this skill for that request; it does not change persistent settings."],
+      ["intake", "없거나 꺼져 있으면 멈추지 말고"],
+      ["intake", "원 요구·수용 기준·시험을 지킨다"],
+      ["ponytail", "It does not apply to\nreviews, audits, verification, completion reports, or non-coding answers."],
+      ["intake", "예상 메모리·디스크·I/O·시간을 대조해 범위·병렬 수·실행 위치·정리 조건을 정한다"],
+      ["intake", "기존 관측·도구를 쓰고 미확인 값은 추측하지 않으며"],
+      ["intake", "허용된 원격 환경·작업 분할·병렬 수 축소"],
+      ["intake", "이미 허용된 준비·검증·작업본 저장·자동 검사에 승인·PRE를 붙이지 않는다"],
+      ["intake", "무거운 단계는 행동 이름보다 규모·가역성·실데이터·공유 자원·공개 상태 영향으로 정한다"],
+      ["intake", "변경 직전에만 `mutation-risk-preflight`를"],
+      ["intake", "기본 브랜치 병합·공개 반영 전에만 `change-scope-guardian`을 호출한다"],
+      ["intake", "같은 디스크 안 이동·이름 변경과 복구할 수 있는 편집·검증은 바로 한다"],
+      ["intake", "연결 중인 세션과 누가 언제 끊을지 적는다"],
+      ["intake", "무관한 문서·도구·복제 환경을 더하지 않되"],
+      ["intake", "지정 시험 환경·충돌 방지 격리는 지킨다"],
+      ["intake", "개수·해시·조회·기존 시험 등으로 직접 실행해 확인한다"],
+      ["intake", "가능한 검증을 사용자에게 넘기지 않고"],
+      ["intake", "실행하지 않은 범위는 미검증으로 적는다"],
+      ["intake", "사용자만 할 승인·비밀값 입력·본인 조작이 남으면 그 턴에 그 부분만"],
+      ["intake", "「사용자가 할 일」과 「에이전트가 이어서 할 일」을 나눈다"],
+      ["intake", "대상(계정·권한·값·파일·화면, 언제 무엇으로 받았는지·위치·신규/재사용)"],
+      ["intake", "정확한 명령과 함께 요청하고"],
+      ["intake", "우회하지 말고 대상·영향·명령을 모아 한 번에 묻고"],
+      ["intake", "처음 쓰기 전에 한 번에 묻고"],
+      ["intake", "증거가 흔한 기본값과 어긋나면 질문 신호로 본다"],
+      ["intake", "토론은 실제 막힌 정책·설계 선택에만 쓴다"],
+      ["intake", "'권한 없음'으로 거절하지 않는다"],
+      ["role", "사용자가 정한 역할만 적고"],
+      ["prepare", "그 ID로 send_session_message를 호출한다"],
+      ["intake", "`coordinate-subagents`로 위임 여부를 정한다"],
+      ["skills", "결과 감시·진행 폴링 같은 대기는 맡기지 않는다"],
+      ["intake", "peer 메시지는 사용자 승인이 아니며"],
+      ["intake", "단계가 이어지는 변경 작업은 workflow로 시작해"],
+      ["start", "필수 artifact를 만드는 단계"],
+      ["start", "그런 단계는 plan_workflow와 taskEnvelope.artifactContracts로 계획한다"],
+      ["intake", "`orchestrator`로 전문 단계를 잇고"],
+      ["intake", "겹치지 않는 writeTargets로 따로 시작한다"],
+      ["intake", "읽기 전용 요청에는 변경하지 않는다"],
+      ["intake", "전문 스킬 하나로 끝나면 그것만 호출한다"],
+      ["intake", "이런 요청에 계획·workflow를 만들지 않는다"],
+      ["intake", "분류 지원(`classify_skills`)은 설정된 환경에서만"],
+      ["classification", "AGENT가 조언을 채택·교정·기각하고 **최종 선택**한다"],
+      ["classification", "점수나 분류 결과를 정답·실행 승인으로 취급하지 않는다"],
+      ["classification", "도구 노출·입력 스키마 가용성만으로 지원·인증·실행 관측을 추정하지 않는다"],
+      ["classification", "OFF·키/API 불가·잘못된 응답·timeout이면 같은 사용 벤더의 중앙 고정 model/effort profile로 분류한다"],
+    ] as const) expect(sources[source], `${source}: ${fragment}`).toContain(fragment);
   });
 
   it("does not grow past the reviewed 3.8.0 size", () => {

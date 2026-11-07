@@ -49,9 +49,10 @@ describe("AGS3-D-0025 checkpoint_context requestId rule in tools/list", () => {
       "현재 본문·토큰이 없으면 load_context로 읽고 stateToken을 expectedStateToken에 그대로 넣는다.",
     ]],
     ["en", [
-      "Changed content: new requestId; identical payload retries, even unknown responses: same ID.",
-      "Never bypass REQUEST_CONFLICT by changing ID.",
-      "If current body/token absent, load_context; echo stateToken as expectedStateToken.",
+      // 3.9.0 (AGS3-D-0053) shortened the en description; the requestId rule is unchanged.
+      "Changed content: new requestId; identical retries, even unknown responses: same ID;",
+      "never bypass REQUEST_CONFLICT by changing ID.",
+      "If body/token absent, load_context; echo stateToken as expectedStateToken.",
     ]],
   ] as const)("the %s description says a requestId is new for each saved content", async (locale, phrases) => {
     const tool = await listedCheckpointTool(locale);

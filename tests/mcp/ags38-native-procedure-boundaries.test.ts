@@ -44,7 +44,8 @@ describe("native pilot procedure contracts (D31/D32/D36/D38)", () => {
     const intake = skillIntakeText(locale);
     expect(intake).toContain("새 사용자 메시지의 교정·결정·승인·금지·추가 작업·범위 변경");
     expect(intake).toContain("읽기 전용·상태 쓰기 금지가 아니면 그 턴에");
-    expect(intake).toContain("`checkpoint_context`로 원문과 바뀐 남은 일을 저장한다");
+    // 3.9.0 (AGS3-D-0032): what to save (user quotes, changed remaining work) is stated once, in the per-message cue.
+    expect(intake).toContain("그 턴에 `checkpoint_context`로 현재 상태에 반영한다");
     expect(serverInstructions(locale)).toContain(intake);
     expect(read("skills/blocker-diagnostician/references/entry-details.md")).toContain("외부 workflow 상태 쓰기에도 적용한다");
   });
@@ -57,21 +58,24 @@ describe("native pilot procedure contracts (D31/D32/D36/D38)", () => {
   });
 
   // D53: tools/list delivery only; these clauses do not prove reconstruction quality or model behaviour.
+  // 3.9.0 (AGS3-D-0053): each save rebuilds the stored state instead of appending to it.
   it.each([
     ["ko", [
-      "기존 유효 핵심도 최적화해 보존한다.",
-      "상태가 바뀌면 목표, 최신 결정·권한·유효 제약, 미완료·다음 행동, 필요한 실패·근거를 즉시 갱신하라.",
-      "현재 행동을 바꾸는 필요한 사용자 원문은 보존하고 상세 근거는 참조하되, 대화 요약·원시 로그·완료 내역을 덤프하지 않는다.",
-      "보고 전에도 바뀐 상태를 반영하고 단순 덧붙임·무변화 저장을 하지 않는다.",
+      "매 저장은 덧붙이기가 아니라 재구성이다.",
+      "저장된 현재 상태와 최신 요청을 대조해 중복은 합치고, 폐기된 전제와 끝난 일은 지우고, 완료 이력은 근거 참조로 바꾼다.",
+      "유효한 목표, 최신 결정·권한·제약, 미완료·다음 행동, 필요한 실패·불확실성·근거와 실행 위치·병렬 수·중단·재개 조건은 보존한다.",
+      "현재 행동을 바꾸는 필요한 사용자 원문은 보존하고 상세 근거는 참조하되, 대화 요약·원시 로그·workflow 원장 사본을 넣지 않는다.",
+      "보고 전에도 바뀐 상태를 반영하고 무변화 저장을 하지 않는다.",
       "현재 본문·토큰이 없으면 load_context로 읽고 stateToken을 expectedStateToken에 그대로 넣는다.",
       "STALE_REVISION이면 최신 현재 상태를 읽어 재구성한다.",
     ]],
     ["en", [
-      "Optimize prior valid essentials; on changes immediately update goals, latest decisions/authority/constraints, unfinished work/next actions and needed failures/evidence.",
+      "Each save rebuilds, not appends: compare stored state with the latest request, merge duplicates, drop obsolete premises/finished work, reduce completed history to evidence refs.",
+      "Keep valid goals, latest decisions/authority/constraints, unfinished work/next actions, needed failures/uncertainty/evidence and run location/parallelism/stop/resume conditions.",
       "Keep needed user quotes; reference details.",
-      "No chat summaries/log/completed-history dumps or secrets.",
-      "Reflect changes before reports; no append-only or unchanged saves.",
-      "If current body/token absent, load_context; echo stateToken as expectedStateToken.",
+      "No chat summaries/logs/workflow-ledger copies or secrets.",
+      "Reflect changes before reports; no unchanged saves.",
+      "If body/token absent, load_context; echo stateToken as expectedStateToken.",
       "STALE_REVISION: reload/rebuild.",
     ]],
   ] as const)("NP04 exposes the D53 reconstruction delivery contract in %s without claiming semantic quality", async (locale, clauses) => {
