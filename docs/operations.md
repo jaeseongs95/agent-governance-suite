@@ -81,7 +81,10 @@ AGS는 세 가지 컨텍스트를 둡니다. 프로젝트 단위 컨텍스트는
 | 상황 | 그 세션과 그 서브에이전트 | 2000 byte(현재 메모리, 기존 그대로) | 그 세션 | 호스트별 `continuity.sqlite3` |
 
 - 공유 파일은 `AGENT_GOVERNANCE_SHARED_STATE_DIR`(없으면 `~/.agent-governance-suite`) 아래에 있고 `AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH`로 따로 지정할 수 있습니다. hook은 이 파일을 만들지 않습니다. 저장한 적이 없으면 파일도 주입도 없습니다.
-- 사람이 정하는 항목(전역 컨텍스트, 역할 등록표, 세션↔역할 결속, 패스키 목록)의 정본은 패스키 서명 기록(`admin_log`, 추가만 함) 하나입니다. 읽는 쪽(hook·MCP·페이지)은 매번 서명과 대상별 사슬을 검증하고, 검증에 실패한 기록은 적용하지 않습니다. 자세한 내용은 [로컬 관리 페이지](admin-page.md)를 봅니다.
+- 사람이 정하는 항목(전역 컨텍스트, 역할 등록표, 세션↔역할 결속, 패스키 목록, JEV 켜고 끄기·예산·프리셋, JEV key, 표시 언어, 편집 관문 예외 경로)의 정본은 패스키 서명 기록(`admin_log`, 추가만 함) 하나입니다. 읽는 쪽(hook·MCP·페이지)은 매번 서명과 대상별 사슬을 검증하고, 검증에 실패한 기록은 적용하지 않습니다. 자세한 내용은 [로컬 관리 페이지](admin-page.md)를 봅니다.
+- JEV는 기본으로 꺼져 있습니다. 설치 설정 파일(`AGENT_GOVERNANCE_CLASSIFICATION_CONFIG`)이 허용하고 사용자가 관리 페이지에서 켜야 동작합니다. 예산은 설정 파일과 페이지 중 작은 값입니다.
+- 환경 변수 `AGENT_GOVERNANCE_LOCALE`, `AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS`, 그리고 JEV 경로가 요구하는 key 이름의 환경 변수는 서명 기록보다 우선합니다. 관리 페이지는 그 항목을 잠금으로 보여 줍니다.
+- 페이지에서 등록한 JEV key는 공유 상태 폴더의 `jev-key-vault.bin`(데이터 키)으로 암호화해 `context-layers.sqlite3`에 저장합니다. 같은 OS 사용자로 도는 프로그램은 풀 수 있습니다.
 - 에이전트는 바꾸지 못하고 요청만 남깁니다. `checkpoint_global_context`와 `bind_session_role`은 요청(proposal)을 저장하고 `pending`·`proposalId`·`adminUrl`을 돌려줍니다. 사용자가 페이지에서 차이를 보고 패스키로 승인해야 적용됩니다. 결속은 역할 등록표에 있는 역할에만 요청할 수 있습니다(없으면 `ROLE_NOT_REGISTERED`).
 - 담당 컨텍스트에 누가 접근하는지는 서명된 결속으로만 정합니다. 세션 현황판의 role(`update_session_status`)은 세션이 스스로 적는 표시용 문구이며 접근 키가 아닙니다. 역할은 불변 ID와 이름(NFC 정규화·앞뒤 공백 제거, 대소문자 무시 고유)을 가지며 결속과 담당 컨텍스트는 ID를 참조합니다. 결속은 root 세션 단위이고 서브에이전트는 root 세션의 결속을 이어받습니다. 같은 세션을 재개하면 유지되고, 마지막 사용 뒤 30일이 지나면 없어집니다.
 - 담당 컨텍스트 저장은 항상 본문 전체를 다시 구성해 `expectedStateToken`과 함께 보냅니다. 읽은 뒤 같은 역할의 다른 세션이 저장했으면 `STALE_REVISION`이며 아무것도 쓰지 않습니다. 담당 컨텍스트 이력은 역할마다 최근 50개를 남기고, 전역 컨텍스트 이력은 서명 기록 그 자체입니다.

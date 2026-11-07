@@ -260,7 +260,7 @@ function adminResetCommand(args: string[]): number {
   const summary = { keys: state.keys.length, roles: state.roles.length, bindings: state.bindings.length, lastSeq: state.lastSeq };
   if (!args.includes("--yes")) {
     process.stdout.write(`${JSON.stringify({ command: "admin-reset", dryRun: true, wouldArchive: summary,
-      effect: "Every signed admin item returns to its default (no global context, no roles, no bindings, no passkeys). Re-run with --yes." })}\n`);
+      effect: "Every signed admin item returns to its default (no global context, no roles, no bindings, no passkeys, JEV off, no JEV keys; the locale and the edit gate exceptions come from the environment or the defaults). Re-run with --yes." })}\n`);
     return 0;
   }
   const reset = service.reset();

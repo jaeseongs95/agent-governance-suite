@@ -162,7 +162,7 @@ Codex 출력 형식은 continuity hook이 host 인자로 정한다(`resolveHookH
 
 제품 파일은 버전 관리 아래에 있는 파일이다(3.2.0). 편집 대상에서 위로 올라가며 `.git`(디렉터리, 또는 worktree·submodule의 `.git` 파일), `.hg`, `.svn`, `.jj` 중 하나를 찾는다. 아직 없는 새 파일은 없는 상위 폴더를 지나쳐 올라간다. 끝까지 없으면 세지 않는다. 다만 아래 면제 경로가 아니면 7.2 ①(판정 대기 root의 쓰기 범위)은 본다(3.4.0). 3.3.0까지는 버전 관리 밖 경로를 판정 전에 빼서, 쓰기 범위가 저장소 밖인 판정 대기 root의 파일을 편집 도구로 바꿀 수 있었다. 이런 편집은 구간에 세지 않고 편집 기록도 남기지 않는다. 상위 폴더를 읽다 오류가 나면(권한 등) 센다. 3.1.0은 아래 면제만 빼고 모든 경로를 세서, 저장소 밖 질의 문서(Google Drive 폴더)를 쓰던 Codex 세션이 3개째에서 거부됐다.
 
-세지 않는 경로: OS 임시 폴더(`os.tmpdir()`, Claude scratchpad 포함), 호스트의 에이전트 메모 폴더, 사용자 설정 `AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS`(플랫폼 경로 구분자로 나눈 절대 경로). 호스트 메모 폴더는 adapter가 정한다.
+세지 않는 경로: OS 임시 폴더(`os.tmpdir()`, Claude scratchpad 포함), 호스트의 에이전트 메모 폴더, 사용자 설정 `AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS`(플랫폼 경로 구분자로 나눈 절대 경로). 이 환경 변수가 없으면 로컬 관리자 페이지에서 패스키로 서명한 목록을 쓴다(3.9.0, [admin-page.md](admin-page.md)). 호스트 메모 폴더는 adapter가 정한다.
 
 | 호스트 | 폴더 | 근거 |
 | --- | --- | --- |

@@ -73,11 +73,12 @@ AGS는 세 층으로 배치된다. 층마다 같은 기계일 수도, 다른 기
 호스트 쪽 프로세스는 모두 `runtime/i18n`의 같은 함수로 다음 순서에 따라 정한다.
 
 1. 환경 변수 `AGENT_GOVERNANCE_LOCALE`: `Accept-Language` 문법의 언어 목록(예 `en-US,ko;q=0.5`). 시험과 고급 사용자를 위한 것이다.
-2. 사용자 설정: `<공유 상태 디렉터리>/settings.json`의 `locale`(기본 `~/.agent-governance-suite/settings.json`). 로컬 관리자 페이지나 설정 명령이 바꾼다.
-3. 설치 패키지의 기본 locale: 패키지 빌드가 적는 `runtime/locale.json`. 그 패키지의 스킬·manifest 언어와 같다. `runtime/`은 세 호스트의 패키지에 모두 들어가는 폴더라 이 위치를 쓴다.
-4. 근(root) locale `en`.
+2. 로컬 관리자 페이지에서 패스키로 서명한 표시 언어(3.9.0, [admin-page.md](admin-page.md)). 읽을 때마다 서명 기록을 검증한다.
+3. 사용자 설정: `<공유 상태 디렉터리>/settings.json`의 `locale`(기본 `~/.agent-governance-suite/settings.json`). 설정 명령이 바꾼다.
+4. 설치 패키지의 기본 locale: 패키지 빌드가 적는 `runtime/locale.json`. 그 패키지의 스킬·manifest 언어와 같다. `runtime/`은 세 호스트의 패키지에 모두 들어가는 폴더라 이 위치를 쓴다.
+5. 근(root) locale `en`.
 
-- 1~3의 각 값은 RFC 4647 Lookup으로 지원 locale과 맞춘다. 맞는 것이 없으면 다음 단계로 간다.
+- 1~4의 각 값은 RFC 4647 Lookup으로 지원 locale과 맞춘다. 맞는 것이 없으면 다음 단계로 간다.
 - 잘못된 값은 그 단계만 건너뛰고, 건너뛴 사실을 `code`(`LOCALE_INVALID`)로 진단에 남긴다.
 - hook은 호출마다 새 프로세스라 설정 변경이 바로 반영된다.
 - 키 단위 fallback: 정한 locale → 그 언어의 상위 태그 → `en`. 출시 locale은 원칙 4 때문에 이 경로를 타지 않는다.

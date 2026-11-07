@@ -177,6 +177,10 @@ dialog::backdrop{background:rgba(20,20,18,.45)}
 .picked{padding:10px 12px;border:1px solid var(--info-bd);background:#F3F6FD;border-radius:6px;display:flex;flex-direction:column;gap:2px}
 .picked b{font-size:15px;overflow-wrap:anywhere}
 select:disabled{background:#EFEFEC}
+ul.paths{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+ul.paths li{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 10px;border:1px solid var(--line2);border-radius:6px}
+ul.paths code{flex:1 1 240px;min-width:0;overflow-wrap:anywhere}
+input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
 @media (max-width:760px){
   header.top{padding:12px 16px}
   .band{padding:10px 16px}
@@ -214,6 +218,7 @@ select:disabled{background:#EFEFEC}
     r: { query: '', newName: '', renaming: null },
     b: { filter: 'active', limit: LIMIT },
     newKeyLabel: '', firstKeyNotice: false,
+    j: { base: null, cur: null }, loc: { base: '', cur: null }, ex: { base: [], cur: null, newPath: '' },
     dialog: null,
   };
   let ruleSeq = 0;
@@ -306,6 +311,11 @@ select:disabled{background:#EFEFEC}
     KEY_ALREADY_KNOWN: '이미 등록된 패스키입니다.',
     TOO_LARGE: '크기 상한을 넘었습니다.',
     TARGET_MISMATCH: '요청한 대상과 변경 대상이 다릅니다.',
+    JEV_PRESET_UNKNOWN: '이 설치에 없는 프리셋입니다.',
+    JEV_KEY_NOT_FOUND: '등록된 key가 없습니다.',
+    JEV_KEY_FINGERPRINT_MISMATCH: '보낸 key 값이 서명한 지문과 다릅니다.',
+    SECRET_UNEXPECTED: 'key 값은 key 등록에만 보낼 수 있습니다.',
+    JEV_KEY_VAULT_UNAVAILABLE: 'key를 암호화해 저장할 수 없습니다(상태 폴더를 쓸 수 없음).',
   };
   const SIGN_CODES = new Set(['ADMIN_SIGNATURE_INVALID', 'ADMIN_CHALLENGE_MISMATCH', 'ADMIN_RPID_MISMATCH', 'ADMIN_USER_VERIFICATION_MISSING',
     'ADMIN_ALGORITHM_UNSUPPORTED', 'ADMIN_KEY_UNKNOWN', 'ADMIN_KEY_REVOKED', 'ADMIN_KEY_NOT_REGISTERED', 'ADMIN_INTENT_NONCANONICAL', 'ADMIN_INTENT_EXPIRED']);
@@ -384,6 +394,7 @@ select:disabled{background:#EFEFEC}
       else S.g.conflict = true;
     }
     if (S.r.renaming && !d.roles.some((r) => r.roleId === S.r.renaming.roleId)) S.r.renaming = null;
+    syncSettings(d);
   }
   function reapplyMine() {
     // ponytail: 규칙(빈 줄 단위) 3방향 병합. 다른 경로가 추가한 규칙은 끝에 붙는다(순서 보존 안 함).
@@ -491,7 +502,8 @@ select:disabled{background:#EFEFEC}
       const requestId = crypto.randomUUID();
       setStatus(slot, { kind: 'busy', text: '저장 중…' });
       let c;
-      try { c = await api('POST', '/api/commit', { intent, assertion, requestId, proposalId: o.proposalId || null }); }
+      // key 값은 서명한 등록과 함께 한 번만 보낸다(서버는 암호화해 두고 다시 보내지 않는다).
+      try { c = await api('POST', '/api/commit', { intent, assertion, requestId, proposalId: o.proposalId || null, ...(o.secret ? { secret: o.secret } : {}) }); }
       catch (e) { S.busy = null; await checkUnknown(slot, requestId, o.onDone); return; }
       if (!c.ok) { const code = httpFail(slot, c); if (code === 'ADMIN_TARGET_STALE' && o.onStale) await o.onStale(); return; }
       if (!c.json || !c.json.record) { S.busy = null; await checkUnknown(slot, requestId, o.onDone); return; }
@@ -585,7 +597,7 @@ select:disabled{background:#EFEFEC}
     top.replaceChildren(...kids);
   }
 
-  const LAYER = { global: '전역 컨텍스트', keys: '패스키 목록', roles: '역할', binding: '세션 결속' };
+  const LAYER = { global: '전역 컨텍스트', keys: '패스키 목록', roles: '역할', binding: '세션 결속', jev: 'JEV 설정', jevKeys: 'JEV key', locale: '표시 언어', editExempt: '편집 관문 예외 경로' };
   function renderBands() {
     const out = [];
     const err = S.storeError || S.loadError;
@@ -799,8 +811,27 @@ select:disabled{background:#EFEFEC}
       onStale: async () => { await loadState(); if (isGlobalDirty()) S.g.conflict = true; render(); },
       onDone: (rec, loaded) => { if (loaded && S.data.global) { S.g.justRev = S.data.global.revision; S.g.saved = { revision: S.data.global.revision, at: rec.createdAt }; } } });
   }
+  function renderJevSaveBar(bar) {
+    const j = jevOf(S.data), dirty = isJevDirty(), st = S.status.jev;
+    if (!j || (!dirty && !st)) { bar.hidden = true; bar.replaceChildren(); return; }
+    const lim = jevLimitCheck(S.j.cur.limit, j.budget.maxUsd);
+    let why = '';
+    if (!hasKeys()) why = '패스키가 없어 저장할 수 없습니다 · 패스키 메뉴에서 먼저 등록하세요';
+    else if (lim.err) why = '예산 한도를 고쳐야 저장할 수 있습니다';
+    else if (slotBlocked('jev')) why = '앞 저장의 결과를 확인한 뒤 저장할 수 있습니다';
+    bar.hidden = false;
+    bar.replaceChildren(
+      h('div', { class: 'txt' }, h('span', null, dirty ? 'JEV 변경 ' + jevChangeCount() + '건 · 저장할 때 패스키를 확인합니다' : '저장할 변경이 없습니다'),
+        why ? h('span', { id: 'jev-why', class: 'small err-t' }, why) : null, statusEl('jev')),
+      h('button', { type: 'button', class: 'btn', id: 'jev-undo', disabled: !dirty || !!S.busy, onclick: () => {
+        S.j.cur = { ...S.j.base, presets: { ...S.j.base.presets } }; delete S.status.jev; render(); const f = $('jev-on'); if (f && !f.disabled) f.focus();
+      } }, '변경 취소'),
+      h('button', { type: 'button', class: 'btn pri', id: 'jev-save', disabled: !!why || !dirty || !!S.busy, 'aria-describedby': why ? 'jev-why' : null, onclick: saveJev },
+        S.busy === 'jev' ? '저장 중…' : '패스키로 저장'));
+  }
   function renderSaveBar() {
     const bar = $('savebar');
+    if (S.data && S.tab === 'jev') { renderJevSaveBar(bar); return; }
     const dirty = S.data && S.tab === 'global' && isGlobalDirty();
     const st = S.status.global;
     if (!S.data || S.tab !== 'global' || (!dirty && !st)) { bar.hidden = true; bar.replaceChildren(); return; }
@@ -1216,46 +1247,266 @@ select:disabled{background:#EFEFEC}
   }
 
   // ---------- JEV · 일반 설정 ----------
-  function lockLine(lockedBy, reason, id) {
-    return h('div', { class: 'col', id }, lockedBy ? h('span', { class: 'small muted' }, '환경 변수 ', h('code', null, lockedBy), '로 고정됨 · 페이지에서 바꿀 수 없습니다') : null,
-      reason ? h('span', { class: 'small muted' }, reason) : null);
+  // 편집 모델: 서버 값(base)과 내 편집(cur)을 나눠 두고, 편집하지 않은 동안에만 서버 값으로 다시 맞춘다.
+  const jevOf = (d) => (d.settings && d.settings.jev) || null;
+  const usd = (n) => (n == null ? '—' : Number(n).toFixed(2) + ' USD');
+  function jevBase(j) {
+    const presets = {}; for (const p of j.presets || []) presets[p.presetId] = !!p.enabled;
+    return { enabled: !!j.switchOn, limit: j.budget && j.budget.signedLimitUsd != null ? String(j.budget.signedLimitUsd) : '', presets };
+  }
+  const jevSame = (a, b) => a.enabled === b.enabled && a.limit.trim() === b.limit.trim() && Object.keys(a.presets).every((k) => a.presets[k] === b.presets[k]);
+  const isJevDirty = () => !!(S.j.base && S.j.cur && !jevSame(S.j.base, S.j.cur));
+  function jevChangeCount() {
+    if (!isJevDirty()) return 0;
+    const a = S.j.base, b = S.j.cur;
+    return (a.enabled !== b.enabled ? 1 : 0) + (a.limit.trim() !== b.limit.trim() ? 1 : 0) + Object.keys(a.presets).filter((k) => a.presets[k] !== b.presets[k]).length;
+  }
+  /** 예산 칸: 비우면 null(설치 설정의 한도만), 아니면 0~상한 사이 숫자. */
+  function jevLimitCheck(raw, max) {
+    const t = String(raw).trim();
+    if (!t) return { value: null, err: null };
+    const n = Number(t);
+    if (!Number.isFinite(n) || n < 0) return { value: null, err: '0 이상의 숫자를 입력하세요.' };
+    if (n > max) return { value: null, err: max + ' USD를 넘을 수 없습니다(서버 상한).' };
+    return { value: Math.round(n * 100) / 100, err: null };
+  }
+  function syncSettings(d) {
+    const j = jevOf(d);
+    if (j) { const base = jevBase(j); if (!S.j.cur || !isJevDirty()) S.j.cur = { ...base, presets: { ...base.presets } }; S.j.base = base; }
+    const st = d.settings || {};
+    if (st.locale) { const b = st.locale.signed || ''; if (S.loc.cur === null || S.loc.cur === S.loc.base) S.loc.cur = b; S.loc.base = b; }
+    if (st.editGateExceptions) {
+      const b = st.editGateExceptions.signedPaths || [];
+      if (S.ex.cur === null || sameList(S.ex.cur, S.ex.base)) S.ex.cur = b.slice();
+      S.ex.base = b.slice();
+    }
+  }
+  const sameList = (a, b) => !!a && !!b && a.length === b.length && a.every((x, i) => x === b[i]);
+  const isLocaleDirty = () => S.loc.cur !== null && S.loc.cur !== S.loc.base;
+  const isExemptDirty = () => S.ex.cur !== null && !sameList(S.ex.cur, S.ex.base);
+  function lockLine(lockedBy, text, id) {
+    return h('span', { class: 'small muted', id }, lockedBy ? ['환경 변수 ', h('code', null, lockedBy), '로 고정됨 · ', text] : text);
+  }
+  function jevStatusText(j) {
+    if (j.enabled) {
+      const on = (j.presets || []).filter((p) => p.enabled).map((p) => (PRESET[p.presetId] ? PRESET[p.presetId].name : p.presetId));
+      return on.length ? '켜짐 · ' + on.join(', ') + '에 쓰입니다' : '켜짐 · 켜진 프리셋이 없어 쓰는 곳이 없습니다';
+    }
+    if (!j.installationAllows) return '꺼짐 · 설치 설정 파일이 JEV를 끕니다';
+    if (!j.signed) return '꺼짐(기본값) · 이 페이지에서 켜야 동작합니다';
+    return '꺼짐 · 이 페이지에서 껐습니다';
+  }
+  async function saveJev() {
+    const j = jevOf(S.data); if (!j || S.busy) return;
+    const lim = jevLimitCheck(S.j.cur.limit, j.budget.maxUsd);
+    if (lim.err || !isJevDirty()) return;
+    await runSigned({ slot: 'jev', change: { op: 'jev.set', enabled: S.j.cur.enabled, limitUsd: lim.value, presets: { ...S.j.cur.presets } }, onStale: () => loadState(),
+      onDone: (rec, loaded) => { if (loaded) { S.j.cur = null; syncSettings(S.data); } S.status.jev = { kind: 'ok', text: 'JEV 설정을 저장했습니다 · 기록 #' + rec.seq + ' · ' + fmtHM(rec.createdAt) }; } });
   }
   function viewJev() {
-    const j = (S.data.settings && S.data.settings.jev) || null;
-    const sec = h('section', { class: 'col', 'aria-labelledby': 'j-title' }, head('j-title', 'JEV', '조언 계층입니다. 꺼도 AGS의 판단·관문은 그대로 동작합니다.'));
-    if (!j) { sec.append(h('p', { class: 'empty' }, '서버가 JEV 설정 값을 주지 않았습니다.')); return sec; }
+    const j = jevOf(S.data);
+    const sec = h('section', { class: 'col', 'aria-labelledby': 'j-title' }, head('j-title', 'JEV', '조언 계층입니다. 꺼도 AGS의 판단·관문은 그대로 동작합니다. 기본값은 꺼짐입니다.'));
+    if (!j || !S.j.cur) { sec.append(h('p', { class: 'empty' }, '서버가 JEV 설정 값을 주지 않았습니다.')); return sec; }
+    const cur = S.j.cur, locked = !j.installationAllows;
+    const lim = jevLimitCheck(cur.limit, j.budget.maxUsd);
+    const sw = h('input', { type: 'checkbox', role: 'switch', id: 'jev-on', checked: cur.enabled, disabled: locked, 'aria-describedby': 'jev-state' });
+    sw.addEventListener('change', () => { cur.enabled = sw.checked; delete S.status.jev; render(); });
+    const budget = h('input', { id: 'jev-budget', type: 'text', inputmode: 'decimal', class: 'txt-in' + (lim.err ? ' invalid' : ''), autocomplete: 'off', value: cur.limit,
+      placeholder: j.budget.installationLimitUsd != null ? '설치 설정 ' + usd(j.budget.installationLimitUsd) : '예: 2.50', 'aria-invalid': lim.err ? 'true' : 'false', 'aria-describedby': 'jev-budget-hint', style: 'width:160px' });
+    // 입력 중에는 본문을 다시 그리지 않는다. 안내·저장 막대만 고친다.
+    budget.addEventListener('input', () => {
+      cur.limit = budget.value; delete S.status.jev;
+      const c = jevLimitCheck(cur.limit, j.budget.maxUsd), hint = $('jev-budget-hint');
+      budget.classList.toggle('invalid', !!c.err); budget.setAttribute('aria-invalid', c.err ? 'true' : 'false');
+      if (hint) { hint.className = 'hint' + (c.err ? ' err' : ''); hint.textContent = c.err || BUDGET_HINT(j); }
+      renderSaveBar();
+    });
+    const u = j.usage;
     sec.append(h('div', { class: 'box' },
-      h('dl', { class: 'kv' },
-        h('dt', null, '사용'), h('dd', null, j.enabled ? '켜짐' : '꺼짐'),
-        h('dt', null, '설정'), h('dd', null, j.configured ? '있음' : '없음'),
-        h('dt', null, '모드'), h('dd', null, j.mode || '—'),
-        h('dt', null, '프리셋'), h('dd', null, (j.profileCount || 0) + '개')),
-      j.error ? h('p', { class: 'err-t' }, '설정을 읽지 못했습니다: ' + j.error) : null,
-      j.editable ? null : lockLine(j.lockedBy, j.reason, 'jev-lock')));
+      h('label', { class: 'row center', for: 'jev-on' }, sw, h('b', null, 'JEV 사용'), h('span', { class: 'muted' }, cur.enabled ? '(켜짐)' : '(꺼짐)')),
+      h('span', { id: 'jev-state', class: 'small ' + (j.enabled ? '' : 'muted') }, '지금: ' + jevStatusText(j) + (isJevDirty() ? ' · 저장 전 변경이 있습니다' : '')),
+      locked ? lockLine(null, h('span', null, '설치 설정 파일(', h('code', null, 'AGENT_GOVERNANCE_CLASSIFICATION_CONFIG'), ')이 jevEnabled=false라 페이지에서 켤 수 없습니다.'), 'jev-lock') : null,
+      j.error ? h('p', { class: 'err-t' }, '설치 설정을 읽지 못했습니다: ' + j.error) : null,
+      h('div', { class: 'row' },
+        h('div', { class: 'field', style: 'flex:0 1 240px' }, h('label', { for: 'jev-budget', class: 'small' }, h('b', null, '예산 한도 (USD)')), budget,
+          h('span', { id: 'jev-budget-hint', class: 'hint' + (lim.err ? ' err' : '') }, lim.err || BUDGET_HINT(j))),
+        h('div', { class: 'field', style: 'flex:0 1 260px' }, h('span', { class: 'small' }, h('b', null, '적용 중인 한도')),
+          h('span', null, j.budget.limitUsd == null ? '없음 · JEV 호출을 하지 않습니다' : usd(j.budget.limitUsd))),
+        h('div', { class: 'field', style: 'flex:0 1 260px' }, h('span', { class: 'small' }, h('b', null, '사용액 (보기만)')),
+          h('span', null, !u ? '집계 없음' : (u.spentUsd == null ? '집계 없음' : usd(u.spentUsd)) + (u.reservedUsd ? ' · 예약 ' + usd(u.reservedUsd) : '')),
+          h('span', { class: 'small muted' }, '이 페이지를 연 MCP 서버가 시작한 뒤의 집계입니다.')))));
+    const tbody = h('tbody');
+    for (const p of j.presets) {
+      const cb = h('input', { type: 'checkbox', role: 'switch', id: 'preset-' + idSafe(p.presetId), checked: !!cur.presets[p.presetId] });
+      cb.addEventListener('change', () => { cur.presets[p.presetId] = cb.checked; delete S.status.jev; render(); });
+      tbody.append(h('tr', null, h('td', null, h('b', null, PRESET[p.presetId] ? PRESET[p.presetId].name : p.presetId)),
+        h('td', null, (PRESET[p.presetId] ? PRESET[p.presetId].use + ' ' : ''), h('code', null, p.tool)),
+        h('td', null, h('label', { class: 'row center', for: 'preset-' + idSafe(p.presetId) }, cb, cur.presets[p.presetId] ? '켜짐' : '꺼짐'))));
+    }
+    sec.append(h('div', { class: 'tbl-wrap' }, h('table', null, h('caption', null, '프리셋 · JEV를 쓰는 곳마다 켜고 끕니다'),
+      h('thead', null, h('tr', null, ['이름', '용도', '켜짐'].map((t) => h('th', { scope: 'col' }, t)))), tbody)),
+      h('p', { class: 'small muted' }, '프리셋은 설치된 AGS가 제공합니다. 이 판에는 스킬 분류 하나가 있습니다.'));
+    sec.append(viewJevKeys(j));
     return sec;
   }
-  const SOURCE = { environment: '환경 변수', settings: '설정 파일', package: '패키지 기본값', root: '루트 설정' };
+  const BUDGET_HINT = (j) => '비우면 설치 설정의 한도만 씁니다. 둘 다 있으면 작은 쪽 · 상한 ' + j.budget.maxUsd + ' USD';
+  const PRESET = { 'skill-classification': { name: '스킬 분류', use: '작업에 맞는 스킬 조언' } };
+  function keyState(k) {
+    if (k.environment) return k.fingerprint ? '환경 변수가 우선 · 등록한 key는 쓰지 않음' : '환경 변수 사용 중';
+    if (!k.fingerprint) return '없음';
+    return k.stored ? '등록됨' : '저장값 없음 · 다시 등록하세요';
+  }
+  const shortFp = (fp) => (fp ? fp.slice(0, 11) + '…' + fp.slice(-4) : '—');
+  function viewJevKeys(j) {
+    const tbody = h('tbody');
+    if (!j.keys.length) tbody.append(h('tr', null, h('td', { colspan: '5', class: 'muted' }, '설치 설정에 key를 쓰는 경로가 없고 등록한 key도 없습니다.')));
+    for (const k of j.keys) {
+      const sid = idSafe(k.name);
+      tbody.append(h('tr', null,
+        h('td', null, h('code', null, k.name), k.vendorIds.length ? h('div', { class: 'small muted' }, k.vendorIds.join(', ')) : null),
+        h('td', null, keyState(k)),
+        h('td', null, k.fingerprint ? h('code', { title: k.fingerprint }, shortFp(k.fingerprint)) : '—'),
+        h('td', { class: 'nowrap' }, k.setAt ? fmtTime(k.setAt) : '—'),
+        h('td', null, h('div', { class: 'acts' },
+          h('button', { type: 'button', class: 'btn sm' + (k.fingerprint ? '' : ' pri-o'), id: 'jk-set-' + sid, disabled: !!S.busy || !hasKeys(),
+            onclick: (e) => openKeyDialog(k.name, !!k.fingerprint, e.currentTarget) }, k.fingerprint ? '교체' : '등록'),
+          k.fingerprint ? h('button', { type: 'button', class: 'btn sm danger', id: 'jk-del-' + sid, disabled: !!S.busy || !hasKeys(),
+            onclick: (e) => openKeyDelete(k, e.currentTarget) }, '삭제') : null))));
+    }
+    return h('div', { class: 'col' }, statusEl('jev-keys'),
+      h('div', { class: 'tbl-wrap' }, h('table', null, h('caption', null, 'key · 저장한 값은 다시 볼 수 없고 지문으로만 구분합니다'),
+        h('thead', null, h('tr', null, ['이름 · 공급자', '상태', '지문', '등록', '동작'].map((t) => h('th', { scope: 'col' }, t)))), tbody)),
+      h('div', null, h('button', { type: 'button', class: 'btn dashed', id: 'jk-new', disabled: !!S.busy || !hasKeys(), onclick: (e) => openKeyDialog('', false, e.currentTarget) }, '다른 이름으로 key 등록')),
+      h('p', { class: 'small muted' }, '같은 이름의 환경 변수가 있으면 그 값이 우선합니다. 저장한 값은 이 PC의 상태 폴더에 암호화해 두며, 같은 OS 사용자로 도는 프로그램은 풀 수 있습니다.'));
+  }
+  async function fingerprintOf(value) {
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(value)));
+    return 'sha256:' + Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  const KEY_NAME = /^[A-Za-z_][A-Za-z0-9_]{0,127}$/;
+  function openKeyDialog(name0, replacing, opener) {
+    let name = name0, value = '';
+    delete S.status['jev-key'];
+    // 입력 중에는 대화상자를 다시 그리지 않는다(IME 조합·커서 보존). 버튼과 안내만 그 자리에서 고친다.
+    const check = () => {
+      const nameOk = KEY_NAME.test(name);
+      const ok = nameOk && value.length > 0 && value.length <= 4096 && !/[\u0000-\u001f\u007f]/.test(value);
+      const why = !hasKeys() ? '패스키가 없어 저장할 수 없습니다.' : !nameOk ? '이름은 영문자·숫자·밑줄이며 숫자로 시작할 수 없습니다.' : !value ? 'key 값을 입력하면 저장 버튼이 켜집니다.'
+        : !ok ? 'key 값에 줄바꿈 같은 제어 문자를 넣을 수 없습니다(4,096자 이내).' : '';
+      return { ok, why };
+    };
+    openDialog({ opener, cls: 'narrow', focus: name0 ? 'jk-value' : 'jk-name', fallbackFocus: 'j-title', build: (dlg) => {
+      const { ok, why } = check();
+      const paint = () => { const c = check(); btn.disabled = !!S.busy || !hasKeys() || slotBlocked('jev-key') || !c.ok; whyEl.textContent = c.why; };
+      const nameIn = name0 ? null : h('input', { id: 'jk-name', type: 'text', class: 'txt-in', autocomplete: 'off', spellcheck: 'false', value: name, maxlength: '128', 'aria-describedby': 'jk-why' });
+      if (nameIn) nameIn.addEventListener('input', () => { name = nameIn.value.trim(); paint(); });
+      const valIn = h('input', { id: 'jk-value', type: 'password', class: 'txt-in', autocomplete: 'off', spellcheck: 'false', value, 'aria-describedby': 'jk-why' });
+      valIn.addEventListener('input', () => { value = valIn.value; paint(); });
+      const whyEl = h('span', { id: 'jk-why', class: 'small muted why' }, why);
+      const btn = signBtn({ id: 'jk-go', slot: 'jev-key', label: '패스키로 저장', off: !ok, why: 'jk-why', onclick: async () => {
+        const fingerprint = await fingerprintOf(value);
+        await runSigned({ slot: 'jev-key', change: { op: 'jevKey.set', name, fingerprint }, secret: value, onStale: () => loadState(),
+          onDone: () => { value = ''; S.status['jev-keys'] = { kind: 'ok', text: 'key 「' + name + '」를 ' + (replacing ? '교체' : '등록') + '했습니다 · 지문 ' + shortFp(fingerprint) + ' · ' + fmtHM() }; dlg.close(); } });
+      } });
+      return [h('h2', { id: 'dlg-title' }, name0 ? 'key 「' + name0 + '」 ' + (replacing ? '교체' : '등록') : 'key 등록'),
+        h('p', { class: 'small muted' }, '저장하면 값은 다시 볼 수 없고 지문으로만 구분합니다. 서명 기록에는 지문만 남고, 값은 암호화해 따로 저장합니다.'),
+        nameIn ? h('label', { for: 'jk-name' }, h('b', null, '이름 (설치 설정의 credentialEnvName)')) : null, nameIn,
+        h('label', { for: 'jk-value' }, h('b', null, 'key 값')), valIn,
+        statusEl('jev-key'),
+        h('div', { class: 'dlg-acts' }, whyEl,
+          h('button', { type: 'button', class: 'btn', id: 'jk-cancel', onclick: () => dlg.close() }, '취소'), btn)];
+    } });
+  }
+  function openKeyDelete(k, opener) {
+    delete S.status['jev-key-del'];
+    openDialog({ opener, cls: 'narrow', focus: 'jkd-cancel', fallbackFocus: 'j-title', build: (dlg) => [
+      h('h2', { id: 'dlg-title' }, 'key 「' + k.name + '」를 삭제할까요?'),
+      h('p', null, '지문 ', h('code', null, shortFp(k.fingerprint)), ' · ' + fmtTime(k.setAt) + ' 등록. 삭제하면 이 이름을 쓰는 JEV 경로는 환경 변수가 없을 때 key 없이 호출하지 못합니다.'),
+      statusEl('jev-key-del'),
+      h('div', { class: 'dlg-acts' }, h('button', { type: 'button', class: 'btn', id: 'jkd-cancel', onclick: () => dlg.close() }, '취소'),
+        signBtn({ id: 'jkd-go', slot: 'jev-key-del', cls: 'btn danger', label: '패스키로 삭제', onclick: () => runSigned({
+          slot: 'jev-key-del', change: { op: 'jevKey.delete', name: k.name }, onStale: () => loadState(),
+          onDone: () => { S.status['jev-keys'] = { kind: 'ok', text: 'key 「' + k.name + '」를 삭제했습니다 · ' + fmtHM() }; dlg.close(); } }) }))] });
+  }
+
+  const SOURCE = { environment: '환경 변수', signed: '이 페이지(서명 기록)', settings: '설정 파일', package: '패키지 기본값', root: '기본값' };
+  const LOCALE_NAME = { ko: '한국어', en: 'English' };
+  /** 절대 경로처럼 보이는지(서버가 이 PC의 규칙으로 다시 검사한다). */
+  const looksAbsolute = (p) => /^(?:[A-Za-z]:[\\/]|\\\\|\/)/.test(p);
   function viewGeneral() {
     const st = S.data.settings || {};
-    const sec = h('section', { class: 'col', 'aria-labelledby': 's-title' }, head('s-title', '일반 설정'));
+    const sec = h('section', { class: 'col', 'aria-labelledby': 's-title' }, head('s-title', '일반 설정', '항목마다 따로 저장하며, 저장할 때 패스키를 확인합니다.'));
     const loc = st.locale;
     if (loc) {
+      const sel = h('select', { id: 'lang', class: 'txt-in', disabled: !loc.editable, 'aria-describedby': 'lang-note', style: 'width:240px' },
+        h('option', { value: '', selected: S.loc.cur === '' }, '설정 파일·기본값 따름'),
+        ...(loc.options || []).map((o) => h('option', { value: o, selected: S.loc.cur === o }, LOCALE_NAME[o] || o)));
+      sel.addEventListener('change', () => { S.loc.cur = sel.value; delete S.status.locale; render(); });
+      const dirty = isLocaleDirty();
       sec.append(h('div', { class: 'box' }, h('label', { for: 'lang' }, h('b', null, '표시 언어')),
-        h('select', { id: 'lang', class: 'txt-in', disabled: !loc.editable, 'aria-describedby': 'lang-lock' },
-          h('option', { value: 'ko', selected: loc.value === 'ko' }, '한국어'), h('option', { value: 'en', selected: loc.value === 'en' }, 'English')),
-        h('span', { class: 'small muted' }, '출처: ' + (SOURCE[loc.source] || loc.source)),
-        loc.editable ? null : lockLine(loc.lockedBy, loc.reason, 'lang-lock')));
+        h('div', { class: 'row center' }, sel,
+          loc.editable ? signBtn({ id: 'lang-save', slot: 'locale', label: '패스키로 저장', off: !dirty, onclick: () => runSigned({ slot: 'locale',
+            change: { op: 'locale.set', locale: S.loc.cur || null }, onStale: () => loadState(),
+            onDone: (rec, loaded) => { if (loaded) { S.loc.cur = null; syncSettings(S.data); } S.status.locale = { kind: 'ok', text: '표시 언어를 저장했습니다 · ' + fmtHM(rec.createdAt) + ' · 각 세션의 다음 hook부터, MCP 서버는 다시 시작할 때 적용됩니다.' }; } }) }) : null,
+          dirty ? h('button', { type: 'button', class: 'btn', id: 'lang-undo', disabled: !!S.busy, onclick: () => { S.loc.cur = S.loc.base; render(); } }, '변경 취소') : null),
+        h('span', { id: 'lang-note', class: 'small muted' }, '지금 적용 중: ' + (LOCALE_NAME[loc.value] || loc.value) + ' · 출처: ' + (SOURCE[loc.source] || loc.source)),
+        loc.editable ? null : lockLine(loc.lockedBy, '페이지에서 바꿀 수 없습니다' + (loc.signed ? ' (서명한 값 ' + (LOCALE_NAME[loc.signed] || loc.signed) + '는 환경 변수가 없을 때 씁니다)' : ''), 'lang-lock'),
+        statusEl('locale')));
     }
     const ex = st.editGateExceptions;
-    sec.append(h('div', { class: 'box' }, h('h2', null, '편집 관문 예외 경로'),
-      h('p', { class: 'desc' }, '버전 관리 안에 있지만 제품이 아닌 폴더를 넣으면, 그 안의 편집은 workflow 없이 허용됩니다. OS 임시 폴더와 호스트 메모 폴더는 이미 빠져 있습니다.'),
-      !ex ? h('p', { class: 'muted' }, '서버가 예외 경로 값을 주지 않았습니다.')
-        : ex.available === false ? h('p', { class: 'muted' }, ex.reason || '이 판에서는 페이지에서 바꿀 수 없습니다.')
-          : h('div', { class: 'col' },
-            (ex.paths && ex.paths.length) ? h('ul', { class: 'paths' }, ...ex.paths.map((p) => h('li', null, h('code', null, p))))
-              : h('p', { class: 'muted' }, '지정한 예외 경로가 없습니다.'),
-            lockLine(ex.lockedBy, ex.reason, 'gate-lock'))));
+    if (ex) sec.append(viewExempt(ex));
     return sec;
+  }
+  const EX_HINT = '목록을 고친 뒤 [패스키로 저장]을 눌러야 적용됩니다.';
+  function exemptAddError(raw, cur, max) {
+    return !raw ? null : !looksAbsolute(raw) ? '절대 경로를 입력하세요(예: D:' + BS + 'work' + BS + 'notes, /home/me/notes).'
+      : cur.includes(raw) ? '이미 목록에 있습니다.' : cur.length >= max ? '최대 ' + max + '개까지 넣을 수 있습니다.' : null;
+  }
+  const BS = String.fromCharCode(92);
+  function viewExempt(ex) {
+    const cur = S.ex.cur || [], dirty = isExemptDirty(), locked = !ex.editable;
+    const raw = S.ex.newPath.trim();
+    const addErr = exemptAddError(raw, cur, ex.maxPaths);
+    const add = () => {
+      const value = S.ex.newPath.trim();
+      if (!value || exemptAddError(value, cur, ex.maxPaths)) return;
+      cur.push(value); S.ex.cur = cur; S.ex.newPath = ''; delete S.status.exempt; render(); const f = $('ex-new'); if (f) f.focus();
+    };
+    const inp = h('input', { id: 'ex-new', type: 'text', class: 'txt-in' + (addErr ? ' invalid' : ''), autocomplete: 'off', spellcheck: 'false', value: S.ex.newPath,
+      disabled: locked, placeholder: '예: D:\\work\\reports', 'aria-invalid': addErr ? 'true' : 'false', 'aria-describedby': 'ex-hint' });
+    // 입력 중에는 화면을 다시 그리지 않는다(IME 조합 보존). 안내와 버튼만 고친다.
+    inp.addEventListener('input', () => {
+      S.ex.newPath = inp.value;
+      const c = exemptAddError(S.ex.newPath.trim(), cur, ex.maxPaths), hint = $('ex-hint'), btn = $('ex-add');
+      inp.classList.toggle('invalid', !!c); inp.setAttribute('aria-invalid', c ? 'true' : 'false');
+      if (hint) { hint.className = 'hint' + (c ? ' err' : ''); hint.textContent = c || EX_HINT; }
+      if (btn) btn.disabled = !S.ex.newPath.trim() || !!c;
+    });
+    // 한국어 IME 조합 중 Enter는 조합 확정이므로 추가하지 않는다.
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); add(); } });
+    const shown = locked ? ex.environmentPaths : cur;
+    const list = shown.length ? h('ul', { class: 'paths', 'aria-label': '예외 경로' }, ...shown.map((p, i) => h('li', null, h('code', null, p),
+      !locked && !ex.signedPaths.includes(p) ? h('span', { class: 'tag new' }, '저장 전') : null,
+      locked ? null : h('button', { type: 'button', class: 'btn sm danger', id: 'ex-del-' + i, disabled: !!S.busy, 'aria-label': p + ' 빼기', onclick: () => {
+        cur.splice(i, 1); S.ex.cur = cur; delete S.status.exempt; render(); const f = $('ex-del-' + Math.min(i, cur.length - 1)) || $('ex-new'); if (f) f.focus();
+      } }, '빼기'))))
+      : h('p', { class: 'muted' }, '지정한 예외 경로가 없습니다.');
+    const removed = ex.signedPaths.filter((p) => !cur.includes(p));
+    return h('div', { class: 'box' }, h('h2', null, '편집 관문 예외 경로'),
+      h('p', { class: 'desc' }, '버전 관리 안에 있지만 제품이 아닌 폴더를 넣으면, 그 안의 편집은 workflow 없이 허용됩니다. OS 임시 폴더와 호스트 메모 폴더는 이미 빠져 있습니다.'),
+      locked ? lockLine(ex.lockedBy, '이 환경 변수의 목록을 씁니다. 서명한 목록(' + ex.signedPaths.length + '개)은 환경 변수가 없을 때 씁니다.', 'ex-lock') : null,
+      list,
+      locked ? null : h('div', { class: 'row' },
+        h('div', { class: 'field' }, h('label', { for: 'ex-new', class: 'small muted' }, '추가할 절대 경로'), inp,
+          h('span', { id: 'ex-hint', class: 'hint' + (addErr ? ' err' : '') }, addErr || EX_HINT)),
+        h('button', { type: 'button', class: 'btn pri-o al', id: 'ex-add', disabled: !raw || !!addErr, onclick: add }, '경로 추가')),
+      locked ? null : h('div', { class: 'row center' },
+        signBtn({ id: 'ex-save', slot: 'exempt', label: '패스키로 저장', off: !dirty, onclick: () => runSigned({ slot: 'exempt', change: { op: 'editExempt.set', paths: cur.slice() },
+          onStale: () => loadState(),
+          onDone: (rec, loaded) => { if (loaded) { S.ex.cur = null; syncSettings(S.data); } S.status.exempt = { kind: 'ok', text: '예외 경로를 저장했습니다 · ' + fmtHM(rec.createdAt) + ' · 다음 편집부터 적용됩니다.' }; } }) }),
+        dirty ? h('button', { type: 'button', class: 'btn', id: 'ex-undo', disabled: !!S.busy, onclick: () => { S.ex.cur = S.ex.base.slice(); render(); } }, '변경 취소') : null,
+        dirty ? h('span', { class: 'small muted' }, '추가 ' + cur.filter((p) => !ex.signedPaths.includes(p)).length + ' · 빼기 ' + removed.length) : null),
+      statusEl('exempt'));
   }
 
   // ---------- 패스키 ----------
@@ -1345,6 +1596,7 @@ select:disabled{background:#EFEFEC}
     if (isGlobalDirty()) return true;
     if (S.r.newName.trim()) return true;
     const ren = S.r.renaming; if (ren) { const r = roleById(ren.roleId); if (r && ren.value.normalize('NFC').trim() !== r.name) return true; }
+    if (isJevDirty() || isLocaleDirty() || isExemptDirty() || S.ex.newPath.trim()) return true;
     return false;
   }
   window.addEventListener('beforeunload', (e) => { if (hasUnsaved()) { e.preventDefault(); e.returnValue = ''; } });
