@@ -2,13 +2,27 @@ import { access, cp, mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promi
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { tmpdir } from "node:os";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { SKILL_RUNTIME_ENTRYPOINTS } from "../../scripts/runtime-entrypoints.mjs";
 import { runRuntimeSmokeCheck } from "../../scripts/runtime-smoke.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
+
+function documentedCliPaths(contents, documentPath, skillName) {
+  const documented = new Set();
+  const withoutScriptLinks = contents.replace(/\[[^\]]*\]\(([^)\s]*scripts\/[A-Za-z0-9_.-]+\.mjs)(?:#[^)\s]*)?\)/gu, (_link, target) => {
+    const script = fileURLToPath(new URL(target, pathToFileURL(documentPath)));
+    documented.add(path.relative(root, script).split(path.sep).join("/"));
+    return "";
+  });
+  // Bare CLI examples use the skill directory; Markdown links use their containing document's URL.
+  for (const match of withoutScriptLinks.matchAll(/scripts\/([A-Za-z0-9_.-]+\.mjs)/gu)) {
+    documented.add(`skills/${skillName}/scripts/${match[1]}`);
+  }
+  return documented;
+}
 
 async function removeModelRuntimeFixture(cleanRoot) {
   if (path.dirname(cleanRoot) !== path.resolve(tmpdir()) || !path.basename(cleanRoot).startsWith("ags-model-effort-runtime-")) {
@@ -85,16 +99,26 @@ describe("installed skill runtime", () => {
     expect(results.map((result) => result.path)).toEqual(SKILL_RUNTIME_ENTRYPOINTS.map((entry) => entry.path));
   }, 30_000);
 
+  it.each([
+    { document: "SKILL.md", contents: "[local CLI](scripts/advise.mjs)", expected: "skills/model-effort-advisor/scripts/advise.mjs" },
+    { document: "references/entry-details.md", contents: "[local CLI](../scripts/advise.mjs)", expected: "skills/model-effort-advisor/scripts/advise.mjs" },
+    { document: "references/entry-details.md", contents: "[shared CLI](../../coordinate-subagents/scripts/model-routing.mjs)", expected: "skills/coordinate-subagents/scripts/model-routing.mjs" },
+    { document: "references/entry-details.md", contents: "node <SKILL_DIR>/scripts/advise.mjs", expected: "skills/model-effort-advisor/scripts/advise.mjs" },
+    { document: "references/entry-details.md", contents: "node scripts/advise.mjs", expected: "skills/model-effort-advisor/scripts/advise.mjs" },
+  ])("resolves documented CLI paths for $contents", ({ document, contents, expected }) => {
+    const documentPath = path.join(root, "skills/model-effort-advisor", document);
+    expect([...documentedCliPaths(contents, documentPath, "model-effort-advisor")]).toEqual([expected]);
+  });
+
   it("accounts for every CLI documented by SKILL.md or README.md", async () => {
     const skillRoot = path.join(root, "skills");
     const skills = (await readdir(skillRoot, { withFileTypes: true })).filter((entry) => entry.isDirectory());
     const documented = new Set();
     for (const skill of skills) {
       for (const document of ["SKILL.md", "README.md", "references/entry-details.md"]) {
-        const contents = await readFile(path.join(skillRoot, skill.name, document), "utf8").catch(() => "");
-        for (const match of contents.matchAll(/scripts\/([A-Za-z0-9_.-]+\.mjs)/gu)) {
-          documented.add(`skills/${skill.name}/scripts/${match[1]}`);
-        }
+        const documentPath = path.join(skillRoot, skill.name, document);
+        const contents = await readFile(documentPath, "utf8").catch(() => "");
+        for (const script of documentedCliPaths(contents, documentPath, skill.name)) documented.add(script);
       }
     }
     expect(SKILL_RUNTIME_ENTRYPOINTS.map((entry) => entry.path).sort()).toEqual([...documented].sort());
