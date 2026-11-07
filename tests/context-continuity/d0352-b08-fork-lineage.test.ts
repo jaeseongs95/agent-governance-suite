@@ -122,10 +122,10 @@ function admitted(service: ContinuityService, session: string, tool: string, inp
 // Also a plain tools/call argument record.
 function checkpointInput(overrides: Partial<CheckpointContextRequestV1> = {}): CheckpointContextRequestV1 & Record<string, unknown> {
   return {
-    schemaVersion: "1.0.0", requestId: "checkpoint-1", expectedRevision: 0, status: "active",
+    schemaVersion: "1.0.0", requestId: "checkpoint-1", expectedStateToken: "fixture-token-before-current-read", status: "active",
     core: {
       objective: "Parent-only objective P-7f3a.", completionCriteria: ["done"], constraints: ["parent constraint"],
-      decisions: ["parent decision"], progress: [], blockers: [], nextActions: ["continue"],
+      decisions: ["parent decision"], progress: overrides.requestId ? [`Progress ${overrides.requestId}`] : [], blockers: [], nextActions: ["continue"],
     },
     evidenceRefs: [{ artifactId: "t", locator: "tests", digest: convergenceDigest("t"), verified: true }],
     ...overrides,
@@ -133,7 +133,10 @@ function checkpointInput(overrides: Partial<CheckpointContextRequestV1> = {}): C
 }
 
 function checkpoint(service: ContinuityService, session: string, transcriptPath: string, overrides: Partial<CheckpointContextRequestV1> = {}): ContinuitySnapshotV1 {
-  const input = checkpointInput(overrides);
+  // Distinct request fixtures record real progress when the case intends a new saved state.
+  const read = { schemaVersion: "1.0.0" };
+  const current = service.loadContext(read, admitted(service, session, "load_context", read, transcriptPath)).data as ContinuitySnapshotV1;
+  const input = checkpointInput({ expectedStateToken: current.stateToken, ...overrides });
   const result = service.checkpointContext(input, admitted(service, session, "checkpoint_context", input, transcriptPath));
   expect(result.error).toBeNull();
   return result.data!;
@@ -147,13 +150,19 @@ function inspect(service: ContinuityService, session: string, transcriptPath?: s
 }
 
 function loadInput(candidate: ReturnType<typeof inspect>) {
-  return { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken!, epoch: candidate.summary!.epoch,
-    revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
+  return { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken! };
 }
 
 function load(service: ContinuityService, session: string, candidate: ReturnType<typeof inspect>) {
   const input = loadInput(candidate);
   return service.loadContext(input, admitted(service, session, "load_context", input));
+}
+
+function expectAdopted(value: unknown, parent: ContinuitySnapshotV1, service: ContinuityService, child: string) {
+  expect(value).toMatchObject({ schemaVersion: "1.0.0", source: "direct", taskCorrelation: service.correlateSession(child),
+    epoch: service.store.getTask(service.correlateSession(child))!.currentEpoch, memory: parent.memory, memoryDigest: parent.memoryDigest });
+  expect((value as ContinuitySnapshotV1).stateToken).not.toBe(parent.stateToken);
+  expect(value).toEqual(service.store.getCurrent(service.correlateSession(child)));
 }
 
 /** Parent A checkpoints over its own transcript; returns A's snapshot and the rows a fork would copy. */
@@ -182,16 +191,17 @@ describe("D0352 B08 fork lineage", () => {
     const candidate = inspect(service, "fork-f", childFile);
     expect(candidate).toMatchObject({ decision: "DEFER", reasonCodes: CANDIDATE });
     expect(candidate.summary).toMatchObject({ source: "direct", taskCorrelation: parentSnapshot.taskCorrelation,
-      revision: parentSnapshot.revision, snapshotDigest: parentSnapshot.snapshotDigest });
+      stateToken: parentSnapshot.stateToken, memoryDigest: parentSnapshot.memoryDigest });
     const loaded = load(service, "fork-f", candidate);
-    expect(loaded.data).toEqual(parentSnapshot);
-    expect((loaded.data as ContinuitySnapshotV1).core.objective).toBe("Parent-only objective P-7f3a.");
-    const next = checkpoint(service, "fork-f", childFile, { requestId: "child-1", expectedRevision: parentSnapshot.revision });
-    expect(next).toMatchObject({ revision: parentSnapshot.revision + 1, taskCorrelation: service.correlateSession("fork-f") });
+    expectAdopted(loaded.data, parentSnapshot, service, "fork-f");
+    expect((loaded.data as ContinuitySnapshotV1).memory!.core.objective).toBe("Parent-only objective P-7f3a.");
+    const next = checkpoint(service, "fork-f", childFile, { requestId: "child-1" });
+    expect(next).toMatchObject({ taskCorrelation: service.correlateSession("fork-f") });
+    expect(next.stateToken).not.toBe((loaded.data as ContinuitySnapshotV1).stateToken);
     // The parent namespace is read-only for the child.
-    expect(service.store.getSnapshot(parentSnapshot.taskCorrelation, parentSnapshot.epoch)).toEqual(parentSnapshot);
+    expect(service.store.getCurrent(parentSnapshot.taskCorrelation, parentSnapshot.epoch)).toEqual(parentSnapshot);
     // After adoption the child sees its own state, not the parent again.
-    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: next.taskCorrelation, revision: next.revision });
+    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: next.taskCorrelation, stateToken: next.stateToken });
   });
 
   it("D1: the parent whose anchor appears last in the child's own file is chosen (grandchild fork)", async () => {
@@ -202,7 +212,7 @@ describe("D0352 B08 fork lineage", () => {
     expect(start(service, "fork-b", "fork", bFile)).toEqual({});
     const bSnapshot = checkpoint(service, "fork-b", bFile, { requestId: "b-1" });
     const grandchild = await fork(service, "fork-g", bRows.map(([, uuid]) => uuid));
-    expect(inspect(service, "fork-g", grandchild).summary).toMatchObject({ taskCorrelation: bSnapshot.taskCorrelation, revision: bSnapshot.revision });
+    expect(inspect(service, "fork-g", grandchild).summary).toMatchObject({ taskCorrelation: bSnapshot.taskCorrelation, stateToken: bSnapshot.stateToken });
   });
 
   it("N14: a grandchild forked before its parent fork adopted anything is a descendant of the original parent", async () => {
@@ -210,7 +220,7 @@ describe("D0352 B08 fork lineage", () => {
     const { snapshot, uuids } = await parent(service);
     const childFile = await fork(service, "fork-f", uuids);
     const grandchild = await fork(service, "fork-g", [...uuids, randomUUID()]);
-    expect(inspect(service, "fork-g", grandchild).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(inspect(service, "fork-g", grandchild).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
     expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation });
   });
 
@@ -219,14 +229,16 @@ describe("D0352 B08 fork lineage", () => {
     const { snapshot, uuids } = await parent(service);
     const files = [await fork(service, "fork-1", uuids), await fork(service, "fork-2", uuids)];
     const candidates = [inspect(service, "fork-1", files[0]), inspect(service, "fork-2", files[1])];
-    expect(load(service, "fork-1", candidates[0]!).data).toEqual(snapshot);
-    expect(load(service, "fork-2", candidates[1]!).data).toEqual(snapshot);
-    const first = checkpoint(service, "fork-1", files[0]!, { requestId: "f1", expectedRevision: 1, status: "paused" });
-    const second = checkpoint(service, "fork-2", files[1]!, { requestId: "f2", expectedRevision: 1 });
-    expect([first.revision, second.revision]).toEqual([2, 2]);
+    expectAdopted(load(service, "fork-1", candidates[0]!).data, snapshot, service, "fork-1");
+    expectAdopted(load(service, "fork-2", candidates[1]!).data, snapshot, service, "fork-2");
+    const first = checkpoint(service, "fork-1", files[0]!, { requestId: "f1", status: "paused" });
+    const second = checkpoint(service, "fork-2", files[1]!, { requestId: "f2" });
+    expect(first.stateToken).not.toBe(second.stateToken);
+    expect(first.stateToken).not.toBe(snapshot.stateToken);
+    expect(second.stateToken).not.toBe(snapshot.stateToken);
     expect(first.taskCorrelation).not.toBe(second.taskCorrelation);
-    expect([first.status, second.status]).toEqual(["paused", "active"]);
-    expect(service.store.getSnapshot(snapshot.taskCorrelation, 1)).toEqual(snapshot);
+    expect([first.memory!.status, second.memory!.status]).toEqual(["paused", "active"]);
+    expect(service.store.getCurrent(snapshot.taskCorrelation, 1)).toEqual(snapshot);
   });
 
   it("A16: the parent is found when its newest entries were not copied into the fork", async () => {
@@ -235,7 +247,7 @@ describe("D0352 B08 fork lineage", () => {
     const snapshot = checkpoint(service, "parent-a", await transcript(rows));
     // The fork copied all but the parent's last three entries: anchors 17-19 of the newest 16 still match.
     const childFile = await fork(service, "fork-short", rows.slice(0, -3).map(([, uuid]) => uuid));
-    expect(inspect(service, "fork-short", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: 1 });
+    expect(inspect(service, "fork-short", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
     // Entries older than the newest 16 at checkpoint time are not anchors.
     const oldOnly = await fork(service, "fork-old", rows.slice(0, 4).map(([, uuid]) => uuid));
     expect(inspect(service, "fork-old", oldOnly).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_NOT_FOUND"]);
@@ -252,9 +264,9 @@ describe("D0352 B08 fork lineage", () => {
       else start(service, session, "compact", file);
       const child = `fork-of-${session}`;
       const childFile = await fork(service, child, after);
-      expect(inspect(service, child, childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
-      // A save after the re-anchor advances the parent: the fork's pinned revision is no longer current.
-      checkpoint(service, session, file, { requestId: "after-compact", expectedRevision: snapshot.revision });
+      expect(inspect(service, child, childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
+      // A save after the re-anchor advances the parent: the fork's pinned state is no longer current.
+      checkpoint(service, session, file, { requestId: "after-compact" });
       expect(inspect(service, child, childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
     }
   });
@@ -321,8 +333,8 @@ describe("D0352 B08 fork lineage", () => {
     expect(service.store.firstObservationEvent(service.correlateSession("fork-late-file"), 1, "fork-parent:")).toBeNull();
     await writeFile(childFile, [...uuids, randomUUID()].map(uuid => line("fork-late-file", uuid)).join("\n") + "\n", "utf8");
     const candidate = inspect(service, "fork-late-file", childFile);
-    expect(candidate).toMatchObject({ decision: "DEFER", reasonCodes: CANDIDATE, summary: { revision: snapshot.revision } });
-    expect(load(service, "fork-late-file", candidate).data).toEqual(snapshot);
+    expect(candidate).toMatchObject({ decision: "DEFER", reasonCodes: CANDIDATE, summary: { stateToken: snapshot.stateToken } });
+    expectAdopted(load(service, "fork-late-file", candidate).data, snapshot, service, "fork-late-file");
   });
 
   it("F1: a parent save after the fork is never chosen, even when its anchors include entries the fork copied", async () => {
@@ -332,7 +344,7 @@ describe("D0352 B08 fork lineage", () => {
     expect(start(service, "fork-f", "fork", childFile)).toEqual({});
     // The parent continues (or resumes) in the same file and saves again: its newest anchors still hold pre-fork entries.
     await appendFile(file, [randomUUID(), randomUUID()].map(uuid => line("parent-a", uuid)).join("\n") + "\n", "utf8");
-    checkpoint(service, "parent-a", file, { requestId: "after-fork", expectedRevision: snapshot.revision });
+    expect(checkpoint(service, "parent-a", file, { requestId: "after-fork" }).stateToken).not.toBe(snapshot.stateToken);
     expect(inspect(service, "fork-f", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
   });
 
@@ -341,10 +353,10 @@ describe("D0352 B08 fork lineage", () => {
     const { snapshot, uuids } = await parent(service);
     const firstFile = await fork(service, "fork-1", uuids);
     expect(load(service, "fork-1", inspect(service, "fork-1", firstFile)).error).toBeNull();
-    checkpoint(service, "fork-1", firstFile, { requestId: "sibling-own", expectedRevision: snapshot.revision });
+    checkpoint(service, "fork-1", firstFile, { requestId: "sibling-own" });
     const secondFile = await transcript([...uuids.map(uuid => ["fork-2", uuid] as [string, string]), ["fork-2", randomUUID()]]);
     expect(start(service, "fork-2", "fork", secondFile)).toEqual({});
-    expect(inspect(service, "fork-2", secondFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(inspect(service, "fork-2", secondFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
   });
 
   it("F3: a sibling's save repeating copied entries never outscores the parent for a later fork (review 902e)", async () => {
@@ -356,9 +368,9 @@ describe("D0352 B08 fork lineage", () => {
     const siblingFile = await fork(service, "fork-s", copied);
     expect(load(service, "fork-s", inspect(service, "fork-s", siblingFile)).error).toBeNull();
     // The sibling saves with one own entry: 15 of its 16 anchors are copies of the parent's entries.
-    checkpoint(service, "fork-s", siblingFile, { requestId: "sibling-15", expectedRevision: snapshot.revision });
+    checkpoint(service, "fork-s", siblingFile, { requestId: "sibling-15" });
     const laterFile = await fork(service, "fork-late", copied);
-    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
   });
 
   it("T1: a sibling that copied the parent's entries written after its save never becomes the parent (review 902e)", async () => {
@@ -373,9 +385,9 @@ describe("D0352 B08 fork lineage", () => {
     const siblingFile = await fork(service, "fork-s", copied);
     expect(load(service, "fork-s", inspect(service, "fork-s", siblingFile)).error).toBeNull();
     // The sibling saves: the tail it copied existed before its fork, so it owns only its own entry.
-    checkpoint(service, "fork-s", siblingFile, { requestId: "sibling-tail", expectedRevision: snapshot.revision });
+    checkpoint(service, "fork-s", siblingFile, { requestId: "sibling-tail" });
     const laterFile = await fork(service, "fork-late", copied);
-    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
   });
 
   it("N1x: an unrelated session that wrote the parent's unanchored entries into its own file and saved never becomes the parent (review 902e)", async () => {
@@ -390,7 +402,7 @@ describe("D0352 B08 fork lineage", () => {
     expect(start(service, "unrelated-c", "startup", forged)).toEqual({});
     checkpoint(service, "unrelated-c", forged, { requestId: "forged-tail" });
     const laterFile = await fork(service, "fork-late", [...rows.map(([, uuid]) => uuid), ...tail]);
-    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
   });
 
   // OPEN DEFECT REPRODUCTION, not the accepted outcome (review 902e N1z; chief 700fa72c judgement: risk not accepted,
@@ -407,11 +419,11 @@ describe("D0352 B08 fork lineage", () => {
     expect(start(service, "fork-f", "fork", childFile)).toEqual({});
     prompt(service, "fork-f", childFile);
     expect(load(service, "fork-f", inspect(service, "fork-f", childFile)).error).toBeNull();
-    const childSnapshot = checkpoint(service, "fork-f", childFile, { requestId: "f-own", expectedRevision: snapshot.revision });
+    const childSnapshot = checkpoint(service, "fork-f", childFile, { requestId: "f-own" });
     await appendFile(file, line("parent-a", own) + "\n", "utf8");
-    checkpoint(service, "parent-a", file, { requestId: "a-copied-f", expectedRevision: snapshot.revision });
+    expect(checkpoint(service, "parent-a", file, { requestId: "a-copied-f" }).stateToken).not.toBe(snapshot.stateToken);
     const laterFile = await fork(service, "fork-g", [...uuids, own]);
-    expect(inspect(service, "fork-g", laterFile).summary).toMatchObject({ taskCorrelation: childSnapshot.taskCorrelation, revision: childSnapshot.revision });
+    expect(inspect(service, "fork-g", laterFile).summary).toMatchObject({ taskCorrelation: childSnapshot.taskCorrelation, stateToken: childSnapshot.stateToken });
   });
 
   it("T1b: a fork entry without a host write time is treated as copied, never as the fork's own anchor", async () => {
@@ -421,16 +433,16 @@ describe("D0352 B08 fork lineage", () => {
     const siblingFile = await transcript([...uuids.map(uuid => ["fork-u", uuid] as [string, string])], JSON.stringify({ type: "user", sessionId: "fork-u", uuid: untimed }) + "\n");
     expect(start(service, "fork-u", "fork", siblingFile)).toEqual({});
     expect(load(service, "fork-u", inspect(service, "fork-u", siblingFile)).error).toBeNull();
-    checkpoint(service, "fork-u", siblingFile, { requestId: "untimed", expectedRevision: snapshot.revision });
+    checkpoint(service, "fork-u", siblingFile, { requestId: "untimed" });
     const laterFile = await fork(service, "fork-late", [...uuids, untimed]);
-    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
   });
 
   it("N5/N8: a parent that saved again, was suppressed or purged after the fork yields no candidate", async () => {
     const service = createService();
     const advanced = await parent(service, "parent-adv");
     const advancedChild = await fork(service, "child-adv", advanced.uuids);
-    checkpoint(service, "parent-adv", await transcript([["parent-adv", randomUUID()]]), { requestId: "again", expectedRevision: 1 });
+    checkpoint(service, "parent-adv", await transcript([["parent-adv", randomUUID()]]), { requestId: "again" });
     expect(inspect(service, "child-adv", advancedChild).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
 
     const suppressed = await parent(service, "parent-sup");
@@ -441,7 +453,7 @@ describe("D0352 B08 fork lineage", () => {
 
     const purgedParent = await parent(service, "parent-pur");
     const purgedChild = await fork(service, "child-pur", purgedParent.uuids);
-    const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-1", expectedEpoch: 1, expectedRevision: purgedParent.snapshot.revision };
+    const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-1", expectedStateToken: purgedParent.snapshot.stateToken };
     expect(service.purgeDirectContext(purge, admitted(service, "parent-pur", "purge_direct_context", purge)).data).toMatchObject({ purged: true });
     expect(inspect(service, "child-pur", purgedChild).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
   });
@@ -449,9 +461,9 @@ describe("D0352 B08 fork lineage", () => {
   it("N5/N13: a parent that saved, purged, cleared or suppressed between inspect and load rejects the load and adopts nothing", async () => {
     const service = createService();
     const cases: Array<[string, (session: string, snapshot: ContinuitySnapshotV1, file: string) => void, string]> = [
-      ["saved", (session, snapshot) => { checkpoint(service, session, join(tmpdir(), "absent-b08.jsonl"), { requestId: "again", expectedRevision: snapshot.revision }); }, "STALE_REVISION"],
+      ["saved", session => { checkpoint(service, session, join(tmpdir(), "absent-b08.jsonl"), { requestId: "again" }); }, "STALE_REVISION"],
       ["purged", (session, snapshot) => {
-        const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-1", expectedEpoch: 1, expectedRevision: snapshot.revision };
+        const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-1", expectedStateToken: snapshot.stateToken };
         expect(service.purgeDirectContext(purge, admitted(service, session, "purge_direct_context", purge)).data).toMatchObject({ purged: true });
       }, "STALE_REVISION"],
       ["cleared", (session, _snapshot, file) => { start(service, session, "clear", file); }, "BINDING_INVALID"],
@@ -468,7 +480,7 @@ describe("D0352 B08 fork lineage", () => {
       expect(candidate.reasonCodes).toEqual(CANDIDATE);
       change(`parent-${name}`, snapshot, file);
       expect(load(service, child, candidate).error?.code).toBe(code);
-      expect(service.store.getSnapshot(service.correlateSession(child), 1)).toBeNull();
+      expect(service.store.getCurrent(service.correlateSession(child), 1)?.memory ?? null).toBeNull();
     }
   });
 
@@ -484,7 +496,7 @@ describe("D0352 B08 fork lineage", () => {
     const early = inspect(service, "fork-saved", savedFile);
     const own = checkpoint(service, "fork-saved", savedFile, { requestId: "own-1", core: { ...checkpointInput().core, objective: "Child's own objective." } });
     expect(load(service, "fork-saved", early).error?.code).toBe("STALE_REVISION");
-    expect(service.store.getSnapshot(own.taskCorrelation, 1)).toEqual(own);
+    expect(service.store.getCurrent(own.taskCorrelation, 1)).toEqual(own);
   });
 
   it("N6: missing, unreadable-format or foreign-session transcripts close with a stable reason", async () => {
@@ -535,7 +547,7 @@ describe("D0352 B08 fork lineage", () => {
     await fork(service, "fork-other", uuids);
     expect(load(service, "fork-other", candidate).error?.code).toBe("BINDING_INVALID");
     expect(load(service, "parent-a", candidate).error?.code).toBe("BINDING_INVALID");
-    expect(service.store.getSnapshot(service.correlateSession("fork-other"), 1)).toBeNull();
+    expect(service.store.getCurrent(service.correlateSession("fork-other"), 1)?.memory ?? null).toBeNull();
   });
 
   it("PRIV: the store keeps only HMAC anchors, never transcript bodies or raw entry IDs", async () => {
@@ -582,7 +594,9 @@ describe("D0352 B08 Codex fork origin", () => {
   }
 
   function codexCheckpoint(service: ContinuityService, session: string, overrides: Partial<CheckpointContextRequestV1> = {}): ContinuitySnapshotV1 {
-    const input = checkpointInput(overrides);
+    const read = { schemaVersion: "1.0.0" };
+    const current = service.loadContext(read, codexAdmitted(service, session, "load_context", read)).data as ContinuitySnapshotV1;
+    const input = checkpointInput({ expectedStateToken: current.stateToken, ...overrides });
     const result = service.checkpointContext(input, codexAdmitted(service, session, "checkpoint_context", input));
     expect(result.error).toBeNull();
     return result.data!;
@@ -603,14 +617,14 @@ describe("D0352 B08 Codex fork origin", () => {
   /** The child's SessionStart(source=fork) at its first prompt, then that prompt. */
   function codexFork(service: ContinuityService, child: string, file?: string, extra: Record<string, unknown> = {}) {
     const correlation = service.correlateSession(child), before = service.store.getTask(correlation);
-    const snapshot = before ? service.store.getSnapshot(correlation, before.currentEpoch) : null;
+    const snapshot = before ? service.store.getCurrent(correlation, before.currentEpoch) : null;
     expect(hook(service, { hook_event_name: "SessionStart", source: "fork", session_id: child, ...(file ? { transcript_path: file } : {}), ...extra }, CODEX)).toEqual({});
     const output = hook(service, { hook_event_name: "UserPromptSubmit", session_id: child, prompt: "continue", ...(file ? { transcript_path: file } : {}), ...extra }, CODEX);
     if (Object.hasOwn(extra, "agent_id")) {
       expect(output).toEqual({});
       expect(service.store.getTask(correlation)).toEqual(before);
     } else expectCheckpointCue(output);
-    expect(service.store.getSnapshot(correlation, before?.currentEpoch ?? 1)).toEqual(snapshot);
+    expect(service.store.getCurrent(correlation, before?.currentEpoch ?? 1)?.memory ?? null).toEqual(snapshot?.memory ?? null);
   }
 
   it("C-P1: a Codex fork inspects and loads its host-named parent's checkpoint, then continues without STALE_REVISION", async () => {
@@ -619,11 +633,13 @@ describe("D0352 B08 Codex fork origin", () => {
     codexFork(service, "codex-f", await rollout("codex-f", { forked_from_id: "codex-p", forked_from_ordinal_exclusive: 4 }));
     const candidate = codexInspect(service, "codex-f");
     expect(candidate).toMatchObject({ decision: "DEFER", reasonCodes: CANDIDATE });
-    expect(candidate.summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation, revision: parentSnapshot.revision, snapshotDigest: parentSnapshot.snapshotDigest });
-    expect(codexLoad(service, "codex-f", candidate).data).toEqual(parentSnapshot);
-    const next = codexCheckpoint(service, "codex-f", { requestId: "child-1", expectedRevision: parentSnapshot.revision });
-    expect(next).toMatchObject({ revision: parentSnapshot.revision + 1, taskCorrelation: service.correlateSession("codex-f") });
-    expect(service.store.getSnapshot(parentSnapshot.taskCorrelation, parentSnapshot.epoch)).toEqual(parentSnapshot);
+    expect(candidate.summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation, stateToken: parentSnapshot.stateToken, memoryDigest: parentSnapshot.memoryDigest });
+    const adopted = codexLoad(service, "codex-f", candidate).data as ContinuitySnapshotV1;
+    expectAdopted(adopted, parentSnapshot, service, "codex-f");
+    const next = codexCheckpoint(service, "codex-f", { requestId: "child-1" });
+    expect(next).toMatchObject({ taskCorrelation: service.correlateSession("codex-f") });
+    expect(next.stateToken).not.toBe(adopted.stateToken);
+    expect(service.store.getCurrent(parentSnapshot.taskCorrelation, parentSnapshot.epoch)).toEqual(parentSnapshot);
   });
 
   it("C-F1b: a parent save after the host's fork instant (before the child's first prompt) is never the fork's state", async () => {
@@ -633,21 +649,21 @@ describe("D0352 B08 Codex fork origin", () => {
     expect(codexInspect(service, "codex-f").reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
   });
 
-  it("C-Q1: only a new saved revision moves the parent's save time; a re-anchor after the fork instant never makes it advanced", async () => {
+  it("C-Q1: only a new saved state moves the parent's save time; a re-anchor after the fork instant never makes it advanced", async () => {
     const service = createService();
     const parentSnapshot = codexCheckpoint(service, "codex-p");
-    // Re-anchoring (compaction) adds lineage rows only; the snapshot and its save time stay those of the saved revision.
+    // Re-anchoring (compaction) adds lineage rows only; the snapshot and its save time stay those of the saved state.
     service.reanchorAfterCompact("codex-p", () => ({ ids: ["entry-1"], at: [Date.parse(FORK_AT)] }));
-    expect(service.store.getSnapshot(parentSnapshot.taskCorrelation, parentSnapshot.epoch)).toEqual(parentSnapshot);
+    expect(service.store.getCurrent(parentSnapshot.taskCorrelation, parentSnapshot.epoch)).toEqual(parentSnapshot);
     codexFork(service, "codex-f", await rollout("codex-f", { forked_from_id: "codex-p", timestamp: parentSnapshot.updatedAt }));
-    expect(codexInspect(service, "codex-f").summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation, revision: parentSnapshot.revision });
+    expect(codexInspect(service, "codex-f").summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation, stateToken: parentSnapshot.stateToken });
   });
 
   it("C-N5: a parent that saves again after the pin, or is suppressed, yields no candidate", async () => {
     const service = createService();
     const parentSnapshot = codexCheckpoint(service, "codex-p");
     codexFork(service, "codex-f", await rollout("codex-f", { forked_from_id: "codex-p" }));
-    codexCheckpoint(service, "codex-p", { requestId: "again", expectedRevision: parentSnapshot.revision });
+    expect(codexCheckpoint(service, "codex-p", { requestId: "again" }).stateToken).not.toBe(parentSnapshot.stateToken);
     expect(codexInspect(service, "codex-f").reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
     codexCheckpoint(service, "codex-q");
     service.store.setSuppressed(service.correlateSession("codex-q"), 1, "2026-11-01T01:00:00.000Z");
@@ -660,9 +676,10 @@ describe("D0352 B08 Codex fork origin", () => {
     const parentSnapshot = codexCheckpoint(service, "codex-p");
     codexFork(service, "codex-f", await rollout("codex-f", { forked_from_id: "codex-p" }));
     expect(codexLoad(service, "codex-f", codexInspect(service, "codex-f")).error).toBeNull();
-    const childSnapshot = codexCheckpoint(service, "codex-f", { requestId: "f-1", expectedRevision: parentSnapshot.revision });
+    const childSnapshot = codexCheckpoint(service, "codex-f", { requestId: "f-1" });
+    expect(childSnapshot.stateToken).not.toBe(parentSnapshot.stateToken);
     codexFork(service, "codex-g", await rollout("codex-g", { forked_from_id: "codex-f" }));
-    expect(codexInspect(service, "codex-g").summary).toMatchObject({ taskCorrelation: childSnapshot.taskCorrelation, revision: childSnapshot.revision });
+    expect(codexInspect(service, "codex-g").summary).toMatchObject({ taskCorrelation: childSnapshot.taskCorrelation, stateToken: childSnapshot.stateToken });
   });
 
   it("C-N1: no fork, a non-root actor, a wrong or malformed origin, or an unknown parent never yields a parent", async () => {
@@ -702,7 +719,7 @@ describe("D0352 B08 Codex fork origin", () => {
     codexFork(service, "codex-f", file);
     await writeFile(file, JSON.stringify({ timestamp: FORK_AT, type: "session_meta", payload: { id: "codex-f", forked_from_id: "codex-q", timestamp: FORK_AT } }) + "\n", "utf8");
     expect(hook(service, { hook_event_name: "PreToolUse", session_id: "codex-f", tool_name: "shell", tool_input: { command: "true" }, tool_use_id: "call_x", transcript_path: file }, CODEX)).toEqual({});
-    expect(codexInspect(service, "codex-f").summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation, revision: parentSnapshot.revision });
+    expect(codexInspect(service, "codex-f").summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation, stateToken: parentSnapshot.stateToken });
     // A second fork start of the same session never re-pins either.
     codexFork(service, "codex-f", file);
     expect(codexInspect(service, "codex-f").summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation });
@@ -713,7 +730,7 @@ describe("D0352 B08 Codex fork origin", () => {
     codexCheckpoint(service, "codex-p");
     const own = codexCheckpoint(service, "codex-f0");
     codexFork(service, "codex-f0", await rollout("codex-f0", { forked_from_id: "codex-p" }));
-    expect(codexInspect(service, "codex-f0").summary).toMatchObject({ taskCorrelation: own.taskCorrelation, revision: own.revision });
+    expect(codexInspect(service, "codex-f0").summary).toMatchObject({ taskCorrelation: own.taskCorrelation, stateToken: own.stateToken });
     expect(service.store.firstObservationEvent(service.correlateSession("codex-f0"), 1, "fork-parent:")).toBeNull();
     const resumed = hook(service, { hook_event_name: "SessionStart", source: "resume", session_id: "codex-p" }, CODEX) as { hookSpecificOutput?: { additionalContext?: string } };
     expect(resumed.hookSpecificOutput?.additionalContext ?? "").toContain("source=direct");
@@ -885,8 +902,8 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     expect(hostParentEvent(service, "fork-f")).toBe("fork-host-parent:" + JSON.stringify({ c: snapshot.taskCorrelation, e: snapshot.epoch }));
     const candidate = inspect(service, "fork-f", childFile);
     expect(candidate).toMatchObject({ decision: "DEFER", reasonCodes: CANDIDATE });
-    expect(candidate.summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision, snapshotDigest: snapshot.snapshotDigest });
-    expect(load(service, "fork-f", candidate).data).toEqual(snapshot);
+    expect(candidate.summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken, memoryDigest: snapshot.memoryDigest });
+    expectAdopted(load(service, "fork-f", candidate).data, snapshot, service, "fork-f");
   });
 
   it("H-N1z: a parent that wrote its fork's own entries into its file keeps its later fork (repair of N1z)", async () => {
@@ -897,12 +914,12 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     expect(start(service, "fork-f", "fork", childFile)).toEqual({});
     prompt(service, "fork-f", childFile);
     expect(load(service, "fork-f", inspect(service, "fork-f", childFile)).error).toBeNull();
-    const childSnapshot = checkpoint(service, "fork-f", childFile, { requestId: "f-own", expectedRevision: snapshot.revision });
+    const childSnapshot = checkpoint(service, "fork-f", childFile, { requestId: "f-own" });
     await appendFile(file, line("parent-a", own) + "\n", "utf8");
-    const parentAgain = checkpoint(service, "parent-a", file, { requestId: "a-copied-f", expectedRevision: snapshot.revision });
+    const parentAgain = checkpoint(service, "parent-a", file, { requestId: "a-copied-f" });
     const laterFile = await hostFork(service, "fork-g", [...uuids, own], "parent-a");
     const summary = inspect(service, "fork-g", laterFile).summary;
-    expect(summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: parentAgain.revision });
+    expect(summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: parentAgain.stateToken });
     expect(summary?.taskCorrelation).not.toBe(childSnapshot.taskCorrelation);
   });
 
@@ -914,7 +931,7 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     service.startFork("fork-b", undefined, () => ({ parentSessionId: "parent-a" }));
     const bSnapshot = checkpoint(service, "fork-b", bFile, { requestId: "b-1" });
     const grandchild = await hostFork(service, "fork-g", bRows.map(([, uuid]) => uuid), "fork-b");
-    expect(inspect(service, "fork-g", grandchild).summary).toMatchObject({ taskCorrelation: bSnapshot.taskCorrelation, revision: bSnapshot.revision });
+    expect(inspect(service, "fork-g", grandchild).summary).toMatchObject({ taskCorrelation: bSnapshot.taskCorrelation, stateToken: bSnapshot.stateToken });
   });
 
   it("H-N4: a named parent without a pre-fork save gives no candidate, even when the child's file holds another session's entries", async () => {
@@ -937,7 +954,7 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", randomUUID(), OWN]]);
     service.startFork("fork-f", undefined, () => ({ parentSessionId: "parent-a" }));
     await appendFile(file, [randomUUID(), randomUUID()].map(uuid => line("parent-a", uuid)).join("\n") + "\n", "utf8");
-    checkpoint(service, "parent-a", file, { requestId: "after-fork", expectedRevision: snapshot.revision });
+    expect(checkpoint(service, "parent-a", file, { requestId: "after-fork" }).stateToken).not.toBe(snapshot.stateToken);
     expect(inspect(service, "fork-f", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
   });
 
@@ -949,7 +966,7 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     service.startFork("fork-f", undefined, () => ({ parentSessionId: "never-saved-x" }));
     expect(hostParentEvent(service, "fork-f")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_UNRECOGNIZED" }));
     prompt(service, "fork-f", childFile);
-    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
   });
   it("H-R04: a named parent's latest pre-fork save is chosen even when it anchors entries another session wrote into its file", async () => {
     // Tester c613 k2argv1-r04 (rwown): fork F's own entries were written into P's file under P's id, P saved again, then
@@ -963,12 +980,12 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     await hostFork(service, "fork-f", rows.map(([, uuid]) => uuid), "parent-a");
     const pNew = randomUUID();
     await appendFile(parentFile, [...fOwn, pNew].map(uuid => line("parent-a", uuid)).join("\n") + "\n", "utf8");
-    const second = checkpoint(service, "parent-a", parentFile, { requestId: "p-2", expectedRevision: first.revision });
+    const second = checkpoint(service, "parent-a", parentFile, { requestId: "p-2" });
     const laterFile = await hostFork(service, "fork-f2", [...rows.map(([, uuid]) => uuid), pNew], "parent-a");
     const candidate = inspect(service, "fork-f2", laterFile);
     expect(candidate).toMatchObject({ decision: "DEFER", reasonCodes: CANDIDATE });
-    expect(candidate.summary).toMatchObject({ taskCorrelation: first.taskCorrelation, revision: second.revision, snapshotDigest: second.snapshotDigest });
-    expect(load(service, "fork-f2", candidate).data).toEqual(second);
+    expect(candidate.summary).toMatchObject({ taskCorrelation: first.taskCorrelation, stateToken: second.stateToken, memoryDigest: second.memoryDigest });
+    expectAdopted(load(service, "fork-f2", candidate).data, second, service, "fork-f2");
   });
 
   it("H-W1: Windows command lines split as CommandLineToArgvW does", () => {
@@ -1084,8 +1101,8 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     expect(reads).toBe(1);
     expect(hostParentEvent(service, "fork-f")).toBe("fork-host-parent:" + JSON.stringify({ c: snapshot.taskCorrelation, e: snapshot.epoch, s: "Anthropic, PBC" }));
     const candidate = inspect(service, "fork-f", childFile);
-    expect(candidate.summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
-    expect(load(service, "fork-f", candidate).data).toEqual(snapshot);
+    expect(candidate.summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
+    expectAdopted(load(service, "fork-f", candidate).data, snapshot, service, "fork-f");
     // A fork whose start read the host (Linux) or that was never deferred is never read again at a boundary.
     service.startFork("fork-l", undefined, () => ({ reason: "FORK_HOST_UNRECOGNIZED" }));
     service.readDeferredForkHostParent("fork-l", read);
@@ -1119,7 +1136,7 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     // Even a second row that slipped in between the re-check and the insert is never read.
     service.store.recordObservation(correlation, epoch, "fork-host-parent:" + JSON.stringify({ c: service.correlateSession("other-b"), e: 1 }), null, true, OWN);
     expect(rows()).toHaveLength(2);
-    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
   });
 
   it("H-W5: a deferred fork reaching a final boundary without a read records why and lineage decides; a read reason is kept", async () => {
@@ -1127,7 +1144,7 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     const { snapshot, uuids } = await parent(service);
     const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", randomUUID(), OWN]]);
     service.startFork("fork-f", undefined, () => ({ deferred: true }));
-    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
     expect(hostParentEvent(service, "fork-f")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_PARENT_NOT_READ" }));
     // After the pin a late read changes nothing.
     service.readDeferredForkHostParent("fork-f", () => ({ parentSessionId: "never-saved-x" }));
@@ -1136,7 +1153,7 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     service.startFork("fork-g", undefined, () => ({ deferred: true }));
     service.readDeferredForkHostParent("fork-g", () => ({ reason: "FORK_HOST_QUERY_TIMEOUT" }));
     expect(hostParentEvent(service, "fork-g")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_QUERY_TIMEOUT" }));
-    expect(inspect(service, "fork-g", secondFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(inspect(service, "fork-g", secondFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, stateToken: snapshot.stateToken });
   });
 
   it("H-W7: through the Claude hook on Windows the fork start defers, the prompt waits and the first tool reads once", async () => {

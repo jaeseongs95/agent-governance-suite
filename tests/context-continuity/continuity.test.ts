@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fixtureLocator } from "../helpers/fixture-locator.js";
 import type {
   CheckpointContextRequestV1,
+  ContinuitySnapshotV1,
   ConvergenceRootV1,
   TaskEnvelopeV1,
 } from "../../contracts/types.js";
@@ -80,7 +81,7 @@ function checkpointInput(overrides: Partial<CheckpointContextRequestV1> = {}): C
   return {
     schemaVersion: "1.0.0",
     requestId: "checkpoint-1",
-    expectedRevision: 0,
+    expectedStateToken: "fixture-state-token-before-read",
     status: "active",
     core: {
       objective: "Finish the continuity implementation.",
@@ -107,9 +108,29 @@ function nonCanonicalSignatureAlias(token: string): string {
   return `${body}.${signature.slice(0, -1)}${alphabet[lastIndex + 1]}`;
 }
 
+const originalCheckpointRequests = new WeakMap<ContinuityService, Map<string, CheckpointContextRequestV1>>();
+function currentMemory(service: ContinuityService, session = "raw-session"): ContinuitySnapshotV1 {
+  const result = service.loadContext({ schemaVersion: "1.0.0" }, asRoot(session));
+  expect(result.error).toBeNull();
+  return result.data as ContinuitySnapshotV1;
+}
+function replayCheckpointInput(service: ContinuityService, session = "raw-session") {
+  return originalCheckpointRequests.get(service)!.get(session)!;
+}
 function directCheckpoint(service: ContinuityService, session = "raw-session") {
-  const input = checkpointInput();
+  const input = checkpointInput({ expectedStateToken: currentMemory(service, session).stateToken });
+  if (!originalCheckpointRequests.has(service)) originalCheckpointRequests.set(service, new Map());
+  originalCheckpointRequests.get(service)!.set(session, input);
   return service.checkpointContext(input, asRoot(session));
+}
+
+/** This store is created by this test; history is checked only through its owned fixture database. */
+function expectArchived(store: SqliteContinuityStore, snapshot: ContinuitySnapshotV1) {
+  const database = (store as unknown as { database: DatabaseSync }).database;
+  const row = database.prepare("SELECT memory_json, memory_digest, epoch FROM continuity_memory_history WHERE task_correlation=? AND state_token=?")
+    .get(snapshot.taskCorrelation, snapshot.stateToken) as { memory_json: string; memory_digest: string; epoch: number } | undefined;
+  expect(row).toMatchObject({ epoch: snapshot.epoch, memory_digest: snapshot.memoryDigest });
+  expect(JSON.parse(row!.memory_json)).toEqual(snapshot.memory);
 }
 
 function taskEnvelope(): TaskEnvelopeV1 {
@@ -163,45 +184,44 @@ describe("direct task continuity", () => {
   it("stores replacement snapshots with CAS and request idempotency", () => {
     const service = createService();
     const first = directCheckpoint(service);
-    expect(first.data?.revision).toBe(1);
+    expect(first.data?.memory).toMatchObject({ core: checkpointInput().core });
+    expect(first.data?.stateToken).toEqual(expect.any(String));
 
-    const replayInput = checkpointInput();
+    const replayInput = replayCheckpointInput(service);
     const replay = service.checkpointContext(replayInput, asRoot("raw-session"));
     expect(replay).toEqual(first);
 
-    const conflictInput = checkpointInput({ core: { ...checkpointInput().core, objective: "Different content." } });
+    const conflictInput = checkpointInput({ expectedStateToken: replayInput.expectedStateToken, core: { ...checkpointInput().core, objective: "Different content." } });
     expect(service.checkpointContext(conflictInput, asRoot("raw-session")).error?.code).toBe("REQUEST_CONFLICT");
 
-    const staleInput = checkpointInput({ requestId: "checkpoint-2" });
+    const staleInput = checkpointInput({ requestId: "checkpoint-2", expectedStateToken: replayInput.expectedStateToken });
     expect(service.checkpointContext(staleInput, asRoot("raw-session")).error).toMatchObject({
       code: "STALE_REVISION",
-      details: { actualRevision: 1 },
+      details: { actualStateToken: first.data!.stateToken },
     });
 
     const replacementInput = checkpointInput({
       requestId: "checkpoint-3",
-      expectedRevision: 1,
+      expectedStateToken: first.data!.stateToken,
       core: { ...checkpointInput().core, progress: ["Replacement contains only current progress."] },
     });
     const replacement = service.checkpointContext(replacementInput, asRoot("raw-session"));
-    expect(replacement.data).toMatchObject({ revision: 2, core: { progress: ["Replacement contains only current progress."] } });
+    expect(replacement.data).toMatchObject({ memory: { core: { progress: ["Replacement contains only current progress."] } } });
+    expect(replacement.data!.stateToken).not.toBe(first.data!.stateToken);
   });
 
-  it("returns body-free candidates and loads body only after exact revalidation", () => {
+  it("returns body-free signed candidates and revalidates their selected current body", () => {
     const service = createService();
     const snapshot = directCheckpoint(service).data!;
     const inspectInput = { schemaVersion: "1.0.0" as const };
     const inspected = service.inspectContext(inspectInput, asRoot("raw-session"));
-    expect(JSON.stringify(inspected)).not.toContain(snapshot.core.objective);
+    expect(JSON.stringify(inspected)).not.toContain(snapshot.memory!.core.objective);
     expect(inspected.data?.decision).toBe("DEFER");
 
     const candidate = inspected.data!;
     const loadInput = {
       schemaVersion: "1.0.0" as const,
       candidateToken: candidate.restoreToken!,
-      epoch: candidate.summary!.epoch,
-      revision: candidate.summary!.revision,
-      digest: candidate.summary!.snapshotDigest,
     };
     expect(service.loadContext(loadInput, asRoot("raw-session")).data).toEqual(snapshot);
 
@@ -222,9 +242,6 @@ describe("direct task continuity", () => {
     const loadInput = {
       schemaVersion: "1.0.0" as const,
       candidateToken: candidate.restoreToken!,
-      epoch: candidate.summary!.epoch,
-      revision: candidate.summary!.revision,
-      digest: candidate.summary!.snapshotDigest,
     };
     const reasonOf = (input: typeof loadInput, session = "raw-session") => {
       const error = service.loadContext(input, asRoot(session)).error;
@@ -251,26 +268,29 @@ describe("direct task continuity", () => {
     expect(service.store.getTask(service.correlateSession("native-unobserved"))).toBeNull();
   });
 
-  it("keeps direct compact and resume output candidate-only", () => {
+  it("restores only the current direct body on compact and resume", () => {
     const service = createService();
     directCheckpoint(service);
     const resume = handleContinuityHook({ hook_event_name: "SessionStart", session_id: "raw-session", source: "resume" }, service);
-    expect(JSON.stringify(resume)).toContain("decision=DEFER");
-    expect(JSON.stringify(resume)).not.toContain("Finish the continuity implementation");
+    expect(JSON.stringify(resume)).toContain("[AGS current memory]");
+    expect(JSON.stringify(resume)).toContain("Finish the continuity implementation");
+    expect(JSON.stringify(resume)).not.toContain("candidateToken=");
 
     handleContinuityHook({ hook_event_name: "PreCompact", session_id: "raw-session", trigger: "auto" }, service);
     const compact = handleContinuityHook({ hook_event_name: "SessionStart", session_id: "raw-session", source: "compact" }, service);
-    expect(JSON.stringify(compact)).toContain("decision=DEFER");
-    expect(JSON.stringify(compact)).not.toContain("Finish the continuity implementation");
+    expect(JSON.stringify(compact)).toContain("[AGS current memory]");
+    expect(JSON.stringify(compact)).toContain("Finish the continuity implementation");
+    expect(JSON.stringify(compact)).not.toContain("candidateToken=");
   });
 
-  it("separates suppression and clear while allowing old-epoch purge without retained payload", async () => {
+  it("separates suppression, current purge and clear without returning an old payload", async () => {
     const directory = await mkdtemp(join(tmpdir(), "continuity-purge-"));
     temporaryDirectories.push(directory);
     const databasePath = join(directory, "continuity.sqlite3");
     const service = createService(databasePath);
     const marker = "PLAINTEXT-SNAPSHOT-MUST-BE-DELETED";
     const checkpoint = checkpointInput({
+      expectedStateToken: currentMemory(service).stateToken,
       core: { ...checkpointInput().core, objective: marker },
     });
     const snapshot = service.checkpointContext(checkpoint, asRoot("raw-session")).data!;
@@ -284,43 +304,43 @@ describe("direct task continuity", () => {
     expect(service.suppressContextRestore(suppress, asRoot("raw-session")).data?.suppressed).toBe(true);
     expect(service.candidateForSession("raw-session").decision).toBe("REJECT");
 
-    service.clearSession("raw-session");
-    expect(service.candidateForSession("raw-session")).toMatchObject({ decision: "REJECT", reasonCodes: ["NO_RESTORE_CANDIDATE"] });
-
-    const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-1", expectedEpoch: 1, expectedRevision: snapshot.revision };
+    const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-1", expectedStateToken: snapshot.stateToken };
     const purged = service.purgeDirectContext(purge, asRoot("raw-session"));
-    expect(purged.data).toMatchObject({ purged: true, epoch: 1, revision: snapshot.revision });
+    expect(purged.data).toMatchObject({ purged: true, epoch: 1, stateToken: snapshot.stateToken });
     expect(service.purgeDirectContext(purge, asRoot("raw-session"))).toEqual(purged);
 
     const afterPurge = new DatabaseSync(databasePath);
-    const snapshotCount = afterPurge.prepare("SELECT COUNT(*) AS count FROM continuity_snapshots").get() as { count: number };
+    const snapshotCount = afterPurge.prepare("SELECT COUNT(*) AS count FROM continuity_current_memory WHERE memory_json IS NOT NULL").get() as { count: number };
     const storedRequests = afterPurge.prepare("SELECT result_json FROM continuity_requests").all() as Array<{ result_json: string }>;
     afterPurge.close();
     expect(snapshotCount.count).toBe(0);
     expect(JSON.stringify(storedRequests)).not.toContain(marker);
+    service.clearSession("raw-session");
+    expect(service.candidateForSession("raw-session")).toMatchObject({ decision: "REJECT", reasonCodes: ["NO_RESTORE_CANDIDATE"] });
+    expect(service.purgeDirectContext(purge, asRoot("raw-session")).error?.code).toBe("STALE_REVISION");
+    expect(currentMemory(service)).toMatchObject({ epoch: 2, memory: null });
   });
 
-  it("keeps revisions monotonic and makes an old purge stale across identical snapshot cycles", () => {
+  it("rotates opaque tokens and makes an old purge stale across identical memory cycles", () => {
     const service = createService();
     const firstSnapshot = directCheckpoint(service, "repeated-purge-session").data!;
     const firstPurgeInput = {
       schemaVersion: "1.0.0" as const,
       requestId: "purge-first",
-      expectedEpoch: 1,
-      expectedRevision: firstSnapshot.revision,
+      expectedStateToken: firstSnapshot.stateToken,
     };
     const firstPurge = service.purgeDirectContext(firstPurgeInput, asRoot("repeated-purge-session"));
     expect(firstPurge.data?.purged).toBe(true);
 
-    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-second", expectedRevision: firstSnapshot.revision });
+    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-second", expectedStateToken: firstPurge.data!.emptyStateToken });
     const secondSnapshot = service.checkpointContext(secondCheckpoint, asRoot("repeated-purge-session")).data!;
-    expect(secondSnapshot.revision).toBe(firstSnapshot.revision + 1);
-    expect(secondSnapshot.snapshotDigest).not.toBe(firstSnapshot.snapshotDigest);
+    expect(secondSnapshot.stateToken).not.toBe(firstSnapshot.stateToken);
+    expect(secondSnapshot.stateToken).not.toBe(firstPurge.data!.emptyStateToken);
+    expect(secondSnapshot.memoryDigest).toBe(firstSnapshot.memoryDigest);
     const secondPurgeInput = {
       schemaVersion: "1.0.0" as const,
       requestId: "purge-second",
-      expectedEpoch: 1,
-      expectedRevision: secondSnapshot.revision,
+      expectedStateToken: secondSnapshot.stateToken,
     };
     const secondPurge = service.purgeDirectContext(secondPurgeInput, asRoot("repeated-purge-session"));
     expect(secondPurge.data?.purged).toBe(true);
@@ -339,20 +359,19 @@ describe("direct task continuity", () => {
     const purgeInput = {
       schemaVersion: "1.0.0" as const,
       requestId: "purge-generation-bound",
-      expectedEpoch: 1,
-      expectedRevision: firstSnapshot.revision,
+      expectedStateToken: firstSnapshot.stateToken,
     };
     expect(service.purgeDirectContext(purgeInput, asRoot(session)).data?.purged).toBe(true);
 
-    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-next-generation", expectedRevision: firstSnapshot.revision });
+    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-next-generation", expectedStateToken: currentMemory(service, session).stateToken });
     const secondSnapshot = service.checkpointContext(secondCheckpoint, asRoot(session)).data!;
     const staleReplay = service.purgeDirectContext(purgeInput, asRoot(session));
-    expect(staleReplay.error).toMatchObject({ code: "STALE_REVISION", details: { actualRevision: secondSnapshot.revision } });
-    expect(service.store.getSnapshot(service.correlateSession(session), 1)).toEqual(secondSnapshot);
+    expect(staleReplay.error).toMatchObject({ code: "STALE_REVISION" });
+    expect(service.store.getCurrent(service.correlateSession(session), 1)).toEqual(secondSnapshot);
 
-    const reusedForCurrent = { ...purgeInput, expectedRevision: secondSnapshot.revision };
+    const reusedForCurrent = { ...purgeInput, expectedStateToken: secondSnapshot.stateToken };
     expect(service.purgeDirectContext(reusedForCurrent, asRoot(session)).error?.code).toBe("REQUEST_CONFLICT");
-    expect(service.store.getSnapshot(service.correlateSession(session), 1)).toEqual(secondSnapshot);
+    expect(service.store.getCurrent(service.correlateSession(session), 1)).toEqual(secondSnapshot);
   });
 
   it("rejects and later scrubs a malformed purge receipt with extra snapshot content", async () => {
@@ -365,8 +384,7 @@ describe("direct task continuity", () => {
     const firstPurgeInput = {
       schemaVersion: "1.0.0" as const,
       requestId: "purge-malformed-first",
-      expectedEpoch: 1,
-      expectedRevision: firstSnapshot.revision,
+      expectedStateToken: firstSnapshot.stateToken,
     };
     const firstPurge = service.purgeDirectContext(firstPurgeInput, asRoot(session)).data!;
     const marker = "MALFORMED-PURGE-BODY-MUST-NOT-SURVIVE";
@@ -382,13 +400,12 @@ describe("direct task continuity", () => {
     expect(rejected.error?.code).toBe("STALE_REVISION");
     expect(JSON.stringify(rejected)).not.toContain(marker);
 
-    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-after-malformed-purge", expectedRevision: firstSnapshot.revision });
+    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-after-malformed-purge", expectedStateToken: currentMemory(service, session).stateToken });
     const secondSnapshot = service.checkpointContext(secondCheckpoint, asRoot(session)).data!;
     const secondPurgeInput = {
       schemaVersion: "1.0.0" as const,
       requestId: "purge-after-malformed-purge",
-      expectedEpoch: 1,
-      expectedRevision: secondSnapshot.revision,
+      expectedStateToken: secondSnapshot.stateToken,
     };
     expect(service.purgeDirectContext(secondPurgeInput, asRoot(session)).data?.purged).toBe(true);
 
@@ -406,20 +423,21 @@ describe("direct task continuity", () => {
     const snapshot = directCheckpoint(service, "mixed-session").data!;
     service.bindOpenedRoot(asRoot("mixed-session"), root.rootId);
 
-    const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-mixed", expectedEpoch: 1, expectedRevision: snapshot.revision };
+    const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-mixed", expectedStateToken: snapshot.stateToken };
     expect(service.purgeDirectContext(purge, asRoot("mixed-session")).data?.purged).toBe(true);
-    expect(service.store.getSnapshot(service.correlateSession("mixed-session"), 1)).toBeNull();
+    expect(service.store.getCurrent(service.correlateSession("mixed-session"), 1)?.memory).toBeNull();
     expect(workflow.getConvergenceSnapshot(root.rootId)?.root).toEqual(root);
   });
 
-  it("allows only one winner across two SQLite connections using the same CAS revision", async () => {
+  it("allows only one winner across two SQLite connections using the same CAS token", async () => {
     const directory = await mkdtemp(join(tmpdir(), "continuity-cas-"));
     temporaryDirectories.push(directory);
     const databasePath = join(directory, "continuity.sqlite3");
     const first = createService(databasePath);
     const second = createService(databasePath);
-    const left = checkpointInput({ requestId: "left" });
-    const right = checkpointInput({ requestId: "right", core: { ...checkpointInput().core, progress: ["Competing update."] } });
+    const token = currentMemory(first, "same-session").stateToken;
+    const left = checkpointInput({ requestId: "left", expectedStateToken: token });
+    const right = checkpointInput({ requestId: "right", expectedStateToken: token, core: { ...checkpointInput().core, progress: ["Competing update."] } });
     const results = await Promise.all([
       Promise.resolve().then(() => first.checkpointContext(left, asRoot("same-session"))),
       Promise.resolve().then(() => second.checkpointContext(right, asRoot("same-session"))),
@@ -437,21 +455,18 @@ describe("direct task continuity", () => {
     const inspected = service.inspectContext({ schemaVersion: "1.0.0" }, asRoot("raw-session")).data!;
 
     const database = new DatabaseSync(databasePath);
-    const row = database.prepare("SELECT task_correlation, epoch, snapshot_json FROM continuity_snapshots").get() as {
-      task_correlation: string; epoch: number; snapshot_json: string;
+    const row = database.prepare("SELECT task_correlation, epoch, memory_json FROM continuity_current_memory").get() as {
+      task_correlation: string; epoch: number; memory_json: string;
     };
-    const changed = JSON.parse(row.snapshot_json) as { core: { objective: string } };
+    const changed = JSON.parse(row.memory_json) as { core: { objective: string } };
     changed.core.objective = "Tampered objective.";
-    database.prepare("UPDATE continuity_snapshots SET snapshot_json = ? WHERE task_correlation = ? AND epoch = ?")
+    database.prepare("UPDATE continuity_current_memory SET memory_json = ? WHERE task_correlation = ? AND epoch = ?")
       .run(JSON.stringify(changed), row.task_correlation, row.epoch);
     database.close();
 
     const load = {
       schemaVersion: "1.0.0" as const,
       candidateToken: inspected.restoreToken!,
-      epoch: inspected.summary!.epoch,
-      revision: inspected.summary!.revision,
-      digest: inspected.summary!.snapshotDigest,
     };
     expect(service.loadContext(load, asRoot("raw-session")).error?.code).toBe("INTEGRITY_FAILED");
   }, 15_000);
@@ -628,8 +643,7 @@ async function twoContinuityConnections() {
 function directLoadInput(service: ContinuityService, session: string) {
   const candidate = service.candidateForSession(session);
   expect(candidate.decision).toBe("DEFER");
-  return { schemaVersion: "1.0.0" as const, candidateToken: candidate.restoreToken!,
-    epoch: candidate.summary!.epoch, revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
+  return { schemaVersion: "1.0.0" as const, candidateToken: candidate.restoreToken! };
 }
 function clearAfterMetadataRead(first: ContinuityService, second: ContinuityService, session: string) {
   const original = first.store.getTask.bind(first.store);
@@ -647,19 +661,20 @@ describe("current continuity authority versus historical payload", () => {
       const session = "preflight-" + operation;
       const snapshot = directCheckpoint(first, session).data!;
       const loadInput = directLoadInput(first, session);
-      const checkpoint = operation === "replay" ? checkpointInput() : checkpointInput({ requestId: "after-read", expectedRevision: 1 });
-      const purgeRequest = { schemaVersion: "1.0.0" as const, requestId: "purge-after-read", expectedEpoch: 1, expectedRevision: 1 };
+      const checkpoint = operation === "replay" ? replayCheckpointInput(first, session) : checkpointInput({ requestId: "after-read", expectedStateToken: snapshot.stateToken });
+      const purgeRequest = { schemaVersion: "1.0.0" as const, requestId: "purge-after-read", expectedStateToken: snapshot.stateToken };
       clearAfterMetadataRead(first, second, session);
       const result = operation === "load" ? first.loadContext(loadInput, asRoot(session))
         : operation === "purge" ? first.purgeDirectContext(purgeRequest, asRoot(session)) : first.checkpointContext(checkpoint, asRoot(session));
       expect(result.ok).toBe(false);
       expect(result.error?.code).toBe("BINDING_INVALID");
       expect(result.data).toBeNull();
-      expect(JSON.stringify(result)).not.toContain(snapshot.core.objective);
+      expect(JSON.stringify(result)).not.toContain(snapshot.memory!.core.objective);
       const correlation = first.correlateSession(session);
       expect(second.store.getTask(correlation)?.currentEpoch).toBe(2);
-      expect(second.store.getSnapshot(correlation, 1)).toEqual(snapshot);
-      expect(second.store.getSnapshot(correlation, 2)).toBeNull();
+      expect(second.store.getCurrent(correlation, 1)).toBeNull();
+      expectArchived(second.store, snapshot);
+      expect(second.store.getCurrent(correlation, 2)?.memory).toBeNull();
       expect(second.store.getRequest(correlation, 1, first.hashOpaque("request", "after-read"))).toBeNull();
       expect(second.store.getRequest(correlation, 1, first.hashOpaque("request", "purge-after-read"))).toBeNull();
       expect(second.store.getTask(correlation)?.pendingSource).toBeNull();
@@ -686,7 +701,7 @@ describe("current continuity authority versus historical payload", () => {
         const session = "transaction-" + change + replay;
         const snapshot = directCheckpoint(first, session).data!;
         const correlation = first.correlateSession(session);
-        const input = replay ? checkpointInput() : checkpointInput({ requestId: "new-receipt", expectedRevision: 1 });
+        const input = replay ? replayCheckpointInput(first, session) : checkpointInput({ requestId: "new-receipt", expectedStateToken: snapshot.stateToken, core: { ...checkpointInput().core, progress: ["A real update after the read."] } });
         const original = first.store.checkpoint.bind(first.store);
         vi.spyOn(first.store, "checkpoint").mockImplementationOnce((...args) => {
           if (change === "clear") second.clearSession(session);
@@ -697,15 +712,19 @@ describe("current continuity authority versus historical payload", () => {
         if (change === "root") {
           expect(result.error).toBeNull();
           if (replay) expect(result.data).toEqual(snapshot);
-          else expect(result.data).toMatchObject({ source: "direct", epoch: 1, revision: 2 });
-          expect(second.store.getSnapshot(correlation, 1)).toEqual(result.data);
+          else {
+            expect(result.data).toMatchObject({ source: "direct", epoch: 1 });
+            expect(result.data!.stateToken).not.toBe(snapshot.stateToken);
+          }
+          expect(second.store.getCurrent(correlation, 1)).toEqual(result.data);
           expect(second.store.getRequest(correlation, 1, first.hashOpaque("request", "new-receipt")) === null).toBe(replay);
           expect(second.store.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: "root-after-read" });
           return;
         }
         expect(result.error?.code).toBe("BINDING_INVALID");
         expect(result.data).toBeNull();
-        expect(second.store.getSnapshot(correlation, 1)).toEqual(snapshot);
+        expect(second.store.getCurrent(correlation, 1)).toBeNull();
+        expectArchived(second.store, snapshot);
         expect(second.store.getRequest(correlation, 1, first.hashOpaque("request", "new-receipt"))).toBeNull();
       });
     }
@@ -721,10 +740,12 @@ describe("current continuity authority versus historical payload", () => {
       second.clearSession("replay-body");
       return replay;
     });
-    const result = first.checkpointContext(checkpointInput(), asRoot("replay-body"));
+    const result = first.checkpointContext(replayCheckpointInput(first, "replay-body"), asRoot("replay-body"));
     expect(result.error?.code).toBe("BINDING_INVALID");
     expect(result.data).toBeNull();
-    expect(second.store.getSnapshot(first.correlateSession("replay-body"), 1)).toEqual(snapshot);
+    expect(second.store.getCurrent(first.correlateSession("replay-body"), 1)).toBeNull();
+    expect(currentMemory(second, "replay-body").memory).toBeNull();
+    expectArchived(second.store, snapshot);
   });
 
   // Behaviors 2-3 (d7585d74): the session's own record comes first while a root is bound, so a root without a
@@ -738,49 +759,52 @@ describe("current continuity authority versus historical payload", () => {
     expect(second.store.bindRoot(correlation, 1, "root-without-projection", "2026-09-13T01:00:00.000Z")).toBe(true);
     expect(first.loadContext(load, asRoot(session)).data).toEqual(snapshot);
     expect(first.candidateForSession(session)).toMatchObject({ decision: "DEFER",
-      summary: { source: "direct", epoch: 1, revision: snapshot.revision, snapshotDigest: snapshot.snapshotDigest } });
+      summary: { source: "direct", epoch: 1, stateToken: snapshot.stateToken, memoryDigest: snapshot.memoryDigest } });
     first.markPreCompact(session);
     expect(first.store.getTask(correlation)).toMatchObject({ pendingSource: "direct", pendingRootId: null,
-      pendingRevision: snapshot.revision, pendingDigest: snapshot.snapshotDigest });
-    // No projection to show beside it: the card is the direct candidate alone, metadata only.
+      pendingRevision: null, pendingStateToken: snapshot.stateToken, pendingDigest: snapshot.memoryDigest });
+    // No workflow projection exists: restore exactly the direct current body alone.
     const card = renderHookText(first.compactContext(session), "en")!;
-    expect(card).toContain("source=direct");
+    expect(card).toContain("[AGS current memory]");
     expect(card).not.toContain("[Task continuity workflow card");
-    expect(card).not.toContain(snapshot.core.objective);
-    expect(first.store.getSnapshot(correlation, 1)).toEqual(snapshot);
-    const purge = { schemaVersion: "1.0.0" as const, requestId: "root-purge", expectedEpoch: 1, expectedRevision: 1 };
+    expect(card).toContain(snapshot.memory!.core.objective);
+    expect(first.store.getCurrent(correlation, 1)).toEqual(snapshot);
+    const purge = { schemaVersion: "1.0.0" as const, requestId: "root-purge", expectedStateToken: snapshot.stateToken };
     expect(first.purgeDirectContext(purge, asRoot(session)).data?.purged).toBe(true);
     expect(first.store.getTask(correlation)?.rootId).toBe("root-without-projection");
     expect(first.candidateForSession(session)).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
   });
 
-  it("purge transaction rejects a stale current binding but a newly bound request can purge the old epoch", async () => {
+  it("purge transaction rejects a stale binding and never deletes an old epoch through a new binding", async () => {
     const { first, second } = await twoContinuityConnections();
-    directCheckpoint(first, "purge-authority");
+    const saved = directCheckpoint(first, "purge-authority").data!;
     const correlation = first.correlateSession("purge-authority");
-    const input = { schemaVersion: "1.0.0" as const, requestId: "purge-guard", expectedEpoch: 1, expectedRevision: 1 };
+    const input = { schemaVersion: "1.0.0" as const, requestId: "purge-guard", expectedStateToken: saved.stateToken };
     const original = first.store.purge.bind(first.store);
     vi.spyOn(first.store, "purge").mockImplementationOnce((...args) => {
       second.clearSession("purge-authority");
       return original(...args);
     });
     expect(first.purgeDirectContext(input, asRoot("purge-authority")).error?.code).toBe("BINDING_INVALID");
-    expect(first.store.getSnapshot(correlation, 1)).not.toBeNull();
-    expect(first.purgeDirectContext(input, asRoot("purge-authority")).data?.purged).toBe(true);
-    expect(first.store.getSnapshot(correlation, 1)).toBeNull();
+    expect(first.store.getCurrent(correlation, 1)).toBeNull();
+    expectArchived(first.store, saved);
+    expect(first.purgeDirectContext(input, asRoot("purge-authority")).error?.code).toBe("STALE_REVISION");
+    expect(currentMemory(first, "purge-authority").memory).toBeNull();
+    expect(first.store.getCurrent(correlation, 1)).toBeNull();
     expect(first.store.getTask(correlation)?.currentEpoch).toBe(2);
   });
 
-  // Behavior 3 (d7585d74): while a root is bound a direct marker (no root) is accepted; one naming a root is not.
-  it("pending markers accept a rootless direct marker after binding and reject a direct marker naming a root, wrong root, suppression, and stale epoch", () => {
+  // D53: direct markers bind the exact current token and expose no root selector; workflow markers retain root/revision guards.
+  it("pending markers bind exact direct tokens without a root selector and reject wrong token, wrong workflow root, suppression and stale epoch", () => {
     const service = createService();
     const task = service.ensureSession("marker-guards");
     const c = task.taskCorrelation;
     const now = "2026-09-13T01:00:00.000Z";
-    const digest = convergenceDigest("marker");
+    const saved = directCheckpoint(service, "marker-guards").data!;
+    const digest = saved.memoryDigest!;
     expect(service.store.bindRoot(c, 1, "root-a", now)).toBe(true);
-    expect(service.store.setPendingMarker(c, 1, "direct", 1, digest, "root-a", now)).toBe(false);
-    expect(service.store.setPendingMarker(c, 1, "direct", 1, digest, null, now)).toBe(true);
+    expect(service.store.setDirectPendingMarker(c, 1, "wrong-state-token", digest, now)).toBe(false);
+    expect(service.store.setDirectPendingMarker(c, 1, saved.stateToken, digest, now)).toBe(true);
     expect(service.store.getTask(c)).toMatchObject({ pendingSource: "direct", pendingRootId: null });
     expect(service.store.setPendingMarker(c, 1, "workflow", 1, digest, "root-b", now)).toBe(false);
     expect(service.store.setPendingMarker(c, 1, "workflow", 1, digest, "root-a", now)).toBe(true);
@@ -791,7 +815,7 @@ describe("current continuity authority versus historical payload", () => {
     expect(service.store.consumeWorkflowMarker(c, 1, "root-b", 1, digest, now)).toBe(false);
     expect(service.store.setPendingMarker(c, 1, "workflow", 1, digest, "root-b", now)).toBe(false);
     service.clearSession("marker-guards");
-    expect(service.store.setPendingMarker(c, 1, "direct", 1, digest, null, now)).toBe(false);
+    expect(service.store.setDirectPendingMarker(c, 1, saved.stateToken, digest, now)).toBe(false);
     expect(service.store.getTask(c)?.pendingSource).toBeNull();
   });
 
@@ -828,12 +852,12 @@ describe("current continuity authority versus historical payload", () => {
       const rotate = competing.prepare("UPDATE continuity_tasks SET current_epoch = current_epoch + 1 WHERE task_correlation = ?");
       const selected = first.store.readCurrentState(c, 1, "direct", () => {
         expect(() => rotate.run(c)).toThrow(/locked|busy/iu);
-        return first.store.getSnapshot(c, 1);
+        return first.store.getCurrent(c, 1);
       });
       expect(selected).toMatchObject({ kind: "available", value: snapshot });
       expect(rotate.run(c).changes).toBe(1);
       expect(first.store.readCurrentState(c, 1, "direct", () => { throw new Error("stale callback must not run"); })).toEqual({ kind: "epoch-mismatch" });
-      expect(first.store.getSnapshot(c, 1)).toEqual(snapshot);
+      expect(first.store.getCurrent(c, 1)).toEqual(snapshot);
     } finally { competing.close(); }
   });
 
@@ -851,8 +875,7 @@ describe("current continuity authority versus historical payload", () => {
     expect(bundle.continuity.bindRoot(c, 1, root.rootId, now.toISOString())).toBe(true);
     expect(service.candidateForSession("shared-workflow").summary?.source).toBe("workflow");
     const candidate = service.candidateForSession("shared-workflow");
-    const input = { schemaVersion: "1.0.0" as const, candidateToken: candidate.restoreToken!,
-      epoch: candidate.summary!.epoch, revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
+    const input = { schemaVersion: "1.0.0" as const, candidateToken: candidate.restoreToken! };
     expect(service.loadContext(input, asRoot("shared-workflow")).ok).toBe(true);
     service.markPreCompact("shared-workflow");
     expect(renderHookText(service.compactContext("shared-workflow"), "ko")).toContain("decision=INJECT");
@@ -914,9 +937,9 @@ function seedCompactMarker(service: ContinuityService, session: string) {
   expect(checkpoint.error).toBeNull();
   service.markPreCompact(session);
   const state = service.store.getTask(service.correlateSession(session))!;
-  expect(state).toMatchObject({ pendingSource: "direct", pendingRevision: checkpoint.data!.revision,
-    pendingDigest: checkpoint.data!.snapshotDigest, pendingConsumed: false });
-  expect(state.pendingRevision).not.toBeNull(); expect(state.pendingDigest).not.toBeNull();
+  expect(state).toMatchObject({ pendingSource: "direct", pendingRevision: null, pendingStateToken: checkpoint.data!.stateToken,
+    pendingDigest: checkpoint.data!.memoryDigest, pendingConsumed: false });
+  expect(state.pendingStateToken).not.toBeNull(); expect(state.pendingDigest).not.toBeNull();
   return state;
 }
 
@@ -943,7 +966,7 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     expect(caller).toMatchObject({ host, sessionId: session, callId, actor: { id: hostActorId(host, session), role: "root" },
       parentChain: [], execution: { unavailable: "EXECUTION_NOT_REQUIRED" } });
     const inspected = service.inspectContext({ schemaVersion: "1.0.0" }, caller);
-    expect(inspected.error).toBeNull(); expect(inspected.data?.summary?.snapshotDigest).toBe(before.pendingDigest);
+    expect(inspected.error).toBeNull(); expect(inspected.data?.summary).toMatchObject({ source: "direct", memoryDigest: before.pendingDigest });
     expect(translations).toBe(2);
     expect(service.store.getTask(service.correlateSession(session))).toEqual(before);
   });
@@ -958,12 +981,12 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     await event({ kind: "startup" }); expect(service.store.getTask(correlation)?.currentEpoch).toBe(1);
     const checkpoint = directCheckpoint(service, session); expect(checkpoint.error).toBeNull();
     const resumed = await event({ kind: "resume" });
-    expect(resumed).toMatchObject({ hookSpecificOutput: { hookEventName: "LifecycleNotice", additionalContext: expect.stringContaining("decision=DEFER") } });
+    expect(resumed).toMatchObject({ hookSpecificOutput: { hookEventName: "LifecycleNotice", additionalContext: expect.stringContaining("[AGS current memory]") } });
     await event({ kind: "pre-compact" });
     const marker = service.store.getTask(service.correlateSession(session))!;
-    expect(marker).toMatchObject({ pendingSource: "direct", pendingRevision: checkpoint.data!.revision, pendingDigest: checkpoint.data!.snapshotDigest });
+    expect(marker).toMatchObject({ pendingSource: "direct", pendingRevision: null, pendingStateToken: checkpoint.data!.stateToken, pendingDigest: checkpoint.data!.memoryDigest });
     const compacted = await event({ kind: "compact" });
-    expect(compacted).toMatchObject({ hookSpecificOutput: { hookEventName: "LifecycleNotice", additionalContext: expect.stringContaining("decision=DEFER") } });
+    expect(compacted).toMatchObject({ hookSpecificOutput: { hookEventName: "LifecycleNotice", additionalContext: expect.stringContaining("[AGS current memory]") } });
     await event({ kind: "post-compact", turnId: "normalized-turn", successful: false });
     const database = new DatabaseSync(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
     try { expect(database.prepare("SELECT task_correlation, turn_hash, success FROM continuity_observations").get()).toMatchObject({
@@ -986,7 +1009,7 @@ describe("normalized continuity semantics and one-call snapshots", () => {
       if (action.kind !== "pre-compact") expect(JSON.parse(output)).toMatchObject({ hookSpecificOutput: { hookEventName: "LifecycleNotice", additionalContext: expect.any(String) } });
     }
     expect(close).toHaveBeenCalledTimes(3);
-    expect(service.store.getTask(service.correlateSession(session))).toMatchObject({ pendingSource: "direct", pendingRevision: checkpoint.data!.revision, pendingDigest: checkpoint.data!.snapshotDigest });
+    expect(service.store.getTask(service.correlateSession(session))).toMatchObject({ pendingSource: "direct", pendingRevision: null, pendingStateToken: checkpoint.data!.stateToken, pendingDigest: checkpoint.data!.memoryDigest });
   });
 
   it("rejects contradictory lifecycle/tool semantics before any epoch or marker mutation", async () => {
@@ -1052,17 +1075,15 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     expect(service.store.getTask(forkCorrelation)).toBeNull();
     expect(handleNativeContinuityHook({ hook_event_name: "SessionStart", source: "fork", session_id: "fork-recipient" }, service, "claude-code")).toEqual({});
     expect(service.store.getTask(forkCorrelation)).toMatchObject({ currentEpoch: 1, rootId: null });
-    expect(service.store.getSnapshot(forkCorrelation, 1)).toBeNull();
-    const foreignLoad = { schemaVersion: "1.0.0", candidateToken: originalCandidate.restoreToken!, epoch: original.epoch,
-      revision: original.revision, digest: original.snapshotDigest };
+    expect(service.store.getCurrent(forkCorrelation, 1)?.memory).toBeNull();
+    const foreignLoad = { schemaVersion: "1.0.0", candidateToken: originalCandidate.restoreToken! };
     expect(service.loadContext(foreignLoad, asRoot("fork-recipient")).error?.code).toBe("BINDING_INVALID");
     const own = directCheckpoint(service, "fork-recipient").data!;
     expect(own.taskCorrelation).not.toBe(original.taskCorrelation);
     const candidate = service.inspectContext({ schemaVersion: "1.0.0" }, asRoot("fork-recipient")).data!;
-    const ownLoad = { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken!, epoch: candidate.summary!.epoch,
-      revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
+    const ownLoad = { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken! };
     expect(service.loadContext(ownLoad, asRoot("fork-recipient")).data).toEqual(own);
-    expect(service.store.getSnapshot(original.taskCorrelation, original.epoch)).toEqual(original);
+    expect(service.store.getCurrent(original.taskCorrelation, original.epoch)).toEqual(original);
   });
 
   it.each(["claude-code", "codex"])("recognizes %s compact actions without changing the lifecycle contract", (host) => {
@@ -1084,15 +1105,16 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     }
   });
 
-  it.each(["claude-code", "codex"])("preserves the native %s pre-compact marker and returns a metadata-only restore card", (host) => {
+  it.each(["claude-code", "codex"])("preserves the native %s pre-compact marker and restores its current direct body exactly once", (host) => {
     const service = createService(), session = "native-compact-root";
-    directCheckpoint(service, session);
+    const saved = directCheckpoint(service, session).data!;
     expect(handleNativeContinuityHook({ hook_event_name: "SessionStart", source: "compact", session_id: session }, service, host)).toEqual({});
     handleNativeContinuityHook({ hook_event_name: "PreCompact", session_id: session }, service, host);
-    expect(service.store.getTask(service.correlateSession(session))).toMatchObject({ pendingSource: "direct", pendingRevision: 1 });
+    expect(service.store.getTask(service.correlateSession(session))).toMatchObject({ pendingSource: "direct", pendingRevision: null, pendingStateToken: saved.stateToken });
     const restored = handleNativeContinuityHook({ hook_event_name: "SessionStart", source: "compact", session_id: session }, service, host);
-    expect(JSON.stringify(restored)).toContain("decision=DEFER");
-    expect(JSON.stringify(restored)).not.toContain("Finish the continuity implementation");
+    expect(JSON.stringify(restored)).toContain("[AGS current memory]");
+    expect(JSON.stringify(restored)).toContain("Finish the continuity implementation");
+    expect(handleNativeContinuityHook({ hook_event_name: "SessionStart", source: "compact", session_id: session }, service, host)).toEqual({});
   });
 
   it.each(["claude-code", "codex"])("consumes the native %s workflow compact marker exactly once", (host) => {

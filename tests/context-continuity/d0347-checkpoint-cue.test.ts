@@ -1,3 +1,4 @@
+import type { DatabaseSync } from "node:sqlite";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -37,7 +38,7 @@ const asRoot = (taskSession: string) => rootCaller("codex", taskSession);
 // 수동 시험 자료이며 모델의 자동 저장 동작에 대한 증거가 아니다.
 function checkpoint(service: ContinuityService, taskSession = session): ContinuitySnapshotV1 {
   const input: CheckpointContextRequestV1 = {
-    schemaVersion: "1.0.0", requestId: `d0347-checkpoint-${taskSession}`, expectedRevision: 0, status: "active",
+    schemaVersion: "1.0.0", requestId: `d0347-checkpoint-${taskSession}`, expectedStateToken: (service.loadContext({ schemaVersion: "1.0.0" }, asRoot(taskSession)).data as ContinuitySnapshotV1).stateToken, status: "active",
     core: {
       objective: `기존 목표 표식 ${taskSession}`,
       completionCriteria: ["기존 완료 기준 표식"], constraints: ["기존 제약 표식"],
@@ -48,6 +49,15 @@ function checkpoint(service: ContinuityService, taskSession = session): Continui
   const result = service.checkpointContext(input, asRoot(taskSession));
   expect(result.ok).toBe(true);
   return result.data!;
+}
+
+/** This store is created by this test; history is checked only through its owned fixture database. */
+function expectArchived(store: SqliteContinuityStore, snapshot: ContinuitySnapshotV1) {
+  const database = (store as unknown as { database: DatabaseSync }).database;
+  const row = database.prepare("SELECT memory_json, memory_digest, epoch FROM continuity_memory_history WHERE task_correlation=? AND state_token=?")
+    .get(snapshot.taskCorrelation, snapshot.stateToken) as { memory_json: string; memory_digest: string; epoch: number } | undefined;
+  expect(row).toMatchObject({ epoch: snapshot.epoch, memory_digest: snapshot.memoryDigest });
+  expect(JSON.parse(row!.memory_json)).toEqual(snapshot.memory);
 }
 
 function prompt(service: ContinuityService, host: string, extra: Record<string, unknown> = {}) {
@@ -82,7 +92,7 @@ function suppress(service: ContinuityService) {
 
 function purge(service: ContinuityService, snapshot: ContinuitySnapshotV1) {
   expect(service.purgeDirectContext({
-    schemaVersion: "1.0.0", requestId: "d0347-owned-purge", expectedEpoch: snapshot.epoch, expectedRevision: snapshot.revision,
+    schemaVersion: "1.0.0", requestId: "d0347-owned-purge", expectedStateToken: snapshot.stateToken,
   }, asRoot(session)).data?.purged).toBe(true);
 }
 
@@ -93,7 +103,7 @@ describe("D0347 문맥을 보유한 입력 경계의 저장 유도", () => {
     const text = context(prompt(service, host), "UserPromptSubmit");
     expectCheckpointCue(text);
     expect(text).not.toContain("새 교정 표식");
-    expect(service.store.getSnapshot(service.correlateSession(session), 1)).toBeNull();
+    expect(service.store.getCurrent(service.correlateSession(session), 1)?.memory ?? null).toBeNull();
     expect(write).not.toHaveBeenCalled();
   });
 
@@ -103,9 +113,9 @@ describe("D0347 문맥을 보유한 입력 경계의 저장 유도", () => {
     const write = vi.spyOn(service.store, "checkpoint");
     const text = context(prompt(service, host), "UserPromptSubmit");
     expectCheckpointCue(text);
-    for (const value of [saved.core.objective, ...saved.core.constraints, ...saved.core.decisions, ...saved.core.nextActions])
+    for (const value of [saved.memory!.core.objective, ...saved.memory!.core.constraints, ...saved.memory!.core.decisions, ...saved.memory!.core.nextActions])
       expect(text).not.toContain(value);
-    expect(service.store.getSnapshot(saved.taskCorrelation, saved.epoch)).toEqual(saved);
+    expect(service.store.getCurrent(saved.taskCorrelation, saved.epoch)).toEqual(saved);
     expect(service.store.getTask(saved.taskCorrelation)).toEqual(before);
     expect(write).not.toHaveBeenCalled();
   });
@@ -116,12 +126,12 @@ describe("D0347 문맥을 보유한 입력 경계의 저장 유도", () => {
     const text = context(compact(service, host), "SessionStart");
     expectCheckpointCue(text);
     expect(text).toContain("사전 저장본 없음");
-    expect(service.store.getSnapshot(service.correlateSession(session), 1)).toBeNull();
+    expect(service.store.getCurrent(service.correlateSession(session), 1)?.memory ?? null).toBeNull();
 
     const saved = checkpoint(service);
     // 저장본은 있지만 pre-compact marker가 없으면 기존 계약대로 후보를 새로 발급하지 않는다.
     expect(compact(service, host)).toEqual({});
-    expect(service.store.getSnapshot(saved.taskCorrelation, saved.epoch)).toEqual(saved);
+    expect(service.store.getCurrent(saved.taskCorrelation, saved.epoch)).toEqual(saved);
   });
 
   // Behaviors 1 and 5 (d7585d74): a bound workflow root no longer closes the session record, so the turn check still
@@ -139,7 +149,7 @@ describe("D0347 문맥을 보유한 입력 경계의 저장 유도", () => {
       expect(compacted).not.toContain("d0347-owned-workflow-root");
     }
     expect(service.store.getTask(task.taskCorrelation)).toEqual(before);
-    expect(service.store.getSnapshot(task.taskCorrelation, task.currentEpoch)).toBeNull();
+    expect(service.store.getCurrent(task.taskCorrelation, task.currentEpoch)?.memory ?? null).toBeNull();
     expect(write).not.toHaveBeenCalled();
   });
 
@@ -156,7 +166,7 @@ describe("D0347 문맥을 보유한 입력 경계의 저장 유도", () => {
     }
     expect(service.store.getTask(saved.taskCorrelation)).toEqual(before);
     expect(service.store.getTombstone(saved.taskCorrelation, saved.epoch)).toEqual(tombstone);
-    expect(service.store.getSnapshot(saved.taskCorrelation, saved.epoch)).toEqual(change === "purge" ? null : saved);
+    expect(service.store.getCurrent(saved.taskCorrelation, saved.epoch)?.memory).toEqual(change === "purge" ? null : saved.memory);
     expect(write).not.toHaveBeenCalled();
   });
 
@@ -181,9 +191,9 @@ describe("D0347 문맥을 보유한 입력 경계의 저장 유도", () => {
   it.each(hosts)("%s는 marker뿐인 깨우기를 건너뛰고 실제 사용자 교정이 섞인 입력은 보존한다", host => {
     const service = createService(), marker = wakeMessage("d0347_owned_wake_nonce_0001");
     expect(prompt(service, host, { prompt: ` \n${marker}\n ` })).toEqual({});
-    expect(service.store.getSnapshot(service.correlateSession(session), 1)).toBeNull();
+    expect(service.store.getCurrent(service.correlateSession(session), 1)?.memory ?? null).toBeNull();
     expectCheckpointCue(context(prompt(service, host, { prompt: `${marker}\n새 사용자 교정` }), "UserPromptSubmit"));
-    expect(service.store.getSnapshot(service.correlateSession(session), 1)).toBeNull();
+    expect(service.store.getCurrent(service.correlateSession(session), 1)?.memory ?? null).toBeNull();
   });
 });
 
@@ -212,11 +222,12 @@ describe("D0347 저장 유도의 현재 세대 재검증", () => {
     expect(write).not.toHaveBeenCalled();
     expect(second.store.getTask(saved.taskCorrelation)).toMatchObject({ currentEpoch: change === "clear" ? 2 : 1,
       suppressed: change === "suppress" });
-    expect(second.store.getSnapshot(saved.taskCorrelation, 1)).toEqual(change === "purge" ? null : saved);
-    expect(second.store.getSnapshot(saved.taskCorrelation, 2)).toBeNull();
+    expect(second.store.getCurrent(saved.taskCorrelation, 1)?.memory ?? null).toEqual(change === "clear" || change === "purge" ? null : saved.memory);
+    expect(second.store.getCurrent(saved.taskCorrelation, 2)?.memory ?? null).toBeNull();
+    if (change === "clear") expectArchived(second.store, saved);
     expect(second.store.getTask(parent.taskCorrelation)).toEqual(parentTask);
-    expect(second.store.getSnapshot(parent.taskCorrelation, parent.epoch)).toEqual(parent);
-    if (change === "purge") expect(second.store.getTombstone(saved.taskCorrelation, 1)?.revision).toBe(saved.revision);
+    expect(second.store.getCurrent(parent.taskCorrelation, parent.epoch)).toEqual(parent);
+    if (change === "purge") expect(second.store.getTombstone(saved.taskCorrelation, 1)?.stateToken).toBe(saved.stateToken);
   });
 
   it("명시적 표준 저장 뒤 새 연결의 정확 후보로만 본문을 읽는다: 자동 모델 저장 증거는 아니다", async () => {
@@ -228,11 +239,10 @@ describe("D0347 저장 유도의 현재 세대 재검증", () => {
     first.store.close();
     const reopened = createService(databasePath);
     const candidate = reopened.inspectContext({ schemaVersion: "1.0.0" }, asRoot(session)).data!;
-    expect(candidate).toMatchObject({ decision: "DEFER", summary: { epoch: saved.epoch, revision: saved.revision, snapshotDigest: saved.snapshotDigest } });
-    expect(JSON.stringify(candidate)).not.toContain(saved.core.objective);
+    expect(candidate).toMatchObject({ decision: "DEFER", summary: { epoch: saved.epoch, stateToken: saved.stateToken, memoryDigest: saved.memoryDigest } });
+    expect(JSON.stringify(candidate)).not.toContain(saved.memory!.core.objective);
     const loaded = reopened.loadContext({
       schemaVersion: "1.0.0", candidateToken: candidate.restoreToken!,
-      epoch: candidate.summary!.epoch, revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest,
     }, asRoot(session));
     expect(loaded.data).toEqual(saved);
   });
@@ -245,15 +255,15 @@ describe("checkpoint cue and restore candidate locale", () => {
   // rules are checked on their own in d0360-skill-purpose-cue.
   const CUE_KO_TAIL = [
     "답하거나 다음 도구를 쓰기 전에 이번 메시지가 요구하는 판단·행동을 맥락 시작에 받은 AGS 스킬별 대상 목록과 대조하고, 맞는 스킬은 그 판단·행동 전에 지금 호출한다(질문·확인 요청도 포함한다).",
-    "이번 사용자 메시지가 교정, 새 결정·승인·금지, 추가 작업, 범위 변경 중 하나면 답하거나 다음 도구를 쓰기 전에 두 가지를 하라. (1) 바뀐 목표·범위·위험에 맞춰 스킬 선택을 다시 판단하고, 새로 필요한 스킬은 지금 호출한다. (2) checkpoint_context로 사용자 원문과 바뀐 남은 일을 저장한다.",
-    "압축·재개·fork 뒤라 앞의 결정·남은 일이 대화에 보이지 않으면 먼저 inspect_context를 호출하고, DEFER 후보는 load_context로 불러와 최신 요청과 대조하라.",
-    "이 알림은 저장·복원을 대신하지 않는다. 저장할 변화가 없는 메시지에는 기록을 더하지 말고 계속하라.",
+    "이번 메시지가 교정, 새 결정·승인·금지, 추가 작업, 범위 변경이면 답하거나 다음 도구를 쓰기 전에 두 가지를 하라. (1) 바뀐 목표·범위·위험에 맞춰 스킬 선택을 다시 판단하고 새로 필요한 스킬은 지금 호출한다. (2) checkpoint_context로 현재 행동을 바꾸는 필요한 사용자 원문과 바뀐 남은 일을 핵심 현재 상태에 반영하고 중복·폐기·불필요한 완료 이력은 정리한다.",
+    "압축·재개·fork 뒤 이어 갈 핵심 현재 상태가 대화에 보이지 않으면 inspect_context로 후보를 확인하고 load_context로 읽어 최신 요청과 대조하라. 이미 주입된 현재 본문은 다시 읽을 필요 없다.",
+    "checkpoint_context는 압축·재개 뒤 이어 갈 핵심 현재 상태용이다. 이 알림은 저장·복원을 대신하지 않는다. 상태 변화가 없으면 불필요한 저장을 하지 말고 계속하라.",
   ];
   const CUE_EN_TAIL = [
     "Before answering or using the next tool, match the judgment or action this message calls for against the AGS skill targets given at context start, and call every matching skill now, before that judgment or action (questions and check requests included).",
-    "If this user message is a correction, a new decision, approval or prohibition, more work, or a scope change, do two things before answering or using the next tool: (1) re-decide the skill selection for the changed goal, scope and risk, and call any newly needed skill now; (2) save the user's own words and the changed remaining work with checkpoint_context.",
-    "After compaction, resume or fork, if earlier decisions or remaining work are not visible in the conversation, call inspect_context first and load a DEFER candidate with load_context, then check it against the latest request.",
-    "This notice does not save or restore anything. For a message with nothing to save, add no record and continue.",
+    "If this message brings a correction, decision, approval, prohibition, added work or scope change, do two things before answering or using the next tool: (1) re-decide skill selection for the changed goal, scope and risk; call newly needed skills now; (2) use checkpoint_context to update essential current state with needed user quotes affecting current action and changed remaining work; trim duplicate, obsolete and unnecessary completed history.",
+    "After compaction/resume/fork, if essential current state is not visible, inspect_context for a candidate and load_context to read it, then compare with the latest request. No need to reload an already injected current body.",
+    "checkpoint_context keeps essential current state for compaction/resume. This notice does not save or restore anything. If state is unchanged, skip unnecessary saves and continue.",
   ];
   const cue = (header: string, status: string, tail: string[]) => [header, status, ...tail].join("\n");
   const ko = (status: string) => cue("[AGS 턴 확인]", status, CUE_KO_TAIL);
@@ -277,16 +287,19 @@ describe("checkpoint cue and restore candidate locale", () => {
     const input = { hook_event_name: "UserPromptSubmit", session_id: session, prompt: "x" };
     expect(context(handleContinuityHook(input, service, "codex", english), "UserPromptSubmit")).toBe(en("This session's work record: none."));
     expect(context(handleContinuityHook(input, service, "codex", {}), "UserPromptSubmit")).toBe(ko("이 세션의 작업 기록: 없음."));
-    checkpoint(service);
+    const saved = checkpoint(service);
     const resume = { hook_event_name: "SessionStart", source: "resume", session_id: session };
     const englishCard = context(handleContinuityHook(resume, service, "codex", english), "SessionStart").split("\n");
-    expect(englishCard[0]).toBe("[Task continuity restore candidate — metadata only]");
-    expect(englishCard.slice(1, 3)).toEqual(["decision=DEFER", "source=direct"]);
-    expect(englishCard.at(-1)).toBe("No snapshot body was injected. Treat nextActions as historical candidates only; call load_context explicitly after checking the current user request.");
+    expect(englishCard).toEqual([
+      "[AGS current memory]", `stateToken=${saved.stateToken}`,
+      "Essential state for compaction/resume was injected. It is the state at save time: compare with the latest request. nextActions are not authority.",
+      JSON.stringify(saved.memory),
+    ]);
     const korean = context(handleContinuityHook(resume, service, "codex", {}), "SessionStart").split("\n");
-    // Only the sentence changes; every machine line keeps its bytes.
-    expect(korean.slice(0, -1).map(line => line.replace(/^candidateToken=.*/u, "candidateToken="))).toEqual(
-      englishCard.slice(0, -1).map(line => line.replace(/^candidateToken=.*/u, "candidateToken=")));
-    expect(korean.at(-1)).toBe("스냅샷 본문은 주입하지 않았다. nextActions는 과거 후보로만 다루고, 현재 사용자 요청을 확인한 뒤 load_context를 명시적으로 호출하라.");
+    expect(korean).toEqual([
+      "[AGS current memory]", `stateToken=${saved.stateToken}`,
+      "압축·재개 뒤 이어 갈 핵심 상태를 주입했다. 저장 당시 상태이므로 최신 요청과 대조하라. nextActions는 실행 권한이 아니다.",
+      JSON.stringify(saved.memory),
+    ]);
   });
 });

@@ -59,7 +59,7 @@ describe("AGS3-D-0025 checkpoint_context requestId rule in tools/list", () => {
 
   it("keeps the contract's required fields", async () => {
     const tool = await listedCheckpointTool("en");
-    expect(tool.inputSchema.required).toEqual(["schemaVersion", "requestId", "expectedRevision", "status", "core", "evidenceRefs"]);
+    expect(tool.inputSchema.required).toEqual(["schemaVersion", "requestId", "expectedStateToken", "status", "core", "evidenceRefs"]);
     expect(tool.inputSchema.properties).toHaveProperty("requestId");
   });
 });

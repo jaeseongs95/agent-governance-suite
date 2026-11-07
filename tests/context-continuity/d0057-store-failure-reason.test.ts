@@ -1,3 +1,4 @@
+import type { ContinuitySnapshotV1 } from "../../contracts/types.js";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -38,8 +39,8 @@ function setup() {
   });
   // The verified caller the server admits; the service computes its continuity scope at call time.
   const caller = rootCaller("codex", "s-1");
-  const checkpointInput = (expectedRevision: number) => ({
-    schemaVersion: "1.0.0", requestId: `checkpoint-${expectedRevision}`, expectedRevision, status: "active",
+  const checkpointInput = (requestId: string) => ({
+    schemaVersion: "1.0.0", requestId, expectedStateToken: (service.loadContext({ schemaVersion: "1.0.0" }, caller).data as ContinuitySnapshotV1).stateToken, status: "active",
     core: { objective: "o", completionCriteria: ["c"], constraints: [], decisions: [], progress: [], blockers: [], nextActions: [] },
     evidenceRefs: [{ artifactId: "t", locator: "tests", digest: convergenceDigest("t"), verified: true }],
   });
@@ -52,8 +53,8 @@ describe("D0057 continuity store failure reasons", () => {
     [5, "STORE_UNAVAILABLE"], [10, "STORE_UNAVAILABLE"], [27, "STORE_UNAVAILABLE"],
   ] as const)("a write transaction failing with errcode %i keeps the reason %s", (errcode, reason) => {
     const { service, fail, caller, checkpointInput } = setup();
-    expect(service.checkpointContext(checkpointInput(0), caller).error).toBeNull();
-    const request = checkpointInput(1);
+    expect(service.checkpointContext(checkpointInput("initial"), caller).error).toBeNull();
+    const request = checkpointInput("updated");
     fail(sqliteError(errcode), "transaction");
     const result = service.checkpointContext(request, caller);
     expect(result.error).toMatchObject({ code: "CONTINUITY_UNAVAILABLE", details: { reason } });
@@ -64,12 +65,11 @@ describe("D0057 continuity store failure reasons", () => {
     for (const [error, reason] of [[sqliteError(11), "CORRUPT_DATABASE"], [sqliteError(26), "CORRUPT_DATABASE"],
       [sqliteError(5), "STORE_UNAVAILABLE"], [new Error("not a driver error"), "STORE_UNAVAILABLE"]] as const) {
       const { service, fail, caller, checkpointInput } = setup();
-      const saved = service.checkpointContext(checkpointInput(0), caller).data!;
+      expect(service.checkpointContext(checkpointInput("initial"), caller).error).toBeNull();
       const candidate = service.inspectContext({ schemaVersion: "1.0.0" }, caller).data!;
       expect(candidate.restoreToken).toEqual(expect.any(String));
       const inspectRequest = { schemaVersion: "1.0.0" } as const;
-      const loadRequest = { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken!, epoch: saved.epoch,
-        revision: saved.revision, digest: saved.snapshotDigest } as const;
+      const loadRequest = { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken! } as const;
       fail(error, "always");
       expect(service.inspectContext(inspectRequest, caller).error, reason).toMatchObject({ code: "CONTINUITY_UNAVAILABLE", details: { reason } });
       expect(service.loadContext(loadRequest, caller).error, reason).toMatchObject({ code: "CONTINUITY_UNAVAILABLE", details: { reason } });
