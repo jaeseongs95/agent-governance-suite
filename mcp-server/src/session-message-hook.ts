@@ -139,10 +139,19 @@ function assertHookBudget(budget: HookBudget, reserve = 0): void {
   if (remainingBudget(budget, reserve) < 1) throw hookFailure("HOOK_BUDGET_EXPIRED", "The session message hook budget expired.");
 }
 
-/** Check synchronous I/O and output boundaries, never cleanup. Keep a producer failure as the primary cause. */
+/** The budget check of every synchronous I/O, side-effect and output boundary; never cleanup. A producer failure stays the
+ * primary cause. Hook code checks the budget only through this, budgetedCall, budgetedTimeout and request (D0022). */
 function budgetedStep<T>(budget: HookBudget, run: () => T): T {
   assertHookBudget(budget);
   const result = run();
+  assertHookBudget(budget);
+  return result;
+}
+
+/** budgetedStep for an awaited external call (host callback, OS query, broker request); `reserve` stays unspent at its start. */
+async function budgetedCall<T>(budget: HookBudget, run: () => T | Promise<T>, reserve = 0): Promise<T> {
+  assertHookBudget(budget, reserve);
+  const result = await run();
   assertHookBudget(budget);
   return result;
 }
@@ -181,7 +190,6 @@ function snapshotOptions(options: SessionMessageHookOptions): SessionMessageHook
   }
   if (options.recoverExistingSession && (!budget || (!options.hostProcess && !options.resolveHostProcess))) throw hookFailure("RELAY_RECOVERY_CONTEXT_REQUIRED", "Relay recovery requires a host process resolver and budget.");
   if (options.ensureRelay && (!options.hostProcess || !budget)) throw hookFailure("RELAY_ENSURE_CONTEXT_REQUIRED", "Relay ensure requires a host process observation and budget.");
-  assertHookBudget(budget);
   return { ...options, ...(budget ? { executionBudget: budget } : {}),
     ...(options.hostProcess ? { hostProcess: { ...options.hostProcess } } : {}),
     ...(options.relayEnv ? { relayEnv: options.relayEnv } : {}) };
@@ -292,7 +300,6 @@ function launchRelayWithoutInheritedHandles(args: readonly string[], environment
 }
 
 function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid: number | undefined, hostProcess: Readonly<{ pid: number; startToken: string }> | undefined, budget: HookBudget, relayId: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"], isolateHandles = false): void {
-  assertHookBudget(budget);
   const relayPath = fileURLToPath(new URL("./session-message-relay.mjs", import.meta.url));
   // D0011: the relay process records its own abnormal end; this hook may exit before the relay does.
   const relayGuard = new URL("./session-message-relay-guard.mjs", import.meta.url).href;
@@ -300,8 +307,8 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   if (!hostPid || !Number.isInteger(hostPid) || hostPid < 1) { relayNotStarted("RELAY_HOST_PID_UNRESOLVED"); return; }
   // No OS identity query runs here (D0331): the relay's host watcher binds the birth, bounded by this hook's own start.
   const startToken = hostProcess?.startToken;
-  const hostAliveAt = hostAliveAtBound();
-  assertHookBudget(budget);
+  // The last boundary before the relay starts: a started relay is never reported as an expired budget.
+  const hostAliveAt = budgetedStep(budget, () => hostAliveAtBound());
   const environment = relayEnvironment(relayEnv);
   const relayArgs = [
     "--import", relayGuard,
@@ -345,7 +352,6 @@ export type RecordedSessionMessage = SessionMessage & { sourceReceiptId: string;
 
 function recordPeerMessages(host: SupportedHookHost, sessionId: string, messages: SessionMessage[], budget?: HookBudget): RecordedSessionMessage[] {
   const databasePath = budgetedStep(budget, resolveTrustDatabasePath);
-  assertHookBudget(budget);
   const store = budget ? new TrustStore(databasePath, undefined, { busyTimeoutMs: 0 }) : new TrustStore(databasePath);
   let failed = false;
   let primary: unknown;
@@ -445,8 +451,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   // Read once, and only when this call shows text (docs/i18n-design.md 4.1 ①).
   let hostLocale: SupportedLocale | undefined;
   const locale = (): SupportedLocale => (hostLocale ??= resolveHostLocale().locale);
-  const adapted = adaptHostInput(input, host);
-  assertHookBudget(budget);
+  // A host adapter may read host files (the Claude transcript lineage), so it is a synchronous I/O boundary.
+  const adapted = budgetedStep(budget, () => adaptHostInput(input, host));
   const observation = adapted.observation;
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
@@ -468,27 +474,26 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   async function request<T>(operation: string, payload: Record<string, unknown>): Promise<T> {
     progress.step = operation;
     // Every operation that claims bodies keeps the post-claim reserve and is never replayed.
-    const claim = operation === "claim-deferred" || operation === "claim-turn-end" || operation === "claim-host-wake";
-    assertHookBudget(budget, claim ? budget?.postClaimReserveMs ?? 0 : 0);
+    const claim = operation === "claim-deferred" || operation === "claim-turn-end" || operation === "claim-host-wake" || operation === "claim-wake-input";
     let attempted = false;
-    const result = await sessionMessageRequest<T>(operation, payload, undefined, budget ? {
-      totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS,
-      deadlineMonotonicMs: budget.deadlineMonotonicMs - (claim ? budget.postClaimReserveMs : 0),
-      // A synchronous SQLite busy wait cannot be interrupted at the deadline. Leave queued work for the next
-      // activity boundary instead; BEGIN IMMEDIATE failure writes nothing and does not spend the receipt reserve.
-      busyTimeoutMs: 0,
-      ...(claim || operation === "ensure-relay" ? {noOperationReplay:true}:{}),
-      ...(claim ? { onOperationWrite: () => {
-        if (attempted) return;
-        attempted = true;
-        observeClaim(options, "request-attempted", []);
-      } } : {}),
-    } : { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS, ...(operation === "ensure-relay" ? {noOperationReplay:true}:{}) });
-    if (budget && claim) {
-      const messages = (result as { messages: SessionMessage[] }).messages;
-      observeClaim(options, "response-received", messages.map((message) => message.messageId));
-    }
-    assertHookBudget(budget);
+    const result = await budgetedCall(budget, async () => {
+      const response = await sessionMessageRequest<T>(operation, payload, undefined, budget ? {
+        totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS,
+        deadlineMonotonicMs: budget.deadlineMonotonicMs - (claim ? budget.postClaimReserveMs : 0),
+        // A synchronous SQLite busy wait cannot be interrupted at the deadline. Leave queued work for the next
+        // activity boundary instead; BEGIN IMMEDIATE failure writes nothing and does not spend the receipt reserve.
+        busyTimeoutMs: 0,
+        ...(claim || operation === "ensure-relay" ? {noOperationReplay:true}:{}),
+        ...(claim ? { onOperationWrite: () => {
+          if (attempted) return;
+          attempted = true;
+          observeClaim(options, "request-attempted", []);
+        } } : {}),
+      } : { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS, ...(operation === "ensure-relay" ? {noOperationReplay:true}:{}) });
+      // Observed before the closing budget check, so a claim that answered is reported even when the budget then expires.
+      if (budget && claim) observeClaim(options, "response-received", (response as { messages: SessionMessage[] }).messages.map((message) => message.messageId));
+      return response;
+    }, claim ? budget?.postClaimReserveMs ?? 0 : 0);
     progress.step = undefined;
     return result;
   }
@@ -598,7 +603,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
           additionalContext: guidance } };
       } catch (error) {
         reportHookFailure("peer-wait", error);
-        assertHookBudget(budget);
+        // The output boundary (serialization in runSessionMessageHookOutcome) checks the budget before this is emitted.
         return additionalContext(adapted.outputEventName, render(msg("peer.wait.unavailable", {}), locale()));
       }
     }
@@ -614,9 +619,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   let claimHostProcess: Readonly<{ pid: number; startToken: string }> | undefined;
   let claimInstanceId: string | undefined;
   if (claimsAtBoundary && (options.hostProcess || options.resolveHostProcess)) {
-    assertHookBudget(budget);
-    const observed = options.hostProcess ?? await options.resolveHostProcess?.();
-    assertHookBudget(budget);
+    const observed = options.hostProcess ?? await budgetedCall(budget, () => options.resolveHostProcess?.());
     if (!observed) throw hookFailure("HOOK_HOST_GENERATION_UNVERIFIED", "The hook host process generation is unavailable.");
     claimHostProcess = { pid: observed.pid, startToken: observed.startToken };
     if (!Number.isInteger(claimHostProcess.pid) || claimHostProcess.pid < 1
@@ -666,10 +669,10 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       let observedHostPid = explicitHostPid;
       if (observedHostPid === undefined && options.resolveHostPid) {
         progress.step = "host-pid";
-        try { observedHostPid = await options.resolveHostPid(budgetedTimeout(budget, HOST_PID_LOOKUP_TIMEOUT_MS)); }
+        const resolveHostPid = options.resolveHostPid;
+        try { observedHostPid = await budgetedCall(budget, () => resolveHostPid(budgetedTimeout(budget, HOST_PID_LOOKUP_TIMEOUT_MS))); }
         catch (error) { throw budgetExpiredOr(budget, error); }
         progress.step = undefined;
-        assertHookBudget(budget);
       }
       const hostPid = resolveHookProcessPid(host, observedHostPid, undefined);
       if (!hostPid) throw hookFailure("RELAY_RECOVERY_HOST_UNIDENTIFIED", "This hook did not receive its host process identity.");
@@ -701,7 +704,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         sourceReceiptId,
       });
       if (!result.recognized) {
-        // Diagnose the exact refusal without exposing the marker or treating it as authority for a fallback claim.
+        // Diagnose the exact refusal without exposing the marker; the marker itself authorizes nothing.
         const reason = ["WAKE_OBSERVATION_INVALID", "WAKE_READER_UNAVAILABLE", "WAKE_RECEIPT_REJECTED", "WAKE_NONCE_UNKNOWN", "WAKE_GENERATION_NOT_CURRENT"]
           .find((known) => known === result.rejectionReason) ?? "WAKE_CLAIM_UNRECOGNIZED";
         reportHookFailure("wake-claim", hookFailure(reason, "The peer wake claim was not recognized."));
@@ -717,7 +720,18 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         return { decision: "block", reason: render(msg("peer.wake.retired", {}), locale()) };
       }
       if (result.recognized) messages = result.messages;
-      else await recoverUnverifiedRelay(await request<RelayRecoveryHint>("observe-native-input", hookTarget));
+      else if (result.retired === true) await recoverUnverifiedRelay(await request<RelayRecoveryHint>("observe-native-input", hookTarget));
+      else {
+        // D0015: an unrecognized marker (unknown, pruned, another birth's, unverifiable) still started a turn of this
+        // hook's generation. That boundary, fenced by this hook's instance like a tool boundary, claims the waiting bodies;
+        // with none to attach the wake-only prompt is stopped before a model request, as a verified empty wake is.
+        const claimed = await request<ClaimWithRecovery>("claim-wake-input", fencedLimits);
+        messages = claimed.messages;
+        await recoverUnverifiedRelay(claimed);
+        if (profile.blocksEmptyWakePrompt && messages.length === 0) {
+          return { decision: "block", reason: render(msg("peer.wake.noMessage", {}), locale()) };
+        }
+      }
     } else if (!observation.wakeOnly) {
       await recoverUnverifiedRelay(await request<RelayRecoveryHint>("observe-native-input", hookTarget));
     }
@@ -756,7 +770,6 @@ export async function runSessionMessageHookOutcome(host: SupportedHookHost, raw:
     if (!input || typeof input !== "object" || Array.isArray(input)) throw hookFailure("INVALID_HOOK_INPUT", "Invalid hook input.");
     phase = "handle";
     const output = await handleSessionMessageHook(input, host, explicitHostPid, options, progress);
-    assertHookBudget(options.executionBudget);
     phase = "serialize";
     const serialized = budgetedStep(options.executionBudget, () => Object.keys(output).length > 0 ? JSON.stringify(output) : "");
     return { ok: true, output: serialized };

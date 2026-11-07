@@ -13,7 +13,7 @@ import { msg, render, ROOT_LOCALE } from "./i18n.js";
  * process against the shared SQLite file; each store call is one BEGIN IMMEDIATE transaction (docs/ags30-broker-redesign.md 3.1).
  */
 export const SESSION_MESSAGE_OPERATIONS = ["prepare", "send", "claim", "claim-host-wake", "observe-native-input", "claim-deferred",
-  "claim-turn-end", "clear-deferred", "acknowledge", "status", "peer-wait", "pending", "ensure-relay", "grant-relay", "release-relay",
+  "claim-turn-end", "claim-wake-input", "clear-deferred", "acknowledge", "status", "peer-wait", "pending", "ensure-relay", "grant-relay", "release-relay",
   "relay-tick", "presence-start", "presence-heartbeat", "presence-end", "presence-end-host", "presence", "list-presence", "list-current-presence", "list-known-presence",
   "reserve-wake", "start-wake", "record-wake-outcome", "wake-status", "consume-wake"] as const;
 
@@ -223,14 +223,15 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
       return withRelayRecovery(store, payload, { observed: true });
     }
     case "claim-deferred":
-    case "claim-turn-end": {
+    case "claim-turn-end":
+    case "claim-wake-input": {
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
       const limits = { ...(Object.hasOwn(payload, "instanceId") ? { instanceId: string(payload.instanceId, "instanceId") } : {}),
         ...(maxMessages === undefined ? {} : { maxMessages }), ...(maxBodyChars === undefined ? {} : { maxBodyChars }) };
       const target = identity(payload.target);
       return withRelayRecovery(store, payload, { messages: operation === "claim-deferred" ? store.claimDeferred(target, undefined, limits)
-        : store.claimTurnEnd(target, undefined, limits) });
+        : operation === "claim-turn-end" ? store.claimTurnEnd(target, undefined, limits) : store.claimWakeInput(target, undefined, limits) });
     }
     case "clear-deferred": {
       store.clearDeferred(identity(payload.target), undefined, optionalString(payload, "instanceId"));
