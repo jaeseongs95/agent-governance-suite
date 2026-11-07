@@ -215,6 +215,9 @@ export function oracleDigest(value: { oracleRevision: string; sourceSpecDigest: 
     pairedMatrix: value.pairedMatrix, split: value.split })).digest("hex");
 }
 
+/** Digest of the current (last) source-binding manifest, fixtures.v390-intake-source-successor.json. */
+export const V390_INTAKE_MANIFEST_DIGEST = "sha256:4fd928139e0acca64174e0b549d2e04f08060e2523c2bb448cc08df8f7b15763";
+
 /** 동결 fixture는 덮지 않는다. 검토된 후속 manifest만 현재 원문 결속을 바꾼다. */
 export function loadCurrentSourceBindings(repo: string) {
   const hashBytes = (value: string | Buffer) => "sha256:" + createHash("sha256").update(value).digest("hex");
@@ -438,17 +441,25 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, d38References.frozenPredecessor.path) !== deliveryPath || deliveryBytes.length !== d38References.frozenPredecessor.bytes || hashBytes(deliveryBytes) !== d38References.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings, ...intakeLength.bindings, ...writtenCases.bindings, ...delivery.bindings, ...d38References.bindings];
+  // 3.9.0 WP-F: the shortened intake and field-neutral sources follow frozen r37 (AGS3-D-0032/0038/0042-0055).
+  const v390IntakePath = resolve(repo, "tests/skill-classification/fixtures.v390-intake-source-successor.json");
+  const v390IntakeBytes = readFileSync(v390IntakePath);
+  if (hashBytes(v390IntakeBytes) !== V390_INTAKE_MANIFEST_DIGEST) throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const v390Intake = JSON.parse(v390IntakeBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, v390Intake.frozenPredecessor.path) !== d38ReferencesPath || d38ReferencesBytes.length !== v390Intake.frozenPredecessor.bytes || hashBytes(d38ReferencesBytes) !== v390Intake.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings, ...intakeLength.bindings, ...writtenCases.bindings, ...delivery.bindings, ...d38References.bindings, ...v390Intake.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: d38References.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath, intakeLengthPath, writtenCasesPath, deliveryPath, d38ReferencesPath);
+  const currentManifest = {...manifest, revision: v390Intake.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath, intakeLengthPath, writtenCasesPath, deliveryPath, d38ReferencesPath, v390IntakePath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(d38ReferencesBytes),
+    manifest: currentManifest, files, digest: hashBytes(v390IntakeBytes),
     /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
     resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);
