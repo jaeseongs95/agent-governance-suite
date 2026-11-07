@@ -3,10 +3,10 @@
 // where it applies to one field. This check finds field-limited words in the
 // description and body of every general SKILL.md, in the source tree and in the
 // generated Claude package (which carries the Claude overlay descriptions), and
-// in the shared intake block.
+// in the shared intake block and the four mandatory reference boundaries below.
 //
 // Usage: node scripts/check-domain-neutral-wording.mjs
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -86,6 +86,7 @@ export const FIELD_TERMS = Object.freeze([
   ["library", /\blibrar(?:y|ies)\b/giu],
   ["screen", /\bscreens?\b/giu],
   ["software", /\bsoftware\b/giu],
+  ["runner", /\brunner\b/giu],
 ]);
 
 // A sentence that only says where the skill is not used, or what it does not do
@@ -140,6 +141,10 @@ function allowance(sentence, raw, index, length, underBranchHeading) {
   if (BRANCH_SUFFIX.test(sentence.slice(index + length))) return "branch";
   const { start, end } = clauseBounds(sentence, index);
   const clause = sentence.slice(start, end);
+  // These explicit conditions govern their own clause, never a later clause.
+  const condition = /^\s*(?:-\s*)?(?:저장소 관례가 필요하고 이미 제공됐다면|소프트웨어 테스트와 표준 runner가 있는 경우에는)/u.exec(sentence);
+  if (condition && start < condition[0].length) return "branch";
+  if (sentence.slice(index).startsWith("diff와 의미 동일성 근거")) return "evidence-kind";
   // Only this clause routes work to the field-specific skill whose field it names.
   if (FIELD_SKILLS.some((id) => raw.slice(start, end).includes(`\`${id}\``))) return "field-skill-routing";
   for (const group of sentence.matchAll(EXAMPLE_GROUP)) {
@@ -153,7 +158,7 @@ function allowance(sentence, raw, index, length, underBranchHeading) {
   }
   const lead = clause.search(EXAMPLE_LEAD);
   if (lead >= 0 && lead < index - start) return "example";
-  if (inMixedList(sentence, index, length)) return "mixed-list";
+  if (!/^구현자/u.test(sentence.slice(index)) && inMixedList(sentence, index, length)) return "mixed-list";
   // The word must sit in the clause the exclusion closes, not in an earlier clause ("..판정하고, ..대신하지 않는다").
   const exclusion = EXCLUSION.exec(sentence.slice(index));
   if (exclusion && !CLAUSE_END.test(sentence.slice(index, index + exclusion.index)) && !ONLY.test(sentence)) return "exclusion";
@@ -224,6 +229,58 @@ export function intakeLines(markdown) {
 
 export const INTAKE_FILE = "skills/orchestrator/references/intake.md";
 
+// Only the four mandatory references identified by D38, and their general
+// application/role/procedure clauses. Evidence lists and specialist routing stay out.
+const REFERENCE_RULES = {
+  "skills/task-contract/references/entry-details.md": [
+    ["작성 절차", /^1\.\s/u, 1],
+  ],
+  "skills/independent-audit-gate/references/entry-details.md": [
+    ["권한과 역할 경계", /^- 감사자는/u, 3],
+    ["실행 안전", /^(?:감사자와|- (?:저장소의|대상의) 기존 검증|- 감사자는)/u, 3],
+    ["실행 절차", /^(?:3|4|6)\.\s/u, 3],
+    ["완료 불변조건", /^- 감사자와/u, 1],
+    ["판정의 범위를 보존한다", /^- 발견사항의 ID/u, 1],
+  ],
+  "skills/independent-audit-gate/references/audit-protocol.md": [
+    ["2. 감사자 독립성", /^- /u, 6],
+    ["3. 감사자 briefing", /^필수 정보/u, 1],
+    ["재현과 실행 안전", /^(?:증거 재현은|자원 경계는|감사자는 기존 검증|(?:구현자|변경 작업자)는 명세를|- (?:저장소가 정의한|대상에 정의된) 검증)/u, 5],
+    ["6. 수정과 재감사", /^공백·서식/u, 1],
+  ],
+  "skills/independent-audit-gate/references/orchestrator-integration.md": [
+    ["1. 책임 분리", /^- 상위 orchestrator/u, 1],
+    ["3. 출력 handoff", /^- `Independence`/u, 1],
+  ],
+};
+
+/** Reuse the existing lines boundary; missing/empty structural selections fail. */
+function referenceLines(markdown, rules) {
+  const all = markdown.replace(/<!--[\s\S]*?-->/gu, blank).split(/\r?\n/u);
+  const prose = new Set();
+  let fenced = false;
+  all.forEach((line, index) => {
+    if (/^\s*(```|~~~)/u.test(line)) { fenced = !fenced; return; }
+    if (!fenced && line.trim()) prose.add(index);
+  });
+  const lines = new Set();
+  for (const [heading, select, minimum] of rules) {
+    const starts = all.flatMap((line, index) => prose.has(index) && /^#{1,6}\s/u.test(line)
+      && line.replace(/^#{1,6}\s+/u, "") === heading ? [index] : []);
+    if (starts.length !== 1) throw new Error(`required reference section missing or repeated: ${heading}`);
+    const start = starts[0], level = all[start].match(/^#+/u)[0].length;
+    let selected = 0;
+    for (let index = start + 1; index < all.length; index += 1) {
+      if (!prose.has(index)) continue;
+      const next = /^(#{1,6})\s/u.exec(all[index]);
+      if (next && next[1].length <= level) break;
+      if (select.test(all[index])) { lines.add(index + 1); selected += 1; }
+    }
+    if (selected < minimum) throw new Error(`required reference clauses missing: ${heading} (${selected}/${minimum})`);
+  }
+  return lines;
+}
+
 export function checkRepository(root = ROOT) {
   const problems = [];
   const ids = readdirSync(path.join(root, "skills"), { withFileTypes: true })
@@ -246,6 +303,22 @@ export function checkRepository(root = ROOT) {
   }
   const intake = readFileSync(path.join(root, INTAKE_FILE), "utf8");
   for (const finding of findFieldWording(intake, { lines: intakeLines(intake) })) findings.push({ file: INTAKE_FILE, ...finding });
+  for (const [source, rules] of Object.entries(REFERENCE_RULES)) {
+    for (const file of [source, `claude-plugin/${source}`]) {
+      let text;
+      try { text = readFileSync(path.join(root, file), "utf8"); } catch (error) {
+        const skill = source.split("/")[1];
+        if (error.code === "ENOENT" && file.startsWith("claude-plugin/")
+          && !existsSync(path.join(root, "claude-plugin/skills", skill, "SKILL.md"))) continue;
+        if (error.code !== "ENOENT") throw error;
+        problems.push(`${file}: required reference missing`);
+        continue;
+      }
+      let lines;
+      try { lines = referenceLines(text, rules); } catch (error) { problems.push(`${file}: ${error.message}`); continue; }
+      for (const finding of findFieldWording(text, { lines })) findings.push({ file, ...finding });
+    }
+  }
   return { general, findings, problems };
 }
 
@@ -254,9 +327,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   for (const problem of problems) console.error(problem);
   for (const { file, line, term, text } of findings) console.error(`${file}:${line}: field-limited word "${term}": ${text}`);
   if (problems.length || findings.length) {
-    console.error(`domain-neutral wording: ${findings.length} finding(s), ${problems.length} problem(s) in ${general.length} general skills and the intake block`);
+    console.error(`domain-neutral wording: ${findings.length} finding(s), ${problems.length} problem(s) in ${general.length} general skills, the intake block and four required references`);
     process.exitCode = 1;
   } else {
-    console.log(`domain-neutral wording: ${general.length} general skills and the intake block pass`);
+    console.log(`domain-neutral wording: ${general.length} general skills, the intake block and four required references pass`);
   }
 }

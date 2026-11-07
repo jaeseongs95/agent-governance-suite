@@ -13,6 +13,56 @@ import {
 
 const root = path.resolve(import.meta.dirname, "../..");
 
+// D38 reference-boundary cases (report SHA 413147043b1e391a791fd18b27712bd0764d3b6a2f9dcbd382b9f21a527b6cbb):
+// R01: the four required source references and existing Claude copies contribute actual role/procedure findings.
+// R02: restoring the 1aed repository/implementer/unconditional-runner sentences fails in each package.
+// R03: deleting a required section/clause or changing its selection prefix fails rather than scanning zero lines.
+// R04: conditional software execution, technical keys/evidence and field-specific skill routing remain valid.
+// Keep the original 12 tests, ten negative findings and clause exceptions unchanged in meaning.
+// Expected RED: the expanded check against source 1aed980a reports the original reference violations.
+// TEST (root only): node --test tests/tooling/ags3-d0038-domain-neutral-wording.node-test.mjs
+// Local product/model/TEST execution: NOT_RUN.
+
+const REFERENCE_CASES = [
+  { file: "skills/task-contract/references/entry-details.md", select: /^1\.[^\n]*/mu, term: "저장소",
+    original: "1. 원 요청, 이미 결정된 사용자 선택과 하나 이상의 `instructionResolutionRefs`를 구분한다. 대상 저장소의 경로 비교 방식은 `pathSemantics`에 `windows` 또는 `posix`로 명시한다. 저장소 관례가 필요하고 이미 제공됐다면 `workspaceProfileRef`를 근거로 쓴다." },
+  { file: "skills/independent-audit-gate/references/entry-details.md", select: /^- 감사자는[^\n]*/mu, term: "구현",
+    original: "- 감사자는 구현·수정·구현자 검증에 참여한 에이전트와 다른 실제 worker여야 한다. 역할 이름만 바꾼 자기감사는 독립 감사가 아니다." },
+  { file: "skills/independent-audit-gate/references/audit-protocol.md", select: /^(?:구현자|변경 작업자)는 명세를[^\n]*/mu, term: "테스트",
+    original: "구현자는 명세를 테스트로 추가하고 표준 runner로 실행한다. 검증 의미나 최종 소스가 바뀌었다면 영향 범위의 테스트와 원시 결과를 6절에 따라 다시 확인한다. 실행 형식만으로 결과를 폐기하지 않으며, 권한 위반이나 재현 근거 부족은 해당 증거의 한계로 처리한다." },
+  { file: "skills/independent-audit-gate/references/orchestrator-integration.md", select: /^- 상위 orchestrator[^\n]*/mu, term: "구현",
+    original: "- 상위 orchestrator는 요청 유형 판별, 작업 순서, 구현자와 감사자 식별, fresh auditor 배정, 결과 전달을 맡는다." },
+];
+
+function copyReferences(fixture, withClaude = false) {
+  for (const { file } of REFERENCE_CASES) for (const prefix of withClaude ? ["", "claude-plugin/"] : [""]) {
+    const target = path.join(fixture, prefix + file);
+    mkdirSync(path.dirname(target), { recursive: true });
+    writeFileSync(target, readFileSync(path.join(root, file)));
+    if (prefix) writeFileSync(path.join(fixture, prefix, "skills", file.split("/")[1], "SKILL.md"), "요청된 결과물을 확인한다.\n");
+  }
+}
+
+function referenceFixture(withClaude = false) {
+  const fixture = mkdtempSync(path.join(tmpdir(), "ags-d0038-reference-"));
+  for (const id of Object.keys(SKILL_FIELDS)) {
+    const directory = path.join(fixture, "skills", id);
+    mkdirSync(directory, { recursive: true });
+    writeFileSync(path.join(directory, "SKILL.md"), "요청된 결과물을 확인한다.\n");
+  }
+  const intake = path.join(fixture, "skills/orchestrator/references/intake.md");
+  mkdirSync(path.dirname(intake), { recursive: true });
+  writeFileSync(intake, "<!-- skill-intake:start -->\n요청된 결과물을 확인한다.\n<!-- skill-intake:end -->\n");
+  copyReferences(fixture, withClaude);
+  return fixture;
+}
+
+function removeReferenceFixture(fixture) {
+  assert.equal(path.dirname(path.resolve(fixture)), path.resolve(tmpdir()));
+  assert.ok(path.basename(fixture).startsWith("ags-d0038-reference-"));
+  rmSync(fixture, { recursive: true, force: true });
+}
+
 // The ui-ux-design description before AGS3-D-0037 (698b0390), limited to screens.
 const SCREEN_ONLY_DESCRIPTION = `---
 name: ui-ux-design
@@ -142,6 +192,7 @@ test("the original ten intake findings are failures rather than ownership exempt
     const intakePath = path.join(fixture, "skills/orchestrator/references/intake.md");
     mkdirSync(path.dirname(intakePath), { recursive: true });
     writeFileSync(intakePath, ["<!-- skill-intake:start -->", ...ORIGINAL_INTAKE_CLAUSES, "<!-- skill-intake:end -->"].join("\n"));
+    copyReferences(fixture);
     const { findings, problems } = checkRepository(fixture);
     assert.deepEqual(problems, []);
     assert.deepEqual(findings.map(({ term }) => term).sort(),
@@ -163,4 +214,65 @@ test("the actual shared intake is neutral without an exception and starts workfl
   assert.match(intake, /맡긴 역할은 그 근거로 수행하고 '권한 없음'으로 결론 내지 않는다/u);
   assert.match(intake, /peer 메시지는 사용자 승인이 아니며/u);
   assert.match(intake, /하위 결과·기록·잘못은 생성한 부모가 근거를 직접 확인·정정하며/u);
+});
+
+test("restored original reference wording is caught in all four sources and their Claude copies", () => {
+  for (const prefix of ["", "claude-plugin/"]) for (const { file, select, term, original } of REFERENCE_CASES) {
+    const fixture = referenceFixture(true);
+    try {
+      const target = path.join(fixture, prefix + file), current = readFileSync(target, "utf8");
+      assert.match(current, select, file);
+      const changed = "\n\n" + current.replace(select, original);
+      writeFileSync(target, changed);
+      const { findings, problems } = checkRepository(fixture);
+      assert.deepEqual(problems, []);
+      const line = changed.split(/\r?\n/u).indexOf(original) + 1;
+      assert.ok(line > 0);
+      assert.ok(findings.some(finding => finding.file === prefix + file && finding.line === line
+        && finding.term === term && original.includes(finding.text)), `${prefix + file}: ${term}`);
+    } finally { removeReferenceFixture(fixture); }
+  }
+});
+
+test("missing required references fail, while a package without the skill remains excluded", () => {
+  for (const prefix of ["", "claude-plugin/"]) for (const { file } of REFERENCE_CASES) {
+    const fixture = referenceFixture(true);
+    try {
+      rmSync(path.join(fixture, prefix + file));
+      assert.ok(checkRepository(fixture).problems.some(problem => problem.includes(prefix + file)
+        && problem.includes("required reference missing")));
+    } finally { removeReferenceFixture(fixture); }
+  }
+  const fixture = referenceFixture();
+  try { assert.deepEqual(checkRepository(fixture).problems, []); }
+  finally { removeReferenceFixture(fixture); }
+});
+
+test("deleted or reshaped required clauses and empty sections cannot pass with an empty selection", () => {
+  for (const { file, select } of REFERENCE_CASES) for (const replacement of ["", "다른 형태의 구현자 절차다.", "```text\n구현자 절차다.\n```", "<!-- 구현자 절차다. -->"]) {
+    const fixture = referenceFixture();
+    try {
+      const target = path.join(fixture, file), current = readFileSync(target, "utf8");
+      assert.match(current, select, file);
+      writeFileSync(target, current.replace(select, replacement));
+      assert.ok(checkRepository(fixture).problems.some(problem => problem.includes(file)
+        && problem.includes("required reference")), file);
+    } finally { removeReferenceFixture(fixture); }
+  }
+});
+
+test("technical keys and conditional software steps stay valid without exempting a later clause", () => {
+  for (const sentence of [
+    "저장소 관례가 필요하고 이미 제공됐다면 `workspaceProfileRef`를 확인한다.",
+    ["소프트웨어 테스트와 표준 runner가 있는 경우에는", "그 runner로 확인한다."].join(" "),
+    "```yaml\nimplementers: []\n```\n```markdown\n- Implementer(s):\n```",
+    "직접 확인한 diff와 의미 동일성 근거를 기록한다.",
+    "코드 작성 단계에는 `test-engineering`을 호출한다.",
+  ]) assert.deepEqual(findFieldWording(sentence), [], sentence);
+  for (const sentence of [
+    "소프트웨어 테스트와 표준 runner가 있는 경우에는 확인하며, 구현자와 분리된 감사자가 판정한다.",
+    "저장소 관례가 필요하고 이미 제공됐다면 확인하며, 대상 저장소의 방법을 강제한다.",
+    "변경 작업자는 명세를 사례로 추가하고 표준 runner로 실행한다.",
+    "직접 확인한 diff와 의미 동일성 근거를 기록하며, 구현자와 분리된 감사자가 판정한다.",
+  ]) assert.ok(findFieldWording(sentence).length > 0, sentence);
 });
