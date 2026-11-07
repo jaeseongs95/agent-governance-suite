@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { types } from "node:util";
 
-import { ContinuityService, minimalWorkflowStartExample, renderHookText, subagentStartCue, workflowFailureCode } from "./continuity-service.js";
+import { ContinuityService, minimalWorkflowStartExample, renderHookText, stepCheck, subagentStartCue, workflowFailureCode } from "./continuity-service.js";
 import { ContextLayerService } from "./context-layer-service.js";
 import { ContextLayerStore } from "./context-layer-store.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
@@ -294,27 +294,37 @@ type ContinuityHookPhase = "host-entry" | "stdin" | "input" | "storage" | "workf
 const CONTEXT_START_ACTIONS: ReadonlySet<string> = new Set(["startup", "fork", "clear", "resume", "compact"]);
 
 /**
- * Which actor gets the shared context layers at this boundary, and whether in full (a context start: session start,
- * resume, compaction, a subagent's start, or a turn start the adapter marks as a context start) or only the layers that
- * changed since that actor last received them (a later user prompt, the boundary after an AGS progress tool, or a step
- * between model calls inside a turn; a subagent gets these two too). The actor key is the same hostActorId the server
- * and the phase checks use. A subagent whose hooks learn their root session only mid-turn gets its layers at the first
- * such step after that.
+ * The actor a boundary belongs to, keyed by the same hostActorId the server and the phase checks use. `own`: the
+ * session's own actor, which saves and restores the session's situational context itself.
  */
-function contextLayerTarget(input: NormalizedContinuityInput, host: string): { sessionId: string; actorId: string; full: boolean } | null {
-  const { observation, action } = input;
+function boundaryActor(input: NormalizedContinuityInput, host: string): { sessionId: string; actorId: string; own: boolean } | null {
+  const { observation } = input;
   const sessionId = observation.sessionId;
   if (!sessionId) return null;
   const child = isSubagentStart(input) || isObservedSubagent(observation);
   if (!child && !actorAccess(observation.actor).allowed) return null;
-  const actorId = hostActorId(host, sessionId, child ? observation.agentKey ?? "unidentified-child" : null);
+  return { sessionId, actorId: hostActorId(host, sessionId, child ? observation.agentKey ?? "unidentified-child" : null), own: !child };
+}
+
+/**
+ * Which actor gets the shared context layers at this boundary, and whether in full (a context start: session start,
+ * resume, compaction, a subagent's start, or a turn start the adapter marks as a context start) or only the layers that
+ * changed since that actor last received them (a later user prompt, the boundary after an AGS progress tool, or the
+ * step boundary the adapter marks; a subagent gets these two too). A subagent whose hooks learn their root session only
+ * mid-turn gets its layers at the first step after that.
+ */
+function contextLayerTarget(input: NormalizedContinuityInput, host: string): { sessionId: string; actorId: string; full: boolean } | null {
+  const { observation, action } = input;
+  const actor = boundaryActor(input, host);
+  if (!actor) return null;
+  const { sessionId, actorId, own } = actor;
   if (isSubagentStart(input)) return { sessionId, actorId, full: true };
-  if (!child && action && CONTEXT_START_ACTIONS.has(action.kind)) return { sessionId, actorId, full: true };
-  if (!child && observation.kind === "user-input" && !observation.wakeOnly) return { sessionId, actorId, full: input.restoreCurrentAtTurnStart };
+  if (own && action && CONTEXT_START_ACTIONS.has(action.kind)) return { sessionId, actorId, full: true };
+  if (own && observation.kind === "user-input" && !observation.wakeOnly) return { sessionId, actorId, full: input.restoreCurrentAtTurnStart };
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "after" && localToolName(host, observation.toolName ?? "", PROGRESS_TOOLS)) {
     return { sessionId, actorId, full: false };
   }
-  if (observation.kind === "turn-step") return { sessionId, actorId, full: false };
+  if (observation.step === true) return { sessionId, actorId, full: false };
   return null;
 }
 
@@ -343,21 +353,47 @@ function withAddedContext(output: Record<string, unknown>, eventName: string, te
   return { ...output, hookSpecificOutput: { ...specific, additionalContext: specific.additionalContext ? `${specific.additionalContext}\n\n${text}` : text } };
 }
 
-/** The situational context a subagent starts with: its session's current body, read best-effort. */
-function subagentSituation(sessionId: string, environment: NodeJS.ProcessEnv, locale: SupportedLocale): string | null {
+/**
+ * The session's situational context for an actor other than the session's own, at its start or a later step, once per
+ * state token (AGS3-D-0065). Read best-effort: a failure is reported and takes only this text away.
+ */
+function situationText(input: NormalizedContinuityInput, host: string, store: SqliteContinuityStore, locale: SupportedLocale): string | null {
+  try {
+    const actor = boundaryActor(input, host);
+    if (!actor || actor.own || !(isSubagentStart(input) || input.observation.step === true)) return null;
+    return renderHookText(new ContinuityService(store, null).situationForActor(actor.sessionId, actor.actorId), locale);
+  } catch (cause) {
+    reportContinuityFailure("subagent-situation", cause);
+    return null;
+  }
+}
+
+/** The subagent start path opens the continuity store only for its situational context. */
+function subagentSituation(input: NormalizedContinuityInput, host: string, environment: NodeJS.ProcessEnv, locale: SupportedLocale): string | null {
   let store: SqliteContinuityStore | null = null;
   try {
     const workflowDatabasePath = resolveWorkflowDatabasePath(environment);
     const continuityDatabasePath = resolveContinuityDatabasePath(environment);
     assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
     store = new SqliteContinuityStore(continuityDatabasePath);
-    return renderHookText(new ContinuityService(store, null).currentForSubagent(sessionId), locale);
+    return situationText(input, host, store, locale);
   } catch (cause) {
     reportContinuityFailure("subagent-situation", cause);
     return null;
   } finally {
     try { store?.close(); } catch (cause) { reportContinuityFailure("close", cause); }
   }
+}
+
+/**
+ * Every actor's step check at the step boundary the adapter marks (AGS3-D-0065): a subagent has no user message, so this
+ * is where it matches skills again during its work, as the session's own actor does. A boundary whose output already
+ * carries the turn check (the cue after an AGS progress tool) gets no second one.
+ */
+function stepCheckText(input: NormalizedContinuityInput, host: string, handled: Record<string, unknown>, locale: SupportedLocale): string | null {
+  if (input.observation.step !== true || !boundaryActor(input, host)) return null;
+  const specific = handled.hookSpecificOutput as { additionalContext?: unknown } | undefined;
+  return specific?.additionalContext ? null : renderHookText(stepCheck(), locale);
 }
 
 /** Bounded diagnostics only: stable reason codes and error metadata, never session IDs, inputs, SQL or paths. */
@@ -405,8 +441,7 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
       // storage failure takes only them away, never the cue.
       phase = "handle";
       const locale = resolveHostLocale({ environment }).locale;
-      const sessionId = normalized.observation.sessionId;
-      const added = [contextLayerText(normalized, host, environment, locale), sessionId ? subagentSituation(sessionId, environment, locale) : null]
+      const added = [contextLayerText(normalized, host, environment, locale), subagentSituation(normalized, host, environment, locale)]
         .filter((text): text is string => Boolean(text)).join("\n\n");
       result = JSON.stringify(withAddedContext(subagentStartOutput(normalized, locale), normalized.outputEventName, added || null));
       return result;
@@ -438,7 +473,9 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
     const locale = resolveHostLocale({ environment }).locale;
     const handled = handleNormalizedContinuityHook(normalized, new ContinuityService(continuity, null, workflow, undefined, workflowFailure), host, environment,
       locale);
-    const output = withAddedContext(handled, normalized.outputEventName, contextLayerText(normalized, host, environment, locale));
+    const added = [contextLayerText(normalized, host, environment, locale), situationText(normalized, host, continuity, locale),
+      stepCheckText(normalized, host, handled, locale)].filter((text): text is string => Boolean(text)).join("\n\n");
+    const output = withAddedContext(handled, normalized.outputEventName, added || null);
     result = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
     primary = cause;

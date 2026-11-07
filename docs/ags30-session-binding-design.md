@@ -100,7 +100,7 @@ Codex 소스는 `rust-v0.166.0` raw 파일로 확인했다. sha256: `mcp_tool_ca
 2. Claude: admission(D)을 그대로 쓴다. `toolUseId`가 없거나 다를 때 `updatedInput`을 유지한다는 조건은 해당하지 않는다. hook 입력에 model이 없으므로 model은 2.2대로 transcript 발신 항목이나 세션 model 기록에서 온다.
 3. agy: arg proof(E)를 지우고 `_meta` ingress(`antigravity-meta`)로 옮긴다. 호출 ID가 없으므로 one-use 회수가 없고, 실행 관측은 `unavailable`이다. 현행에도 agy에는 실행 관측 token 발급 경로가 없다.
 4. 중첩: Codex·agy는 호출마다 root와 **직속 부모**를 준다. Claude는 root와 agent 자신만 주고 부모 agent는 주지 않는다. 그래서 사슬은 「호스트가 준 만큼」 기록하고 완전성을 따로 표시한다(2.1). 요청 버전 Codex 0.165는 두 서버 모두 0.166.0만 설치되어 있어 0.166.0으로 채집했다. Windows Claude는 2.1.316이다.
-5. agy subagent hook(1.5.3): hook 입력에 root가 없으므로, MCP ingress가 subagent의 첫 AGS 호출 `_meta`에서 본 「대화→root」를 기록하고 agy hook adapter가 그 기록으로 root 세션과 child(agentKey=subagent 대화)를 준다. 첫 AGS 호출 전의 hook(SessionStart, 첫 턴 시작)은 subagent 자기 대화로 남는다. 그래서 담당 컨텍스트는 턴 안의 단계 경계(`turn-step`, agy는 PostInvocation)에서 그 actor가 아직 받지 않은 부분으로 준다. PostToolUse 출력은 agy가 전달하지 않으므로 쓰지 않는다.
+5. agy subagent hook(1.5.3): hook 입력에 root가 없으므로, MCP ingress가 subagent의 첫 AGS 호출 `_meta`에서 본 「대화→root」를 기록하고 agy hook adapter가 그 기록으로 root 세션과 child(agentKey=subagent 대화)를 준다. 첫 AGS 호출 전의 hook(SessionStart, 첫 턴 시작)은 subagent 자기 대화로 남는다. 그래서 담당 컨텍스트는 턴 안의 단계 경계(`turn-step`, agy는 PostInvocation)에서 그 actor가 아직 받지 않은 부분으로 준다. PostToolUse 출력은 agy가 전달하지 않으므로 쓰지 않는다. 같은 단계 경계에서 모든 실행 주체가 같은 단계 확인(스킬 대조 한 줄)을 받고, 세션 자신이 아닌 실행 주체는 아직 받지 않은 상황 컨텍스트도 받는다(AGS3-D-0065). Claude Code·Codex의 단계 경계는 PostToolUse다.
 
 ## 2. 설계
 

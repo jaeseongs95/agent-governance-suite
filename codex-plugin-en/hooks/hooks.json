@@ -164,7 +164,6 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "^mcp__.*__(start_workflow|start_guarded_workflow|record_stage_result|finalize_workflow|abort_workflow|release_convergence_root)$",
         "hooks": [{
           "type": "command",
           "command": "node \"$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs\"",
