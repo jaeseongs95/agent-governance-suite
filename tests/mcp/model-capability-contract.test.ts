@@ -562,7 +562,9 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     expect(missingObservationCall.data?.bootstrapExecution).toBeUndefined();
   });
 
-  it("keeps both catalog and observed host class floors when policy reclassifies a model (AC3, AC4)", () => {
+  // 3.9.0 (AGS3-D-0058): class and effort only order recommendations. A reclassified or lightweight model the host
+  // supports stays selectable; the catalog change shows in the reported class, not in a refusal.
+  it("reports a policy reclassification in the model class without refusing the selection (AC3, AC4, AGS3-D-0058)", () => {
     const options = {
       provider: "openai-codex", role: "independent-audit", highRisk: true,
       user: { model: "gpt-6.5-nova", effort: "xhigh" },
@@ -575,10 +577,11 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     downgraded.providers["openai-codex"].catalog.models["gpt-6.5-nova"].model_class = "lightweight";
     const suite = createCatalogExecutionAdapters(downgraded as unknown as ModelRoutingPresetsV1);
     expect(suite.adapters.get("codex")!.modelClassForModel("gpt-6.5-nova")).toBe("lightweight");
-    expect(resolveModelSelection(options, downgraded).delivery).toBe("blocked");
-    expect(resolveModelSelection({
+    for (const selected of [resolveModelSelection(options, downgraded), resolveModelSelection({
       ...options, supported: [{ ...options.supported[0]!, modelClass: "lightweight" }],
-    }, syntheticCatalogV2).delivery).toBe("blocked");
+    }, syntheticCatalogV2)]) {
+      expect(selected).toMatchObject({ delivery: "explicit", selection: { model: "gpt-6.5-nova", effort: "xhigh" }, fallbackReason: null });
+    }
   });
 
   it("records a below-recommendation stage observation and keeps the signed plan values (AC4, AC5, AGS3-D-0058)", () => {
@@ -672,10 +675,11 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         user: { model, effort: "high" },
         supported: [{ model, modelClass: "frontier", efforts: ["high"] }],
       };
-      expect(resolveModelSelection(options, syntheticCatalogV2).delivery).toBe("blocked");
+      // AGS3-D-0058: a lightweight catalog model is selected or inherited as the host reports it.
+      expect(resolveModelSelection(options, syntheticCatalogV2)).toMatchObject({ delivery: "explicit", selection: { model, effort: "high" } });
       expect(resolveModelSelection({
         ...options, inheritOnly: true, inherited: { model, effort: "high" },
-      }, syntheticCatalogV2).delivery).toBe("blocked");
+      }, syntheticCatalogV2)).toMatchObject({ delivery: "inherited", selection: { model, effort: "high" } });
     }
     for (const [provider, rawModel, canonicalModel] of [
       ["anthropic-claude-code", "us.anthropic.claude-mythos-preview-v1:0", "mythos"],
@@ -699,12 +703,13 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       ["anthropic-claude-code", "claude-unknown-9"],
       ["google-gemini", "models/gemini-9.0-unknown"],
     ] as const) {
+      // AGS3-D-0058: a model the catalog does not list stays selectable when the host supports it.
       expect(resolveModelSelection({
         provider, role: "independent-audit", highRisk: true,
         user: { model, effort: "high" },
         inherited: { model, effort: "high" },
         supported: [{ model, modelClass: "frontier", efforts: ["high"] }],
-      }, syntheticCatalogV2).delivery).toBe("blocked");
+      }, syntheticCatalogV2)).toMatchObject({ delivery: "explicit", selection: { model, effort: "high" } });
     }
     expect(resolveModelSelection({
       provider: "google-gemini", role: "general-implementation", highRisk: false,

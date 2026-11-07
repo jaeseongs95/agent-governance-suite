@@ -74,7 +74,7 @@ describe("AGS3-D-0018/0007 one recommendation definition owned by core", () => {
       const blocked: string[] = [];
       const result = await build({ entryPoints: [path.join(root, entry)], bundle: true, platform: "node", format: "esm", write: false, logLevel: "silent",
         plugins: [{ name: "no-skill-files", setup(builder) {
-          builder.onResolve({ filter: /(^|[\\/])skills[\\/]/u }, args => { blocked.push(args.path); return { errors: [{ text: "skill file unavailable to core" }] }; });
+          builder.onResolve({ filter: /(^|[\\/])skills[\\/]/ }, args => { blocked.push(args.path); return { errors: [{ text: "skill file unavailable to core" }] }; });
         } }] }).catch((error: { errors?: unknown[] }) => ({ errors: error.errors ?? [error] }));
       expect(blocked).toEqual([]);
       expect(result.errors).toEqual([]);

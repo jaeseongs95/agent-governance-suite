@@ -228,9 +228,11 @@ describe("D0043: 등록된 제공자의 실행 위험", () => {
     expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
   });
 
-  it("서명된 고위험 요구를 신뢰된 실제 단계 관측에 적용한다", async () => {
+  // 3.9.0 (AGS3-D-0058): the signed plan keeps general/high as the recommendation, and a passed stage observed below it is
+  // recorded with the observed class and effort instead of being refused.
+  it("서명된 고위험 권장값을 유지하고 그보다 낮은 신뢰된 실제 단계 관측도 기록한다", async () => {
     let sequence = 0;
-    let stageBelowFloor = true;
+    const stageBelowFloor = true;
     const observedPhases: string[] = [];
     const trustedProvider: TrustedExecutionContextProvider = {
       observe: (binding) => {
@@ -258,18 +260,10 @@ describe("D0043: 등록된 제공자의 실행 위험", () => {
       evidence: [{ artifactId: "proof", kind: "test", locator: "fixture:proof", verified: true, note: "합성 시험" }],
       findings: [], blockers: [], error: null,
     };
-    const rejected = service.recordStageResult(result, true);
-    expect(rejected.error).toMatchObject({
-      code: "GATE_FAILED",
-      details: { modelClass: "lightweight", reasoningEffort: "low", minimumModelClass: "general", minimumReasoningEffort: "high" },
-    });
-    expect(rejected.error?.message).toContain("below the planned semantic assurance floor");
-    expect(observedPhases).toEqual(["bootstrap", "stage"]);
-    expect(service.getWorkflowStatus(started.runId).data?.stageResults).toEqual([]);
-    stageBelowFloor = false;
     const recorded = service.recordStageResult(result, true);
     expect(recorded.ok, recorded.error?.message).toBe(true);
-    expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ modelClass: "general", reasoningEffort: "high" });
-    expect(observedPhases).toEqual(["bootstrap", "stage", "stage"]);
+    expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ modelClass: "lightweight", reasoningEffort: "low" });
+    expect(recorded.data?.plan.stages[0]?.executionRequirement).toMatchObject({ minimumModelClass: "general", minimumReasoningEffort: "high" });
+    expect(observedPhases).toEqual(["bootstrap", "stage"]);
   });
 });
