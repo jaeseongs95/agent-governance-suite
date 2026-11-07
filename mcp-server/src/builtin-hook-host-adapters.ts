@@ -78,7 +78,7 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
     kind = "tool-boundary";
     boundaryPhase = "after";
   } else if (event === "Stop") kind = "turn-end";
-  // A subagent's own end (Claude Code SubagentStop, with agent_id): the turn end of that child (AGS3-D-0061).
+  // A subagent's own end (Claude Code and Codex 0.166 SubagentStop, with agent_id): the turn end of that child (AGS3-D-0061).
   else if (event === "SubagentStop") kind = "turn-end";
   // Claude Code and Codex 0.166 name the hook that adds context to a new subagent SubagentStart; it carries agent_id.
   else if (event === "SubagentStart") kind = "subagent-start";

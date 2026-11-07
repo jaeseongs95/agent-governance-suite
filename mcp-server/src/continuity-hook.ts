@@ -216,8 +216,9 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
   // A subagent's hooks name its parent in session_id and itself in agentKey. Its edits are gated in the session and
-  // arm only its own phase check, which runs at its own turn end (Claude Code SubagentStop) over the workflows it
-  // started: never at the parent's Stop (AGS3-D-0060, AGS3-D-0061). Nothing else a child does pins or binds continuity.
+  // arm only its own phase check, which runs at its own turn end (Claude Code and Codex SubagentStop) over the
+  // workflows it started: never at the parent's Stop (AGS3-D-0060, AGS3-D-0061). Nothing else a child does pins or
+  // binds continuity.
   if (isObservedSubagent(observation)) {
     // Every adapter that observes a child sets its agentKey; the fallback still keeps the edit off the parent's window.
     const actor = hostActorId(host, sessionId, observation.agentKey ?? "unidentified-child");

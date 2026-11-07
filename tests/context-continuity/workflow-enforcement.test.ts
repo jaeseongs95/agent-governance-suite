@@ -344,7 +344,8 @@ describe("Stop output", () => {
 // AGS3-D-0060, AGS3-D-0061, AGS3-D-0063: phase checks belong to the actor that does the work. A subagent's edits and
 // the workflows it starts are checked at its own turn end, never at its parent's Stop; every bound root of the session
 // still passes the edit gate for every actor. Host shapes: Claude Code and Codex hooks name the parent in session_id
-// and the subagent in agent_id (Claude Code SubagentStop ends the subagent); agy runs a subagent's hooks under its own
+// and the subagent in agent_id, and both end the subagent with SubagentStop (measured: Claude Code 2.1.316, Codex
+// 0.166.0; Codex sends no subagent Stop); agy runs a subagent's hooks under its own
 // conversation, and its MCP calls name that conversation, its parent and the root (session binding design 1.5).
 describe("phase checks per actor (AGS3-D-0060, AGS3-D-0061, AGS3-D-0063)", () => {
   const child = { agent_id: "child-1", agent_type: "general-purpose" };
@@ -417,13 +418,13 @@ describe("phase checks per actor (AGS3-D-0060, AGS3-D-0061, AGS3-D-0063)", () =>
     expect(text(handleContinuityHook(stop(), target, "claude-code", NO_ENV))).not.toContain("root-child");
   });
 
-  it("Codex: a subagent's Stop (agent_id) checks its own workflow, not the parent's", () => {
+  it("Codex: a subagent's SubagentStop checks its own workflow, not the parent's", () => {
     const target = twoRoots();
     target.prepareWorkflowStart(session, "root-parent");
     target.prepareWorkflowStart(session, "root-child", childActor("codex"));
     expect(target.gateEditForSession(session, [file("beta/1.ts")], [file("beta/1.ts")], undefined, [], childActor("codex"))).toBeNull();
     expect(handleContinuityHook(stop(), target, "codex", NO_ENV)).toEqual({});
-    const childCue = text(handleContinuityHook(stop({ ...child, turn_id: "turn-child" }), target, "codex", NO_ENV));
+    const childCue = text(handleContinuityHook({ ...subagentStop, turn_id: "turn-child", stop_hook_active: false }, target, "codex", NO_ENV));
     expect(childCue).toContain("rootId root-child");
     expect(childCue).not.toContain("root-parent");
   });

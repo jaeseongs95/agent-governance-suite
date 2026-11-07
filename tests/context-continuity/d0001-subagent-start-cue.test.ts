@@ -96,4 +96,12 @@ describe("subagent start cue", () => {
     const cue = context(handleContinuityHook(codexStart, service(), "codex", {}));
     expect(hook!.additionalContextLimit ?? 0).toBeGreaterThanOrEqual(cue.length);
   });
+
+  // AGS3-D-0061: a subagent's own end is SubagentStop on both hosts (Codex sends no subagent Stop).
+  it("registers SubagentStop for the continuity hook in the Claude Code and Codex hook configurations", () => {
+    const claude = JSON.parse(readFileSync(join(root, "claude-overlay/hooks/hooks.json"), "utf8")) as { hooks: Record<string, { hooks: { args?: string[] }[] }[]> };
+    expect(claude.hooks.SubagentStop?.flatMap(group => group.hooks).some(hook => hook.args?.some(arg => arg.endsWith("/hooks/continuity-hook.mjs")))).toBe(true);
+    const codex = JSON.parse(readFileSync(join(root, "hooks/hooks.json"), "utf8")) as { hooks: Record<string, { hooks: { command: string }[] }[]> };
+    expect(codex.hooks.SubagentStop?.flatMap(group => group.hooks).some(hook => hook.command.includes("mcp-server/dist/continuity-hook.mjs"))).toBe(true);
+  });
 });
