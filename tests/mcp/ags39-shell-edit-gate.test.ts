@@ -56,10 +56,18 @@ describe("AGS3-D-0005 shell writes the 3.8.0 observation missed", () => {
     ["SW11 git mv", "git mv src/a.ts src/b.ts", [file("src/a.ts"), file("src/b.ts")]],
     ["SW12 heredoc after cd", "cd src && cat > a.ts <<'EOF'\nx > fake.ts\nEOF", [file("src/a.ts")]],
   ])("%s: %s", (_name, command, expected) => {
-    for (const [host, tool, key] of hosts) {
-      const observation = observe(host, shell(host, tool, key, command));
-      expect(observation.editTargets, host).toEqual(expected);
-      expect(observation.editTargetsIncomplete, host).toBeUndefined();
+    // The expected targets follow POSIX shell semantics. On Windows agy names no shell, so its run_command is also read
+    // as PowerShell, where `(cd src && ...)` keeps the new location; AG01 covers that reading.
+    const platform = Object.getOwnPropertyDescriptor(process, "platform")!;
+    Object.defineProperty(process, "platform", { ...platform, value: "linux" });
+    try {
+      for (const [host, tool, key] of hosts) {
+        const observation = observe(host, shell(host, tool, key, command));
+        expect(observation.editTargets, host).toEqual(expected);
+        expect(observation.editTargetsIncomplete, host).toBeUndefined();
+      }
+    } finally {
+      Object.defineProperty(process, "platform", platform);
     }
   });
 
