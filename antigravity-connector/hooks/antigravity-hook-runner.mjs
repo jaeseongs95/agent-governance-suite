@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { types } from "node:util";
 import { failureCode, failureContext, retainFailureCause, retainFailureSecondary } from "../../runtime/failure-diagnostics.mjs";
 import { msg, render, resolveHostLocale } from "../../runtime/i18n.mjs";
+import { cleanupLegacyServerKey, legacyCleanupActed } from "../scripts/legacy-server-key-cleanup.mjs";
 
 let denyLocale = null;
 /** A deny reason in the host locale (docs/i18n-design.md 4.1 ①); the locale is read once, when the first reason is shown. */
@@ -1666,6 +1667,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
     );
   }
 
+  if (event === "SessionStart" && !explicitHook) runLegacyServerKeyCleanup(options);
   if (event === "SessionStart" || event === "PreInvocation" || event === "PostInvocation") {
     // agy has no compaction hook event, and its compaction drops system messages a SessionStart hook injected (agy 1.5.0,
     // 2026-11-04). So the context start for the shared intake is each turn's first model call, the first turn included.
@@ -1744,6 +1746,26 @@ export function reportStageFailure(stage, cause, writeStderr = (line) => process
     const code = failureCode(cause);
     writeStderr(`[agent-governance-suite] antigravity-stage-failure ${JSON.stringify({ stage, ...(code ? { code } : {}) })}\n`);
   } catch { /* Diagnostics never change the hook decision. */ }
+}
+
+/**
+ * AGS3-D-0028: a new conversation after an install or update moves the old `agent-governance-suite` server key's
+ * tool-schema caches of this plugin install to a backup (scripts/legacy-server-key-cleanup.mjs). It reports what it
+ * moved or kept on stderr and never changes the hook's result.
+ */
+function runLegacyServerKeyCleanup(options) {
+  const writeStderr = options?.writeStderr ?? ((line) => process.stderr.write(line));
+  try {
+    const report = cleanupLegacyServerKey({
+      pluginRoot: fileURLToPath(new URL("../..", import.meta.url)),
+      ...(options?.homeDir ? { homeDir: options.homeDir } : {}),
+    });
+    if (legacyCleanupActed(report)) {
+      writeStderr(`${JSON.stringify({ component: "antigravity-connector", event: "legacy-server-key-cleanup", ...report })}\n`);
+    }
+  } catch (cause) {
+    reportStageFailure("legacy-server-key-cleanup", cause, options?.writeStderr);
+  }
 }
 
 export function failClosedPreToolUseFallback(raw, eventArg, hookArg) {

@@ -166,7 +166,7 @@ Where default paths differ, for example in a sandbox, give every participating h
 
 Work-record bodies and stage results are stored without encryption in the local databases; the retention periods below do not delete them automatically. Keep secrets, personal data, and raw logs out of work records and stage results. To remove old state, preview candidates with `prepare_state_cleanup`, then pass the token you confirmed to `execute_state_cleanup` (finished workflows after 180 days, inactive work-record bodies after 30 days). A backup is taken before deletion and is never deleted automatically. See [retention and cleanup](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/state-cleanup.md).
 
-When a newer public stable release exists, the MCP server mentions it once in a tool response; `check_for_updates` checks on demand. Nothing is installed automatically. To update, stop the existing AGS MCP and relay processes, install the new version with the steps above, and start a new session. In Codex, trust the hooks again in `/hooks`; for agy, close the app and install the new package. See [update and recovery](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/session-message-lifecycle.md#업데이트와-복구).
+When a newer public stable release exists, the MCP server mentions it once in a tool response; `check_for_updates` checks on demand. Nothing is installed automatically. To update, stop the existing AGS MCP and relay processes, install the new version with the steps above, and start a new session. In Codex, trust the hooks again in `/hooks`; for agy, close the app, install the new package, and restart the app. The restarted app reads only the new configuration's server key `ags`, so it no longer starts an AGS MCP server under the server key used before 3.0. See [update and recovery](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/session-message-lifecycle.md#업데이트와-복구).
 
 ### Local processes and message storage
 
@@ -231,6 +231,7 @@ Results do not transfer automatically between candidates, hosts, or CLI versions
 | An execution-observation error such as `BINDING_REQUIRED` | Check the host-specific cause in the [execution-observation contract](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/host-execution-attestation.md). Model advice and execution eligibility are separate. |
 | A peer is missing or sends only an ACK | Check hooks, the shared-state path, and the host's wake mode. Query the same `messageId` and obtain the work result separately. |
 | Old behavior remains after an update | Check that the old AGS MCP and relay have ended, then reconnect in a new session as in the [update procedure](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/session-message-lifecycle.md#업데이트와-복구). |
+| Antigravity shows two AGS MCP servers after an update | Restart the app and open a new conversation. If AGS was installed before 3.0 under the server key `agent-governance-suite`, the new conversation's start hook moves that key's tool-schema cache (`~/.gemini/antigravity{,-cli}/mcp/agent-governance-suite_agent-governance-suite/`) to `~/.gemini/antigravity{,-cli}/ags-legacy-server-key-backup/`. See the [migration result](https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/antigravity-migration.md). |
 
 ## Documentation
 
