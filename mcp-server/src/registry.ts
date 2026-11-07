@@ -87,7 +87,9 @@ export class FileSkillRegistry {
         }
       }
       const gateSchema = provider.gate.validator?.endsWith(".schema.json") ? provider.gate.validator : null;
-      for (const schemaPath of [provider.outputSchema, provider.resultSchema, ...(gateSchema ? [gateSchema] : [])]) {
+      // A declared stage validator is confined like the schemas: core runs only what the skill ships in its own folder.
+      for (const schemaPath of [provider.outputSchema, provider.resultSchema, ...(gateSchema ? [gateSchema] : []),
+        ...(provider.stageValidator ? [provider.stageValidator] : [])]) {
         const resolved = path.resolve(this.rootDirectory, schemaPath);
         if (resolved !== this.rootDirectory && !resolved.startsWith(`${this.rootDirectory}${path.sep}`)) {
           throw new WorkflowContractError("INVALID_INPUT", msg("workflow.registry.providerSchemaPathEscapesPlugin", {}), {

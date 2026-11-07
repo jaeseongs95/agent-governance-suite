@@ -12,7 +12,7 @@ import {
   SqliteKoreanProseGlossary,
 } from "../../mcp-server/src/korean-prose-glossary.js";
 
-const resourceRoot = path.resolve(import.meta.dirname, "../../skills/korean-prose-editor/resources");
+const resourceRoot = path.resolve(import.meta.dirname, "../../runtime/korean-prose-glossary");
 const databasePath = path.join(resourceRoot, "korean-prose-glossary.sqlite3");
 const seedPath = path.join(resourceRoot, "glossary.seed.jsonl");
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");

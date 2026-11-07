@@ -1,10 +1,11 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 import { type StageResultV1, WorkflowContractError } from "../../contracts/types.js";
 import { assertCsStageBundle } from "../../mcp-server/src/cs-engineering-validator.js";
 import { assertEngineeringStageBundle } from "../../mcp-server/src/engineering-practices-validator.js";
+import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 
 const roots: string[] = [];
@@ -24,9 +25,16 @@ function fakeRoot(script: string, body: string) {
   return root;
 }
 
+const CS_PROVIDER = "cs-engineering:cs-implementation-review:2";
+/** The registry declaration core reads; nothing about the skill's layout is assumed by the validator itself. */
+const declared = (root: string, stageValidator?: string) => ({rootDirectory: root,
+  read: () => [{providerKey: CS_PROVIDER, ...(stageValidator ? {stageValidator} : {})}] as ReturnType<FileSkillRegistry["read"]>});
+const runCs = (root: string, stageValidator?: string) => assertCsStageBundle(declared(root, stageValidator), {providerKey: CS_PROVIDER},
+  digest, stageResult("cs-review-bundle", path.join(root, "bundle.json")), validator);
+
 const targets = [
   {name: "CS", emptyReportExitStatus: 3, script: "skills/cs-engineering/scripts/validate.mjs",
-    run: (root: string) => assertCsStageBundle(root, digest, stageResult("cs-review-bundle", path.join(root, "bundle.json")), validator)},
+    run: (root: string) => runCs(root, "skills/cs-engineering/scripts/validate.mjs")},
   {name: "engineering", emptyReportExitStatus: 1, script: "runtime/engineering-practices/cli.mjs",
     run: (root: string) => assertEngineeringStageBundle(root, digest, "change-code-review", stageResult("engineering-stage-bundle", path.join(root, "bundle.json")), validator)},
 ];
@@ -89,5 +97,33 @@ describe.each(targets)("$name stage validator process failures keep their cause"
     const error = caught(() => run(fakeRoot(script, "console.log('not json');")));
     expect(error.code).toBe("MCP_UNAVAILABLE");
     expect(error.details).toMatchObject({step: "parse", reason: "VALIDATOR_OUTPUT_INVALID"});
+  });
+});
+
+describe("AGS3-D-0007 CS stage validator comes from the provider declaration", () => {
+  test("CB-13 runs the CLI the stage's provider declares, wherever that skill keeps it", () => {
+    const root = fakeRoot("skills/neutral-review/tools/check-bundle.mjs", "process.exitCode = 7;");
+    const error = caught(() => runCs(root, "skills/neutral-review/tools/check-bundle.mjs"));
+    expect(error.details).toMatchObject({step: "exit", status: 7});
+  });
+
+  test("CB-14 an undeclared validator fails closed and never falls back to a skill path core knows", () => {
+    const root = fakeRoot("skills/cs-engineering/scripts/validate.mjs", "process.exitCode = 7;");
+    const error = caught(() => runCs(root));
+    expect(error.code).toBe("MCP_UNAVAILABLE");
+    expect(error.details).toEqual({step: "declaration", reason: "STAGE_VALIDATOR_UNDECLARED", providerKey: CS_PROVIDER});
+  });
+
+  test("CB-15 the shipped registry declares the CS validator and the registry confines it to the skill folder", () => {
+    const repository = path.resolve(import.meta.dirname, "../..");
+    const shipped = new FileSkillRegistry(path.join(repository, "skills/registry.json"), validator).read();
+    expect(shipped.find(provider => provider.providerKey === CS_PROVIDER)?.stageValidator).toBe("skills/cs-engineering/scripts/validate.mjs");
+    const document = JSON.parse(readFileSync(path.join(repository, "skills/registry.json"), "utf8")) as {skills: {skillId: string; providers: Record<string, unknown>[]}[]};
+    const skill = document.skills.find(entry => entry.skillId === "cs-engineering")!;
+    skill.providers[1]!.stageValidator = "skills/orchestrator/scripts/validate.mjs";
+    const root = fakeRoot("skills/registry.json", JSON.stringify({schemaVersion: "2.0.0", skills: [skill]}));
+    const error = caught(() => new FileSkillRegistry(path.join(root, "skills/registry.json"), validator).read());
+    expect(error.code).toBe("INVALID_INPUT");
+    expect(error.details).toMatchObject({skillId: "cs-engineering", schemaPath: "skills/orchestrator/scripts/validate.mjs"});
   });
 });

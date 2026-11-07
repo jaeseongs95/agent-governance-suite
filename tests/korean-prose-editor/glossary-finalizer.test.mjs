@@ -8,7 +8,7 @@ import { extractProtectedSpans } from "../../skills/korean-prose-editor/scripts/
 import { createSourceUnitManifest } from "../../skills/korean-prose-editor/scripts/source-units.mjs";
 import { stableJson } from "../../skills/korean-prose-editor/scripts/lib.mjs";
 
-const db = fileURLToPath(new URL("../../skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3", import.meta.url));
+const db = fileURLToPath(new URL("../../runtime/korean-prose-glossary/korean-prose-glossary.sqlite3", import.meta.url));
 const actorIds = ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333"];
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 

@@ -1607,6 +1607,10 @@ export function checkRegistryContextCompatibility(registry) {
   // unrelated descriptors, order, authority, bindings and gate semantics still match exactly.
   const expected = JSON.parse(readFileSync(join(ROOT, "scripts/fixtures/registry-contract.3.0.json"), "utf8"));
   expected.skills = expected.skills.filter(skill => skill.skillId !== "codex-token-usage-analyzer");
+  // AGS3-D-0007: the CS review provider declares the stage validator core runs; core no longer names the skill's script.
+  const csReview = expected.skills.find(skill => skill.skillId === "cs-engineering")?.providers
+    .find(provider => provider.capabilities.includes("cs-implementation-review"));
+  if (csReview) csReview.stageValidator = "skills/cs-engineering/scripts/validate.mjs";
   const advisor = registry.skills.filter(skill => skill.skillId === "model-effort-advisor");
   const errors = [];
   if (advisor.length === 1 && contextDigest(Buffer.from(JSON.stringify(advisor[0]))) === PURPOSE_CHANGE_SUCCESSOR.registryDescriptorSha256) {
