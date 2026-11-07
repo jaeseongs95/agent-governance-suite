@@ -47,7 +47,7 @@ try {
     await mkdir(path.dirname(target), {recursive: true});
     await cp(source, target);
   }
-  for (const file of ["bootstrap.mts","prepared-fixture.mts","independent-wire-oracle.mts","precision-current-oracle.mts","dynamic-current-oracle.mts"]) await cp(path.join(directory,file),path.join(root,"tests/skill-classification/live-bootstrap",file));
+  for (const file of ["bootstrap.mts","provider-retention-sources.mts","prepared-fixture.mts","independent-wire-oracle.mts","precision-current-oracle.mts","dynamic-current-oracle.mts"]) await cp(path.join(directory,file),path.join(root,"tests/skill-classification/live-bootstrap",file));
   const checks: string[] = [];
   const runOracle = () => new Promise<{status: number | null; stderr: string}>((resolve, reject) => {
     const child = spawn(process.execPath, ["--import", "tsx", path.join(root, "tests/skill-classification/live-bootstrap/dynamic-current-oracle.mts"), root], {
