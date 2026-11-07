@@ -10,6 +10,8 @@ import { ADMIN_PAGE_HTML } from "../../mcp-server/src/admin-page.generated.js";
 import { ADMIN_BODY_MAX_BYTES, type AdminSessionView, type AdminSettingsView, createAdminRequestHandler } from "../../mcp-server/src/admin-page-server.js";
 import { ADMIN_ERROR_CODES, AdminError } from "../../mcp-server/src/admin-webauthn.js";
 import { adminRecordHash } from "../../mcp-server/src/admin-log.js";
+import { adminSettingsView } from "../../mcp-server/src/admin-settings.js";
+import { JevKeyVault, jevKeyFingerprint } from "../../mcp-server/src/jev-key-vault.js";
 import { ContextLayerService } from "../../mcp-server/src/context-layer-service.js";
 import { ContextLayerStore } from "../../mcp-server/src/context-layer-store.js";
 import { runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
@@ -33,7 +35,8 @@ function layersFile(): string {
 }
 
 function serviceAt(file: string, now: () => Date = () => new Date()): ContextLayerService {
-  return new ContextLayerService(create => ContextLayerStore.open(file, create), now, "http://localhost:47615/");
+  return new ContextLayerService(create => ContextLayerStore.open(file, create), now, "http://localhost:47615/",
+    new JevKeyVault(path.join(path.dirname(file), "jev-key-vault.bin")));
 }
 
 function adminCode(action: () => unknown): string {
@@ -454,12 +457,10 @@ describe("admin page HTTP boundary", () => {
     const server: Server = createServer();
     await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
     const port = (server.address() as { port: number }).port;
-    const settings: AdminSettingsView = {
-      locale: { value: "ko", source: "settings", lockedBy: null, editable: false, reason: "r" },
-      jev: { configured: false, enabled: false, mode: null, profileCount: 0, error: null, lockedBy: "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG", editable: false, reason: "r" },
-      editGateExceptions: { available: true, paths: [], lockedBy: "AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS", editable: false, reason: "r" },
-    };
-    server.on("request", createAdminRequestHandler({ service, port, settings: async () => settings,
+    const settings = (admin: { signedSettings: Parameters<typeof adminSettingsView>[0]["signed"] }): AdminSettingsView => adminSettingsView({ environment: {},
+      signed: admin.signedSettings, locale: { value: "ko", source: "settings" }, localeOptions: ["en", "ko"], usage: null,
+      installation: { configured: false, allows: true, mode: null, profileCount: 0, limitUsd: null, credentials: [], error: null } });
+    server.on("request", createAdminRequestHandler({ service, port, settings: async admin => settings(admin),
       listSessions: async () => { if (options.failSessions) throw Object.assign(new Error("x"), { code: "PRESENCE_DOWN" }); return options.sessions ?? []; } }));
     cleanups.push(() => new Promise<void>(resolve => server.close(() => resolve())));
     const call = (method: string, pathName: string, headers: Record<string, string> = {}, body?: string) =>
@@ -555,6 +556,24 @@ describe("admin page HTTP boundary", () => {
     expect(state.sessionsError).toBeNull();
     const failing = await page({ failSessions: true });
     expect(JSON.parse((await failing.call("GET", "/api/state")).text)).toMatchObject({ sessions: [], sessionsError: { code: "PRESENCE_DOWN" } });
+  });
+
+  it("takes a JEV key only with its signed registration, never sends it back, and refuses a control character", async () => {
+    const { service, post, call, port } = await page();
+    const owner = fakeAuthenticator();
+    ensureBootstrapped(service, owner);
+    const onPage = { origin: `http://localhost:${port}` };
+    const value = "sk-page-fixture-value";
+    const prepared = JSON.parse((await post("/api/intent", { change: { op: "jevKey.set", name: "JEV_PAGE_KEY", fingerprint: jevKeyFingerprint(value) }, bootstrap: false })).text) as { intent: string };
+    const bad = await post("/api/commit", { intent: prepared.intent, assertion: owner.assert(prepared.intent, onPage), requestId: randomUUID(), proposalId: null, secret: "sk-" });
+    expect([bad.status, JSON.parse(bad.text).error]).toEqual([400, { code: "REQUEST_INVALID", details: { field: "secret" } }]);
+    const saved = await post("/api/commit", { intent: prepared.intent, assertion: owner.assert(prepared.intent, onPage), requestId: randomUUID(), proposalId: null, secret: value });
+    expect(saved.status).toBe(200);
+    expect(saved.text).not.toContain(value);
+    const state = await call("GET", "/api/state");
+    expect(state.text).not.toContain(value);
+    expect(JSON.parse(state.text).settings.jev.keys).toMatchObject([{ name: "JEV_PAGE_KEY", fingerprint: jevKeyFingerprint(value), stored: true }]);
+    expect(service.jevKey("JEV_PAGE_KEY")).toBe(value);
   });
 
   it("rejects an agent request from the page", async () => {

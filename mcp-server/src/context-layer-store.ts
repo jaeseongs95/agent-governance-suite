@@ -16,13 +16,17 @@ import type { AdminChange, AdminLogRecord } from "./admin-log.js";
  *   (not signed: an agent writes it).
  * - session_seen: when each session last used its context (bindings of sessions unused for 30 days lapse).
  * - context_deliveries: per-actor delivery marks so a layer that changed during a session is sent exactly once.
+ * - jev_keys: each JEV key the user registered, encrypted (jev-key-vault.ts); the signed record holds its fingerprint.
  * The situational (per-session) context stays in the per-host continuity store.
  */
-export const CONTEXT_LAYER_SCHEMA_VERSION = 1;
+export const CONTEXT_LAYER_SCHEMA_VERSION = 2;
 const HISTORY_PER_ROLE = 50;
 /** Delivery marks and session use of sessions unseen this long are removed. */
 export const RETAIN_MS = 30 * 24 * 3600_000;
-const TABLES = ["admin_log", "admin_log_archive", "admin_proposals", "admin_resets", "context_deliveries", "role_context_history", "role_contexts", "session_seen"];
+const TABLES_V1 = ["admin_log", "admin_log_archive", "admin_proposals", "admin_resets", "context_deliveries", "role_context_history", "role_contexts", "session_seen"];
+const TABLES = [...TABLES_V1, "jev_keys"].sort();
+/** Version 2 adds the encrypted JEV keys; a version 1 file (3.9.0 before the settings) gains the table in place. */
+const JEV_KEYS_TABLE = `CREATE TABLE jev_keys (name TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, sealed TEXT NOT NULL, stored_at TEXT NOT NULL) STRICT;`;
 
 export interface RoleContextRecord {
   roleId: string;
@@ -62,6 +66,14 @@ export interface AdminResetRecord {
   resetOf: string | null;
   archived: number;
   at: string;
+}
+
+/** One stored JEV key: `sealed` is the vault's ciphertext (never the value). */
+export interface JevKeyRecord {
+  name: string;
+  fingerprint: string;
+  sealed: string;
+  storedAt: string;
 }
 
 export type RoleSaveResult =
@@ -146,7 +158,10 @@ export class ContextLayerStore {
             CREATE TABLE session_seen (host TEXT NOT NULL, session_id TEXT NOT NULL, last_seen_at TEXT NOT NULL, PRIMARY KEY (host, session_id)) STRICT;
             CREATE TABLE context_deliveries (actor_id TEXT PRIMARY KEY, global_token TEXT, role TEXT, role_token TEXT,
               delivered_at TEXT NOT NULL) STRICT;
+            ${JEV_KEYS_TABLE}
             PRAGMA user_version = ${CONTEXT_LAYER_SCHEMA_VERSION};`);
+        } else if (version === 1 && present.join(",") === TABLES_V1.join(",")) {
+          database.exec(`${JEV_KEYS_TABLE} PRAGMA user_version = ${CONTEXT_LAYER_SCHEMA_VERSION};`);
         } else if (version !== CONTEXT_LAYER_SCHEMA_VERSION || present.join(",") !== TABLES.join(",")) {
           throw new ContextLayerFormatError("CONTEXT_LAYER_FOREIGN_DATABASE");
         }
@@ -209,6 +224,8 @@ export class ContextLayerStore {
         record_hash, request_id, created_at, reset_id) SELECT seq, target, intent, credential_id, authenticator_data, client_data_json, signature,
         record_hash, request_id, created_at, ? FROM admin_log`).run(id);
       this.database.exec("DELETE FROM admin_log;");
+      // Every signed key fingerprint went with the log, so no stored key can be used again.
+      this.database.exec("DELETE FROM jev_keys;");
       this.database.prepare("UPDATE admin_proposals SET state = 'rejected', decided_at = ? WHERE state = 'pending'").run(now);
       return { id, resetOf, archived, at: now };
     });
@@ -221,6 +238,24 @@ export class ContextLayerStore {
   resets(): AdminResetRecord[] {
     return (this.database.prepare("SELECT id, reset_of, archived, at FROM admin_resets ORDER BY id DESC").all() as Array<{ id: number; reset_of: string | null; archived: number; at: string }>)
       .map(row => ({ id: row.id, resetOf: row.reset_of, archived: row.archived, at: row.at }));
+  }
+
+  // --- JEV keys (encrypted; written in the transaction of their signed record) -------------------------------------
+
+  jevKey(name: string): JevKeyRecord | null {
+    const row = this.database.prepare("SELECT name, fingerprint, sealed, stored_at FROM jev_keys WHERE name = ?").get(name) as
+      { name: string; fingerprint: string; sealed: string; stored_at: string } | undefined;
+    return row ? { name: row.name, fingerprint: row.fingerprint, sealed: row.sealed, storedAt: row.stored_at } : null;
+  }
+
+  putJevKey(record: JevKeyRecord): void {
+    this.database.prepare(`INSERT INTO jev_keys (name, fingerprint, sealed, stored_at) VALUES (?, ?, ?, ?)
+      ON CONFLICT (name) DO UPDATE SET fingerprint = excluded.fingerprint, sealed = excluded.sealed, stored_at = excluded.stored_at`)
+      .run(record.name, record.fingerprint, record.sealed, record.storedAt);
+  }
+
+  deleteJevKey(name: string): void {
+    this.database.prepare("DELETE FROM jev_keys WHERE name = ?").run(name);
   }
 
   // --- Agent proposals -------------------------------------------------------------------------------------------

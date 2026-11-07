@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { IntlMessageFormat } from "intl-messageformat";
 
 import { CATALOGS, ROOT_LOCALE, SUPPORTED_LOCALES, type MessageParams, type SupportedLocale } from "./i18n-catalog.generated.js";
+import { signedLocale } from "./admin-settings.js";
 import { resolvePackageLocalePath, resolveUserSettingsPath } from "./runtime-config.js";
 
 export { ROOT_LOCALE, SUPPORTED_LOCALES, type SupportedLocale };
@@ -78,8 +79,8 @@ export function lookupLocale(ranges: readonly string[]): SupportedLocale | null 
   return null;
 }
 
-export type LocaleSource = "environment" | "settings" | "package" | "root";
-export type LocaleSkipCode = "LOCALE_INVALID" | "LOCALE_UNSUPPORTED" | "LOCALE_SETTINGS_UNREADABLE";
+export type LocaleSource = "environment" | "signed" | "settings" | "package" | "root";
+export type LocaleSkipCode = "LOCALE_INVALID" | "LOCALE_UNSUPPORTED" | "LOCALE_SETTINGS_UNREADABLE" | "LOCALE_SIGNED_UNREADABLE";
 
 export interface ResolvedLocale {
   readonly locale: SupportedLocale;
@@ -94,6 +95,8 @@ export interface HostLocaleInputs {
   readonly settingsPath?: string | null;
   readonly packageLocalePath?: string;
   readonly readText?: (file: string) => string;
+  /** The locale signed on the admin page (admin-settings.ts reads and verifies the signed log); a test may pin it. */
+  readonly signedLocale?: () => Configured;
 }
 
 type Configured = { value: unknown } | { failure: LocaleSkipCode } | null;
@@ -116,7 +119,11 @@ function readLocaleFile(file: string | null, readText: (file: string) => string)
   }
 }
 
-/** Host-side locale (docs/i18n-design.md 4.1 ①): environment, user settings, installed package, then the root locale. */
+/**
+ * Host-side locale (docs/i18n-design.md 4.1 ①): environment, the locale signed on the admin page (docs/admin-page.md),
+ * user settings, installed package, then the root locale. The environment wins over the signed value; the page shows
+ * the locale as locked by it. The signed value is read only when the environment does not set one.
+ */
 export function resolveHostLocale(inputs: HostLocaleInputs = {}): ResolvedLocale {
   const environment = inputs.environment ?? process.env;
   const readText = inputs.readText ?? ((file: string) => readFileSync(file, "utf8"));
@@ -126,6 +133,7 @@ export function resolveHostLocale(inputs: HostLocaleInputs = {}): ResolvedLocale
   }
   const sources: Array<[LocaleSource, () => Configured]> = [
     ["environment", () => (environment[LOCALE_ENVIRONMENT] === undefined ? null : { value: environment[LOCALE_ENVIRONMENT] })],
+    ["signed", inputs.signedLocale ?? (() => signedLocale(environment))],
     ["settings", () => readLocaleFile(settingsPath, readText)],
     ["package", () => readLocaleFile(inputs.packageLocalePath ?? resolvePackageLocalePath(), readText)],
   ];

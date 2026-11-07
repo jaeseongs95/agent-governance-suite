@@ -19,8 +19,11 @@ import {
   parseIntent,
   ROLE_NAME_MAX_LENGTH,
   roleKey,
+  SETTING_TARGETS,
   verifyRecord,
 } from "./admin-log.js";
+import type { AdminSignedSettings } from "./admin-settings.js";
+import { jevKeyFingerprint, type JevKeyVault } from "./jev-key-vault.js";
 import { type AdminAssertion, AdminError, assertionOrigin, intentChallenge } from "./admin-webauthn.js";
 import { msg, type MessageRef } from "./i18n.js";
 import {
@@ -137,9 +140,12 @@ function failureLayer(target: string): string {
   return target.startsWith("binding:") ? "binding" : target;
 }
 
-/** The failures that change what this session receives: the keys, the global context, the roles and its own binding. */
+/**
+ * The failures that change what this session works with: the keys, the global context, the roles, the settings the page
+ * edits (locale, edit gate exceptions, JEV and its keys) and its own binding.
+ */
 function sessionFailures(state: AdminState, host: string, sessionId: string): LayerFailureView[] {
-  const own = new Set(["keys", "global", "roles", bindingTarget(host, sessionId)]);
+  const own = new Set<string>(["keys", "global", "roles", ...SETTING_TARGETS, bindingTarget(host, sessionId)]);
   const byTarget = new Map<string, AdminFailure>();
   for (const failure of state.failures) if (own.has(failure.target) && !byTarget.has(failure.target)) byTarget.set(failure.target, failure);
   return [...byTarget.values()].map(failure => ({ layer: failureLayer(failure.target), revision: state.heads.get(failure.target)?.seq ?? null, code: failure.code }));
@@ -155,8 +161,12 @@ export interface AdminPageState {
   bindings: Array<{ host: string; sessionId: string; roleId: string; boundAt: string; lastUsedAt: string; lapsed: boolean }>;
   proposals: Array<AdminProposalRecord & { baseChanged: boolean }>;
   failures: Array<AdminFailure & { layer: string; revision: number | null }>;
+  /** The signed settings (a JEV key only by its fingerprint). */
+  signedSettings: AdminSignedSettings;
   lastSeq: number;
 }
+
+const NO_SETTINGS: AdminSignedSettings = { jev: null, jevKeys: [], locale: null, editExempt: null };
 
 /**
  * The shared context policy every entry point uses: MCP tools, lifecycle hooks and the local admin page. What the user
@@ -175,6 +185,8 @@ export class ContextLayerService {
     private readonly openStore: (create: boolean) => ContextLayerStore | null,
     private readonly now: () => Date = () => new Date(),
     readonly adminUrl: string | null = null,
+    /** Encrypts the JEV keys the page registers; null refuses a key registration. */
+    private readonly keyVault: JevKeyVault | null = null,
   ) {}
 
   /** The page address for message text; a turned-off page names the setting that turned it off. */
@@ -373,9 +385,35 @@ export class ContextLayerService {
         bindings,
         proposals: store.pendingProposals().map(proposal => ({ ...proposal, baseChanged: (state.heads.get(proposal.target)?.recordHash ?? null) !== proposal.baseHash })),
         failures: state.failures.map(failure => ({ ...failure, layer: failureLayer(failure.target), revision: state.heads.get(failure.target)?.seq ?? null })),
+        signedSettings: {
+          jev: state.jev,
+          jevKeys: [...state.jevKeys.values()].map(key => ({ name: key.name, fingerprint: key.fingerprint, setAt: key.issuedAt,
+            stored: store.jevKey(key.name)?.fingerprint === key.fingerprint })),
+          locale: state.locale,
+          editExempt: state.editExempt,
+        },
         lastSeq: state.lastSeq,
       };
-    }, { keys: [], bootstrap: null, resets: [], global: null, globalHistory: [], roles: [], bindings: [], proposals: [], failures: [], lastSeq: 0 });
+    }, { keys: [], bootstrap: null, resets: [], global: null, globalHistory: [], roles: [], bindings: [], proposals: [], failures: [], signedSettings: NO_SETTINGS, lastSeq: 0 });
+  }
+
+  /** The verified signed settings, for the readers in the MCP server (JEV); the defaults when nothing was saved. */
+  verifiedState(): AdminState | null {
+    return this.with(false, store => this.fold(store), null);
+  }
+
+  /**
+   * The JEV key registered under this credential name: decrypted only when the stored value matches the fingerprint of
+   * the last valid signed record. Null when none is registered; throws JevKeyVaultError when one is but cannot be read.
+   */
+  jevKey(name: string): string | null {
+    return this.with(false, store => {
+      const signed = this.fold(store).jevKeys.get(name);
+      if (!signed) return null;
+      const stored = store.jevKey(name);
+      if (!stored || stored.fingerprint !== signed.fingerprint || !this.keyVault) return null;
+      return this.keyVault.open(name, signed.fingerprint, stored.sealed);
+    }, null);
   }
 
   /**
@@ -407,8 +445,9 @@ export class ContextLayerService {
    * append share one BEGIN IMMEDIATE transaction. A repeated request ID returns the record already stored, so a page
    * that lost the response asks again instead of signing twice.
    */
-  commit(input: { intent: string; assertion: AdminAssertion; requestId: string; proposalId?: string | null; origin?: string }): { record: AdminLogRecord; duplicate: boolean } {
+  commit(input: { intent: string; assertion: AdminAssertion; requestId: string; proposalId?: string | null; origin?: string; secret?: string | null }): { record: AdminLogRecord; duplicate: boolean } {
     const now = this.now();
+    const sealed = this.sealSecret(input.intent, input.secret ?? null);
     const result = this.with(true, store => store.transaction(() => {
       const existing = store.recordByRequest(input.requestId);
       if (existing) return { record: existing, duplicate: true };
@@ -437,11 +476,31 @@ export class ContextLayerService {
       verifyRecord(state, { ...record, seq: state.lastSeq + 1 });
       const appended = store.appendRecord(record, input.requestId);
       if (intent.change.op === "role.delete") store.deleteRoleBody(intent.change.roleId);
+      if (intent.change.op === "jevKey.set") store.putJevKey({ name: intent.change.name, fingerprint: intent.change.fingerprint, sealed: sealed!, storedAt: now.toISOString() });
+      if (intent.change.op === "jevKey.delete") store.deleteJevKey(intent.change.name);
       if (proposal) store.decideProposal(proposal.id, "applied", now.toISOString());
       return { record: appended, duplicate: false };
     }), null as never);
     this.highWater.set(result.record.target, Math.max(result.record.seq, this.highWater.get(result.record.target) ?? 0));
     return result;
+  }
+
+  /**
+   * A key registration carries the value beside the signed intent: it must hash to the fingerprint the passkey signed,
+   * and it is encrypted before the transaction. Any other change carries no value.
+   */
+  private sealSecret(intentText: string, secret: string | null): string | null {
+    let change: AdminChange;
+    try { change = parseIntent(intentText).change; } catch { return null; }
+    if (change.op !== "jevKey.set") {
+      if (secret !== null) throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "SECRET_UNEXPECTED" });
+      return null;
+    }
+    if (secret === null || jevKeyFingerprint(secret) !== change.fingerprint) throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "JEV_KEY_FINGERPRINT_MISMATCH" });
+    if (!this.keyVault) throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "JEV_KEY_VAULT_UNAVAILABLE" });
+    try { return this.keyVault.seal(change.name, change.fingerprint, secret); } catch {
+      throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "JEV_KEY_VAULT_UNAVAILABLE" });
+    }
   }
 
   recordByRequest(requestId: string): AdminLogRecord | null {

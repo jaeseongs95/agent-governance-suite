@@ -176,6 +176,11 @@ export function resolveContextLayerDatabasePath(
   return path.join(sharedUserStateDirectory(environment, homeDirectory), "context-layers.sqlite3");
 }
 
+/** The data key that encrypts the JEV keys registered on the admin page, beside the shared context file. */
+export function resolveJevKeyVaultPath(environment: NodeJS.ProcessEnv = process.env): string {
+  return path.join(path.dirname(resolveContextLayerDatabasePath(environment)), "jev-key-vault.bin");
+}
+
 /** The fixed local port of the admin page (AGS3-T-0024); 0 turns the page off. */
 export const DEFAULT_ADMIN_PORT = 47615;
 

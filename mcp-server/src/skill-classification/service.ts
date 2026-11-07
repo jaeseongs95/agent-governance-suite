@@ -20,17 +20,36 @@ export class InMemoryClassificationBudget implements ClassificationBudgetPort {
   private readonly invalidCostCeilings = new Set<string>();
   private readonly limits = new Map<string, BudgetLimit>();
   private readonly nativeAllowances = new Map<string, NativeClassificationAllowance>();
-  constructor(options: {jev: BudgetLimit; vendors: Record<string, BudgetLimit>; nativeAllowances?: Record<string, NativeClassificationAllowance>; maxReservations?: number}) {
+  /**
+   * `jevSignedLimitUsd` reads the JEV budget the user signed on the admin page (null: none). The narrower of it and the
+   * installation's limit applies. When the installation gives neither a limit nor a spent amount, the signed budget
+   * counts from zero in this process; an installation limit with an unknown spent amount still refuses, as before.
+   */
+  constructor(options: {jev: BudgetLimit; vendors: Record<string, BudgetLimit>; nativeAllowances?: Record<string, NativeClassificationAllowance>; maxReservations?: number;
+    jevSignedLimitUsd?: () => number | null}) {
     this.maxReservations = options.maxReservations ?? 2048;
     if (!Number.isSafeInteger(this.maxReservations) || this.maxReservations < 1) throw new Error("INVALID_RESERVATION_BOUND");
-    this.limits.set("jev", {...options.jev, limitUsd: options.jev.limitUsd === null ? null : Math.min(5, options.jev.limitUsd)});
+    this.jevSignedLimitUsd = options.jevSignedLimitUsd ?? null;
+    const unset = options.jev.limitUsd === null && options.jev.spentUsd === null;
+    this.limits.set("jev", {limitUsd: options.jev.limitUsd === null ? null : Math.min(5, options.jev.limitUsd),
+      spentUsd: unset && this.jevSignedLimitUsd ? 0 : options.jev.spentUsd});
     for (const [vendor, limit] of Object.entries(options.vendors)) this.limits.set(`vendor:${vendor}`, {...limit});
     for (const [id, allowance] of Object.entries(options.nativeAllowances ?? {})) this.nativeAllowances.set(id, {...allowance});
   }
   private readonly maxReservations: number;
+  private readonly jevSignedLimitUsd: (() => number | null) | null;
+  /** The limit in force for a bucket; for JEV, the narrower of the installation's and the signed budget (cap 5 USD). */
+  private limitFor(bucket: string): BudgetLimit | undefined {
+    const limit = this.limits.get(bucket);
+    if (bucket !== "jev" || !limit || !this.jevSignedLimitUsd) return limit;
+    let signed: number | null;
+    try { signed = this.jevSignedLimitUsd(); } catch { return {limitUsd: null, spentUsd: limit.spentUsd}; }
+    const limits = [limit.limitUsd, signed].filter((value): value is number => value !== null && Number.isFinite(value));
+    return {limitUsd: limits.length ? Math.min(5, ...limits) : null, spentUsd: limit.spentUsd};
+  }
   reserve(profile: ProviderProfile, reservationId: string, maximumUsd: number, routeKind: "native" | "remote" = "remote"): boolean {
     const bucket = profile.providerKind === "jev" ? "jev" : `vendor:${profile.vendorId}`;
-    const limit = this.limits.get(bucket);
+    const limit = this.limitFor(bucket);
     if (!Number.isFinite(maximumUsd) || maximumUsd < 0 || this.reservations.has(reservationId) || this.reservations.size >= this.maxReservations
       || this.invalidCostCeilings.has(profile.profileId) || this.invalidCostCeilings.size >= this.maxReservations) return false;
     let nativeProfileId: string | null = null;

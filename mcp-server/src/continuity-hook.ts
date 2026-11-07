@@ -9,6 +9,7 @@ import path from "node:path";
 import { types } from "node:util";
 
 import { ContinuityService, minimalWorkflowStartExample, renderHookText, subagentStartCue, workflowFailureCode } from "./continuity-service.js";
+import { editExemptPaths } from "./admin-settings.js";
 import { ContextLayerService } from "./context-layer-service.js";
 import { ContextLayerStore } from "./context-layer-store.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
@@ -41,9 +42,6 @@ const BOUND_TOOLS = new Set([
 const PROGRESS_TOOLS = new Set(["start_workflow", "start_guarded_workflow", "record_stage_result",
   "finalize_workflow", "abort_workflow", "release_convergence_root"]);
 
-/** Extra exempt directories, separated by the platform path delimiter. Set by the user's environment, never a tool input. */
-const EXEMPT_PATHS_VARIABLE = "AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS";
-
 /** Edit paths compare as the platform's file system does: Windows paths without case or separator differences. */
 function normalizedEditPath(value: string): string {
   const resolved = path.resolve(value);
@@ -56,10 +54,11 @@ function realOrSelf(value: string): string[] {
 
 /**
  * Non-product directories (design ags30-phase-check 7.3): the OS temporary directory (agent scratch space), the host's
- * own note directories and the user's configured list. The working directory is not a criterion.
+ * own note directories and the user's list: AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS when set, else the list signed on the admin
+ * page (verified on each read, admin-settings.ts). Never a tool input. The working directory is not a criterion.
  */
 function exemptEditRoots(host: string, environment: NodeJS.ProcessEnv): string[][] {
-  const configured = (environment[EXEMPT_PATHS_VARIABLE] ?? "").split(path.delimiter).map(entry => entry.trim()).filter(entry => path.isAbsolute(entry));
+  const configured = editExemptPaths(environment);
   return [...new Set([tmpdir(), ...hostAgentNoteRoots(host, environment), ...configured].flatMap(realOrSelf).map(normalizedEditPath))]
     .map(root => root.split(path.sep));
 }

@@ -5,6 +5,7 @@ import { AdminError, type AdminErrorCode, ADMIN_RP_ID } from "./admin-webauthn.j
 import { ADMIN_PAGE_HTML } from "./admin-page.generated.js";
 import { ROLE_NAME_MAX_LENGTH } from "./admin-log.js";
 import { type AdminPageState, type ContextLayerService, GLOBAL_CONTEXT_MAX_BYTES, ROLE_CONTEXT_MAX_BYTES } from "./context-layer-service.js";
+import type { AdminSettingsView } from "./admin-settings.js";
 import { failureCode } from "./failure-diagnostics.js";
 import { writeDiagnostic } from "./hook-error-diagnostics.js";
 
@@ -15,6 +16,8 @@ import { writeDiagnostic } from "./hook-error-diagnostics.js";
  * protects a change from an agent on this computer — the signature is.
  */
 export const ADMIN_BODY_MAX_BYTES = 64 * 1024;
+/** A JEV key value's length limit (characters). */
+export const JEV_KEY_MAX_LENGTH = 4096;
 
 export interface AdminSessionView {
   host: string;
@@ -28,18 +31,15 @@ export interface AdminSessionView {
   lastSeenAt: string | null;
 }
 
-export interface AdminSettingsView {
-  locale: { value: string; source: string; lockedBy: string | null; editable: false; reason: string };
-  jev: { configured: boolean; enabled: boolean; mode: string | null; profileCount: number; error: string | null; lockedBy: string; editable: false; reason: string };
-  editGateExceptions: { available: true; paths: string[]; lockedBy: string; editable: false; reason: string };
-}
+export type { AdminSettingsView };
 
 export interface AdminPageDependencies {
   service: ContextLayerService;
   port: number;
   /** The sessions this computer's presence and board know; throws when they cannot be read. */
   listSessions: () => Promise<AdminSessionView[]>;
-  settings: () => Promise<AdminSettingsView>;
+  /** The settings with what bounds them (environment, installation); never a secret value. */
+  settings: (admin: AdminPageState) => Promise<AdminSettingsView>;
 }
 
 const STATUS: Partial<Record<AdminErrorCode, number>> = {
@@ -147,7 +147,7 @@ export function createAdminRequestHandler(dependencies: AdminPageDependencies) {
         return { ...session, binding: binding ? { roleId: binding.roleId, boundAt: binding.boundAt, lastUsedAt: binding.lastUsedAt, lapsed: binding.lapsed } : null };
       }),
       sessionsError,
-      settings: await dependencies.settings(),
+      settings: await dependencies.settings(admin),
     };
   }
 
@@ -188,8 +188,11 @@ export function createAdminRequestHandler(dependencies: AdminPageDependencies) {
       const requestId = stringField(body, "requestId", 100);
       if (!REQUEST_ID.test(requestId)) throw new HttpError(400, "REQUEST_INVALID", { field: "requestId" });
       const proposalId = body.proposalId === null || body.proposalId === undefined ? null : stringField(body, "proposalId", 100);
+      // A JEV key's value travels only with its signed registration; it is encrypted and never sent back.
+      const secret = body.secret === null || body.secret === undefined ? null : stringField(body, "secret", JEV_KEY_MAX_LENGTH);
+      if (secret !== null && /\p{Cc}/u.test(secret)) throw new HttpError(400, "REQUEST_INVALID", { field: "secret" });
       const { record, duplicate } = service.commit({
-        intent: stringField(body, "intent", ADMIN_BODY_MAX_BYTES), requestId, proposalId, origin,
+        intent: stringField(body, "intent", ADMIN_BODY_MAX_BYTES), requestId, proposalId, origin, secret,
         assertion: { credentialId: stringField(assertion, "credentialId", 1400), authenticatorData: stringField(assertion, "authenticatorData", 4000),
           clientDataJSON: stringField(assertion, "clientDataJSON", 8000), signature: stringField(assertion, "signature", 2000) },
       });

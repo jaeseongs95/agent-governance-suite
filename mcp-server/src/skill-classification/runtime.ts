@@ -26,6 +26,8 @@ export interface ClassificationProviderRuntimeOptions {
   getCredentialByEnvName?: (name: string) => Promise<string | null>;
   wireAdapters?: ReadonlyMap<string, ClassificationWireAdapter>;
   nativeAdapters?: NativeClassificationAdapterRegistry;
+  /** The JEV budget signed on the admin page; the budget applies the narrower of it and the configured limit. */
+  jevSignedLimitUsd?: () => number | null;
 }
 
 /** The trusted installation supplies routes and balances. Requests cannot invent endpoints or keys. */
@@ -51,7 +53,7 @@ export function createClassificationProviderRuntime(raw: unknown, options: Class
   return {providers: {
     jev: new ApprovedRouteClassificationProvider(routes.filter(route => route.providerKind === "jev"), options.fetcher),
     vendor: new ApprovedRouteClassificationProvider(routes.filter(route => route.providerKind === "vendor"), options.fetcher),
-  }, budget: new InMemoryClassificationBudget(config.budget)};
+  }, budget: new InMemoryClassificationBudget({...config.budget, ...(options.jevSignedLimitUsd ? {jevSignedLimitUsd: options.jevSignedLimitUsd} : {})})};
 }
 
 export async function loadClassificationProviderRuntime(file: string, options: ClassificationProviderRuntimeOptions = {}) {

@@ -11,6 +11,7 @@ import {
   resolveContextLayerDatabasePath,
   resolveContinuityDatabasePath,
   resolveHostAttestation,
+  resolveJevKeyVaultPath,
   resolveKoreanProseGlossaryPath,
   resolveRegistryPath,
   resolveSessionBoardDatabasePath,
@@ -35,7 +36,7 @@ import { pathToFileURL } from "node:url";
 import type { ClassificationWireAdapter } from "./skill-classification/providers.js";
 import { RuntimeSkillClassificationGateway, readClassificationRuntime } from "./skill-classification/gateway.js";
 import { InMemoryClassificationBudget, SkillClassificationService } from "./skill-classification/service.js";
-import { ClassificationInitializationError, loadClassificationProviderRuntime, reportClassificationInitializationFailure } from "./skill-classification/runtime.js";
+import { ClassificationInitializationError, classificationProviderRuntimeSchema, loadClassificationProviderRuntime, reportClassificationInitializationFailure } from "./skill-classification/runtime.js";
 import { readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { digestClassificationValue } from "./skill-classification/request.js";
@@ -45,10 +46,14 @@ import { createNativeClassificationAdapters, type NativeClassificationAdapterDef
 import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
 import { failureContext } from "./failure-diagnostics.js";
 import { writeDiagnostic, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
-import { type AdminSessionView, type AdminSettingsView, startAdminPage } from "./admin-page-server.js";
+import { type AdminSessionView, startAdminPage } from "./admin-page-server.js";
+import { type AdminPageState } from "./context-layer-service.js";
+import { adminSettingsView, applyAdminJev, type AdminSettingsView, type JevInstallationView } from "./admin-settings.js";
+import { JevKeyVault } from "./jev-key-vault.js";
+import { InMemoryClassificationBudget as ClassificationBudget } from "./skill-classification/service.js";
 import { mergeSessionBoard } from "./server.js";
 import { SessionMessageService } from "./session-message-service.js";
-import { LOCALE_ENVIRONMENT, resolveHostLocale } from "./i18n.js";
+import { resolveHostLocale, SUPPORTED_LOCALES } from "./i18n.js";
 
 
 /** Trusted installation code supplies adapters; request JSON and environment names cannot register them. */
@@ -105,6 +110,23 @@ export async function startMcpServer(
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
+  let adminPort = 0;
+  try { adminPort = resolveAdminPort(); } catch { writeDiagnostic("admin-page", "port-invalid", { setting: "AGENT_GOVERNANCE_ADMIN_PORT" }); }
+  // Opened per call: every host's processes share this file, and a read never creates it. The JEV settings and keys the
+  // user signed on the admin page are read through it on each use (verified every time).
+  const contextLayers = new ContextLayerService(create => ContextLayerStore.open(resolveContextLayerDatabasePath(), create), undefined,
+    adminPort ? adminPageUrl(adminPort) : null, new JevKeyVault(resolveJevKeyVaultPath()));
+  const signedJev = () => {
+    try { return contextLayers.verifiedState()?.jev ?? null; } catch { return null; }
+  };
+  // An environment variable named by the route wins; otherwise the key registered on the page (never logged).
+  const getCredentialByEnvName = async (name: string): Promise<string | null> => {
+    if (process.env[name]) return process.env[name]!;
+    try { return contextLayers.jevKey(name); } catch (error) {
+      writeDiagnostic("skill-classification", "jev-key-unreadable", { code: (error as { code?: unknown }).code ?? "UNREADABLE" });
+      return null;
+    }
+  };
   const classificationRoot = path.dirname(path.dirname(registryPath));
   const classificationConfig = process.env.AGENT_GOVERNANCE_CLASSIFICATION_CONFIG;
   let initializationFailure: ClassificationInitializationError | null = null;
@@ -124,7 +146,12 @@ export async function startMcpServer(
     nativeDefinitionDigest = nativeDefinitionBytes ? digestClassificationValue(nativeDefinitionBytes.toString("utf8")) : null;
     const nativeDefinitions: NativeClassificationAdapterDefinition[] = nativeDefinitionBytes ? JSON.parse(nativeDefinitionBytes.toString("utf8")) as NativeClassificationAdapterDefinition[] : [];
     const nativeAdapters = createNativeClassificationAdapters(bindNativeClassificationDefinitions(nativeDefinitions, installedNativeBehaviors));
-    if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, {nativeAdapters, wireAdapters: installedWireAdapters});
+    if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, {nativeAdapters, wireAdapters: installedWireAdapters,
+      getCredentialByEnvName, jevSignedLimitUsd: () => signedJev()?.limitUsd ?? null});
+    // JEV is off until the user turns it on on the admin page; a config that enables it is said to be waiting, not ignored.
+    if (classificationConfig && initialRuntime.config.jevEnabled && !signedJev()?.enabled) {
+      writeDiagnostic("skill-classification", "jev-off-until-signed", { adminUrl: adminPort ? adminPageUrl(adminPort) : null });
+    }
   } catch (error) {
     initializationFailure = new ClassificationInitializationError(error);
     reportClassificationInitializationFailure(initializationFailure);
@@ -159,15 +186,12 @@ export async function startMcpServer(
       const runtime = await readClassificationRuntime(classificationConfig, classificationRoot);
       if (runtime.providerRuntimeRef !== providerRuntimeRef || (providerRuntimeRef && digestClassificationValue((await readFile(providerRuntimeRef)).toString("utf8")) !== providerBytesDigest)) throw new Error("APPROVED_PROVIDER_RUNTIME_CHANGED");
       if (runtime.nativeAdapterDefinitionsRef !== nativeDefinitionsRef || (nativeDefinitionsRef && digestClassificationValue((await readFile(nativeDefinitionsRef)).toString("utf8")) !== nativeDefinitionDigest)) throw new Error("APPROVED_NATIVE_ADAPTERS_CHANGED");
-      return runtime;
+      // The switch, the preset and the budget the user signed apply on each read (default off).
+      return applyAdminJev(runtime, signedJev());
     },
     service: new SkillClassificationService(providerRuntime),
   });
-  let adminPort = 0;
-  try { adminPort = resolveAdminPort(); } catch { writeDiagnostic("admin-page", "port-invalid", { setting: "AGENT_GOVERNANCE_ADMIN_PORT" }); }
-  // Opened per call: every host's processes share this file, and a read never creates it.
-  const contextLayers = new ContextLayerService(create => ContextLayerStore.open(resolveContextLayerDatabasePath(), create), undefined,
-    adminPort ? adminPageUrl(adminPort) : null);
+  const classificationBudget = providerRuntime.budget;
   const sessionMessages = new SessionMessageService();
   const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), sessionMessages, trust, classification, builtinCallerIngress(process.env.AGENT_GOVERNANCE_HOST_ATTESTATION, store), undefined,
     contextLayers);
@@ -176,7 +200,8 @@ export async function startMcpServer(
     service: contextLayers,
     port: adminPort,
     listSessions: () => adminSessions(sessionMessages, resolveSessionBoardDatabasePath()),
-    settings: () => adminSettings(classificationConfig, classificationRoot),
+    settings: admin => adminSettings(admin, classificationConfig, classificationRoot,
+      classificationBudget instanceof ClassificationBudget ? classificationBudget : null),
   });
 }
 
@@ -198,30 +223,34 @@ async function adminSessions(sessionMessages: SessionMessageService, boardPath: 
   }));
 }
 
-async function adminSettings(classificationConfig: string | undefined, classificationRoot: string): Promise<AdminSettingsView> {
+/** What the page shows about the settings: the signed values with the environment and installation that bound them. */
+async function adminSettings(admin: AdminPageState, classificationConfig: string | undefined, classificationRoot: string,
+  budget: ClassificationBudget | null): Promise<AdminSettingsView> {
   const locale = resolveHostLocale({ environment: process.env });
-  let jev: AdminSettingsView["jev"] = { configured: Boolean(classificationConfig), enabled: false, mode: null, profileCount: 0, error: null,
-    lockedBy: "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG", editable: false,
-    reason: "JEV 설정은 이 환경 변수가 가리키는 설정 파일에서 읽고, 서버가 시작할 때 승인된 런타임으로 고정합니다. 이 판에서는 페이지에서 바꾸지 않습니다." };
+  const installation: JevInstallationView = { configured: Boolean(classificationConfig), allows: true, mode: null, profileCount: 0, limitUsd: null,
+    credentials: [], error: null };
   if (classificationConfig) {
     try {
       const runtime = await readClassificationRuntime(classificationConfig, classificationRoot);
-      jev = { ...jev, enabled: runtime.config.jevEnabled, mode: runtime.config.mode, profileCount: runtime.registry.profiles.length };
+      Object.assign(installation, { allows: runtime.config.jevEnabled, mode: runtime.config.mode, profileCount: runtime.registry.profiles.length });
+      if (runtime.providerRuntimeRef) {
+        const routes = classificationProviderRuntimeSchema.parse(JSON.parse(await readFile(runtime.providerRuntimeRef, "utf8")));
+        const credentials = new Map<string, Set<string>>();
+        for (const route of routes.routes) {
+          if (route.kind === "remote") credentials.set(route.credentialEnvName, (credentials.get(route.credentialEnvName) ?? new Set()).add(route.vendorId));
+        }
+        installation.credentials = [...credentials].map(([name, vendors]) => ({ name, vendorIds: [...vendors].sort() }));
+        installation.limitUsd = routes.budget.jev.limitUsd === null ? null : Math.min(5, routes.budget.jev.limitUsd);
+      }
     } catch (error) {
-      jev = { ...jev, error: failureContext(error).type === "syntax-error" ? "CONFIG_INVALID" : "CONFIG_UNREADABLE" };
+      installation.error = failureContext(error).type === "syntax-error" ? "CONFIG_INVALID" : "CONFIG_UNREADABLE";
     }
   }
-  return {
-    locale: { value: locale.locale, source: locale.source, lockedBy: locale.source === "environment" ? LOCALE_ENVIRONMENT : null, editable: false,
-      reason: locale.source === "environment"
-        ? "환경 변수로 고정되어 페이지에서 바꿀 수 없습니다."
-        : "표시 언어는 AGS 사용자 설정 파일(settings.json)에서 읽습니다. 이 판에서는 페이지에서 바꾸지 않습니다." },
-    jev,
-    editGateExceptions: { available: true, lockedBy: "AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS", editable: false,
-      // The same reading as the edit gate (continuity-hook.ts exemptEditRoots): the platform delimiter, absolute entries only.
-      paths: (process.env.AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS ?? "").split(path.delimiter).map(entry => entry.trim()).filter(entry => path.isAbsolute(entry)),
-      reason: "편집 관문은 hook이 이 환경 변수를 읽어 정합니다. 이 판에서는 페이지에서 바꾸지 않습니다." },
-  };
+  const snapshot = budget?.snapshot();
+  const usage = snapshot ? { spentUsd: snapshot.limits.jev?.spentUsd ?? null,
+    reservedUsd: snapshot.reservations.filter(item => item.bucket === "jev").reduce((sum, item) => sum + item.maximumUsd, 0) } : null;
+  return adminSettingsView({ environment: process.env, signed: admin.signedSettings, locale: { value: locale.locale, source: locale.source },
+    localeOptions: SUPPORTED_LOCALES, installation, usage });
 }
 
 /** `server.mjs admin-reset`: archives the signed admin log after every passkey was lost (no HTTP or MCP path). */

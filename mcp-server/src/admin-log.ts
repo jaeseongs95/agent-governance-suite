@@ -1,4 +1,5 @@
-import { canonicalJson } from "./convergence-logic.js";
+import path from "node:path";
+
 import {
   ADMIN_RP_ID,
   AdminError,
@@ -10,6 +11,7 @@ import {
   sha256,
   verifyAdminAssertion,
 } from "./admin-webauthn.js";
+import { SUPPORTED_LOCALES } from "./i18n-catalog.generated.js";
 
 /**
  * The signed admin log (AGS3-T-0024, deliberation 2026-11-07): the only source of what the user decided on the admin
@@ -23,6 +25,39 @@ export const ADMIN_INTENT_VERSION = 1;
 export const ADMIN_INTENT_TTL_MS = 10 * 60_000;
 export const ROLE_NAME_MAX_LENGTH = 100;
 export const KEY_LABEL_MAX_LENGTH = 60;
+/** The JEV budget the page can sign; the classification budget never goes above it (skill-classification/service.ts). */
+export const JEV_BUDGET_MAX_USD = 5;
+export const EDIT_EXEMPT_MAX_PATHS = 50;
+const EDIT_EXEMPT_PATH_MAX_LENGTH = 1024;
+/** A JEV key name is the credential name an approved route asks for (credentialEnvName in the provider runtime). */
+export const JEV_KEY_NAME = /^[A-Za-z_][A-Za-z0-9_]{0,127}$/u;
+const FINGERPRINT = /^sha256:[a-f0-9]{64}$/u;
+/** The JEV uses (presets) this installation has; each can be turned off on the page. */
+export const JEV_PRESETS = [{ presetId: "skill-classification", tool: "classify_skills" }] as const;
+export type JevPresetId = (typeof JEV_PRESETS)[number]["presetId"];
+/** Targets of the settings the page edits besides the contexts (AGS3-T-0024 completion condition 2). */
+export const SETTING_TARGETS = ["jev", "jevKeys", "locale", "editExempt"] as const;
+/** ADMIN_CHANGE_INVALID reasons (details.reason) of the settings; the page has a sentence for each. */
+export const SETTING_CHANGE_REASONS = ["JEV_PRESET_UNKNOWN", "JEV_KEY_NOT_FOUND", "JEV_KEY_FINGERPRINT_MISMATCH", "SECRET_UNEXPECTED",
+  "JEV_KEY_VAULT_UNAVAILABLE"] as const;
+
+/**
+ * Canonical JSON (sorted keys, no spaces), the same form convergence-logic.ts writes. Kept here so the hook-side
+ * readers (locale, edit gate) load the verifier without the workflow modules.
+ */
+export function canonicalJson(value: unknown, subject = "Admin intent"): string {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new TypeError(`${subject}: non-finite number`);
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(item => canonicalJson(item, subject)).join(",")}]`;
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record).sort().map(key => `${JSON.stringify(key)}:${canonicalJson(record[key], subject)}`).join(",")}}`;
+  }
+  throw new TypeError(`${subject}: value cannot be serialized`);
+}
 
 export type AdminChange =
   | { op: "key.add"; credentialId: string; publicKey: string; alg: number; label: string }
@@ -32,6 +67,15 @@ export type AdminChange =
   | { op: "role.rename"; roleId: string; name: string }
   | { op: "role.delete"; roleId: string }
   | { op: "binding.set"; host: string; sessionId: string; roleId: string | null }
+  /** JEV on or off, its budget (null: the provider runtime's) and each preset's switch, signed together. */
+  | { op: "jev.set"; enabled: boolean; limitUsd: number | null; presets: Record<string, boolean> }
+  /** A JEV key: the signed record holds its fingerprint; the encrypted value is stored beside it (jev-key-vault.ts). */
+  | { op: "jevKey.set"; name: string; fingerprint: string }
+  | { op: "jevKey.delete"; name: string }
+  /** The display locale; null follows the AGS settings file and the package default. */
+  | { op: "locale.set"; locale: string | null }
+  /** The edit gate's extra exempt directories (absolute paths), replaced as a whole. */
+  | { op: "editExempt.set"; paths: string[] }
   /** The user saw the failed records of a target and keeps its current valid state (the page's [discard]). */
   | { op: "ack"; target: string };
 
@@ -86,6 +130,22 @@ export interface AdminGlobalState {
   credentialId: string;
 }
 
+export interface AdminSettingRevision {
+  seq: number;
+  issuedAt: string;
+}
+
+export interface AdminJevState extends AdminSettingRevision {
+  enabled: boolean;
+  limitUsd: number | null;
+  presets: Record<string, boolean>;
+}
+
+export interface AdminJevKeyState extends AdminSettingRevision {
+  name: string;
+  fingerprint: string;
+}
+
 export interface AdminFailure {
   target: string;
   seq: number;
@@ -104,6 +164,11 @@ export interface AdminState {
   globalHistory: AdminGlobalState[];
   roles: Map<string, AdminRoleState>;
   bindings: Map<string, AdminBindingState>;
+  /** The settings the page edits; null (or absent) means no valid signed revision: the default or the environment applies. */
+  jev: AdminJevState | null;
+  jevKeys: Map<string, AdminJevKeyState>;
+  locale: (AdminSettingRevision & { locale: string | null }) | null;
+  editExempt: (AdminSettingRevision & { paths: string[] }) | null;
   heads: Map<string, { recordHash: string; seq: number }>;
   /** When each key last signed a valid record. */
   keyLastUsed: Map<string, string>;
@@ -143,6 +208,23 @@ function text(value: unknown, max: number): value is string {
 
 const ID = /^[A-Za-z0-9_-]{1,200}$/;
 
+function budget(value: unknown): boolean {
+  return value === null || (typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= JEV_BUDGET_MAX_USD);
+}
+
+function presetSwitches(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const entries = Object.entries(value as Record<string, unknown>);
+  return entries.length <= 20 && entries.every(([id, on]) => /^[a-z0-9-]{1,60}$/u.test(id) && typeof on === "boolean");
+}
+
+/** Absolute (on this computer's platform), trimmed, one line, unique; the edit gate reads them as given. */
+function exemptPaths(value: unknown): boolean {
+  if (!Array.isArray(value) || value.length > EDIT_EXEMPT_MAX_PATHS || new Set(value).size !== value.length) return false;
+  return value.every(entry => typeof entry === "string" && entry.length > 0 && entry.length <= EDIT_EXEMPT_PATH_MAX_LENGTH
+    && entry.trim() === entry && !/\p{Cc}/u.test(entry) && path.isAbsolute(entry));
+}
+
 /** The change's own shape; state-dependent rules are checked in `applyChange`. */
 export function checkChangeShape(change: unknown): AdminChange {
   const value = change as Record<string, unknown> | null;
@@ -159,6 +241,12 @@ export function checkChangeShape(change: unknown): AdminChange {
       case "binding.set": return keys === "host,op,roleId,sessionId" && text(value.host, 200) && text(value.sessionId, 500)
         && (value.roleId === null || (typeof value.roleId === "string" && ID.test(value.roleId)));
       case "ack": return keys === "op,target" && typeof value.target === "string" && isAdminTarget(value.target);
+      case "jev.set": return keys === "enabled,limitUsd,op,presets" && typeof value.enabled === "boolean" && budget(value.limitUsd) && presetSwitches(value.presets);
+      case "jevKey.set": return keys === "fingerprint,name,op" && typeof value.name === "string" && JEV_KEY_NAME.test(value.name)
+        && typeof value.fingerprint === "string" && FINGERPRINT.test(value.fingerprint);
+      case "jevKey.delete": return keys === "name,op" && typeof value.name === "string" && JEV_KEY_NAME.test(value.name);
+      case "locale.set": return keys === "locale,op" && (value.locale === null || (SUPPORTED_LOCALES as readonly unknown[]).includes(value.locale));
+      case "editExempt.set": return keys === "op,paths" && exemptPaths(value.paths);
       default: return false;
     }
   })();
@@ -174,12 +262,16 @@ export function changeTarget(change: AdminChange): string {
     case "role.add": case "role.rename": case "role.delete": return "roles";
     case "binding.set": return bindingTarget(change.host, change.sessionId);
     case "ack": return change.target;
+    case "jev.set": return "jev";
+    case "jevKey.set": case "jevKey.delete": return "jevKeys";
+    case "locale.set": return "locale";
+    case "editExempt.set": return "editExempt";
   }
 }
 
-/** keys, global, roles or binding:<host>:<sessionId> (each part URI-encoded and non-empty). */
+/** keys, global, roles, a setting target or binding:<host>:<sessionId> (each part URI-encoded and non-empty). */
 export function isAdminTarget(target: string): boolean {
-  if (target === "keys" || target === "global" || target === "roles") return true;
+  if (target === "keys" || target === "global" || target === "roles" || (SETTING_TARGETS as readonly string[]).includes(target)) return true;
   const parts = /^binding:([^:]+):([^:]+)$/.exec(target);
   if (!parts || target.length > 1000) return false;
   try { return bindingTarget(decodeURIComponent(parts[1]!), decodeURIComponent(parts[2]!)) === target; } catch { return false; }
@@ -212,7 +304,7 @@ export function parseIntent(intent: string): AdminIntent {
 
 export function emptyAdminState(): AdminState {
   return { keys: new Map(), revoked: new Set(), bootstrap: null, global: null, globalHistory: [], roles: new Map(), bindings: new Map(),
-    heads: new Map(), keyLastUsed: new Map(), failures: [], lastSeq: 0 };
+    jev: null, jevKeys: new Map(), locale: null, editExempt: null, heads: new Map(), keyLastUsed: new Map(), failures: [], lastSeq: 0 };
 }
 
 /**
@@ -251,7 +343,15 @@ export function checkChange(state: AdminState, change: AdminChange, signer: stri
     case "binding.set":
       if (change.roleId !== null && !state.roles.has(change.roleId)) throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "ROLE_NOT_FOUND" });
       return;
-    case "ack":
+    case "jevKey.delete":
+      if (!state.jevKeys.has(change.name)) throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "JEV_KEY_NOT_FOUND" });
+      return;
+    case "jev.set": {
+      const unknown = Object.keys(change.presets).filter(id => !JEV_PRESETS.some(preset => preset.presetId === id));
+      if (unknown.length) throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "JEV_PRESET_UNKNOWN", presetId: unknown[0] });
+      return;
+    }
+    case "ack": case "jevKey.set": case "locale.set": case "editExempt.set":
       return;
   }
 }
@@ -287,6 +387,21 @@ function apply(state: AdminState, change: AdminChange, record: AdminLogRecord, i
     case "binding.set":
       if (change.roleId === null) state.bindings.delete(bindingKey(change.host, change.sessionId));
       else state.bindings.set(bindingKey(change.host, change.sessionId), { host: change.host, sessionId: change.sessionId, roleId: change.roleId, boundAt: intent.issuedAt, seq: record.seq });
+      return;
+    case "jev.set":
+      state.jev = { enabled: change.enabled, limitUsd: change.limitUsd, presets: { ...change.presets }, seq: record.seq, issuedAt: intent.issuedAt };
+      return;
+    case "jevKey.set":
+      state.jevKeys.set(change.name, { name: change.name, fingerprint: change.fingerprint, seq: record.seq, issuedAt: intent.issuedAt });
+      return;
+    case "jevKey.delete":
+      state.jevKeys.delete(change.name);
+      return;
+    case "locale.set":
+      state.locale = { locale: change.locale, seq: record.seq, issuedAt: intent.issuedAt };
+      return;
+    case "editExempt.set":
+      state.editExempt = { paths: [...change.paths], seq: record.seq, issuedAt: intent.issuedAt };
       return;
     case "ack":
       return;
