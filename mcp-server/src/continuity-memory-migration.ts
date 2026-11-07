@@ -49,16 +49,18 @@ function validateMemory(value: unknown, allowOversized: boolean): ContinuityMemo
     serializeContinuityMemory(value as ContinuityMemoryBodyV1);
   } catch (error) {
     // Export preserves a valid large body for human optimization; apply never truncates or empties it.
-    if (!allowOversized || !(error instanceof WorkflowContractError)
-      || error.details?.reasonCode !== "CONTINUITY_MEMORY_TOO_LARGE") throw new MigrationCliError("INVALID_MEMORY");
+    const oversized = error instanceof WorkflowContractError && error.details?.reasonCode === "CONTINUITY_MEMORY_TOO_LARGE";
+    if (!oversized) throw new MigrationCliError("INVALID_MEMORY");
+    if (!allowOversized) throw new MigrationCliError("MEMORY_TOO_LARGE");
   }
   return value as ContinuityMemoryBodyV1;
 }
 
 function readMappings(file: string): ContinuityMemoryMigration[] {
+  const raw = readFileSync(file, "utf8");
   let input: unknown;
-  try { input = JSON.parse(readFileSync(file, "utf8")) as unknown; }
-  catch { throw new MigrationCliError("MAPPING_UNREADABLE_OR_INVALID_JSON"); }
+  try { input = JSON.parse(raw) as unknown; }
+  catch { throw new MigrationCliError("INVALID_MAPPING_JSON"); }
   if (!Array.isArray(input)) throw new MigrationCliError("INVALID_MAPPING");
   const seen = new Set<string>();
   return input.map((item: unknown) => {
