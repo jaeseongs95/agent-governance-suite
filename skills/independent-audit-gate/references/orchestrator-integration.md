@@ -1,6 +1,6 @@
 # Orchestrator Integration
 
-이 문서는 `independent-audit-gate`를 여러 전문 스킬이 참여하는 오케스트레이션 흐름에 연결할 때 사용한다. v1.0의 연동 방식은 자연어 briefing과 구조화된 Markdown 결과이며, 별도 API나 `audit-run.json`을 요구하지 않는다.
+이 문서는 `independent-audit-gate`를 여러 전문 스킬이 참여하는 오케스트레이션 흐름에 연결할 때 사용한다. v1.0의 연동 방식은 자연어 briefing과 구조화된 Markdown 결과이며, 별도 호출 인터페이스(예: API)나 `audit-run.json`을 요구하지 않는다.
 
 ## 1. 책임 분리
 
@@ -52,7 +52,7 @@ known_limitations: []
 
 - `Audit Target`의 단계와 식별자가 현재 최종 대상과 일치한다.
 - `Independence`에 변경 작업자·감사자 분리, fresh context와 재위임 금지가 기록됐다.
-- `Evidence Checked`가 실제 파일, diff, 명령, 로그 또는 배포 상태를 가리킨다.
+- `Evidence Checked`가 실제 파일, 변경분, 명령, 로그 또는 배포 상태를 가리킨다.
 - 열린 `blocking` 발견사항이 없다.
 - `Gate` 값이 정확히 `PASS`다.
 - 감사 뒤 의미 있는 변경이 없어 판정이 stale하지 않다.
@@ -65,13 +65,13 @@ known_limitations: []
 | 요청 | 담당 |
 | --- | --- |
 | 요구사항 수집과 정규화 | requirement skill |
-| 대안 설계와 구현안 작성 | design skill |
-| 테스트와 일반 품질 확인 | validation skill |
+| 대안 설계와 실행안 작성 | design skill |
+| 시험과 일반 품질 확인 | validation skill |
 | 설치·릴리스 산출물 준비 | packaging skill |
 | 복잡한 판단의 다관점 반박과 합의 | `independent-deliberation-panel` |
 | 최종 고위험 변경의 독립 감사와 완료 판정 | `independent-audit-gate` |
 
-상위 orchestrator는 필요한 스킬만 선택한다. 구현 대상이 없는 설계 토론에는 이 게이트를 호출하지 않고, 고위험 변경의 최종 대상을 고정할 수 있을 때 호출한다.
+상위 orchestrator는 필요한 스킬만 선택한다. 작업 결과물이 없는 설계 토론에는 이 게이트를 호출하지 않고, 고위험 변경의 최종 대상을 고정할 수 있을 때 호출한다.
 
 ## 5. 플러그인 배치
 
@@ -90,4 +90,4 @@ orchestration-plugin/
         └── scripts/
 ```
 
-이 스킬의 `SKILL.md`, `agents/`, `references/`, `scripts/`를 함께 복사한다. 저장소용 `README.md`, `LICENSE`, `.github/`, `.gitattributes`, `.gitignore`는 플러그인 루트의 정책과 CI에서 관리한다. 복사한 구성요소는 `scripts/validate_skill.py --strict`로 검사한다. 스크립트는 플러그인 위치를 자동으로 감지하며, 필요하면 `--profile plugin-component`를 명시할 수 있다.
+이 스킬의 `SKILL.md`, `agents/`, `references/`, `scripts/`를 함께 복사한다. 배포 묶음 전체에 속한 파일(예: 저장소용 `README.md`, `LICENSE`, `.github/`, `.gitattributes`, `.gitignore`)은 플러그인 루트의 정책과 자동 검사(예: CI)에서 관리한다. 복사한 구성요소는 `scripts/validate_skill.py --strict`로 검사한다. 스크립트는 플러그인 위치를 자동으로 감지하며, 필요하면 `--profile plugin-component`를 명시할 수 있다.
