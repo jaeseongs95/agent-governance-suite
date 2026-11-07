@@ -7,7 +7,7 @@ import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ADMIN_PAGE_HTML } from "../../mcp-server/src/admin-page.generated.js";
-import { type AdminChange, JEV_BUDGET_MAX_USD, SETTING_CHANGE_REASONS } from "../../mcp-server/src/admin-log.js";
+import { type AdminChange, SETTING_CHANGE_REASONS } from "../../mcp-server/src/admin-log.js";
 import { adminSettingsView, applyAdminJev, editExemptPaths, jevBudgetLimit, type JevInstallationView } from "../../mcp-server/src/admin-settings.js";
 import { AdminError } from "../../mcp-server/src/admin-webauthn.js";
 import { ContextLayerService } from "../../mcp-server/src/context-layer-service.js";
@@ -192,12 +192,29 @@ describe("JEV switch, preset and budget", () => {
     expect(service.load("codex", "s").failures).toMatchObject([{ layer: "jev" }]);
   });
 
-  it(`refuses an unknown preset (${coversReason("JEV_PRESET_UNKNOWN")}) and a budget over the cap`, () => {
+  it(`refuses an unknown preset (${coversReason("JEV_PRESET_UNKNOWN")}) and a budget that is not a non-negative number`, () => {
     const { service } = setup();
     expect(adminCode(() => service.prepareIntent({ op: "jev.set", enabled: true, limitUsd: null, presets: { "made-up": true } }, false)))
       .toBe("ADMIN_CHANGE_INVALID/JEV_PRESET_UNKNOWN");
-    expect(adminCode(() => service.prepareIntent({ op: "jev.set", enabled: true, limitUsd: JEV_BUDGET_MAX_USD + 0.01, presets: {} }, false))).toBe("ADMIN_CHANGE_INVALID");
     expect(adminCode(() => service.prepareIntent({ op: "jev.set", enabled: true, limitUsd: -1, presets: {} }, false))).toBe("ADMIN_CHANGE_INVALID");
+    expect(adminCode(() => service.prepareIntent({ op: "jev.set", enabled: true, limitUsd: Number.POSITIVE_INFINITY, presets: {} }, false))).toBe("ADMIN_CHANGE_INVALID");
+  });
+
+  it("applies whatever budget the person signs, with no server cap", () => {
+    const { service, owner } = setup();
+    // The person sets the budget; a value above the former 5 USD cap is signed and used as is.
+    signAndCommit(service, owner, { op: "jev.set", enabled: true, limitUsd: 50, presets: {} });
+    expect(service.adminState().signedSettings.jev?.limitUsd).toBe(50);
+    expect(jevBudgetLimit(null, 50)).toBe(50);
+    const profile = { profileId: "p", providerKind: "jev", vendorId: "v" } as ProviderProfile;
+    const budget = new InMemoryClassificationBudget({ jev: { limitUsd: null, spentUsd: null }, vendors: {}, jevSignedLimitUsd: () => 50 });
+    expect(budget.reserve(profile, "big", 20)).toBe(true);
+    expect(budget.reserve(profile, "over", 31)).toBe(false);
+    // An installation file limit above 5 USD is no longer lowered either.
+    expect(new InMemoryClassificationBudget({ jev: { limitUsd: 20, spentUsd: 0 }, vendors: {} }).reserve(profile, "file", 10)).toBe(true);
+    // The page no longer refuses or advertises a cap.
+    expect(ADMIN_PAGE_HTML).not.toContain("서버 상한");
+    expect(ADMIN_PAGE_HTML).not.toContain("maxUsd");
   });
 
   it("reserves within the narrower of the installation's and the signed budget, read at each reservation", () => {
@@ -230,7 +247,7 @@ describe("JEV switch, preset and budget", () => {
     const view = adminSettingsView({ environment: { ...environment, JEV_ENV_KEY: "from-env" }, signed: service.adminState().signedSettings,
       locale: { value: "ko", source: "root" }, localeOptions: ["ko", "en"], installation, usage: { spentUsd: 0.25, reservedUsd: 0.1 } });
     expect(view.jev).toMatchObject({ enabled: true, switchOn: true, presets: [{ presetId: "skill-classification", enabled: true }],
-      budget: { installationLimitUsd: 4, signedLimitUsd: 3, limitUsd: 3, maxUsd: JEV_BUDGET_MAX_USD }, usage: { spentUsd: 0.25, reservedUsd: 0.1 } });
+      budget: { installationLimitUsd: 4, signedLimitUsd: 3, limitUsd: 3 }, usage: { spentUsd: 0.25, reservedUsd: 0.1 } });
     expect(view.jev.keys).toMatchObject([{ name: "JEV_ENV_KEY", fingerprint: null, environment: true }, { name: "JEV_FIXTURE_KEY", stored: true,
       fingerprint: jevKeyFingerprint("sk-fixture-value-1"), environment: false }]);
     expect(JSON.stringify(view)).not.toContain("sk-fixture-value-1");

@@ -31,21 +31,21 @@ export class InMemoryClassificationBudget implements ClassificationBudgetPort {
     if (!Number.isSafeInteger(this.maxReservations) || this.maxReservations < 1) throw new Error("INVALID_RESERVATION_BOUND");
     this.jevSignedLimitUsd = options.jevSignedLimitUsd ?? null;
     const unset = options.jev.limitUsd === null && options.jev.spentUsd === null;
-    this.limits.set("jev", {limitUsd: options.jev.limitUsd === null ? null : Math.min(5, options.jev.limitUsd),
+    this.limits.set("jev", {limitUsd: options.jev.limitUsd,
       spentUsd: unset && this.jevSignedLimitUsd ? 0 : options.jev.spentUsd});
     for (const [vendor, limit] of Object.entries(options.vendors)) this.limits.set(`vendor:${vendor}`, {...limit});
     for (const [id, allowance] of Object.entries(options.nativeAllowances ?? {})) this.nativeAllowances.set(id, {...allowance});
   }
   private readonly maxReservations: number;
   private readonly jevSignedLimitUsd: (() => number | null) | null;
-  /** The limit in force for a bucket; for JEV, the narrower of the installation's and the signed budget (cap 5 USD). */
+  /** The limit in force for a bucket; for JEV, the narrower of the installation's and the signed budget. */
   private limitFor(bucket: string): BudgetLimit | undefined {
     const limit = this.limits.get(bucket);
     if (bucket !== "jev" || !limit || !this.jevSignedLimitUsd) return limit;
     let signed: number | null;
     try { signed = this.jevSignedLimitUsd(); } catch { return {limitUsd: null, spentUsd: limit.spentUsd}; }
     const limits = [limit.limitUsd, signed].filter((value): value is number => value !== null && Number.isFinite(value));
-    return {limitUsd: limits.length ? Math.min(5, ...limits) : null, spentUsd: limit.spentUsd};
+    return {limitUsd: limits.length ? Math.min(...limits) : null, spentUsd: limit.spentUsd};
   }
   reserve(profile: ProviderProfile, reservationId: string, maximumUsd: number, routeKind: "native" | "remote" = "remote"): boolean {
     const bucket = profile.providerKind === "jev" ? "jev" : `vendor:${profile.vendorId}`;

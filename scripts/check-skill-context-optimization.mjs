@@ -384,6 +384,13 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
     }),
   }),
   // 3.9.0 WP-F successor: end
+  // 3.9.1: the JEV budget is the person's limit; the server no longer caps it at 5 USD.
+  Object.freeze({
+    revision: "ca6ac8b41dc12a34ef381db021eaaa9b447573ff",
+    hashes: Object.freeze({
+      "skills/orchestrator/references/skill-classification.md": ["7bb370144a5aeb3f67b7920e4d0d9ac415020ca6bc69a4816f6d39aece07ad8a", "e0ed92eeab8977f4bb8189ff517ad4e4b44e020c38f4aae1c177cc87c2971439"],
+    }),
+  }),
 ]);
 // 3.9.0 (AGS3-D-0007, AGS3-D-0018): core owns these former skill files. A removal is allowed only while the skill
 // path is absent and core holds the file, so a copy left in the skill or a lost core file is still reported.

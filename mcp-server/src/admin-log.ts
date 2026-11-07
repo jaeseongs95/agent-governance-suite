@@ -25,8 +25,6 @@ export const ADMIN_INTENT_VERSION = 1;
 export const ADMIN_INTENT_TTL_MS = 10 * 60_000;
 export const ROLE_NAME_MAX_LENGTH = 100;
 export const KEY_LABEL_MAX_LENGTH = 60;
-/** The JEV budget the page can sign; the classification budget never goes above it (skill-classification/service.ts). */
-export const JEV_BUDGET_MAX_USD = 5;
 export const EDIT_EXEMPT_MAX_PATHS = 50;
 const EDIT_EXEMPT_PATH_MAX_LENGTH = 1024;
 /** A JEV key name is the credential name an approved route asks for (credentialEnvName in the provider runtime). */
@@ -209,7 +207,8 @@ function text(value: unknown, max: number): value is string {
 const ID = /^[A-Za-z0-9_-]{1,200}$/;
 
 function budget(value: unknown): boolean {
-  return value === null || (typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= JEV_BUDGET_MAX_USD);
+  // The person sets the budget; there is no server cap.
+  return value === null || (typeof value === "number" && Number.isFinite(value) && value >= 0);
 }
 
 function presetSwitches(value: unknown): boolean {

@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { type AdminJevState, type AdminState, foldAdminLog, JEV_BUDGET_MAX_USD, JEV_PRESETS, EDIT_EXEMPT_MAX_PATHS } from "./admin-log.js";
+import { type AdminJevState, type AdminState, foldAdminLog, JEV_PRESETS, EDIT_EXEMPT_MAX_PATHS } from "./admin-log.js";
 import { ContextLayerStore } from "./context-layer-store.js";
 import { resolveContextLayerDatabasePath } from "./runtime-config.js";
 
@@ -65,10 +65,10 @@ export function jevEnabled(installationAllows: boolean, signed: AdminJevState | 
   return installationAllows && (signed?.enabled ?? false);
 }
 
-/** The JEV budget in force: the narrower of the installation's and the signed one, never above the server cap. */
+/** The JEV budget in force: the narrower of the installation's and the signed one; none set means no JEV spending. */
 export function jevBudgetLimit(installationLimitUsd: number | null, signedLimitUsd: number | null): number | null {
   const limits = [installationLimitUsd, signedLimitUsd].filter((limit): limit is number => limit !== null);
-  return limits.length ? Math.min(JEV_BUDGET_MAX_USD, ...limits) : null;
+  return limits.length ? Math.min(...limits) : null;
 }
 
 /** The classification runtime with JEV as the user decided: off unless JEV and the skill classification preset are on. */
@@ -105,7 +105,7 @@ export interface AdminSettingsView {
   jev: {
     configured: boolean; installationAllows: boolean; enabled: boolean; signed: boolean; mode: string | null; profileCount: number; error: string | null;
     switchOn: boolean; presets: Array<{ presetId: string; tool: string; enabled: boolean }>;
-    budget: { installationLimitUsd: number | null; signedLimitUsd: number | null; limitUsd: number | null; maxUsd: number };
+    budget: { installationLimitUsd: number | null; signedLimitUsd: number | null; limitUsd: number | null };
     /** The page server process's own tally (spent since it started, plus reservations); null when it keeps none. */
     usage: { spentUsd: number | null; reservedUsd: number } | null;
     keys: Array<{ name: string; vendorIds: string[]; fingerprint: string | null; setAt: string | null; stored: boolean; environment: boolean }>;
@@ -139,7 +139,7 @@ export function adminSettingsView(input: {
       switchOn: signed.jev?.enabled ?? false,
       presets: JEV_PRESETS.map(preset => ({ presetId: preset.presetId, tool: preset.tool, enabled: jevPresetSwitches(signed.jev)[preset.presetId] === true })),
       budget: { installationLimitUsd: installation.limitUsd, signedLimitUsd: signed.jev?.limitUsd ?? null,
-        limitUsd: jevBudgetLimit(installation.limitUsd, signed.jev?.limitUsd ?? null), maxUsd: JEV_BUDGET_MAX_USD },
+        limitUsd: jevBudgetLimit(installation.limitUsd, signed.jev?.limitUsd ?? null) },
       usage: input.usage,
       keys: [...names].sort(([a], [b]) => a.localeCompare(b)).map(([name, vendorIds]) => {
         const key = signed.jevKeys.find(candidate => candidate.name === name);

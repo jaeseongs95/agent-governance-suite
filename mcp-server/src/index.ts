@@ -240,7 +240,7 @@ async function adminSettings(admin: AdminPageState, classificationConfig: string
           if (route.kind === "remote") credentials.set(route.credentialEnvName, (credentials.get(route.credentialEnvName) ?? new Set()).add(route.vendorId));
         }
         installation.credentials = [...credentials].map(([name, vendors]) => ({ name, vendorIds: [...vendors].sort() }));
-        installation.limitUsd = routes.budget.jev.limitUsd === null ? null : Math.min(5, routes.budget.jev.limitUsd);
+        installation.limitUsd = routes.budget.jev.limitUsd;
       }
     } catch (error) {
       installation.error = failureContext(error).type === "syntax-error" ? "CONFIG_INVALID" : "CONFIG_UNREADABLE";

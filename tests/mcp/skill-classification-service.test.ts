@@ -204,8 +204,8 @@ describe("fixed-profile classification service", () => {
     const f = fixture(); f.input.config.jevEnabled = false; vi.mocked(f.vendor.classify).mockRejectedValue(new ClassificationProviderError("SECRET_SENTINEL private", "started"));
     const result = await f.service.classify(f.input); expect(result.response.error).toMatchObject({code: "PROVIDER_UNAVAILABLE", dispatchState: "started"}); expect(JSON.stringify(result)).not.toContain("SECRET_SENTINEL");
   });
-  it("SS33 JEV cap/prior spending and pending reservations are independent of vendor budget", () => {
-    const f = fixture(); const budget = new InMemoryClassificationBudget({jev: {limitUsd: 100, spentUsd: 4.5}, vendors: {"current-vendor": {limitUsd: 1, spentUsd: 0}}});
+  it("SS33 JEV limit/prior spending and pending reservations are independent of vendor budget", () => {
+    const f = fixture(); const budget = new InMemoryClassificationBudget({jev: {limitUsd: 5, spentUsd: 4.5}, vendors: {"current-vendor": {limitUsd: 1, spentUsd: 0}}});
     expect(budget.reserve(f.profile("jev"), "a", 0.4)).toBe(true); expect(budget.reserve(f.profile("jev"), "b", 0.4)).toBe(false);
     budget.settle("a", null, "unknown"); expect(budget.reserve(f.profile("jev"), "c", 0.4)).toBe(false);
     expect(budget.reserve(f.profile("vendor"), "v", 0.4)).toBe(true); budget.settle("v", 0.1, "started");

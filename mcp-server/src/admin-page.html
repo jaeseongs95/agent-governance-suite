@@ -814,7 +814,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
   function renderJevSaveBar(bar) {
     const j = jevOf(S.data), dirty = isJevDirty(), st = S.status.jev;
     if (!j || (!dirty && !st)) { bar.hidden = true; bar.replaceChildren(); return; }
-    const lim = jevLimitCheck(S.j.cur.limit, j.budget.maxUsd);
+    const lim = jevLimitCheck(S.j.cur.limit);
     let why = '';
     if (!hasKeys()) why = '패스키가 없어 저장할 수 없습니다 · 패스키 메뉴에서 먼저 등록하세요';
     else if (lim.err) why = '예산 한도를 고쳐야 저장할 수 있습니다';
@@ -1261,13 +1261,12 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     const a = S.j.base, b = S.j.cur;
     return (a.enabled !== b.enabled ? 1 : 0) + (a.limit.trim() !== b.limit.trim() ? 1 : 0) + Object.keys(a.presets).filter((k) => a.presets[k] !== b.presets[k]).length;
   }
-  /** 예산 칸: 비우면 null(설치 설정의 한도만), 아니면 0~상한 사이 숫자. */
-  function jevLimitCheck(raw, max) {
+  /** 예산 칸: 비우면 null(설치 설정의 한도만), 아니면 0 이상의 숫자. 상한은 사람이 정한다. */
+  function jevLimitCheck(raw) {
     const t = String(raw).trim();
     if (!t) return { value: null, err: null };
     const n = Number(t);
     if (!Number.isFinite(n) || n < 0) return { value: null, err: '0 이상의 숫자를 입력하세요.' };
-    if (n > max) return { value: null, err: max + ' USD를 넘을 수 없습니다(서버 상한).' };
     return { value: Math.round(n * 100) / 100, err: null };
   }
   function syncSettings(d) {
@@ -1298,7 +1297,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
   }
   async function saveJev() {
     const j = jevOf(S.data); if (!j || S.busy) return;
-    const lim = jevLimitCheck(S.j.cur.limit, j.budget.maxUsd);
+    const lim = jevLimitCheck(S.j.cur.limit);
     if (lim.err || !isJevDirty()) return;
     await runSigned({ slot: 'jev', change: { op: 'jev.set', enabled: S.j.cur.enabled, limitUsd: lim.value, presets: { ...S.j.cur.presets } }, onStale: () => loadState(),
       onDone: (rec, loaded) => { if (loaded) { S.j.cur = null; syncSettings(S.data); } S.status.jev = { kind: 'ok', text: 'JEV 설정을 저장했습니다 · 기록 #' + rec.seq + ' · ' + fmtHM(rec.createdAt) }; } });
@@ -1308,7 +1307,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     const sec = h('section', { class: 'col', 'aria-labelledby': 'j-title' }, head('j-title', 'JEV', '조언 계층입니다. 꺼도 AGS의 판단·관문은 그대로 동작합니다. 기본값은 꺼짐입니다.'));
     if (!j || !S.j.cur) { sec.append(h('p', { class: 'empty' }, '서버가 JEV 설정 값을 주지 않았습니다.')); return sec; }
     const cur = S.j.cur, locked = !j.installationAllows;
-    const lim = jevLimitCheck(cur.limit, j.budget.maxUsd);
+    const lim = jevLimitCheck(cur.limit);
     const sw = h('input', { type: 'checkbox', role: 'switch', id: 'jev-on', checked: cur.enabled, disabled: locked, 'aria-describedby': 'jev-state' });
     sw.addEventListener('change', () => { cur.enabled = sw.checked; delete S.status.jev; render(); });
     const budget = h('input', { id: 'jev-budget', type: 'text', inputmode: 'decimal', class: 'txt-in' + (lim.err ? ' invalid' : ''), autocomplete: 'off', value: cur.limit,
@@ -1316,7 +1315,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     // 입력 중에는 본문을 다시 그리지 않는다. 안내·저장 막대만 고친다.
     budget.addEventListener('input', () => {
       cur.limit = budget.value; delete S.status.jev;
-      const c = jevLimitCheck(cur.limit, j.budget.maxUsd), hint = $('jev-budget-hint');
+      const c = jevLimitCheck(cur.limit), hint = $('jev-budget-hint');
       budget.classList.toggle('invalid', !!c.err); budget.setAttribute('aria-invalid', c.err ? 'true' : 'false');
       if (hint) { hint.className = 'hint' + (c.err ? ' err' : ''); hint.textContent = c.err || BUDGET_HINT(j); }
       renderSaveBar();
@@ -1349,7 +1348,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     sec.append(viewJevKeys(j));
     return sec;
   }
-  const BUDGET_HINT = (j) => '비우면 설치 설정의 한도만 씁니다. 둘 다 있으면 작은 쪽 · 상한 ' + j.budget.maxUsd + ' USD';
+  const BUDGET_HINT = () => '비우면 설치 설정의 한도만 씁니다(둘 다 없으면 JEV를 호출하지 않습니다). 둘 다 있으면 작은 쪽';
   const PRESET = { 'skill-classification': { name: '스킬 분류', use: '작업에 맞는 스킬 조언' } };
   function keyState(k) {
     if (k.environment) return k.fingerprint ? '환경 변수가 우선 · 등록한 key는 쓰지 않음' : '환경 변수 사용 중';
