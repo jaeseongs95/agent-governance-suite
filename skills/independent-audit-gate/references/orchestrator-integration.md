@@ -4,7 +4,7 @@
 
 ## 1. 책임 분리
 
-- 상위 orchestrator는 요청 유형 판별, 작업 순서, 구현자와 감사자 식별, fresh auditor 배정, 결과 전달을 맡는다.
+- 상위 orchestrator는 요청 유형 판별, 작업 순서, 변경 작업자와 감사자 식별, fresh auditor 배정, 결과 전달을 맡는다.
 - 요구사항·설계·검증·패키징 스킬은 감사에 필요한 산출물과 근거를 만들 수 있지만 최종 `Gate` 판정을 대신하지 않는다.
 - `independent-audit-gate`는 위험 분류, 독립성 확인, 증거 확인 범위, 발견사항 심각도, stale 판정과 완료 게이트를 맡는다.
 - auditor는 최종 대상과 원자료를 직접 확인한다. orchestrator나 다른 worker에게 감사를 다시 맡기지 않는다.
@@ -51,7 +51,7 @@ known_limitations: []
 결과는 `SKILL.md`에 정의된 일곱 섹션을 같은 순서로 반환한다. orchestrator는 다음 항목을 직접 확인한 뒤에만 작업을 완료로 표시한다.
 
 - `Audit Target`의 단계와 식별자가 현재 최종 대상과 일치한다.
-- `Independence`에 구현자·감사자 분리, fresh context와 재위임 금지가 기록됐다.
+- `Independence`에 변경 작업자·감사자 분리, fresh context와 재위임 금지가 기록됐다.
 - `Evidence Checked`가 실제 파일, diff, 명령, 로그 또는 배포 상태를 가리킨다.
 - 열린 `blocking` 발견사항이 없다.
 - `Gate` 값이 정확히 `PASS`다.
