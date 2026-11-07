@@ -46,11 +46,16 @@ export function applyPatchTargets(command: unknown): string[] {
   return paths;
 }
 
-function setEditTargets(adapted: AdaptedHostInput, input: Record<string, unknown>, targets: (toolName: string, toolInput: Record<string, unknown>) => unknown[] | null): void {
+/** The paths an edit tool names; `unknown`: the call also writes somewhere it does not name (a shell write). */
+interface EditTargetRead { paths: unknown[]; unknown?: boolean }
+
+function setEditTargets(adapted: AdaptedHostInput, input: Record<string, unknown>, targets: (toolName: string, toolInput: Record<string, unknown>) => EditTargetRead | null): void {
   const { observation } = adapted;
   if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before") return;
-  const paths = targets(observation.toolName ?? "", observation.toolInput ?? {});
-  if (paths) observation.editTargets = editTargetPaths(input, paths);
+  const read = targets(observation.toolName ?? "", observation.toolInput ?? {});
+  if (!read) return;
+  observation.editTargets = editTargetPaths(input, read.paths);
+  if (read.unknown && observation.editTargets.length > 0) observation.editTargetsIncomplete = true;
 }
 
 /** Keeps vendor event names and actor fields at the host adapter boundary. */
@@ -139,7 +144,7 @@ function adaptCodexHookInput(input: Record<string, unknown>, host: string): Adap
   const adapted = adaptInferredRootHookInput(input, host, "CODEX");
   // apply_patch is Codex's file edit; its patch text is tool_input.command (Codex hooks, PreToolUse).
   setEditTargets(adapted, input, (tool, toolInput) => {
-    if (tool === "apply_patch") return applyPatchTargets(toolInput.command);
+    if (tool === "apply_patch") return { paths: applyPatchTargets(toolInput.command) };
     // Codex 0.166 exec_command emits canonical Bash with { command: args.cmd }, not the model-facing tool name.
     if (tool !== "Bash" && tool !== "exec_command" && tool !== "shell_command" && tool !== "shell") return null;
     const dialect = /(?:powershell|pwsh)(?:\.exe)?$/iu.test(text(toolInput.shell)) || (!toolInput.shell && process.platform === "win32") ? "powershell" : "posix";
@@ -218,7 +223,7 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
   };
   const adapted = adaptBuiltinHookInput(input, host, actor);
   setEditTargets(adapted, input, (tool, toolInput) => {
-    if (CLAUDE_EDIT_TOOLS.has(tool)) return [tool === "NotebookEdit" ? toolInput.notebook_path : toolInput.file_path];
+    if (CLAUDE_EDIT_TOOLS.has(tool)) return { paths: [tool === "NotebookEdit" ? toolInput.notebook_path : toolInput.file_path] };
     return tool === "Bash" || tool === "PowerShell" ? shellEditTargets(toolInput.command, tool === "PowerShell" ? "powershell" : "posix") : null;
   });
   const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown" || adapted.continuityAction !== undefined;
@@ -318,8 +323,11 @@ function adaptAntigravityHookInput(input: Record<string, unknown>, host: string)
   // (test server capture): write_file and edit_file name the file in Path. write_to_file, replace_file_content and
   // multi_replace_file_content (agy hooks docs) name it in TargetFile.
   setEditTargets(adapted, input, (tool, toolInput) => {
-    if (ANTIGRAVITY_EDIT_TOOLS.has(tool)) return [toolInput.TargetFile ?? toolInput.Path];
-    return tool === "Bash" || tool === "PowerShell" ? shellEditTargets(toolInput.CommandLine ?? toolInput.command, tool === "PowerShell" ? "powershell" : "posix") : null;
+    if (ANTIGRAVITY_EDIT_TOOLS.has(tool)) return { paths: [toolInput.TargetFile ?? toolInput.Path] };
+    // The runner maps run_command to Bash whatever shell agy runs it in; on Windows that shell is not named, so both
+    // readings count (a POSIX heredoc keeps the POSIX reading only).
+    if (tool === "Bash") return shellEditTargets(toolInput.CommandLine ?? toolInput.command, process.platform === "win32" ? "either" : "posix");
+    return tool === "PowerShell" ? shellEditTargets(toolInput.CommandLine ?? toolInput.command, "powershell") : null;
   });
   const { observation } = adapted;
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && !observation.callId) {

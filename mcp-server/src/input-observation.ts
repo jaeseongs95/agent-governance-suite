@@ -25,6 +25,8 @@ export interface InputObservation {
   /** File-edit tool boundary only: the absolute paths the host tool will change, as its adapter reads them from the
    * tool input. An empty list is an edit tool whose target the adapter could not read. Absent: not a file edit. */
   editTargets?: string[];
+  /** With a non-empty editTargets: the call also writes a file it does not name (a shell write), counted as one more. */
+  editTargetsIncomplete?: boolean;
   /** Turn end only: the host reports that this turn was already continued by its Stop hook. */
   stopHookActive?: boolean;
   wakeCandidates?: string[];
