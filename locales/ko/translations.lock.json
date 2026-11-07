@@ -908,7 +908,7 @@
   "tools.abort_workflow.description": "cb50f150f3080a8e8707ae635eeb7744fdb6ba16917f67b116020e6fc667212f",
   "tools.acknowledge_session_messages.description": "5408ffaa6ca817aa07a9e456f531155a74c732b7a75a0bed9c5b753a9b5abd09",
   "tools.check_for_updates.description": "146db10a737d1c603572d8af6b90ac62ecbe2c5e043443b7a47a0aaabce7fb31",
-  "tools.checkpoint_context.description": "268770024250fa3e2aeab538fdad23188dfe8b35993b97362b2b363fb87e5974",
+  "tools.checkpoint_context.description": "414ba425e74f80891f3b690d58bc094a648ce5c2edccd2a4e3de30316533edb3",
   "tools.claim_workflow_attempt.description": "4ed02323a28a94642ca868434a5ebc7693cbab826a19f5ac4e4f279369d0cf0a",
   "tools.classify_skills.description": "d5cd8fa288f6c12761fc18640bcdfbf8d323bb4a043bc662b1d9f25a178aa4ec",
   "tools.execute_state_cleanup.description": "b0640652a6fd93c31df52e3fd85c0423a223edacd9af485b3eb803219b106621",
