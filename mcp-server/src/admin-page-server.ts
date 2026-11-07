@@ -31,7 +31,7 @@ export interface AdminSessionView {
 export interface AdminSettingsView {
   locale: { value: string; source: string; lockedBy: string | null; editable: false; reason: string };
   jev: { configured: boolean; enabled: boolean; mode: string | null; profileCount: number; error: string | null; lockedBy: string; editable: false; reason: string };
-  editGateExceptions: { available: false; reason: string };
+  editGateExceptions: { available: true; paths: string[]; lockedBy: string; editable: false; reason: string };
 }
 
 export interface AdminPageDependencies {

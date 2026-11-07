@@ -437,7 +437,7 @@ describe("admin page HTTP boundary", () => {
     const settings: AdminSettingsView = {
       locale: { value: "ko", source: "settings", lockedBy: null, editable: false, reason: "r" },
       jev: { configured: false, enabled: false, mode: null, profileCount: 0, error: null, lockedBy: "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG", editable: false, reason: "r" },
-      editGateExceptions: { available: false, reason: "r" },
+      editGateExceptions: { available: true, paths: [], lockedBy: "AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS", editable: false, reason: "r" },
     };
     server.on("request", createAdminRequestHandler({ service, port, settings: async () => settings,
       listSessions: async () => { if (options.failSessions) throw Object.assign(new Error("x"), { code: "PRESENCE_DOWN" }); return options.sessions ?? []; } }));
@@ -511,8 +511,9 @@ describe("admin page HTTP boundary", () => {
     const again = await post("/api/intent", { change: fakeAuthenticator().addChange(), bootstrap: true });
     expect([again.status, JSON.parse(again.text).error.code]).toEqual([409, "ADMIN_ALREADY_BOOTSTRAPPED"]);
     // An unsigned "save" by any local program (an agent with curl) is refused.
-    const unsigned = await post("/api/commit", { intent: prepared.intent, assertion: { credentialId: owner.credentialId, authenticatorData: "AA", clientDataJSON: "AA", signature: "AA" }, requestId: randomUUID(), proposalId: null });
-    expect(unsigned.status).toBe(400);
+    const fresh = JSON.parse((await post("/api/intent", { change: { op: "global.set", body: "by curl" }, bootstrap: false })).text) as { intent: string };
+    const unsigned = await post("/api/commit", { intent: fresh.intent, assertion: { credentialId: owner.credentialId, authenticatorData: "AA", clientDataJSON: "AA", signature: "AA" }, requestId: randomUUID(), proposalId: null });
+    expect([unsigned.status, JSON.parse(unsigned.text).error.code]).toEqual([400, "ADMIN_SIGNATURE_INVALID"]);
   });
 
   it("lists present sessions with their signed binding, a bound session no longer present as ended, and a presence failure by code", async () => {

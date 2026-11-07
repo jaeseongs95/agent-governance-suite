@@ -1249,7 +1249,12 @@ select:disabled{background:#EFEFEC}
     const ex = st.editGateExceptions;
     sec.append(h('div', { class: 'box' }, h('h2', null, '편집 관문 예외 경로'),
       h('p', { class: 'desc' }, '버전 관리 안에 있지만 제품이 아닌 폴더를 넣으면, 그 안의 편집은 workflow 없이 허용됩니다. OS 임시 폴더와 호스트 메모 폴더는 이미 빠져 있습니다.'),
-      ex && ex.available === false ? h('p', { class: 'muted' }, ex.reason || '이 판에서는 페이지에서 바꿀 수 없습니다.') : h('p', { class: 'muted' }, '서버가 예외 경로 값을 주지 않았습니다.')));
+      !ex ? h('p', { class: 'muted' }, '서버가 예외 경로 값을 주지 않았습니다.')
+        : ex.available === false ? h('p', { class: 'muted' }, ex.reason || '이 판에서는 페이지에서 바꿀 수 없습니다.')
+          : h('div', { class: 'col' },
+            (ex.paths && ex.paths.length) ? h('ul', { class: 'paths' }, ...ex.paths.map((p) => h('li', null, h('code', null, p))))
+              : h('p', { class: 'muted' }, '지정한 예외 경로가 없습니다.'),
+            lockLine(ex.lockedBy, ex.reason, 'gate-lock'))));
     return sec;
   }
 

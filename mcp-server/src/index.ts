@@ -217,7 +217,10 @@ async function adminSettings(classificationConfig: string | undefined, classific
         ? "환경 변수로 고정되어 페이지에서 바꿀 수 없습니다."
         : "표시 언어는 AGS 사용자 설정 파일(settings.json)에서 읽습니다. 이 판에서는 페이지에서 바꾸지 않습니다." },
     jev,
-    editGateExceptions: { available: false, reason: "편집 관문 예외 경로는 이 판(3.9.0)에 아직 없는 기능입니다." },
+    editGateExceptions: { available: true, lockedBy: "AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS", editable: false,
+      // The same reading as the edit gate (continuity-hook.ts exemptEditRoots): the platform delimiter, absolute entries only.
+      paths: (process.env.AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS ?? "").split(path.delimiter).map(entry => entry.trim()).filter(entry => path.isAbsolute(entry)),
+      reason: "편집 관문은 hook이 이 환경 변수를 읽어 정합니다. 이 판에서는 페이지에서 바꾸지 않습니다." },
   };
 }
 

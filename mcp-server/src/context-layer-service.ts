@@ -197,9 +197,12 @@ export class ContextLayerService {
       this.lastResetId = resetId;
     }
     const state = foldAdminLog(records);
+    // Rollback means records this process saw are gone from the file. A record still present but failing its check is
+    // reported by the fold as that failure (for example ADMIN_RECORD_ALTERED), not as a rollback.
+    const present = new Map<string, number>();
+    for (const record of records) present.set(record.target, Math.max(record.seq, present.get(record.target) ?? 0));
     for (const [target, seq] of this.highWater) {
-      const head = state.heads.get(target)?.seq ?? 0;
-      if (head < seq) state.failures.push({ target, seq, code: "ADMIN_LOG_REGRESSED", change: null });
+      if ((present.get(target) ?? 0) < seq) state.failures.push({ target, seq, code: "ADMIN_LOG_REGRESSED", change: null });
     }
     for (const [target, head] of state.heads) this.highWater.set(target, Math.max(head.seq, this.highWater.get(target) ?? 0));
     return state;
