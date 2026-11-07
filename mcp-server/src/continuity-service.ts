@@ -6,6 +6,7 @@ import {
   CONVERGENCE_ROOT_STATE,
   type ApiResultV1,
   type ContinuityCandidateV1,
+  type ContinuityMemoryBodyV1,
   type ContinuitySnapshotV1,
   type ContinuitySummaryV1,
   type ErrorCode,
@@ -20,6 +21,8 @@ import type { ContractValidator } from "./schema-validator.js";
 import {
   ContinuityStoreError,
   continuityUnavailableReason,
+  serializeContinuityMemory,
+  CURRENT_MEMORY_MAX_BYTES,
   type ContinuityUnavailableReason,
   type ContinuityTaskRecord,
   type ContinuityCurrentRead,
@@ -35,8 +38,8 @@ import { installedSkillTargets } from "./skill-intake.js";
 
 const CANDIDATE_TOKEN_TTL_SECONDS = 3600;
 
-/** A fork child's selected parent: the exact anchored revision, never "latest". */
-interface ForkParent { c: string; e: number; r: number; d: string }
+/** A fork child selects only the exact anchored current state, never history. */
+interface ForkParent { c: string; e: number; t: string; d: string; o?: number }
 
 /** The continuity scope of one verified tool call, computed by the server from the caller. */
 interface ToolBindingPayload {
@@ -54,7 +57,8 @@ interface CandidatePayload {
   c: string;
   e: number;
   s: "direct" | "workflow";
-  r: number;
+  r?: number;
+  t?: string;
   d: Sha256Digest;
   x: number;
   /** Fork candidate: the child task and epoch that alone may load parent state c/e. */
@@ -176,7 +180,8 @@ export interface ContinuityPurgeResultV1 {
   schemaVersion: "1.0.0";
   purged: true;
   epoch: number;
-  revision: number;
+  stateToken: string;
+  emptyStateToken: string;
   tombstoneDigest: Sha256Digest;
   purgedAt: string;
 }
@@ -185,8 +190,8 @@ interface CheckpointReplayReceiptV1 {
   schemaVersion: "1.0.0";
   kind: "checkpoint";
   epoch: number;
-  revision: number;
-  snapshotDigest: Sha256Digest;
+  stateToken: string;
+  memoryDigest: Sha256Digest;
 }
 
 export interface ContinuityGateway {
@@ -314,13 +319,8 @@ export class ContinuityService implements ContinuityGateway {
       rootId,
       isTerminal: () => this.store.boundRoots(task.taskCorrelation, task.currentEpoch)
         .every(bound => this.rootSettled(bound, workflowStore, fromWorkflow)),
-      // The session's corrections and remaining work outlive its finished workflows. Same revision, so the next save
-      // continues from it; the old epoch's tokens and markers stay fenced.
-      carry: (snapshot, nextEpoch) => {
-        const moved = { ...snapshot, epoch: nextEpoch } as Partial<ContinuitySnapshotV1>;
-        delete moved.snapshotDigest;
-        return { ...moved, snapshotDigest: convergenceDigest(moved) } as ContinuitySnapshotV1;
-      },
+      // The store archives the old epoch and issues a fresh state token for its carried current body.
+      carry: snapshot => snapshot,
     }));
   }
 
@@ -394,7 +394,7 @@ export class ContinuityService implements ContinuityGateway {
     const summary = this.summary(parent);
     if (!summary || summary.source !== "direct") return { q: "FORK_PARENT_NOT_FOUND" };
     if (!(Date.parse(summary.updatedAt) <= origin.at)) return { q: "FORK_PARENT_ADVANCED" };
-    return { p: { c: parent.taskCorrelation, e: parent.currentEpoch, r: summary.revision, d: summary.snapshotDigest } };
+    return { p: { c: parent.taskCorrelation, e: parent.currentEpoch, t: summary.stateToken, d: summary.memoryDigest } };
   }
 
   /**
@@ -478,15 +478,15 @@ export class ContinuityService implements ContinuityGateway {
    * Only anchors saved before the child's fork record count, so a parent (or sibling) save after the fork cannot be
    * chosen. An entry belongs to the first session that anchored it: a fork's own save repeats the entries it copied,
    * and those copies never count for it (review 902e: a sibling holding 15 copied anchors outscored the parent's 14).
-   * The (parent, revision) with the most and then the fewest absent of its anchors is chosen, then the later revision
+   * The (parent, state token) with the most and then the fewest absent of its anchors is chosen, then the later observation
    * of the same parent; a tie between different parents is ambiguous. D1 (grandchild): a candidate whose recorded fork
    * pins descend from the chosen one and whose own anchor appears later in the child's file is the nearer parent.
    * Without that recorded descent a later anchor never wins (review 902e N1x: an unrelated session that wrote another
    * session's entries into its own file and saved them would otherwise take the fork).
    * When the host process named the parent at the fork start (D0352 N1z), only that parent's saves are candidates and
-   * lineage picks only which of its pre-fork revisions the child holds; no other session's anchors count, so entries
-   * any session wrote into any file can no longer move the fork elsewhere (review 902e 617f9c95). That revision is the
-   * one whose anchor appears latest in the child's file, then the later revision: a parent revision may anchor entries
+   * lineage picks only which of its pre-fork states the child holds; no other session's anchors count, so entries
+   * any session wrote into any file can no longer move the fork elsewhere (review 902e 617f9c95). That state is the
+   * one whose anchor appears latest in the child's file, then the later observation: a parent state may anchor entries
    * another session wrote into the parent's file, which the child never copied, so absent anchors do not rank it
    * (tester c613 k2argv1-r04: rank by matched count chose rev 1 and inspect then saw the parent advanced).
    */
@@ -504,7 +504,7 @@ export class ContinuityService implements ContinuityGateway {
       const owner = JSON.stringify([parent.c, parent.e]);
       if (named ? parent.c !== named.c || parent.e !== named.e : (owners.get(anchor) ?? owner) !== owner) continue;
       owners.set(anchor, owner);
-      const key = JSON.stringify([parent.c, parent.e, parent.r, parent.d]);
+      const key = JSON.stringify([parent.c, parent.e, parent.t, parent.d]);
       const score = scores.get(key) ?? { parent, matched: 0, absent: 0, last: -1 };
       const position = positions.get(anchor);
       if (position === undefined) score.absent += 1;
@@ -512,10 +512,10 @@ export class ContinuityService implements ContinuityGateway {
       scores.set(key, score);
     }
     const ranked = [...scores.values()].filter(score => score.matched > 0).sort(named
-      ? (left, right) => right.last - left.last || right.parent.r - left.parent.r
+      ? (left, right) => right.last - left.last || (right.parent.o ?? 0) - (left.parent.o ?? 0)
       : (left, right) => right.matched - left.matched
         || left.absent - right.absent
-        || (left.parent.c === right.parent.c && left.parent.e === right.parent.e ? right.parent.r - left.parent.r : 0));
+        || (left.parent.c === right.parent.c && left.parent.e === right.parent.e ? (right.parent.o ?? 0) - (left.parent.o ?? 0) : 0));
     const [best, next] = ranked;
     // A named parent with no pre-fork save in this lineage (including one that had no task at the fork, e = null).
     if (!best) return { q: named ? "FORK_HOST_PARENT_NOT_FOUND" : "FORK_PARENT_NOT_FOUND" };
@@ -576,20 +576,20 @@ export class ContinuityService implements ContinuityGateway {
     const value = pinned as { p?: Partial<ForkParent>; q?: unknown };
     if (value && typeof value.q === "string") return { q: value.q };
     const parent = value?.p;
-    if (parent && typeof parent.c === "string" && Number.isInteger(parent.e) && Number.isInteger(parent.r) && typeof parent.d === "string") {
-      return { p: { c: parent.c, e: parent.e!, r: parent.r!, d: parent.d } };
+    if (parent && typeof parent.c === "string" && Number.isInteger(parent.e) && typeof parent.t === "string" && typeof parent.d === "string") {
+      return { p: { c: parent.c, e: parent.e!, t: parent.t!, d: parent.d } };
     }
     return { q: "FORK_PARENT_PIN_INVALID" };
   }
 
-  /** After compaction a later fork copies only post-boundary entries, so the current revision gets fresh anchors. */
+  /** After compaction a later fork copies only post-boundary entries, so the current state gets fresh anchors. */
   reanchorAfterCompact(rawSessionId: string, readLineage: () => LineageRead): void {
     const task = this.store.getTask(this.correlateSession(rawSessionId));
     if (!task || task.rootId) return;
-    const snapshot = this.store.getSnapshot(task.taskCorrelation, task.currentEpoch);
-    if (!snapshot) return;
+    const snapshot = this.store.getCurrent(task.taskCorrelation, task.currentEpoch);
+    if (!snapshot?.memory || !snapshot.memoryDigest) return;
     const anchors = this.anchorsFor(task, readLineage).a;
-    if (anchors?.length) this.store.reanchorSnapshot(task.taskCorrelation, task.currentEpoch, snapshot.revision, snapshot.snapshotDigest, anchors, this.now().toISOString());
+    if (anchors?.length) this.store.reanchorCurrent(task.taskCorrelation, task.currentEpoch, snapshot.stateToken, snapshot.memoryDigest, anchors, this.now().toISOString());
   }
 
   private lineageAnchor(entryId: string): string {
@@ -603,42 +603,31 @@ export class ContinuityService implements ContinuityGateway {
       // A bound workflow root does not close the session's own record: the workflow ledger has no place for user
       // corrections, decisions or remaining work, and multistage work always runs under a workflow.
       this.currentTask(binding);
-      const now = this.now().toISOString();
-      const current = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
-        () => this.store.getSnapshot(binding.c, binding.e), true));
-      const base = {
-        schemaVersion: "1.0.0" as const,
-        source: "direct" as const,
-        taskCorrelation: binding.c,
-        epoch: binding.e,
-        revision: request.expectedRevision + 1,
-        status: request.status,
-        core: request.core,
-        evidenceRefs: request.evidenceRefs,
-        createdAt: current?.createdAt ?? now,
-        updatedAt: now,
-      };
-      const snapshot: ContinuitySnapshotV1 = { ...base, snapshotDigest: convergenceDigest(base) };
+      const memory: ContinuityMemoryBodyV1 = { status: request.status, core: request.core, evidenceRefs: request.evidenceRefs };
+      serializeContinuityMemory(memory);
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(request as unknown as Record<string, unknown>);
-      const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot, Array.isArray(binding.a) ? binding.a : []);
+      const stored = this.store.checkpoint(binding.c, binding.e, request.expectedStateToken, requestHash, commandDigest,
+        memory, this.now().toISOString(), binding.a ?? []);
       if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", msg("continuity.binding.stale", {}), EPOCH_STALE);
       if (stored.kind === "replay") {
-        const receipt = JSON.parse(stored.request.resultJson) as Partial<CheckpointReplayReceiptV1>;
+        let receipt: Partial<CheckpointReplayReceiptV1> | null = null;
+        try { receipt = JSON.parse(stored.request.resultJson) as Partial<CheckpointReplayReceiptV1>; } catch { /* Reject malformed receipts below. */ }
         const replaySnapshot = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
-          () => this.store.getSnapshot(binding.c, binding.e), true));
-        if (
-          receipt.kind !== "checkpoint" || receipt.epoch !== binding.e ||
-          !replaySnapshot || replaySnapshot.revision !== receipt.revision ||
-          replaySnapshot.snapshotDigest !== receipt.snapshotDigest
-        ) {
+          () => this.store.getCurrent(binding.c, binding.e), true));
+        if (!receipt || !isBodyFreeRequestReceipt(receipt as Record<string, unknown>) || receipt.kind !== "checkpoint"
+          || receipt.epoch !== binding.e || !replaySnapshot?.memory || replaySnapshot.stateToken !== receipt.stateToken
+          || replaySnapshot.memoryDigest !== receipt.memoryDigest) {
           return failure("STALE_REVISION", msg("continuity.checkpoint.replayUnavailable", {}));
         }
+        this.verifyCurrentMemory(replaySnapshot);
         return ok(replaySnapshot);
       }
       if (stored.kind === "conflict") return failure("REQUEST_CONFLICT", msg("continuity.checkpoint.requestConflict", {}));
-      if (stored.kind === "stale") return failure("STALE_REVISION", msg("continuity.checkpoint.revisionChanged", {}), { expectedRevision: request.expectedRevision, actualRevision: stored.actualRevision });
-      return ok(snapshot);
+      if (stored.kind === "stale") return failure("STALE_REVISION", msg("continuity.checkpoint.stateChanged", {}), {
+        reasonCode: "CONTINUITY_STATE_STALE", expectedStateToken: request.expectedStateToken, actualStateToken: stored.actualStateToken,
+      });
+      return ok(stored.snapshot);
     });
   }
 
@@ -661,9 +650,9 @@ export class ContinuityService implements ContinuityGateway {
     if (task.suppressed) return reject("FORK_PARENT_SUPPRESSED");
     const summary = this.summary(task);
     // A parent that saved again after the fork, purged or cleared no longer holds the fork-time state.
-    if (!summary || summary.source !== "direct" || summary.revision !== parent.r || summary.snapshotDigest !== parent.d) return reject("FORK_PARENT_ADVANCED");
+    if (!summary || summary.source !== "direct" || summary.stateToken !== parent.t || summary.memoryDigest !== parent.d) return reject("FORK_PARENT_ADVANCED");
     const payload: CandidatePayload = {
-      v: 1, c: parent.c, e: parent.e, s: "direct", r: parent.r, d: summary.snapshotDigest,
+      v: 1, c: parent.c, e: parent.e, s: "direct", t: parent.t, d: summary.memoryDigest,
       x: Math.floor(this.now().getTime() / 1000) + CANDIDATE_TOKEN_TTL_SECONDS, f: binding.c, g: binding.e,
     };
     return { schemaVersion: "1.0.0", decision: "DEFER", reasonCodes: ["EXPLICIT_LOAD_REQUIRED", "FORK_PARENT_CANDIDATE"], summary, restoreToken: this.sign(payload) };
@@ -673,49 +662,69 @@ export class ContinuityService implements ContinuityGateway {
     return this.guard<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(() => {
       const request = this.validator!.loadContextRequest(value);
       const binding = this.toolBinding(caller, "load_context");
-      const candidate = this.verifyCandidate(request.candidateToken);
-      const fork = candidate.f !== undefined;
-      if (
-        (fork ? candidate.f !== binding.c || candidate.g !== binding.e : candidate.c !== binding.c || candidate.e !== binding.e) ||
-        candidate.e !== request.epoch || candidate.r !== request.revision || candidate.d !== request.digest
-      ) throw new WorkflowContractError("BINDING_INVALID", msg("continuity.restore.candidateMismatch", {}), { reasonCode: "CONTINUITY_CANDIDATE_MISMATCH" });
       const task = this.currentTask(binding);
       if (task.suppressed) throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", msg("continuity.restore.suppressed", {}));
-      if (fork) return ok<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(this.loadForkParent(candidate, binding));
+      if (!request.candidateToken) {
+        const current = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
+          () => this.store.getCurrent(binding.c, binding.e)));
+        if (!current) throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", msg("continuity.restore.directStale", {}));
+        this.verifyCurrentMemory(current);
+        return ok(current);
+      }
+      const candidate = this.verifyCandidate(request.candidateToken);
+      const fork = candidate.f !== undefined;
+      if (fork ? candidate.f !== binding.c || candidate.g !== binding.e : candidate.c !== binding.c || candidate.e !== binding.e) {
+        throw new WorkflowContractError("BINDING_INVALID", msg("continuity.restore.candidateMismatch", {}), { reasonCode: "CONTINUITY_CANDIDATE_MISMATCH" });
+      }
+      if (fork) return ok(this.loadForkParent(candidate, binding));
       if (candidate.s === "direct") {
-        const snapshot = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
-          () => this.store.getSnapshot(binding.c, binding.e)));
-        if (!snapshot || snapshot.revision !== candidate.r || snapshot.snapshotDigest !== candidate.d) {
-          throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.directStale", {}));
+        const current = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
+          () => this.store.getCurrent(binding.c, binding.e)));
+        if (!current?.memory || current.stateToken !== candidate.t || current.memoryDigest !== candidate.d) {
+          throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.directStale", {}), { reasonCode: "CONTINUITY_STATE_STALE" });
         }
-        const { snapshotDigest, ...base } = snapshot;
-        if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", msg("continuity.snapshot.digestInvalid", {}));
-        return ok<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(snapshot);
+        this.verifyCurrentMemory(current);
+        return ok(current);
       }
       const card = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "workflow",
-        (current) => this.workflowProjection(current)));
+        current => this.workflowProjection(current)));
       if (!card || card.revision !== candidate.r || card.snapshotDigest !== candidate.d) {
         throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.workflowStale", {}));
       }
-      return ok<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(card);
+      return ok(card);
     });
   }
 
-  /** Rechecks the parent's exact state, then adopts it into the empty child epoch so the child continues from it. */
+  /** Digest and byte checks cover the complete current body, never an old envelope or history row. */
+  private verifyCurrentMemory(snapshot: ContinuitySnapshotV1): void {
+    if (snapshot.memory === null) {
+      if (snapshot.memoryDigest === null) return;
+    } else {
+      try {
+        const serialized = serializeContinuityMemory(snapshot.memory);
+        if (serialized.bytes <= CURRENT_MEMORY_MAX_BYTES && serialized.digest === snapshot.memoryDigest) return;
+      } catch (error) {
+        if (!(error instanceof WorkflowContractError)) throw error;
+        // A stored invalid body is an integrity failure, not a bad new caller request.
+      }
+    }
+    throw new WorkflowContractError("INTEGRITY_FAILED", msg("continuity.snapshot.digestInvalid", {}));
+  }
+
+  /** Recheck the parent's exact current, then atomically adopt into the empty child's own current. */
   private loadForkParent(candidate: CandidatePayload, binding: ToolBindingPayload): ContinuitySnapshotV1 {
-    const snapshot = this.currentReadValue(this.store.readCurrentState(candidate.c, candidate.e, "direct",
-      () => this.store.getSnapshot(candidate.c, candidate.e)));
-    if (!snapshot || snapshot.revision !== candidate.r || snapshot.snapshotDigest !== candidate.d) {
-      throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.forkParentStale", {}));
-    }
-    const { snapshotDigest, ...base } = snapshot;
-    if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", msg("continuity.snapshot.digestInvalid", {}));
-    const adopted = { ...base, taskCorrelation: binding.c, epoch: binding.e, updatedAt: this.now().toISOString() };
-    // Only an empty child epoch adopts; a child that already loaded or saved keeps its own state.
-    if (!this.store.adoptSnapshot(binding.c, binding.e, { ...adopted, snapshotDigest: convergenceDigest(adopted) })) {
-      throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.forkChildHasState", {}));
-    }
-    return snapshot;
+    if (candidate.s !== "direct") throw new WorkflowContractError("BINDING_INVALID", msg("continuity.restore.candidateMismatch", {}));
+    return this.currentReadValue(this.store.readCurrentState(candidate.c, candidate.e, "direct", () => {
+      const snapshot = this.store.getCurrent(candidate.c, candidate.e);
+      if (!snapshot?.memory || snapshot.stateToken !== candidate.t || snapshot.memoryDigest !== candidate.d) {
+        throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.forkParentStale", {}), { reasonCode: "CONTINUITY_STATE_STALE" });
+      }
+      this.verifyCurrentMemory(snapshot);
+      // Parent read and child adoption share the store transaction: a concurrent parent save cannot slip between them.
+      const adopted = this.store.adoptCurrent(binding.c, binding.e, snapshot, this.now().toISOString());
+      if (!adopted) throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.forkChildHasState", {}));
+      return adopted;
+    }));
   }
 
   suppressContextRestore(value: unknown, caller: VerifiedCaller): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }> {
@@ -733,48 +742,33 @@ export class ContinuityService implements ContinuityGateway {
       const request = this.validator!.purgeDirectContextRequest(value);
       const binding = this.toolBinding(caller, "purge_direct_context");
       this.currentTask(binding);
-      const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
-      if (current && current.revision !== request.expectedRevision) {
-        return failure("STALE_REVISION", msg("continuity.checkpoint.revisionChanged", {}), {
-          expectedRevision: request.expectedRevision,
-          actualRevision: current.revision,
-        });
-      }
+      const current = this.store.getCurrent(binding.c, binding.e);
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(request as unknown as Record<string, unknown>);
-      const tombstoneDigest = convergenceDigest({
-        taskCorrelation: binding.c,
-        epoch: request.expectedEpoch,
-        revision: request.expectedRevision,
-        payloadDigest: current?.snapshotDigest ?? null,
-        purgeRequestHash: requestHash,
-      });
+      const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: binding.e,
+        stateToken: request.expectedStateToken, payloadDigest: current?.memoryDigest ?? null, purgeRequestHash: requestHash });
       const now = this.now().toISOString();
-      const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now, binding.e);
+      const purged = this.store.purge(binding.c, binding.e, request.expectedStateToken, requestHash, commandDigest, tombstoneDigest, now);
       if (purged.kind === "epoch-mismatch") return failure("BINDING_INVALID", msg("continuity.binding.stale", {}), EPOCH_STALE);
       if (purged.kind === "replay") {
         let replay: ContinuityPurgeResultV1 | null = null;
         try { replay = purgeReceipt(JSON.parse(purged.request.resultJson) as unknown); } catch { /* Reject malformed stored state below. */ }
-        const tombstone = this.store.getTombstone(binding.c, request.expectedEpoch);
-        if (
-          !replay || !tombstone || replay.epoch !== request.expectedEpoch ||
-          replay.revision !== request.expectedRevision || replay.revision !== tombstone.revision ||
-          replay.tombstoneDigest !== tombstone.payloadDigest || replay.purgedAt !== tombstone.purgedAt
-        ) {
+        const tombstone = this.store.getTombstone(binding.c, binding.e);
+        const empty = this.store.getCurrent(binding.c, binding.e);
+        if (!replay || !tombstone || replay.epoch !== binding.e || replay.stateToken !== request.expectedStateToken
+          || replay.stateToken !== tombstone.stateToken || replay.emptyStateToken !== tombstone.emptyStateToken
+          || replay.tombstoneDigest !== tombstone.payloadDigest || replay.purgedAt !== tombstone.purgedAt
+          || !empty || empty.stateToken !== replay.emptyStateToken || empty.memory !== null) {
           return failure("STALE_REVISION", msg("continuity.purge.replayUnavailable", {}));
         }
-        return ok({
-          schemaVersion: "1.0.0",
-          purged: true,
-          epoch: replay.epoch,
-          revision: replay.revision,
-          tombstoneDigest: replay.tombstoneDigest,
-          purgedAt: replay.purgedAt,
-        });
+        return ok(replay);
       }
       if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", msg("continuity.purge.requestConflict", {}));
-      if (purged.kind === "stale") return failure("STALE_REVISION", msg("continuity.purge.revisionChanged", {}), { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
-      return ok({ schemaVersion: "1.0.0", purged: true, epoch: request.expectedEpoch, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });
+      if (purged.kind === "stale") return failure("STALE_REVISION", msg("continuity.purge.stateChanged", {}), {
+        reasonCode: "CONTINUITY_STATE_STALE", expectedStateToken: request.expectedStateToken, actualStateToken: purged.actualStateToken,
+      });
+      return ok({ schemaVersion: "1.0.0", purged: true, epoch: binding.e, stateToken: request.expectedStateToken,
+        emptyStateToken: purged.snapshot.stateToken, tombstoneDigest, purgedAt: now });
     });
   }
 
@@ -853,23 +847,39 @@ export class ContinuityService implements ContinuityGateway {
     if (task.suppressed) return;
     const summary = this.summary(task);
     if (!summary) return;
-    this.store.setPendingMarker(task.taskCorrelation, task.currentEpoch, summary.source, summary.revision, summary.snapshotDigest,
-      summary.source === "direct" ? null : task.rootId, this.now().toISOString());
+    const now = this.now().toISOString();
+    if (summary.source === "direct") this.store.setDirectPendingMarker(task.taskCorrelation, task.currentEpoch,
+      summary.stateToken, summary.memoryDigest, now);
+    else this.store.setPendingMarker(task.taskCorrelation, task.currentEpoch, "workflow", summary.revision,
+      summary.snapshotDigest, task.rootId, now);
   }
 
-  /** Ask while the model still has the correction; metadata alone cannot manufacture a checkpoint. */
+  /** A brief refresh purpose reaches the model while corrections still exist in its context. */
   checkpointCueForSession(rawSessionId: string, missingOnly = false): HookText | null {
     return this.checkpointCue(this.ensureSession(rawSessionId), missingOnly);
   }
 
+  /** Called only after a host-qualified AGS progress tool; the call ID deduplicates repeated hook delivery. */
+  checkpointCueAfterProgressForSession(rawSessionId: string, callId: string | null): HookText | null {
+    const task = this.ensureSession(rawSessionId);
+    const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", current => {
+      if (callId) {
+        const hash = this.hashOpaque("turn", callId);
+        const event = `checkpoint-progress:${hash}`;
+        if (this.store.hasObservation(current.taskCorrelation, current.currentEpoch, event)) return null;
+        this.store.recordObservation(current.taskCorrelation, current.currentEpoch, event, hash, true, this.now().toISOString());
+      }
+      return this.checkpointCue(current);
+    });
+    return selected.kind === "available" ? selected.value : null;
+  }
+
   private checkpointCue(task: ContinuityTaskRecord, missingOnly = false): HookText | null {
-    const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", (current) => {
-      if (this.store.getTombstone(current.taskCorrelation, current.currentEpoch)) return null;
-      const snapshot = this.store.getSnapshot(current.taskCorrelation, current.currentEpoch);
-      if (missingOnly && snapshot) return null;
+    const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", current => {
+      const snapshot = this.store.getCurrent(current.taskCorrelation, current.currentEpoch);
+      if (missingOnly && snapshot?.memory) return null;
       return [
-        msg("hooks.checkpointCue.status", { state: missingOnly ? "missing" : snapshot ? "saved" : "none" }),
-        // The targets list itself travels once per context start (intake hook); the cue only points at it.
+        msg("hooks.checkpointCue.status", { state: missingOnly ? "missing" : snapshot?.memory ? "saved" : "none" }),
         msg("hooks.checkpointCue.skills", {}),
         msg("hooks.checkpointCue.save", {}),
         msg("hooks.checkpointCue.resume", {}),
@@ -879,20 +889,40 @@ export class ContinuityService implements ContinuityGateway {
     return selected.kind === "available" ? selected.value : null;
   }
 
+  /** Resume/new-context hook: only this session's latest verified body is returned. */
+  restoreCurrentForSession(rawSessionId: string): HookText | null {
+    const task = this.ensureSession(rawSessionId);
+    const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", current => {
+      const snapshot = this.store.getCurrent(current.taskCorrelation, current.currentEpoch);
+      if (!snapshot?.memory) return null;
+      this.verifyCurrentMemory(snapshot);
+      return [msg("continuity.restore.current", { stateToken: snapshot.stateToken, body: JSON.stringify(snapshot.memory) })];
+    });
+    return selected.kind === "available" ? selected.value : null;
+  }
+
   compactContext(rawSessionId: string): HookText | null {
     const task = this.ensureSession(rawSessionId);
     if (task.suppressed) return null;
     const summary = this.summary(task);
     if (!summary) return this.checkpointCue(task, true);
-    if (task.pendingConsumed || task.pendingRevision !== summary.revision || task.pendingDigest !== summary.snapshotDigest || task.pendingSource !== summary.source) return null;
+    if (task.pendingConsumed || task.pendingSource !== summary.source) return null;
     if (summary.source === "direct") {
-      const candidate = this.formatCandidate(this.candidateFor(task.taskCorrelation, task.currentEpoch));
-      // A bound workflow is shown beside the session's record, so its unfinished stages are not lost either.
+      if (task.pendingStateToken !== summary.stateToken || task.pendingDigest !== summary.memoryDigest) return null;
+      const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", current => {
+        const snapshot = this.store.getCurrent(current.taskCorrelation, current.currentEpoch);
+        if (!snapshot?.memory || snapshot.stateToken !== summary.stateToken || snapshot.memoryDigest !== summary.memoryDigest) return null;
+        this.verifyCurrentMemory(snapshot);
+        if (!this.store.consumeDirectMarker(current.taskCorrelation, current.currentEpoch, snapshot.stateToken, summary.memoryDigest, this.now().toISOString())) return null;
+        return [msg("continuity.restore.current", { stateToken: snapshot.stateToken, body: JSON.stringify(snapshot.memory) })];
+      });
+      const restored = selected.kind === "available" ? selected.value : null;
       const card = task.rootId ? this.workflowProjection(task) : null;
-      return candidate && card ? [...candidate, ...this.formatWorkflowCard(card)] : candidate;
+      return restored && card ? [...restored, ...this.formatWorkflowCard(card)] : restored;
     }
+    if (task.pendingRevision !== summary.revision || task.pendingDigest !== summary.snapshotDigest) return null;
     const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "workflow",
-      (current) => this.workflowProjection(current));
+      current => this.workflowProjection(current));
     const card = selected.kind === "available" ? selected.value : null;
     if (!card || task.pendingRootId !== card.rootId) return null;
     if (!this.store.consumeWorkflowMarker(task.taskCorrelation, task.currentEpoch, card.rootId, card.revision, card.snapshotDigest, this.now().toISOString())) return null;
@@ -1068,6 +1098,7 @@ export class ContinuityService implements ContinuityGateway {
   formatCandidate(candidate: ContinuityCandidateV1): HookText | null {
     if (!candidate.summary || !candidate.restoreToken) return null;
     const summary = candidate.summary;
+    if (summary.source === "direct") return null; // Direct hooks inject their verified current body in compactContext.
     return [msg("continuity.restore.candidate", { source: summary.source, epoch: summary.epoch, revision: summary.revision,
       digest: summary.snapshotDigest, candidateToken: candidate.restoreToken })];
   }
@@ -1084,7 +1115,7 @@ export class ContinuityService implements ContinuityGateway {
     if (!summary) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["NO_RESTORE_CANDIDATE"], summary: null, restoreToken: null };
     const payload: CandidatePayload = {
       v: 1, c: task.taskCorrelation, e: task.currentEpoch, s: summary.source,
-      r: summary.revision, d: summary.snapshotDigest,
+      ...(summary.source === "direct" ? { t: summary.stateToken, d: summary.memoryDigest } : { r: summary.revision, d: summary.snapshotDigest }),
       x: Math.floor(this.now().getTime() / 1000) + CANDIDATE_TOKEN_TTL_SECONDS,
     };
     return { schemaVersion: "1.0.0", decision: "DEFER", reasonCodes: ["EXPLICIT_LOAD_REQUIRED"], summary, restoreToken: this.sign(payload) };
@@ -1095,12 +1126,15 @@ export class ContinuityService implements ContinuityGateway {
       task.taskCorrelation, task.currentEpoch, "either", (current) => {
         // The session's own record comes first: it carries the corrections, decisions and remaining work the workflow
         // ledger has no place for. A bound root without one is restored from the workflow projection.
-        const snapshot = this.store.getSnapshot(current.taskCorrelation, current.currentEpoch);
-        if (snapshot) return {
-          schemaVersion: "1.0.0", source: "direct", taskCorrelation: current.taskCorrelation,
-          epoch: current.currentEpoch, revision: snapshot.revision, status: snapshot.status,
-          snapshotDigest: snapshot.snapshotDigest, updatedAt: snapshot.updatedAt,
-        };
+        const snapshot = this.store.getCurrent(current.taskCorrelation, current.currentEpoch);
+        if (snapshot?.memory && snapshot.memoryDigest) {
+          this.verifyCurrentMemory(snapshot);
+          return {
+            schemaVersion: "1.0.0", source: "direct", taskCorrelation: current.taskCorrelation,
+            epoch: current.currentEpoch, stateToken: snapshot.stateToken, status: snapshot.memory.status,
+            memoryDigest: snapshot.memoryDigest, updatedAt: snapshot.updatedAt,
+          };
+        }
         const card = current.rootId ? this.workflowProjection(current) : null;
         return card ? {
           schemaVersion: "1.0.0", source: "workflow", taskCorrelation: current.taskCorrelation,
@@ -1174,7 +1208,11 @@ export class ContinuityService implements ContinuityGateway {
 
   private verifyCandidate(token: string): CandidatePayload {
     const payload = this.verifySigned<CandidatePayload>(token);
-    if (payload.v !== 1 || !["direct", "workflow"].includes(payload.s)) {
+    if (payload.v !== 1 || !["direct", "workflow"].includes(payload.s)
+      || typeof payload.c !== "string" || !Number.isInteger(payload.e) || !Number.isFinite(payload.x)
+      || typeof payload.d !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(payload.d)
+      || (payload.s === "direct" ? typeof payload.t !== "string" || !payload.t : !Number.isInteger(payload.r))
+      || (payload.f !== undefined && (typeof payload.f !== "string" || !Number.isInteger(payload.g)))) {
       throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.invalid", {}), { reasonCode: "CONTINUITY_TOKEN_INVALID" });
     }
     if (payload.x < Math.floor(this.now().getTime() / 1000)) {
