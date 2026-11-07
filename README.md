@@ -151,6 +151,8 @@ ACK와 실제 검토 결과를 구분해서 알려 줘. 파일 수정과 테스�
 
 ## 상태 저장과 업데이트
 
+**3.8.0으로 갱신하기 전에는 [기존 데이터 백업·이관·복구 가이드](https://github.com/jaeseongs95/agent-governance-suite/blob/v3.8.0/docs/migrate-to-v3.8.0.md)를 먼저 확인하십시오.**
+
 | 데이터 | 위치 |
 | --- | --- |
 | workflow 상태(`workflows.sqlite3`), 작업 기록(`continuity.sqlite3`) | Claude Code는 `${CLAUDE_PLUGIN_DATA}`. 그 밖의 호스트는 Windows `%LOCALAPPDATA%\agent-governance-suite`, macOS `~/Library/Application Support/agent-governance-suite`, Linux `$XDG_STATE_HOME/agent-governance-suite`(기본 `~/.local/state/agent-governance-suite`) |

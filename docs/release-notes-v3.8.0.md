@@ -11,6 +11,8 @@
 
 ### 기존 current의 관리 이관
 
+[기존 사용자를 위한 3.8.0 업그레이드 가이드](https://github.com/jaeseongs95/agent-governance-suite/blob/v3.8.0/docs/migrate-to-v3.8.0.md)에서 호스트별 실제 DB 경로, WAL을 포함한 백업, current mapping 준비와 실패 시 복구 순서를 확인한다.
+
 Legacy schema 2/3에서 4로 이관할 때 현재 메모리 JSON이 2000 UTF-8 byte 이하면 그대로 보존한다. 초과한 current에는 기존 유효 핵심을 최적화한 명시적 semantic mapping이 필요하다. 필요한 mapping이 없거나 원본 digest가 달라지면 `MIGRATION_INCOMPLETE`로 전체 이관을 원자적으로 rollback하며, 원문 자르기나 빈 값 대체로 통과시키지 않는다.
 
 관리자는 해당 DB를 쓰는 호스트를 중지한 상태에서 명시적 DB 경로로 기존 CLI를 사용한다. 아래는 사용법이며 실행 완료 기록이 아니다.

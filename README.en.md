@@ -153,6 +153,8 @@ If a message does not arrive, check `get_session_message_status` with the same `
 
 ## State and updates
 
+**Before upgrading to 3.8.0, follow the [existing-data backup, migration, and recovery guide (Korean)](https://github.com/jaeseongs95/agent-governance-suite/blob/v3.8.0/docs/migrate-to-v3.8.0.md).**
+
 | Data | Location |
 | --- | --- |
 | Workflow state (`workflows.sqlite3`) and work records (`continuity.sqlite3`) | Claude Code: `${CLAUDE_PLUGIN_DATA}`. Other hosts: `%LOCALAPPDATA%\agent-governance-suite` on Windows, `~/Library/Application Support/agent-governance-suite` on macOS, `$XDG_STATE_HOME/agent-governance-suite` on Linux (default `~/.local/state/agent-governance-suite`) |
