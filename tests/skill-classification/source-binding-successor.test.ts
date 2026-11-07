@@ -90,8 +90,16 @@ for (const later of [multi, overwrite, premise, retire, role, purpose, move, blo
   }
 }
 /** A source as of a git revision, checked against the digest the binding recorded for it. */
+// A commit's bytes never change, so each revision:path is read from git once (AGS3-D-0071: one git process per call
+// pushed this file past the per-test limit under a loaded Windows run). Every call still checks its own digest.
+const sourcesAt = new Map<string, Buffer>();
 function sourceAt(revision: string, relativePath: string, digest: string): Buffer {
-  const bytes = execFileSync("git", ["show", `${revision}:${relativePath}`], {cwd: root, maxBuffer: 4 * 1024 * 1024});
+  const key = `${revision}:${relativePath}`;
+  let bytes = sourcesAt.get(key);
+  if (bytes === undefined) {
+    bytes = execFileSync("git", ["show", key], {cwd: root, maxBuffer: 4 * 1024 * 1024});
+    sourcesAt.set(key, bytes);
+  }
   expect(hash(bytes)).toBe(digest);
   return bytes;
 }
