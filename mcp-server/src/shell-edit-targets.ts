@@ -146,7 +146,7 @@ const SCRIPT_WRITES = [
   /\b(?:unlink|rm|rmdir|rename|cp|truncate)Sync\s*\(/u,
   /\b(?:os\.(?:remove(?:dirs)?|unlink|renames?|replace|truncate)|shutil\.(?:copy\w*|move|rmtree))\s*\(/u,
   /\.(?:unlink|rename|rm|rmdir|touch|truncate)\s*\(/u,
-  /\bf?open(?:Sync)?\s*\([^)]*?['"](?:[wax]|r\+)[bt+]*['"]/u,
+  /\bf?open(?:Sync)?\s*\([^)]*?,\s*(?:mode\s*=\s*)?['"](?:[wax]|r\+)[bt+]*['"]/u,
   /\bopen\b[^;\n]*?['"]\+?>{1,2}/u,
   /\bFile\.(?:write|delete|rename)\b/u,
 ];

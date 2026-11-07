@@ -160,6 +160,7 @@ describe("AGS3-D-0005 read-only commands are not edits (no over-blocking)", () =
     "rg -n 'x > y' src", "xargs -0 grep -l foo < list.txt", "find src -name '*.ts' -exec grep -l x {} +", "git checkout -b topic",
     "python3 - <<'EOF'\nprint(1 > 0)\nEOF", "env FOO=1 node scripts/check.mjs", "timeout 10 git fetch -q",
     "node -e \"const fs=require('fs');console.log(fs.readFileSync(fs.openSync('a','r'),'utf8'))\"",
+    "python3 -c \"print(open('a').read())\"", "python3 -c \"print(open('x', encoding='utf-8').read())\"",
   ];
   it.each(hosts)("RO01: %s leaves read-only shell commands uncounted and the first edit allowed", (host, tool, key) => {
     const target = service();
