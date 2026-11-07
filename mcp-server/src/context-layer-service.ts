@@ -414,8 +414,10 @@ export class ContextLayerService {
       if (existing) return { record: existing, duplicate: true };
       const intent = parseIntent(input.intent);
       // The page server accepts only a signature made on its own page: a look-alike page on another localhost port
-      // cannot collect one. Reading the log later accepts any localhost port (the port setting may change).
-      if (input.origin !== undefined && assertionOrigin(input.assertion) !== input.origin) {
+      // cannot collect one. Reading the log later accepts any localhost port (the port setting may change). Client data
+      // that cannot be read is left to the signature check below, which refuses it as ADMIN_SIGNATURE_INVALID.
+      const signedOrigin = input.origin === undefined ? null : assertionOrigin(input.assertion);
+      if (signedOrigin !== null && signedOrigin !== input.origin) {
         throw new AdminError("ADMIN_ORIGIN_REJECTED", { expected: input.origin });
       }
       const issued = Date.parse(intent.issuedAt);

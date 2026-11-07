@@ -514,15 +514,17 @@ describe("admin page HTTP boundary", () => {
   });
 
   it("registers the first key, saves through intent and commit, and answers a lost response by request ID", async () => {
-    const { post, call } = await page();
+    const { post, call, port } = await page();
     const owner = fakeAuthenticator();
+    // The browser signs on this page, so its client data names this page's origin.
+    const onPage = { origin: `http://localhost:${port}` };
     const bootstrap = JSON.parse((await post("/api/intent", { change: owner.addChange(), bootstrap: true })).text) as { intent: string; allowCredentials: string[] };
     expect(bootstrap.allowCredentials).toEqual([owner.credentialId]);
-    const first = await post("/api/commit", { intent: bootstrap.intent, assertion: owner.assert(bootstrap.intent), requestId: randomUUID(), proposalId: null });
+    const first = await post("/api/commit", { intent: bootstrap.intent, assertion: owner.assert(bootstrap.intent, onPage), requestId: randomUUID(), proposalId: null });
     expect(first.status).toBe(200);
     const prepared = JSON.parse((await post("/api/intent", { change: { op: "global.set", body: "from the page" }, bootstrap: false })).text) as { intent: string };
     const requestId = randomUUID();
-    const saved = JSON.parse((await post("/api/commit", { intent: prepared.intent, assertion: owner.assert(prepared.intent), requestId, proposalId: null })).text);
+    const saved = JSON.parse((await post("/api/commit", { intent: prepared.intent, assertion: owner.assert(prepared.intent, onPage), requestId, proposalId: null })).text);
     expect(saved).toMatchObject({ duplicate: false, record: { target: "global" } });
     expect(JSON.parse((await call("GET", `/api/request/${requestId}`)).text)).toEqual({ record: saved.record });
     expect(JSON.parse((await call("GET", `/api/request/${randomUUID()}`)).text)).toEqual({ record: null });
