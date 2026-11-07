@@ -184,6 +184,8 @@ node "<check-continuity-schema.mjs>" "<existing-continuity.sqlite3>"
 - Claude Code: 플러그인을 갱신하고 기존 세션을 종료한 뒤 새 세션에서 MCP와 hook을 재적재합니다. Claude 전용 DB 경로가 유지되는지 확인합니다.
 - Antigravity(agy): 앱을 완전히 닫고 새 설치본으로 갱신한 뒤 다시 엽니다.
 
+CLI가 없는 Antigravity 네이티브 앱은 [위 설치 안내의 수동 설치 절차](https://github.com/jaeseongs95/agent-governance-suite/blob/v3.8.0/README.md#antigravity-agy)로도 갱신할 수 있습니다.
+
 각 호스트가 사용하는 DB에 대해 4절의 읽기 전용 확인으로 schema 4를 확인합니다. 호스트에서 AGS 도구가 정상 연결되는지도 확인합니다. 기존 API를 직접 호출하는 연동은 새 계약에 맞춰 수정해야 합니다. `load_context`는 `schemaVersion`만으로 자기 current를 읽고, 반환된 `stateToken`을 `checkpoint_context`·`purge_direct_context`의 `expectedStateToken`으로 전달합니다. 기존 `expectedRevision`을 계속 보내지 마십시오. 데이터 이관 성공과 실제 호스트 hook의 동작 확인은 서로 다른 확인입니다.
 
 ## 8. 실패 원인별 대응과 3.7 복구

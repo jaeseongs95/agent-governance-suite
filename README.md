@@ -100,6 +100,8 @@ codex plugin add agent-governance-suite@agent-governance
 
 ### Antigravity (`agy`)
 
+`agy` CLI가 없는 Antigravity 네이티브 앱에서는 [공식 수동 설치 안내](https://antigravity.google/docs/plugins#manual-plugin-installation)를 따릅니다. 앱을 정상 종료하고 기존 AGS 폴더를 플러그인 검색 경로 밖에 복구용으로 보존한 뒤, 릴리스에 첨부된 Antigravity 설치용 ZIP의 `agent-governance-suite` 폴더를 `~/.gemini/config/plugins/` 아래에 배치합니다(Windows: `%USERPROFILE%/.gemini/config/plugins/agent-governance-suite`). 앱을 다시 시작하고 `Customizations > Installed`에서 AGS 버전을 확인합니다. 저장소 전체를 복사하지 마십시오. 이 방식에는 CLI 추가 설치가 필요하지 않습니다.
+
 `agy plugin install`은 로컬 디렉터리만 받습니다. 릴리스에 첨부한 설치본을 받아 풀고 그 디렉터리를 설치합니다. 설치본에는 agy가 읽는 파일만 들어 있습니다. 저장소 전체를 설치하면 Antigravity 앱의 설치됨 화면이 멈출 수 있습니다. 설치하는 동안 Antigravity 앱을 닫아 둡니다. 앱이 켜져 있으면 기존 설치 폴더를 지우지 못해 설치가 실패합니다. Windows에서는 `Expand-Archive`로 풉니다.
 
 <!-- release-agy:start -->

@@ -100,6 +100,8 @@ Start a new Codex session, then review and trust the AGS hooks in `/hooks`. Unti
 
 ### Antigravity (`agy`)
 
+For the Antigravity native app without the `agy` CLI, follow the [official manual installation guide](https://antigravity.google/docs/plugins#manual-plugin-installation). Close the app normally and keep the existing AGS folder outside the plugin discovery paths for recovery. Place the `agent-governance-suite` folder from the Antigravity installation ZIP attached to the release under `~/.gemini/config/plugins/` (Windows: `%USERPROFILE%/.gemini/config/plugins/agent-governance-suite`), restart the app, and check the AGS version in `Customizations > Installed`. Do not copy the whole repository. This method does not require installing the CLI.
+
 `agy plugin install` accepts only a local directory. Download the install package attached to the release, extract it, and install that directory. The package holds only the files agy reads; installing the whole repository can freeze the Antigravity app's installed-plugins view. Close the Antigravity app while installing; if it is running, the install cannot remove the old plugin folder and fails. On Windows, extract with `Expand-Archive`.
 
 <!-- release-agy:start -->
