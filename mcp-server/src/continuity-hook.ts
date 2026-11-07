@@ -32,6 +32,9 @@ const BOUND_TOOLS = new Set([
   "purge_direct_context",
 ]);
 
+const PROGRESS_TOOLS = new Set(["start_workflow", "start_guarded_workflow", "record_stage_result",
+  "finalize_workflow", "abort_workflow", "release_convergence_root"]);
+
 /** Extra exempt directories, separated by the platform path delimiter. Set by the user's environment, never a tool input. */
 const EXEMPT_PATHS_VARIABLE = "AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS";
 
@@ -108,10 +111,10 @@ function deniedEdit(reason: string): Record<string, unknown> {
   return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reason } };
 }
 
-function localToolName(host: string, canonicalName: string): string | null {
+function localToolName(host: string, canonicalName: string, tools: ReadonlySet<string> = BOUND_TOOLS): string | null {
   if (!isGovernanceHookTool(host, canonicalName)) return null;
   const tool = canonicalName.includes("__") ? canonicalName.split("__").at(-1)! : canonicalName;
-  return BOUND_TOOLS.has(tool) ? tool : null;
+  return tools.has(tool) ? tool : null;
 }
 
 interface NormalizedContinuityInput {
@@ -119,6 +122,7 @@ interface NormalizedContinuityInput {
   lifecycle: AdaptedHostInput["lifecycle"];
   outputEventName: string;
   action: ContinuityAction | undefined;
+  restoreCurrentAtTurnStart: boolean;
   readLineage: (() => LineageRead) | undefined;
   readForkOrigin: (() => ForkOriginRead) | undefined;
   readForkHostParent: (() => ForkHostParentRead) | undefined;
@@ -159,7 +163,7 @@ function normalizedContinuityInput(adapted: AdaptedHostInput): NormalizedContinu
     }
     if (observation.boundaryPhase !== undefined) continuityConflict();
   }
-  return { observation, lifecycle, outputEventName, action, readLineage: typeof readLineage === "function" ? readLineage : undefined,
+  return { observation, lifecycle, outputEventName, action, restoreCurrentAtTurnStart: adapted.restoreCurrentAtTurnStart === true, readLineage: typeof readLineage === "function" ? readLineage : undefined,
     readForkOrigin: typeof readForkOrigin === "function" ? readForkOrigin : undefined,
     readForkHostParent: typeof readForkHostParent === "function" ? readForkHostParent : undefined };
 }
@@ -218,7 +222,8 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
     case "startup": service.ensureSession(sessionId); return {};
     case "fork": service.startFork(sessionId, readForkOrigin, readForkHostParent); return {};
     case "clear": service.clearSession(sessionId); return {};
-    case "resume": return sessionOutput(outputEventName, renderHookText(service.formatCandidate(service.candidateForSession(sessionId)), locale));
+    case "resume": return sessionOutput(outputEventName, renderHookText(
+      service.restoreCurrentForSession(sessionId) ?? service.formatCandidate(service.candidateForSession(sessionId)), locale));
     case "compact":
       if (readLineage) service.reanchorAfterCompact(sessionId, readLineage);
       return sessionOutput(outputEventName, renderHookText(service.compactContext(sessionId), locale));
@@ -231,7 +236,15 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
   // Pin a fork's parent before the model can change its own file; the cue contains no snapshot body.
   if (observation.kind === "user-input") {
     if (readLineage) service.pinForkParent(sessionId, readLineage, false);
-    return observation.wakeOnly ? {} : sessionOutput(outputEventName, renderHookText(service.checkpointCueForSession(sessionId), locale));
+    if (observation.wakeOnly) return {};
+    const restored = input.restoreCurrentAtTurnStart ? service.restoreCurrentForSession(sessionId) : null;
+    const cue = service.checkpointCueForSession(sessionId);
+    return sessionOutput(outputEventName, renderHookText([...(restored ?? []), ...(cue ?? [])], locale));
+  }
+  if (observation.kind === "tool-boundary" && observation.boundaryPhase === "after") {
+    if (!localToolName(host, observation.toolName ?? "", PROGRESS_TOOLS)) return {};
+    return sessionOutput(outputEventName, renderHookText(
+      service.checkpointCueAfterProgressForSession(sessionId, observation.callId ?? null), locale));
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     // A host that deferred its host-process read at the fork start reads it here, before any pin below.

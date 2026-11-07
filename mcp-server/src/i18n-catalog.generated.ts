@@ -51,6 +51,7 @@ export const CATALOGS: Readonly<Record<SupportedLocale, Readonly<Record<string, 
 
 export interface MessageParams {
   "hooks.checkpointCue.notice": Record<string, never>;
+  "hooks.checkpointCue.refresh": Record<string, never>;
   "hooks.checkpointCue.resume": Record<string, never>;
   "hooks.checkpointCue.save": Record<string, never>;
   "hooks.checkpointCue.skills": Record<string, never>;
@@ -609,6 +610,10 @@ export interface MessageParams {
   "continuity.token.invalid": Record<string, never>;
   "continuity.token.malformed": Record<string, never>;
   "continuity.token.verificationFailed": Record<string, never>;
+  "continuity.restore.current": { "stateToken": NestedMessage | number | string; "body": NestedMessage | number | string; };
+  "continuity.checkpoint.tooLarge": { "bytes": NestedMessage | number | string; "limit": NestedMessage | number | string; };
+  "continuity.checkpoint.stateChanged": Record<string, never>;
+  "continuity.purge.stateChanged": Record<string, never>;
   "peer.envelope.ackGuidance": Record<string, never>;
   "peer.envelope.warning": Record<string, never>;
   "peer.wait.boundedGuidance": Record<string, never>;

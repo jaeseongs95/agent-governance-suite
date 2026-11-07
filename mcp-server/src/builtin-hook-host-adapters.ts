@@ -300,6 +300,8 @@ const ANTIGRAVITY_EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
  * draws a random one to keep the root proof one-use. Bind the native ID once Antigravity sends one. */
 function adaptAntigravityHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
   const adapted = adaptInferredRootHookInput(input, host, "ANTIGRAVITY");
+  // The native runner emits this prompt boundary as a non-persistent ephemeralMessage at turn invocation zero.
+  adapted.restoreCurrentAtTurnStart = adapted.observation.kind === "user-input";
   // The runner maps the file tools to Write, Edit and MultiEdit and passes their arguments. agy 1.4.12 CLI hook input
   // (test server capture): write_file and edit_file name the file in Path. write_to_file, replace_file_content and
   // multi_replace_file_content (agy hooks docs) name it in TargetFile.

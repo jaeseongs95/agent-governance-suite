@@ -45,6 +45,8 @@ export interface AdaptedHostInput {
   observation: InputObservation;
   lifecycle: HostLifecycle;
   outputEventName: string;
+  /** This host drops durable hook context on compaction; its turn cue is ephemeral, so restoring here does not accumulate. */
+  restoreCurrentAtTurnStart?: boolean;
   continuityAction?: ContinuityAction;
   /** Host-written structural message IDs of this session's own transcript, oldest first. Never body text. */
   readLineage?: () => LineageRead;
