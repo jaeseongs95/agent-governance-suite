@@ -60,13 +60,8 @@
   "continuity.layers.integrity": "A stored context layer failed its size or digest check, so it is not used.",
   "continuity.layers.roleInvalid": "role must be one line of 1 to {limit} characters without control characters (compared after NFC and trimming), or null to unbind.",
   "continuity.layers.sessionInvalid": "The calling session could not be identified.",
-  "continuity.layers.roleUnbound": "This session is not bound to a role. Only the user binds it: bind_session_role (the user confirms a form) or the local admin page.",
+  "continuity.layers.roleUnbound": "This session is not bound to a role. The user approves a binding with a passkey on the local admin page ({adminUrl}). Leave a request with bind_session_role and tell the user.",
   "continuity.layers.argumentsInvalid": "The {tool} arguments do not match its input schema.",
-  "continuity.layers.approvalFailed": "The user's decision was not obtained ({reason}), so nothing changed. If the host cannot show the form (USER_APPROVAL_PRODUCER_UNSUPPORTED), tell the user they can make this change on the AGS local admin page.",
   "continuity.layers.unavailable": "The shared context store is unavailable.",
-  "continuity.layers.approveGlobal": "Save this as the global context every AGS session on this computer receives?\nRequested by: {session}\nSize: {bytes}/{limit} bytes ({digest})\nIt replaces the current global context in full.\n----- body -----\n{body}",
-  "continuity.layers.approveBind": "Bind this session to the role below? Sessions bound to a role read and write that role's context.\nSession: {session}\nRole: {role}\nCurrent role: {current}",
-  "continuity.layers.approveUnbind": "Unbind this session from its role?\nSession: {session}\nRole: {role}",
-  "continuity.layers.approveConfirm": "I approve exactly this change",
-  "continuity.layers.emptyBody": "(empty: clears the global context)"
+  "continuity.layers.roleNotRegistered": "The role \"{role}\" is not in the registry. The user creates roles on the local admin page ({adminUrl}), Roles menu. Tell the user, then ask again with a registered role name."
 }

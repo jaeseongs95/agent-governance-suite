@@ -18,6 +18,8 @@ import { adaptHostInput, hostAgentNoteRoots, isGovernanceHookTool, resolveHookHo
 import {
   assertDistinctDatabasePaths,
   resolveContextLayerDatabasePath,
+  resolveAdminPort,
+  adminPageUrl,
   resolveContinuityDatabasePath,
   resolveWorkflowDatabasePath,
 } from "./runtime-config.js";
@@ -319,7 +321,9 @@ function contextLayerText(input: NormalizedContinuityInput, host: string, enviro
     const target = contextLayerTarget(input, host);
     if (!target) return null;
     const databasePath = resolveContextLayerDatabasePath(environment);
-    const service = new ContextLayerService(create => ContextLayerStore.open(databasePath, create));
+    let adminUrl: string | null = null;
+    try { const port = resolveAdminPort(environment); adminUrl = port ? adminPageUrl(port) : null; } catch { adminUrl = null; }
+    const service = new ContextLayerService(create => ContextLayerStore.open(databasePath, create), undefined, adminUrl);
     return renderHookText(service.hookText(host, target.sessionId, target.actorId, target.full), locale);
   } catch (cause) {
     reportContinuityFailure("context-layers", cause);

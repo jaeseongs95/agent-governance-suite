@@ -81,7 +81,8 @@ export interface SharedContextViewV1 {
 export interface ProposalResult {
   pending: true;
   proposalId: string;
-  adminUrl: string;
+  /** Where the user approves it; null when the page is turned off (AGENT_GOVERNANCE_ADMIN_PORT=0). */
+  adminUrl: string | null;
 }
 
 /** The text a hook adds, as catalog messages (rendered by the hook in the host locale). */
@@ -145,14 +146,14 @@ function sessionFailures(state: AdminState, host: string, sessionId: string): La
 }
 
 export interface AdminPageState {
-  keys: Array<{ credentialId: string; label: string; fingerprint: string; addedAt: string; alg: number }>;
+  keys: Array<{ credentialId: string; label: string; fingerprint: string; addedAt: string; alg: number; lastUsedAt: string | null }>;
   bootstrap: AdminState["bootstrap"];
   resets: AdminResetRecord[];
   global: GlobalContextView | null;
-  globalHistory: Array<{ revision: number; body: string; updatedAt: string; credentialId: string }>;
+  globalHistory: Array<{ revision: number; body: string; updatedAt: string; credentialId: string; keyLabel: string | null }>;
   roles: Array<{ roleId: string; name: string; createdAt: string; context: RoleContextView | null; contextError: string | null; bindingCount: number }>;
   bindings: Array<{ host: string; sessionId: string; roleId: string; boundAt: string; lastUsedAt: string; lapsed: boolean }>;
-  proposals: AdminProposalRecord[];
+  proposals: Array<AdminProposalRecord & { baseChanged: boolean }>;
   failures: Array<AdminFailure & { layer: string; revision: number | null }>;
   lastSeq: number;
 }
@@ -166,13 +167,20 @@ export interface AdminPageState {
 export class ContextLayerService {
   /** Highest valid sequence seen per target by this long-lived process: a shrinking log is reported. */
   private readonly highWater = new Map<string, number>();
+  /** The latest reset this process saw; the reset command (another process) archives the log on purpose. */
+  private lastResetId: number | null = null;
 
   constructor(
     /** Opens the shared store; `create: false` returns null when the file does not exist yet. */
     private readonly openStore: (create: boolean) => ContextLayerStore | null,
     private readonly now: () => Date = () => new Date(),
-    readonly adminUrl: string = "http://localhost/",
+    readonly adminUrl: string | null = null,
   ) {}
+
+  /** The page address for message text; a turned-off page names the setting that turned it off. */
+  private get pageText(): string {
+    return this.adminUrl ?? "AGENT_GOVERNANCE_ADMIN_PORT=0";
+  }
 
   private with<T>(create: boolean, read: (store: ContextLayerStore) => T, absent: T): T {
     const store = this.openStore(create);
@@ -182,7 +190,13 @@ export class ContextLayerService {
 
   /** The verified state; a target whose head went back below what this process saw is reported as rolled back. */
   private fold(store: ContextLayerStore): AdminState {
-    const state = foldAdminLog(store.logRecords());
+    const records = store.logRecords();
+    const resetId = store.latestResetId();
+    if (resetId !== this.lastResetId) {
+      this.highWater.clear();
+      this.lastResetId = resetId;
+    }
+    const state = foldAdminLog(records);
     for (const [target, seq] of this.highWater) {
       const head = state.heads.get(target)?.seq ?? 0;
       if (head < seq) state.failures.push({ target, seq, code: "ADMIN_LOG_REGRESSED", change: null });
@@ -238,7 +252,7 @@ export class ContextLayerService {
     let roleId: string | null = null;
     if (name !== null) {
       const found = state ? [...state.roles.values()].find(candidate => candidate.key === roleKey(name)) : undefined;
-      if (!found) throw invalid(msg("continuity.layers.roleNotRegistered", { role: name, adminUrl: this.adminUrl }), "ROLE_NOT_REGISTERED", { adminUrl: this.adminUrl });
+      if (!found) throw invalid(msg("continuity.layers.roleNotRegistered", { role: name, adminUrl: this.pageText }), "ROLE_NOT_REGISTERED", { adminUrl: this.adminUrl });
       roleId = found.roleId;
     }
     const target = bindingTarget(caller.host, caller.sessionId);
@@ -249,14 +263,15 @@ export class ContextLayerService {
   saveRole(host: string, sessionId: string, expectedStateToken: unknown, body: unknown, actor: string): RoleContextView {
     const expected = checkedToken(expectedStateToken);
     const checked = checkedBody(body, "role");
-    const refused = () => new WorkflowContractError("BINDING_REQUIRED", msg("continuity.layers.roleUnbound", { adminUrl: this.adminUrl }), { reasonCode: "ROLE_NOT_BOUND", adminUrl: this.adminUrl });
-    const saved = this.with(false, store => {
+    const refused = () => new WorkflowContractError("BINDING_REQUIRED", msg("continuity.layers.roleUnbound", { adminUrl: this.pageText }), { reasonCode: "ROLE_NOT_BOUND", adminUrl: this.adminUrl });
+    // The binding check and the write share one transaction: a role deleted meanwhile gets no orphan body.
+    const saved = this.with(false, store => store.transaction(() => {
       const binding = this.bindingFor(store, this.fold(store), host, sessionId);
       if (!binding) throw refused();
       const result = store.saveRole(binding.roleId, expected, checked, actor, this.now().toISOString());
       if (result.kind === "stale") throw stale(result.actualStateToken);
       return roleView(result.record)!;
-    }, null);
+    }), null);
     if (!saved) throw refused();
     return saved;
   }
@@ -286,7 +301,8 @@ export class ContextLayerService {
       const globalToken = `${global?.stateToken ?? ""}#${failureMark}`;
       if (full || before?.globalToken !== globalToken) {
         for (const failure of failures) {
-          lines.push(msg("hooks.contextLayers.verifyFailed", { layer: failure.layer, revision: failure.revision === null ? "none" : String(failure.revision), code: failure.code }));
+          lines.push(msg("hooks.contextLayers.verifyFailed", { layer: failure.layer, revision: failure.revision === null ? "none" : String(failure.revision),
+            code: failure.code, adminUrl: this.pageText }));
         }
         if (global && (full || before?.globalToken?.split("#")[0] !== global.stateToken)) {
           // An emptied layer is announced only to an actor that may still hold the earlier body.
@@ -325,12 +341,16 @@ export class ContextLayerService {
   adminState(): AdminPageState {
     return this.with(false, store => {
       const state = this.fold(store);
+      const records = store.logRecords();
       const seen = store.allSessionSeen();
       const now = this.now().getTime();
       const bindings = [...state.bindings.values()].map(binding => {
         const lastUsedAt = new Date(Math.max(Date.parse(binding.boundAt), Date.parse(seen.get(bindingKey(binding.host, binding.sessionId)) ?? binding.boundAt))).toISOString();
         return { host: binding.host, sessionId: binding.sessionId, roleId: binding.roleId, boundAt: binding.boundAt, lastUsedAt, lapsed: now - Date.parse(lastUsedAt) > RETAIN_MS };
       });
+      const labels = new Map(records.filter(record => record.target === "keys").flatMap(record => {
+        try { const change = parseIntent(record.intent).change; return change.op === "key.add" ? [[change.credentialId, change.label] as const] : []; } catch { return []; }
+      }));
       const roles = [...state.roles.values()].sort((a, b) => a.name.localeCompare(b.name)).map(role => {
         let context: RoleContextView | null = null;
         let contextError: string | null = null;
@@ -339,14 +359,16 @@ export class ContextLayerService {
           bindingCount: bindings.filter(binding => binding.roleId === role.roleId && !binding.lapsed).length };
       });
       return {
-        keys: [...state.keys.values()].map(key => ({ credentialId: key.credentialId, label: key.label, fingerprint: key.fingerprint, addedAt: key.addedAt, alg: key.alg })),
+        keys: [...state.keys.values()].map(key => ({ credentialId: key.credentialId, label: key.label, fingerprint: key.fingerprint, addedAt: key.addedAt, alg: key.alg,
+          lastUsedAt: state.keyLastUsed.get(key.credentialId) ?? null })),
         bootstrap: state.bootstrap,
         resets: store.resets(),
         global: globalView(state),
-        globalHistory: state.globalHistory.map(item => ({ revision: item.seq, body: item.body, updatedAt: item.issuedAt, credentialId: item.credentialId })),
+        globalHistory: state.globalHistory.map(item => ({ revision: item.seq, body: item.body, updatedAt: item.issuedAt, credentialId: item.credentialId,
+          keyLabel: labels.get(item.credentialId) ?? null })),
         roles,
         bindings,
-        proposals: store.pendingProposals(),
+        proposals: store.pendingProposals().map(proposal => ({ ...proposal, baseChanged: (state.heads.get(proposal.target)?.recordHash ?? null) !== proposal.baseHash })),
         failures: state.failures.map(failure => ({ ...failure, layer: failureLayer(failure.target), revision: state.heads.get(failure.target)?.seq ?? null })),
         lastSeq: state.lastSeq,
       };
@@ -396,7 +418,7 @@ export class ContextLayerService {
         throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "TOO_LARGE" });
       }
       const proposal = input.proposalId ? store.proposal(input.proposalId) : null;
-      if (input.proposalId && proposal?.state !== "pending") throw new AdminError("ADMIN_PROPOSAL_NOT_FOUND");
+      if (input.proposalId && (proposal?.state !== "pending" || proposal.target !== intent.target)) throw new AdminError("ADMIN_PROPOSAL_NOT_FOUND");
       const unsigned = { target: intent.target, intent: input.intent, credentialId: input.assertion.credentialId, authenticatorData: input.assertion.authenticatorData,
         clientDataJSON: input.assertion.clientDataJSON, signature: input.assertion.signature, createdAt: now.toISOString() };
       const record = { ...unsigned, recordHash: adminRecordHash(unsigned) };

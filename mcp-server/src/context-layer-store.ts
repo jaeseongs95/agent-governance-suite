@@ -214,6 +214,10 @@ export class ContextLayerStore {
     });
   }
 
+  latestResetId(): number | null {
+    return (this.database.prepare("SELECT MAX(id) AS id FROM admin_resets").get() as { id: number | null }).id;
+  }
+
   resets(): AdminResetRecord[] {
     return (this.database.prepare("SELECT id, reset_of, archived, at FROM admin_resets ORDER BY id DESC").all() as Array<{ id: number; reset_of: string | null; archived: number; at: string }>)
       .map(row => ({ id: row.id, resetOf: row.reset_of, archived: row.archived, at: row.at }));
@@ -257,9 +261,13 @@ export class ContextLayerStore {
     return (this.database.prepare("SELECT * FROM role_contexts ORDER BY role_id").all() as unknown as RoleRow[]).map(roleRecord);
   }
 
-  /** Replaces the whole body when the caller names the current state token (null: never written). */
+  /**
+   * Replaces the whole body when the caller names the current state token (null: never written). Runs inside the
+   * caller's transaction (the binding check and this write must not interleave with a role deletion).
+   */
   saveRole(roleId: string, expectedStateToken: string | null, body: string, updatedBy: string, now: string): RoleSaveResult {
-    return this.transaction(() => {
+    if (!this.database.isTransaction) throw new Error("saveRole runs inside a transaction");
+    {
       const current = this.readRole(roleId);
       if ((current?.stateToken ?? null) !== expectedStateToken) return { kind: "stale", actualStateToken: current?.stateToken ?? null } as const;
       const row: RoleRow = { role_id: roleId, body, state_token: newStateToken(), digest: bodyDigest(body), updated_at: now, updated_by: updatedBy };
@@ -271,7 +279,7 @@ export class ContextLayerStore {
       this.database.prepare(`DELETE FROM role_context_history WHERE role_id = ? AND id NOT IN
         (SELECT id FROM role_context_history WHERE role_id = ? ORDER BY id DESC LIMIT ${HISTORY_PER_ROLE})`).run(roleId, roleId);
       return { kind: "saved", record: roleRecord(row) } as const;
-    });
+    }
   }
 
   /** Deletes a role's body and history; called inside the transaction that appends the signed role deletion. */

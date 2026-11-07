@@ -31,7 +31,9 @@ export type AdminChange =
   | { op: "role.add"; roleId: string; name: string }
   | { op: "role.rename"; roleId: string; name: string }
   | { op: "role.delete"; roleId: string }
-  | { op: "binding.set"; host: string; sessionId: string; roleId: string | null };
+  | { op: "binding.set"; host: string; sessionId: string; roleId: string | null }
+  /** The user saw the failed records of a target and keeps its current valid state (the page's [discard]). */
+  | { op: "ack"; target: string };
 
 export interface AdminIntent {
   v: number;
@@ -103,6 +105,8 @@ export interface AdminState {
   roles: Map<string, AdminRoleState>;
   bindings: Map<string, AdminBindingState>;
   heads: Map<string, { recordHash: string; seq: number }>;
+  /** When each key last signed a valid record. */
+  keyLastUsed: Map<string, string>;
   /** Failed records after the last valid record of their target: the target runs on its last valid state. */
   failures: AdminFailure[];
   lastSeq: number;
@@ -154,6 +158,7 @@ export function checkChangeShape(change: unknown): AdminChange {
       case "role.delete": return keys === "op,roleId" && typeof value.roleId === "string" && ID.test(value.roleId);
       case "binding.set": return keys === "host,op,roleId,sessionId" && text(value.host, 200) && text(value.sessionId, 500)
         && (value.roleId === null || (typeof value.roleId === "string" && ID.test(value.roleId)));
+      case "ack": return keys === "op,target" && typeof value.target === "string" && isAdminTarget(value.target);
       default: return false;
     }
   })();
@@ -168,7 +173,16 @@ export function changeTarget(change: AdminChange): string {
     case "global.set": return "global";
     case "role.add": case "role.rename": case "role.delete": return "roles";
     case "binding.set": return bindingTarget(change.host, change.sessionId);
+    case "ack": return change.target;
   }
+}
+
+/** keys, global, roles or binding:<host>:<sessionId> (each part URI-encoded and non-empty). */
+export function isAdminTarget(target: string): boolean {
+  if (target === "keys" || target === "global" || target === "roles") return true;
+  const parts = /^binding:([^:]+):([^:]+)$/.exec(target);
+  if (!parts || target.length > 1000) return false;
+  try { return bindingTarget(decodeURIComponent(parts[1]!), decodeURIComponent(parts[2]!)) === target; } catch { return false; }
 }
 
 export function buildIntent(change: AdminChange, prevTargetHash: string | null, issuedAt: string): string {
@@ -198,7 +212,7 @@ export function parseIntent(intent: string): AdminIntent {
 
 export function emptyAdminState(): AdminState {
   return { keys: new Map(), revoked: new Set(), bootstrap: null, global: null, globalHistory: [], roles: new Map(), bindings: new Map(),
-    heads: new Map(), failures: [], lastSeq: 0 };
+    heads: new Map(), keyLastUsed: new Map(), failures: [], lastSeq: 0 };
 }
 
 /**
@@ -237,6 +251,8 @@ export function checkChange(state: AdminState, change: AdminChange, signer: stri
     case "binding.set":
       if (change.roleId !== null && !state.roles.has(change.roleId)) throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "ROLE_NOT_FOUND" });
       return;
+    case "ack":
+      return;
   }
 }
 
@@ -272,6 +288,8 @@ function apply(state: AdminState, change: AdminChange, record: AdminLogRecord, i
       if (change.roleId === null) state.bindings.delete(bindingKey(change.host, change.sessionId));
       else state.bindings.set(bindingKey(change.host, change.sessionId), { host: change.host, sessionId: change.sessionId, roleId: change.roleId, boundAt: intent.issuedAt, seq: record.seq });
       return;
+    case "ack":
+      return;
   }
 }
 
@@ -303,6 +321,7 @@ export function foldAdminLog(records: readonly AdminLogRecord[]): AdminState {
       const { intent, change } = verifyRecord(state, record);
       apply(state, change, record, intent);
       state.heads.set(intent.target, { recordHash: record.recordHash, seq: record.seq });
+      state.keyLastUsed.set(record.credentialId, record.createdAt);
     } catch (error) {
       if (!(error instanceof AdminError)) throw error;
       let change: AdminChange | null = null;

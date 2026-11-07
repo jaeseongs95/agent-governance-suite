@@ -76,6 +76,8 @@ export interface MessageParams {
   "hooks.contextLayers.role": { "role": NestedMessage | number | string; "stateToken": NestedMessage | number | string; "changed": string; "body": NestedMessage | number | string; };
   "hooks.contextLayers.cleared": { "layer": string; "role": NestedMessage | number | string; };
   "hooks.contextLayers.parentSituation": { "stateToken": NestedMessage | number | string; "body": NestedMessage | number | string; };
+  "hooks.contextLayers.verifyFailed": { "layer": string; "revision": string; "code": NestedMessage | number | string; "adminUrl": NestedMessage | number | string; };
+  "hooks.contextLayers.unreadable": { "layer": string; };
   "server.call.reservedCallerField": Record<string, never>;
   "server.call.callerIngressMissing": Record<string, never>;
   "server.call.responseModeInvalid": { "field": NestedMessage | number | string; };
@@ -629,15 +631,10 @@ export interface MessageParams {
   "continuity.layers.integrity": Record<string, never>;
   "continuity.layers.roleInvalid": { "limit": NestedMessage | number | string; };
   "continuity.layers.sessionInvalid": Record<string, never>;
-  "continuity.layers.roleUnbound": Record<string, never>;
+  "continuity.layers.roleUnbound": { "adminUrl": NestedMessage | number | string; };
   "continuity.layers.argumentsInvalid": { "tool": NestedMessage | number | string; };
-  "continuity.layers.approvalFailed": { "reason": NestedMessage | number | string; };
   "continuity.layers.unavailable": Record<string, never>;
-  "continuity.layers.approveGlobal": { "session": NestedMessage | number | string; "bytes": NestedMessage | number | string; "limit": NestedMessage | number | string; "digest": NestedMessage | number | string; "body": NestedMessage | number | string; };
-  "continuity.layers.approveBind": { "session": NestedMessage | number | string; "role": NestedMessage | number | string; "current": NestedMessage | number | string; };
-  "continuity.layers.approveUnbind": { "session": NestedMessage | number | string; "role": NestedMessage | number | string; };
-  "continuity.layers.approveConfirm": Record<string, never>;
-  "continuity.layers.emptyBody": Record<string, never>;
+  "continuity.layers.roleNotRegistered": { "role": NestedMessage | number | string; "adminUrl": NestedMessage | number | string; };
   "peer.envelope.ackGuidance": Record<string, never>;
   "peer.envelope.warning": Record<string, never>;
   "peer.wait.boundedGuidance": Record<string, never>;
