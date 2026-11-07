@@ -167,3 +167,20 @@ test("a single object exceeding the existing 64 MiB limit fails closed", () => {
   const root = repository(); put(root, "too-large", Buffer.alloc(64 * 1024 * 1024 + 1, 17)); commit(root);
   for (const target of ["commit", "index"]) assert.throws(() => capture(root, target), /git|Git/);
 });
+
+test("individual blobs above a batch and exactly at 64 MiB retain their bytes", () => {
+  const root = repository();
+  const expected = [];
+  for (const size of [32 * 1024 * 1024 + 1, 64 * 1024 * 1024]) {
+    const path = `size-${size}`;
+    const bytes = Buffer.alloc(size, 29); bytes[0] = 0; bytes[size - 1] = 10;
+    put(root, path, bytes); expected.push([path, digest(bytes), size]);
+  }
+  commit(root);
+  for (const target of ["commit", "index"]) {
+    const snapshot = capture(root, target);
+    for (const [path, sha, size] of expected) {
+      const actual = entry(snapshot, path); assert.equal(actual.sha256, sha); assert.equal(actual.size, size);
+    }
+  }
+});
