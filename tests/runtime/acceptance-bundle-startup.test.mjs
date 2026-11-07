@@ -43,9 +43,9 @@ it("starts the bundled MCP server without acceptance schema files beside mcp-ser
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     await Promise.all([
       ...["contracts", "runtime"].map((directory) => cp(path.join(root, directory), path.join(cleanRoot, directory), { recursive: true })),
-      // Start-up and tools/list read only these two files under skills/ (a read trace of this start, AGS3-D-0027). Copying
-      // the other ~500 skill files took 17-97s on the 2-vCPU Windows test server under CPU contention, more than this
-      // test's 30s; a file the start-up needs and this list lacks fails the start instead of passing unseen.
+      // Under skills/, start-up and tools/list read only the intake (a read trace of this start, AGS3-D-0027); the registry
+      // is the configured SKILL_REGISTRY_PATH and is read lazily. Copying the other ~500 skill files took 17-97s on the
+      // 2-vCPU Windows test server under CPU contention, more than this test's 30s. A missing intake fails the start.
       ...["skills/registry.json", "skills/orchestrator/references/intake.md"].map((file) => cp(path.join(root, file), path.join(cleanRoot, file))),
       cp(path.join(root, "mcp-server/dist/server.mjs"), path.join(cleanRoot, "mcp-server/dist/server.mjs")),
     ]);
