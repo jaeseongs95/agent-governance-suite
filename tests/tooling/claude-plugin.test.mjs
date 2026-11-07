@@ -645,19 +645,25 @@ syncBuiltinESMExports();
     expect(await readFile(path.join(directory, installed))).toEqual(await readFile(path.join(root, file)));
   });
 
-  it("keeps change-scope-guardian and korean-prose-editor descriptions aligned with canonical SKILL.md without overbroad triggers", async () => {
+  it("keeps shared descriptions, including pre-dispatch model advice, aligned across both Claude package locales", async () => {
     for (const [skillId, forbiddenTriggers] of [
       ["change-scope-guardian", ["여러 파일을 고치거나", "미커밋 변경이 있는 트리에서 작업을 시작할 때 기준 상태를 남기고", "git commit·merge 전에"]],
       ["korean-prose-editor", ["문서 초안을 쓰거나 다듬을 때"]],
+      ["model-effort-advisor", ["현재 모델·추론 수준이 관측될 때", "이 모델로 충분해?", "하위 에이전트 라우팅, 모델 자동 변경에는 쓰지 않는다."]],
     ]) {
       const adaptation = await readJson(root, "claude-overlay", "adaptations", `${skillId}.json`);
-      expect(adaptation).not.toHaveProperty("description");
-      const shared = await readFile(path.join(root, "skills", skillId, "SKILL.md"), "utf8");
-      const generated = await readFile(path.join(pluginRoot, "skills", skillId, "SKILL.md"), "utf8");
+      expect(adaptation, skillId).not.toHaveProperty("description");
+      const relative = `skills/${skillId}/SKILL.md`;
+      const shared = await readFile(path.join(root, relative), "utf8");
+      const files = new Map([[relative, Buffer.from(shared)]]);
+      applySkillAdaptation(files, skillId, adaptation);
+      expect(files.get(relative).toString("utf8"), skillId).toBe(shared);
       const extractDescription = (text) => text.match(/^---\r?\n[\s\S]*?^description:\s*(.+)$/mu)?.[1]?.trim();
-      expect(extractDescription(generated)).toBe(extractDescription(shared));
-      for (const phrase of forbiddenTriggers) {
-        expect(generated).not.toContain(phrase);
+      // English packages currently copy skill prose verbatim; their runtime locale is separate.
+      for (const packageRoot of [pluginRoot, `${pluginRoot}-en`]) {
+        const generated = await readFile(path.join(packageRoot, relative), "utf8");
+        expect(extractDescription(generated), packageRoot).toBe(extractDescription(shared));
+        for (const phrase of forbiddenTriggers) expect(generated, packageRoot).not.toContain(phrase);
       }
     }
   });
