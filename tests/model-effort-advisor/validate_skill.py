@@ -27,7 +27,7 @@ def validate_current_contract() -> None:
     for clause in [
         "현재 메인 모델이나 추론 수준 관측은 입력도 선행조건도 아니다.",
         "위임 여부·에이전트 수·배치·문맥·권한·독립 감사",
-        "쉬운 검증·작업 분해·비용 선호로 위험 하한을 낮추지 마라.",
+        "쉬운 검증·작업 분해·비용 선호로 고위험 추천을 낮추지 마라.",
         "`user.model`, `user.effort`는 지원 범위에서 우선하며 하나만 제공해도",
         "`host.id`는 실행 호스트 식별자이고 `host.provider`는 모델 catalog/라우팅 adapter 식별자다.",
         "구체적인 제품 모델명·별칭·벤더 API·호출 필드 변환은",
@@ -42,7 +42,7 @@ def validate_current_contract() -> None:
     request = read_json(SKILL_ROOT / "contracts" / "subagent-model-request.v1.schema.json")
     advice = read_json(SKILL_ROOT / "contracts" / "subagent-model-advice.v1.schema.json")
     policy = read_json(ROOT / "contracts" / "model-policy.v1.schema.json")
-    presets = read_json(ROOT / "skills" / "coordinate-subagents" / "references" / "model-routing-presets.json")
+    presets = read_json(ROOT / "runtime" / "model-routing-presets.json")
     classification = read_json(SKILL_ROOT / "classification.json")
     require(classification["actions"] == ["select-subagent-model-effort"], "current action must select before dispatch")
     require(classification["targets"] == ["approved-subagent-assignment", "host-model-capabilities"], "current targets must not be main settings")
@@ -72,7 +72,7 @@ def validate_current_contract() -> None:
     require(set(user["properties"]) == {"model", "effort"} and not user.get("required") and user["minProperties"] == 1, "model-only and effort-only overrides must remain valid")
     require(user["properties"]["effort"] == effort_ref, "user effort must not invent support")
     require(request["$defs"]["setting"]["properties"]["effort"] == effort_ref, "inherited effort must use the same policy")
-    require(policy["$defs"]["highRiskModelClass"]["const"] == "general" and policy["$defs"]["highRiskReasoningEffort"]["const"] == "high", "shared risk floor must not be lowered")
+    require(policy["$defs"]["highRiskModelClass"]["const"] == "general" and policy["$defs"]["highRiskReasoningEffort"]["const"] == "high", "shared high-risk recommendation must stay general/high")
 
     properties = advice["properties"]
     statuses = {"READY", "INHERIT_UNVERIFIED", "BLOCKED"}

@@ -42,29 +42,30 @@ describe("packaged model routing", () => {
       .toEqual({ model: "gpt-5.6-terra", effort: "high" });
   });
 
-  it("enforces the risk floor for presets, overrides and inherited fallback", () => {
+  it("recommends the high-risk preset first without refusing a supported user choice (AGS3-D-0058)", () => {
     expect(resolveModelSelection({ ...options(), role: "discovery", highRisk: true }).selection)
       .toEqual({ model: "gpt-5.6-terra", effort: "high" });
     for (const inherited of [undefined, { model: "gpt-5.6-luna", effort: "high" }, { model: "gpt-5.6-terra", effort: "medium" }]) {
-      expect(resolveModelSelection({ ...options(), highRisk: true, user: { effort: "medium" }, inherited }).delivery).toBe("blocked");
+      expect(resolveModelSelection({ ...options(), highRisk: true, user: { effort: "medium" }, inherited }))
+        .toMatchObject({ delivery: "explicit", selection: { model: "gpt-5.6-terra", effort: "medium" } });
     }
     const safe = resolveModelSelection({ ...options(), highRisk: true, user: { model: "missing" }, inherited: { model: "gpt-5.6-sol", effort: "high" } });
     expect(safe.delivery).toBe("inherited");
     expect(safe.fallbackReason).toBeTruthy();
   });
 
-  it("does not allow an independent auditor to opt out of the mandatory risk floor", () => {
+  it("requires an explicit highRisk flag for an independent audit yet keeps its supported user choice (AGS3-D-0058)", () => {
     const audit = { ...options(), role: "independent-audit", user: { model: "gpt-5.6-luna", effort: "high" } };
     expect(() => resolveModelSelection(audit)).toThrow(/independent-audit requires highRisk/);
-    expect(resolveModelSelection({ ...audit, highRisk: true }).delivery).toBe("blocked");
-    expect(resolveModelSelection({ ...audit, highRisk: true, inherited: { model: "gpt-5.6-sol", effort: "high" } }).delivery).toBe("inherited");
+    expect(resolveModelSelection({ ...audit, highRisk: true }).selection).toEqual({ model: "gpt-5.6-luna", effort: "high" });
+    expect(resolveModelSelection({ ...audit, highRisk: true, inherited: { model: "gpt-5.6-sol", effort: "high" } }).delivery).toBe("explicit");
   });
 
   it("does not infer support or model class and preserves the Luna minimum", () => {
     expect(resolveModelSelection({ ...options(), supported: [] }).delivery).toBe("blocked");
     const unknownClass = options();
     unknownClass.supported[1].modelClass = null;
-    expect(resolveModelSelection({ ...unknownClass, highRisk: true }).delivery).toBe("blocked");
+    expect(resolveModelSelection({ ...unknownClass, highRisk: true }).selection).toEqual({ model: "gpt-5.6-terra", effort: "high" });
     expect(resolveModelSelection({ ...options(), role: "discovery", user: { effort: "medium" } }).delivery).toBe("blocked");
   });
 
@@ -93,13 +94,13 @@ describe("packaged model routing", () => {
     expect(resolveModelSelection({ ...unknown, inherited: undefined, user: { model: "chosen" } }).requested).toEqual({ model: "chosen", effort: null });
   });
 
-  it("records unobservable low-risk inheritance without weakening the high-risk floor", () => {
+  it("records unobservable inheritance at any risk level (AGS3-D-0058)", () => {
     const inherited = { ...record(), contextMode: "full-history", contextReason: "Prior context needed",
       options: { ...options(), inheritOnly: true, inheritanceSupported: true }, spawnArguments: { fork_turns: "all" },
     };
     expect(resolveModelSelection(inherited.options).delivery).toBe("inherited");
     expect(recordModelApplication(inherited).actual).toEqual({ status: "unverified", model: null, effort: null });
-    expect(resolveModelSelection({ ...inherited.options, highRisk: true }).delivery).toBe("blocked");
+    expect(resolveModelSelection({ ...inherited.options, highRisk: true }).delivery).toBe("inherited");
     expect(resolveModelSelection({ ...inherited.options, inheritanceSupported: false }).delivery).toBe("blocked");
   });
 
@@ -179,8 +180,8 @@ describe("packaged model routing", () => {
   });
 
   it.each([
-    ["en", /independent-audit requires highRisk: true/, "Requested combination unavailable or below risk floor"],
-    ["ko", /independent-audit에는 highRisk: true가 필요하다/, "요청한 조합을 쓸 수 없거나 위험 하한보다 낮다"],
+    ["en", /independent-audit requires highRisk: true/, "Requested combination unavailable"],
+    ["ko", /independent-audit에는 highRisk: true가 필요하다/, "요청한 조합을 쓸 수 없다"],
   ])("renders thrown errors and fallback reasons in the %s host locale", (locale, thrown, reason) => {
     vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
     const audit = { ...options(), role: "independent-audit", user: { model: "gpt-5.6-luna", effort: "high" } };
@@ -208,9 +209,11 @@ describe("packaged model routing", () => {
   it("runs the public resolve and record CLI without node_modules", () => {
     const clean = mkdtempSync(path.join(tmpdir(), "routing-runtime-"));
     try {
-      cpSync(new URL("../../skills/coordinate-subagents", import.meta.url), path.join(clean, "skill"), { recursive: true });
+      // The installed layout: the skill beside the shared runtime catalog it reads.
+      cpSync(new URL("../../skills/coordinate-subagents", import.meta.url), path.join(clean, "skills/coordinate-subagents"), { recursive: true });
+      cpSync(new URL("../../runtime/model-routing-presets.json", import.meta.url), path.join(clean, "runtime/model-routing-presets.json"));
       const input = path.join(clean, "input.json");
-      const cli = path.join(clean, "skill/scripts/model-routing.mjs");
+      const cli = path.join(clean, "skills/coordinate-subagents/scripts/model-routing.mjs");
       const env = { ...process.env };
       delete env.NODE_OPTIONS;
       delete env.NODE_PATH;

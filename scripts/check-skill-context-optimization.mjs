@@ -1054,20 +1054,19 @@ export function matchesPonytailPolicySuccessor(path, bytes) {
 
 // 문서·계약 바이트만 문맥 검사에 남긴다. 실행 무결성은 source-lock 책임이다.
 const CONTEXT_CONTRACT_PINS = Object.freeze({
-  revision: "3.8.0-d0006-model-policy-contract-integration",
+  revision: "3.9.0-d0058-model-policy-recommendation",
   authorityEffect: "none",
   hashes: Object.freeze({
-  "contracts/model-policy.v1.schema.json": "90344943d41d95924b28b59969e9b87871354aea5966d8334ab13c146f2cb502",
+  "contracts/model-policy.v1.schema.json": "ebb14766f5f7b57b4b2639b5714fb69f5e6597292d3dbaa31c8a0942497cf7fc",
   "runtime/collaboration-decision.d.mts": "dfd4a99ed6dcdd8e06497f42beab103410d4082d1de3f6b98690fe7a1cec8c14",
   "runtime/provider-acceptance-semantics.d.mts": "5ad79b91fd34d6d4f07321b1011e2b48b5311a89296d10c360ed108ed92f45cf",
   "runtime/session-board-store.d.mts": "fb6dc871d6dc40f180d65ef770c27665f3b29ad2868ffce372cd511feb395067",
   "skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json": "c4a0f4080ed2d1605ec0d362d2abaf8c585d06d3a8e5d262aacd264be122686e",
   "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json": "9054b1bbfc5c431ad61b1daddb44ace792c647328146feb8bb6d1087c4f16000",
   "skills/acceptance-evidence-validator/scripts/core.d.mts": "5ad79b91fd34d6d4f07321b1011e2b48b5311a89296d10c360ed108ed92f45cf",
-  "skills/coordinate-subagents/references/model-routing-policy.schema.json": "90344943d41d95924b28b59969e9b87871354aea5966d8334ab13c146f2cb502",
-  "skills/coordinate-subagents/references/model-routing-presets.json": "b2cb3297f7aa0b2c3fa8a52e042aab3110824af4abd6dbe58867dfe6100f300a",
-  "skills/coordinate-subagents/references/model-routing.md": "49b0e564b80a52475670e850c8272f0c348626ef5d32e4746fd484a262023fe5",
-  "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts": "bf38ea3f72b0b74eb76a79ca8e481ca0de4fb2e57399b6c57c596f95b8f83a15",
+  "skills/coordinate-subagents/references/model-routing-policy.schema.json": "ebb14766f5f7b57b4b2639b5714fb69f5e6597292d3dbaa31c8a0942497cf7fc",
+  "skills/coordinate-subagents/references/model-routing.md": "b86755582e5c704bea3b5f1270d37544aa14dcd3c60a909170c079346e9342a8",
+  "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts": "f94acb26345326e949530a3993047b6e7ad9fcb8be66c52e1809ea55faf2165b",
   "skills/coordinate-subagents/scripts/model-routing-policy.d.mts": "e8faf41ef2ff2889a29a2f27b9a8ed55c9579f83eef0093744a4f11cbd5c483e",
   "skills/coordinate-subagents/scripts/model-routing.d.mts": "4afbbfc1167ee637d1aab74bbfe4ec55241931d33fa55442b94dcea8d8e93fbe",
   "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json": "9423c10246f09738712ac0bf5b5f9134795fa8a9f03bfb4d2a2f2af96af3618f",

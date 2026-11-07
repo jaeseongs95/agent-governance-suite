@@ -29,9 +29,7 @@
     "controls_agent_count": false,
     "controls_batching": false,
     "user_override_precedence": true,
-    "capability_check_required": true,
-    "high_risk_minimum_model_class": "general",
-    "high_risk_minimum_effort": "high"
+    "capability_check_required": true
   },
   "hosts": {
     "codex": {

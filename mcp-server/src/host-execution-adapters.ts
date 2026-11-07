@@ -190,7 +190,7 @@ export function createCatalogExecutionAdapters(
     const admissions = new Map<string, Pick<ResolvedModelCapabilityV1,
       "resolvedModel" | "modelClass" | "minimumReasoningEffort" | "supportedEfforts">>();
     const catalog = provider.catalog;
-    if (catalog && ["exact-only", "claude-family-or-exact", "gemini-family-or-exact"].includes(catalog.matching)) {
+    if (catalog?.matching === "exact-only") {
       const models = new Map(Object.entries(catalog.models ?? {}));
       const rawIds = new Map([...models.keys()].map(id => [id, id]));
       for (const [alias, target] of Object.entries(catalog.aliases ?? {})) rawIds.set(alias, target);
