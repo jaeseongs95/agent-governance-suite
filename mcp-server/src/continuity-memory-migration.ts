@@ -76,17 +76,32 @@ function readMappings(file: string): ContinuityMemoryMigration[] {
   });
 }
 
+interface CurrentExportCounts {
+  count: number;
+  excludedReceiverTasks: number;
+  exclusionReason: "RECEIVER_STATE_UNSUPPORTED" | null;
+}
+
 /** One-time administrative export. The file becomes historical after apply and must leave agent access then. */
-function exportCurrent(databasePath: string, output: string): number {
+function exportCurrent(databasePath: string, output: string): CurrentExportCounts {
   const database = legacyDatabase(databasePath);
   let mappings: ContinuityMemoryMigration[];
+  let excludedReceiverTasks: number;
   try {
+    const currentRows = `FROM continuity_snapshots snapshots
+      JOIN continuity_tasks tasks ON tasks.task_correlation = snapshots.task_correlation
+        AND tasks.current_epoch = snapshots.epoch`;
+    const hasReceiverTable = database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='continuity_delta_state'").get();
+    // Receiver ownership is task-wide, including a delta in an older epoch. Never read its stale origin or delta body.
+    const receiverOwned = hasReceiverTable
+      ? "EXISTS(SELECT 1 FROM continuity_delta_state delta WHERE delta.task_correlation = snapshots.task_correlation)" : "0";
+    excludedReceiverTasks = Number((database.prepare(`SELECT count(*) AS count ${currentRows} WHERE ${receiverOwned}`)
+      .get() as { count: number }).count);
     const rows = database.prepare(`
       SELECT snapshots.task_correlation, snapshots.epoch, snapshots.revision,
              snapshots.snapshot_digest, snapshots.snapshot_json
-      FROM continuity_snapshots snapshots
-      JOIN continuity_tasks tasks ON tasks.task_correlation = snapshots.task_correlation
-        AND tasks.current_epoch = snapshots.epoch
+      ${currentRows}
+      WHERE NOT (${receiverOwned})
       ORDER BY snapshots.task_correlation
     `).all() as Array<{ task_correlation: string; epoch: number; revision: number; snapshot_digest: string; snapshot_json: string }>;
     mappings = rows.map(row => {
@@ -107,11 +122,13 @@ function exportCurrent(databasePath: string, output: string): number {
     database.close();
   }
   writeFileSync(output, `${JSON.stringify(mappings, null, 2)}\n`, { flag: "wx", mode: 0o600 });
-  return mappings.length;
+  return { count: mappings.length, excludedReceiverTasks,
+    exclusionReason: excludedReceiverTasks > 0 ? "RECEIVER_STATE_UNSUPPORTED" : null };
 }
 
 /** No default database path: every mutation needs an explicit existing file and prepared bounded mappings. */
-export function runContinuityMemoryMigrationCli(args: string[]): { ok: true; code: string; count: number } {
+export function runContinuityMemoryMigrationCli(args: string[]):
+  { ok: true; code: "EXPORTED_CURRENT" } & CurrentExportCounts | { ok: true; code: "MIGRATED"; count: number } {
   let parsed: ReturnType<typeof parseArgs>;
   try {
     parsed = parseArgs({ args, allowPositionals: true, strict: true,
@@ -125,7 +142,7 @@ export function runContinuityMemoryMigrationCli(args: string[]): { ok: true; cod
       : typeof mapping !== "string" || !mapping || output !== undefined)) throw new MigrationCliError("INVALID_ARGUMENTS");
   const databasePath = existingDatabase(database);
   if (operation === "export-current") {
-    return { ok: true, code: "EXPORTED_CURRENT", count: exportCurrent(databasePath, output as string) };
+    return { ok: true, code: "EXPORTED_CURRENT", ...exportCurrent(databasePath, output as string) };
   }
   const migrations = readMappings(mapping as string);
   const preflight = legacyDatabase(databasePath);
