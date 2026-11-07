@@ -202,7 +202,7 @@ describe("generated Claude plugin", () => {
       if (file === "tests/skill-classification/intake-length-source-successor.test.ts") {
         // Its r34 assertions read hash-bound historical sources at the r35 ancestor.
         // Exempt only that exact anchor Map, not the rest of this file or other tests.
-        expect(createHash("sha256").update(text).digest("hex"), file).toBe("dcef5ce8744555632bc342628921c58b31ab86b48201ec5612762c1a6abce1ee");
+        expect(createHash("sha256").update(text).digest("hex"), file).toBe("4daf526ac0a9bfb2968104b3ebe07ffce690a41ea6080351ce39f85460236c38");
         const historicalAnchors = text.match(/ {2}const anchors = new Map\(\[\n[\s\S]*?\n {2}\]\);/u);
         expect(historicalAnchors, file).not.toBeNull();
         text = text.replace(historicalAnchors[0], "");
