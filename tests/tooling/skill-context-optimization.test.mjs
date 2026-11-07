@@ -309,7 +309,10 @@ describe("skill context optimization", () => {
   it("keeps the retired context-continuity sources out of the tree and reads them at their exact retirement bytes", () => {
     const report = checkSkillContextOptimization();
     expect(report).toMatchObject({ pass: true, errors: [] });
-    expect(report.retiredSkills).toMatchObject([{ revision: "e6e313864a4fe1be15ac2b199fb56284dbc327a9", skillIds: ["context-continuity"] }]);
+    expect(report.retiredSkills).toMatchObject([
+      { revision: "e6e313864a4fe1be15ac2b199fb56284dbc327a9", skillIds: ["context-continuity"] },
+      { revision: "14549a2e83fd9143cf8184bd71979db23fd43172", skillIds: ["codex-token-usage-analyzer"] },
+    ]);
     expect(Object.keys(report.retiredSkills[0].hashes).toSorted()).toEqual(retiredSources);
     for (const relative of retiredSources) {
       expect(() => readFileSync(new URL(`../../${relative}`, import.meta.url)), relative).toThrow();
