@@ -5,8 +5,8 @@
     "validate-acceptance-evidence"
   ],
   "targets": [
-    "implementation",
-    "test-evidence"
+    "work-products",
+    "verification-evidence"
   ],
   "constraints": [],
   "dependencies": [],

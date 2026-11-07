@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "v390-intake-source-binding-r38",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "a50fbc2c20c20f52dd59643bb929b5b4c88d6f3a",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.d38-reference-source-successor.json",
+    "bytes": 13009,
+    "digest": "sha256:6cbc88426ec49553e19642a10dfa64e490a440fb1fa42b0881bd724abbe64eae"
+  },
+  "sourceChangeRefs": [
+    {
+      "defectIds": [
+        "AGS3-D-0032",
+        "AGS3-D-0038",
+        "AGS3-D-0042",
+        "AGS3-D-0043",
+        "AGS3-D-0045",
+        "AGS3-D-0046",
+        "AGS3-D-0047",
+        "AGS3-D-0048",
+        "AGS3-D-0049",
+        "AGS3-D-0050",
+        "AGS3-D-0051",
+        "AGS3-D-0053",
+        "AGS3-D-0055"
+      ],
+      "sourceRevision": "a50fbc2c20c20f52dd59643bb929b5b4c88d6f3a",
+      "observation": "공통 접수 기준을 전달 경로별 책임에 맞게 줄이고 행동 전 확인 다섯 항목으로 묶었다. 범용 스킬의 대상 목록·참고 문서를 분야 중립 표현으로 바꿨다. 원 평가 fixture·예산·라벨은 바꾸지 않는다."
+    }
+  ],
+  "fixtureFileRewritten": false,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN",
+  "bindings": [
+    {
+      "path": "skills/acceptance-evidence-validator/classification.json",
+      "previousDigest": "sha256:4ce9af6edc26969b41c776135e591bc0674f5d366445207083baf73d2899aff7",
+      "digest": "sha256:9a7834459843cd6c945f40fa11869610cebce2a62a251cd33edde3db211dbef0",
+      "bytes": 3942
+    },
+    {
+      "path": "skills/orchestrator/classification.json",
+      "previousDigest": "sha256:d49407e5fe8f6b2db407a52aedaddd90f3ba4d9ece5cc0fc2371982820647843",
+      "digest": "sha256:5b8de6fc0098d655565391c8c32cee91322680c862890df8c21ca00fccd17d5f",
+      "bytes": 4813
+    },
+    {
+      "path": "skills/orchestrator/references/intake.md",
+      "previousDigest": "sha256:1e1bddfaa4c294815a2ab2da4b071ecd2281a72c7b1e8f7bc72bb5ac585a6c71",
+      "digest": "sha256:9ee68b514bd98613dc37bb1fbabe5616f452035470dd40409e1b951c7c6b71d2",
+      "bytes": 6044
+    }
+  ]
+}

@@ -313,6 +313,18 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/independent-audit-gate/references/orchestrator-integration.md": ["3d14b4944f34c5e071cec027dcf483adf6fe5229e1a6ad17ea39202aa17d2fef", "ab82ba48be44d622dbed30412712ba4138e22e87f1bede5c82adb78b370782f0"],
     }),
   }),
+  // 3.9.0 WP-F (AGS3-D-0032/0038/0042-0055) successor: start
+  // Intake shortened and moved to its delivery paths, field-neutral targets and references; historical budgets and
+  // oracles stay frozen because these exact bytes project onto the 3.8.0 release bytes at BASE.
+  Object.freeze({
+    revision: "a50fbc2c20c20f52dd59643bb929b5b4c88d6f3a",
+    hashes: Object.freeze({
+      "skills/acceptance-evidence-validator/classification.json": ["4ce9af6edc26969b41c776135e591bc0674f5d366445207083baf73d2899aff7", "9a7834459843cd6c945f40fa11869610cebce2a62a251cd33edde3db211dbef0"],
+      "skills/orchestrator/classification.json": ["d49407e5fe8f6b2db407a52aedaddd90f3ba4d9ece5cc0fc2371982820647843", "5b8de6fc0098d655565391c8c32cee91322680c862890df8c21ca00fccd17d5f"],
+      "skills/orchestrator/references/intake.md": ["1e1bddfaa4c294815a2ab2da4b071ecd2281a72c7b1e8f7bc72bb5ac585a6c71", "9ee68b514bd98613dc37bb1fbabe5616f452035470dd40409e1b951c7c6b71d2"],
+    }),
+  }),
+  // 3.9.0 WP-F successor: end
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
 // Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes, or
