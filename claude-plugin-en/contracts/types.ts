@@ -168,37 +168,66 @@ export interface ContinuityEvidenceRefV1 {
   verified: boolean;
 }
 
-export interface CheckpointContextRequestV1 {
-  schemaVersion: typeof CONTRACT_VERSION;
-  requestId: string;
-  expectedRevision: number;
+/** Complete bounded UTF-8 body, including status and evidence references. */
+export interface ContinuityMemoryBodyV1 {
   status: "active" | "paused" | "completed";
   core: ContinuityCoreV1;
   evidenceRefs: ContinuityEvidenceRefV1[];
 }
 
+export interface CheckpointContextRequestV1 extends ContinuityMemoryBodyV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  requestId: string;
+  /** Echo the server-issued token; callers never calculate a revision. */
+  expectedStateToken: string;
+}
+
+/** The caller's sole current memory; an empty state still has a unique token. */
 export interface ContinuitySnapshotV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   source: "direct";
   taskCorrelation: string;
   epoch: number;
-  revision: number;
-  status: "active" | "paused" | "completed";
-  core: ContinuityCoreV1;
-  evidenceRefs: ContinuityEvidenceRefV1[];
-  snapshotDigest: Sha256Digest;
+  stateToken: string;
+  memory: ContinuityMemoryBodyV1 | null;
+  memoryDigest: Sha256Digest | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ContinuitySummaryV1 {
+export interface ContinuityDirectSummaryV1 {
   schemaVersion: typeof CONTRACT_VERSION;
-  source: ContinuitySourceV1;
+  source: "direct";
+  taskCorrelation: string;
+  epoch: number;
+  stateToken: string;
+  status: string;
+  memoryDigest: Sha256Digest;
+  updatedAt: string;
+}
+
+export interface ContinuityWorkflowSummaryV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  source: "workflow";
   taskCorrelation: string;
   epoch: number;
   revision: number;
   status: string;
   snapshotDigest: Sha256Digest;
+  updatedAt: string;
+}
+
+export type ContinuitySummaryV1 = ContinuityDirectSummaryV1 | ContinuityWorkflowSummaryV1;
+
+/** Migration parser only; never returned by the agent-facing memory API. */
+export interface LegacyContinuitySnapshotV1 extends ContinuityMemoryBodyV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  source: "direct";
+  taskCorrelation: string;
+  epoch: number;
+  revision: number;
+  snapshotDigest: Sha256Digest;
+  createdAt: string;
   updatedAt: string;
 }
 
@@ -214,13 +243,18 @@ export interface InspectContextRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
 }
 
-export interface LoadContextRequestV1 {
+export interface LoadCurrentContextRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
-  candidateToken: string;
-  epoch: number;
-  revision: number;
-  digest: Sha256Digest;
+  candidateToken?: never;
 }
+
+export interface LoadCandidateContextRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  /** Signed fork/workflow selection; no caller-selected history or session. */
+  candidateToken: string;
+}
+
+export type LoadContextRequestV1 = LoadCurrentContextRequestV1 | LoadCandidateContextRequestV1;
 
 export interface SuppressContextRestoreRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
@@ -230,8 +264,7 @@ export interface SuppressContextRestoreRequestV1 {
 export interface PurgeDirectContextRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   requestId: string;
-  expectedEpoch: number;
-  expectedRevision: number;
+  expectedStateToken: string;
 }
 
 /** Root session address derived from the server-verified caller; callers never supply it. */
@@ -428,7 +461,7 @@ export interface StateCleanupPlanV1 {
   candidates: {
     workflowRoots: Array<{ rootId: string; revision: number; state: string; updatedAt: string; runIds: string[] }>;
     standaloneWorkflowRuns: Array<{ runId: string; revision: number; state: string; updatedAt: string }>;
-    continuitySnapshots: Array<{ taskCorrelation: string; rootId: string | null; epoch: number; revision: number; snapshotDigest: string; updatedAt: string }>;
+    continuitySnapshots: Array<{ kind: "current"; taskCorrelation: string; rootId: string | null; epoch: number; stateToken: string; memoryDigest: string; updatedAt: string }>;
     continuityTasks: Array<{ taskCorrelation: string; currentEpoch: number; rootId: string | null; updatedAt: string }>;
   };
   counts: {

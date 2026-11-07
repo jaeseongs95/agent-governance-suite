@@ -46,7 +46,7 @@ export function failureCode(error) {
 }
 
 // Fixed public vocabulary: these OS codes and SQLite classes may appear in public details and stderr diagnostics.
-const OBSERVED_OS_CODES = new Set(["EACCES", "EPERM", "EIO", "ENOENT", "ENOTDIR", "EISDIR", "ELOOP", "ENOSPC", "EROFS",
+const OBSERVED_OS_CODES = new Set(["EACCES", "EPERM", "EEXIST", "EIO", "ENOENT", "ENOTDIR", "EISDIR", "ELOOP", "ENOSPC", "EROFS",
   "EMFILE", "ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "EPIPE"]);
 const SQLITE_REASONS = Object.freeze({ 3: "STORE_PERMISSION", 5: "STORE_BUSY", 6: "STORE_BUSY", 8: "STORE_READONLY",
   10: "STORE_IO", 11: "STORE_CORRUPT", 13: "STORE_FULL", 14: "STORE_CANTOPEN", 19: "STORE_CONSTRAINT", 26: "STORE_CORRUPT" });

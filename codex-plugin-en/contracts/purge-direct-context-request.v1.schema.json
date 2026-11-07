@@ -4,11 +4,10 @@
   "title": "PurgeDirectContextRequest.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "requestId", "expectedEpoch", "expectedRevision"],
+  "required": ["schemaVersion", "requestId", "expectedStateToken"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "requestId": { "type": "string", "minLength": 1, "maxLength": 256 },
-    "expectedEpoch": { "type": "integer", "minimum": 1 },
-    "expectedRevision": { "type": "integer", "minimum": 1 }
+    "expectedStateToken": { "type": "string", "minLength": 16, "maxLength": 256 }
   }
 }
