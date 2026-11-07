@@ -142,3 +142,21 @@ SHA256 `231256f27db2be43ca186a2f39ad950f9af14c43a4cfe05f9c3bc4fe15d3d96e`다.
 로컬 `D:/codex/build/ags-01a14016-v380-agy-migration-evidence/public-evidence/`에서
 manifest의 파일 34개를 각각 bytes/hash로 재검증했다. DB·token/key/cert 본문·인증 설정·
 원시 대화는 묶음에 없다.
+
+## 3.9.0 처리
+
+- **캐시**: 새 대화의 SessionStart hook(`antigravity-connector/scripts/legacy-server-key-cleanup.mjs`)이
+  이 플러그인의 옛 namespace `<plugin.json name>_agent-governance-suite` 폴더를 두 cache root
+  (`~/.gemini/antigravity/mcp/`, `~/.gemini/antigravity-cli/mcp/`)에서 찾아, 같은 root의
+  `ags-legacy-server-key-backup/<namespace>-<시각>/`으로 옮긴다(같은 디스크 rename, 반대 rename으로 복구).
+  폴더 안 항목이 모두 agy가 쓰는 형태(`<도구>.json`의 `name`이 파일 이름과 같음, 일반 파일 `instructions.md`)일
+  때만 옮기고, 그 밖의 항목·심볼릭 링크·읽기 실패는 그대로 두고 stderr 보고에 이유를 적는다. 설치 위치가
+  `~/.gemini` 아래가 아니거나 현재 `mcp_config.json`이 아직 옛 키를 쓰면 아무것도 하지 않는다.
+  같은 이름의 전역 서버(`agent-governance-suite`)·다른 플러그인 폴더는 건드리지 않는다.
+- **배치 근거**: TEST Linux CLI cache에서 옛 namespace 폴더는 `<도구>.json` 31개(`name`·`description`·
+  `parameters`)와 `instructions.md`를 가졌다(2026-11-07, 읽기 전용 목록 조회). 공식
+  [MCP 문서](https://antigravity.google/docs/mcp)도 같은 두 종류를 적는다.
+- **프로세스**: hook은 다른 프로세스를 끝내지 않는다. 옛 키 서버는 옛 설정을 읽은 앱이 띄운 것이고, 새 설정에는
+  옛 키가 없어 앱을 다시 시작하면 다시 뜨지 않는다. 공식 문서와 이 저장소 시험에서 앱 재시작 뒤에도 옛 키 서버가
+  남는다는 근거는 찾지 못했다. README 업데이트 절에 "앱을 다시 시작한다"를 적었다.
+- **미확인**: 옛 cache 폴더가 남는 것만으로 App MCP 화면에 서버가 둘로 보이는지는 아직 App에서 재현하지 못했다.

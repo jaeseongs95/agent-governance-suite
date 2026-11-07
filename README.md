@@ -164,7 +164,7 @@ ACK와 실제 검토 결과를 구분해서 알려 줘. 파일 수정과 테스�
 
 작업 기록 본문과 단계 결과는 로컬 DB에 암호화 없이 저장되며, 아래 보존 기간만으로 자동 삭제되지 않습니다. 비밀값, 개인정보, 원시 로그를 작업 기록이나 단계 결과에 넣지 마십시오. 오래된 상태는 `prepare_state_cleanup`으로 미리 보고, 사용자가 확인한 token을 `execute_state_cleanup`에 넘겨야 지워집니다(끝난 workflow 180일, 비활성 작업 기록 본문 30일). 삭제 전에 backup을 만들며 backup은 자동으로 지우지 않습니다. [보존과 정리](docs/state-cleanup.md)
 
-MCP 서버는 새 공개 안정 버전이 있으면 도구 응답에 한 번 알리며, 직접 확인하려면 `check_for_updates`를 씁니다. 자동으로 설치하지는 않습니다. 업데이트할 때는 기존 AGS MCP·relay를 끝내고, 위 설치 절차로 새 버전을 설치한 뒤 새 세션을 시작합니다. Codex는 `/hooks`에서 hook을 다시 신뢰하고, agy는 앱을 닫고 새 설치본을 설치합니다. [업데이트와 복구](docs/session-message-lifecycle.md#업데이트와-복구)
+MCP 서버는 새 공개 안정 버전이 있으면 도구 응답에 한 번 알리며, 직접 확인하려면 `check_for_updates`를 씁니다. 자동으로 설치하지는 않습니다. 업데이트할 때는 기존 AGS MCP·relay를 끝내고, 위 설치 절차로 새 버전을 설치한 뒤 새 세션을 시작합니다. Codex는 `/hooks`에서 hook을 다시 신뢰하고, agy는 앱을 닫고 새 설치본을 설치한 뒤 앱을 다시 시작합니다. 다시 시작한 앱은 새 설정의 서버 키 `ags`만 읽으므로, 3.0 이전 서버 키로 띄우던 AGS MCP 서버를 다시 띄우지 않습니다. [업데이트와 복구](docs/session-message-lifecycle.md#업데이트와-복구)
 
 ### 로컬 프로세스와 메시지 저장
 
@@ -229,6 +229,7 @@ AGS 메시징은 공용 SQLite 파일을 각 프로세스가 직접 엽니다. �
 | `BINDING_REQUIRED` 같은 실행 관측 오류가 난다 | [실행 관측 계약](docs/host-execution-attestation.md)의 호스트별 원인을 확인합니다. 모델 선택 조언과 실행 자격은 별개입니다. |
 | 다른 세션이 보이지 않거나 메시지에 ACK만 온다 | hook·공용 상태 경로·호스트 깨우기 방식을 확인하고, 같은 `messageId`로 상태를 조회합니다. 실제 작업 결과는 따로 요청합니다. |
 | 업데이트 뒤 예전 동작이 남는다 | 기존 AGS MCP·relay가 종료됐는지 확인하고 [업데이트 절차](docs/session-message-lifecycle.md#업데이트와-복구)대로 새 세션으로 연결합니다. |
+| 업데이트 뒤 Antigravity에 AGS MCP 서버가 둘로 보인다 | 앱을 다시 시작하고 새 대화를 엽니다. 3.0 이전 서버 키 `agent-governance-suite`로 설치했던 경우, 새 대화의 시작 hook이 그 키의 도구 스키마 캐시(`~/.gemini/antigravity{,-cli}/mcp/agent-governance-suite_agent-governance-suite/`)를 `~/.gemini/antigravity{,-cli}/ags-legacy-server-key-backup/`으로 옮깁니다. [전환 결과](docs/antigravity-migration.md) |
 
 ## 문서
 
