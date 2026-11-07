@@ -53,7 +53,7 @@ POLICY_REQUIRED_CLAUSES = {
         "Keep work local when a checked condition does not hold, including multi-unit work that is sequential, shares a writer, needs the coordinator's full context, or would cost more to hand off and integrate, and name that condition.",
     ),
     "delegation.explicit-request": (
-        "Implementation delegation is allowed only when the user explicitly requests it or every net-benefit condition below is satisfied:",
+        "Work delegation is allowed only when the user explicitly requests it or every net-benefit condition below is satisfied:",
     ),
     "delegation.independent-parallel": (
         "The unit has an independently verifiable result and completion condition.",
@@ -66,7 +66,7 @@ POLICY_REQUIRED_CLAUSES = {
     "delegation.allowed-exceptions": (
         "When approved delegation cannot run because dependencies, exclusive state, slots, tools, or permissions make it impossible, keep the work local and disclose the concrete reason.",
         "Task size and coordinator convenience do not override the net-benefit check.",
-        "No implementation-delegation decision waives a required high-risk audit.",
+        "No work-delegation decision waives a required high-risk audit.",
     ),
     "preferences.ask-once": (
         "At the first point in each task when delegation will occur, check whether the user or host already supplied a delegation preference.",
@@ -79,19 +79,19 @@ POLICY_REQUIRED_CLAUSES = {
         "A preference may tune supported runtime model and effort settings, but it must not trigger delegation, increase agent count, change batching, expand authority, or waive required independent audits.",
     ),
     "allocation.keep-one-and-fill-slots": (
-        "When implementation delegation has been approved and two or more implementation units exist, keep one independent unit with the coordinator and assign the others across available slots.",
-        "If the user explicitly asks to delegate the only implementation unit, assign that unit to a subagent and keep coordination and evidence review with the coordinator.",
+        "When work delegation has been approved and two or more work units exist, keep one independent unit with the coordinator and assign the others across available slots.",
+        "If the user explicitly asks to delegate the only work unit, assign that unit to a subagent and keep coordination and evidence review with the coordinator.",
     ),
     "allocation.batch-reuse": (
         "When independent units exceed the usable slot count, run them in batches and reuse completed subagents with a fresh brief.",
         "For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`).",
     ),
     "allocation.explicit-single-delegation-playbook": (
-        "If the user explicitly delegates the only implementation unit, give it to the subagent and keep coordination and evidence review with the coordinator.",
+        "If the user explicitly delegates the only work unit, give it to the subagent and keep coordination and evidence review with the coordinator.",
     ),
     "ownership.single-writer": (
         "Give one writer ownership of each shared file or external state.",
-        "A subagent owns investigation, implementation, deliverable preparation, and verification inside its assigned scope and must coordinate before changing another owner's area.",
+        "A subagent owns investigation, execution, deliverable preparation, and verification inside its assigned scope and must coordinate before changing another owner's area.",
     ),
     "integration.no-redo": (
         "Do not redo delegated work.",
@@ -107,16 +107,16 @@ POLICY_REQUIRED_CLAUSES = {
         "Do not paste large logs or completed work products into the coordinator context; return their artifact locations, conclusions, verification evidence, and unresolved items.",
     ),
     "audit.independent-required": (
-        "Assign an auditor who did not implement the change.",
+        "Assign an auditor who did not make the change.",
         "Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge eligibility and non-reuse.",
         "The auditor must inspect the requirements, final change, verification evidence, and plausible failure modes directly.",
     ),
     "audit.reserve-identity": (
-        "When high-risk work requires an independent auditor and later access to a fresh agent identity is uncertain, reserve a non-implementing subagent and its slot before filling implementation assignments.",
+        "When high-risk work requires an independent auditor and later access to a fresh agent identity is uncertain, reserve an uninvolved subagent and its slot before filling work assignments.",
     ),
     "audit.reserve-identity-playbook": (
-        "When a required high-risk audit may not have access to a fresh identity later, reserve a non-implementing subagent and slot before assigning all implementation work.",
-        "When reusing completed agents across implementation batches, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge non-reuse.",
+        "When a required high-risk audit may not have access to a fresh identity later, reserve an uninvolved subagent and slot before assigning all delegated work.",
+        "When reusing completed agents across work batches, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge non-reuse.",
     ),
     "audit.no-completion-without-auditor": (
         "Do not report high-risk work as complete without an available independent auditor and resolved findings.",
@@ -146,7 +146,7 @@ POLICY_REQUIRED_CLAUSES = {
         "Keep the unit local only when delegation is no longer possible and disclose why.",
     ),
     "routing.preset-does-not-delegate": (
-        "Apply a preset only after implementation delegation or an independent audit has already been approved.",
+        "Apply a preset only after work delegation or an independent audit has already been approved.",
         "A preset selects a model and reasoning effort for an assigned role; it never triggers delegation, increases agent count, changes batching, broadens authority, or waives a required audit.",
     ),
     "routing.user-override-precedence": (
@@ -162,7 +162,7 @@ POLICY_REQUIRED_CLAUSES = {
     ),
     "routing.claude-code-adapter": (
         "For Claude Code, resolve the selected model or alias through the current adapter catalog and verify that the host advertises the resolved value.",
-        "Apply `model` and `effort` in a custom subagent definition or CLI agent definition; a per-invocation model argument may override the definition when the current host supports it.",
+        "Apply `model` and `effort` in a custom subagent definition or command-line agent definition; a per-invocation model argument may override the definition when the current host supports it.",
         "Claude Code effort levels are calibrated within each model, so do not treat the same label as an exact match to a Codex reasoning level.",
     ),
     "routing.settings-supported": (

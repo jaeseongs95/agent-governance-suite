@@ -155,7 +155,7 @@ def validate_orchestrator_handoff(root: Path, skill_text: str, errors: list[str]
             errors.append(f"{relative}: missing v1.0 handoff field {fragment!r}")
     if "자연어와 구조화된 Markdown을 사용하는 지침 수준 계약" not in skill_text:
         errors.append("SKILL.md: orchestrator handoff must remain a natural-language/Markdown contract")
-    if "별도 API나 `audit-run.json`을 요구하지 않는다" not in text:
+    if "별도 호출 인터페이스(예: API)나 `audit-run.json`을 요구하지 않는다" not in text:
         errors.append(f"{relative}: handoff must not introduce an undeclared runtime API")
 
 
