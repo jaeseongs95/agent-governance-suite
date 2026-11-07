@@ -32,7 +32,7 @@ describe("shared intake: purpose check before removing a target (AGS3-D-0031)", 
       "미달이면 대상을 없애지 말고 목적을 이루는 쪽을 고른다",
     ]) expect(purposeLine).toContain(fragment);
     // Stopping a process stays in the same line: the connected sessions first, then who disconnects and when.
-    expect(purposeLine).toContain("프로세스·서버·앱을 멈추기 전에는");
+    expect(purposeLine).toContain("프로세스·서버·앱을 멈추거나 바꾸기 전에는");
     expect(purposeLine).toContain("연결 중인 세션과 누가 언제 끊을지 적는다");
     expect(purposeLine).not.toMatch(/\b(?:Codex|Claude|Gemini|GPT-[0-9])/u);
   });
@@ -143,7 +143,7 @@ describe("shared intake: merged without dropping a rule (AGS3-D-0032)", () => {
       ["intake", "겹치지 않는 writeTargets로 따로 시작한다"],
       ["intake", "읽기 전용 요청에는 변경하지 않는다"],
       ["intake", "전문 스킬 하나로 끝나면 그것만 호출한다"],
-      ["intake", "이런 요청에 계획·workflow를 만들지 않는다"],
+      ["intake", "이런 요청에 registry 조회·계획·workflow·감사를 만들지 않는다"],
       ["intake", "분류 지원(`classify_skills`)은 설정된 환경에서만"],
       ["classification", "AGENT가 조언을 채택·교정·기각하고 **최종 선택**한다"],
       ["classification", "점수나 분류 결과를 정답·실행 승인으로 취급하지 않는다"],

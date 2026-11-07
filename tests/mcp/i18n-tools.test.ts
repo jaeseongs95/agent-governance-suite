@@ -170,7 +170,7 @@ describe("server instructions (docs/i18n-design.md 4.2, 6)", () => {
     expect(english.split(intake)).toHaveLength(2);
     // 3.9.0 (AGS3-D-0032): the guide keeps what the message tool descriptions lack (after-send wake handling and the
     // reporting rule); prepare/send/ACK meanings are in each tool description.
-    expect(english).toContain("After a message send: autoWake available, no extra wake;");
+    expect(english).toContain("After a send: autoWake available, no extra wake;");
     expect(english).toContain("Report only confirmed queueing/delivery;");
     expect(english.replace(intake, "")).not.toMatch(HANGUL);
     for (const locale of ["en", "ko"] as const) {
