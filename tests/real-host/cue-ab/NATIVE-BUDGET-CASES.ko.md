@@ -15,10 +15,12 @@ Linux TEST에서 원 operator와 동일한 Node24 PATH의 공식 Claude `2.1.316
 | NB1 양수 cap 전달 | Claude cap `1`, `0.25`, 자기 synthetic plugin/files/turn | 실제 wrapper/driver execute 후 합성 CLI의 argv와 cleanup 읽기 | `-p`·원 model/effort/plugin-dir 보존, cap option/value 한 번, exit0·cleanup CONFIRMED. 누락·중복·다른 값 FAIL | NOT_RUN |
 | NB2 무지정 보존 | Claude cap 환경입력 부재 | 동일 경계 한 합성 턴 | cap option 없음, model/effort 보존·exit0. 임의 기본 cap 추가 FAIL | NOT_RUN |
 | NB3 잘못된 cap | `0`, `-1`, 빈 문자열, `NaN`, `Infinity` | 실제 wrapper CLI | 유한 양수 입력 오류·비정상 종료·run 및 CLI 기록 없음. fixture/child 시작 FAIL | NOT_RUN |
-| NB4 Codex cap 금지 | Codex cap `1` | 실제 wrapper CLI | Claude 전용 오류·비정상 종료·run/child 없음. 임의 옵션 전달 또는 무시 성공 FAIL | NOT_RUN |
+| NB4 Codex cap 금지 | Codex cap `1` | 실제 wrapper prepare CLI(구현 전 RED도 native 호출0) | Claude 전용 오류·비정상 종료·run/child 없음. 임의 옵션 전달 또는 무시 성공 FAIL | NOT_RUN |
 | NB5 Codex 기본 보존 | cap 없음, 유효 synthetic installed pin | 기존 prepare mode | host=codex·원 turn·exit0, 모델/CLI 시작0. 기본 경로 변화 FAIL | NOT_RUN |
 
 명령은 `node --test tests/real-host/cue-ab/plugin-run-budget.node-test.mjs`로 고정한다. 같은 시험 바이트로 test-only RED와 수정 GREEN을 대조한다. cap 누락/입력 수락 assertion을 RED로 삼고 import·환경 오류는 제외한다. 새 runner·framework·native 모델 실행·설치·auth/config 복사는 하지 않는다.
+
+실행 전 정적 검토에서 NB4의 mode를 prepare로 좁혔다. 미수정 RED에서도 Codex native가 시작되지 않게 하기 위한 수정이며 기대 거부 기준은 그대로다. 어느 모델도 이 보정 전에 실행하지 않았다. 최종 동일 시험 바이트와 runner만 바꾼 격리 RED/GREEN을 사용한다.
 
 ## 보존과 제한
 

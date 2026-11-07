@@ -74,7 +74,7 @@ describe("native plugin budget argument boundary", { skip: process.platform !== 
     } finally { rmSync(t.root, { recursive: true, force: true }); }
   });
   it("refuses a Claude-only cap for Codex instead of forwarding or ignoring it", () => {
-    const t = trial("codex", "1");
+    const t = trial("codex", "1", "prepare");
     try {
       assert.notEqual(t.result.status, 0);
       assert.match(t.result.stderr, /CUE_MAX_BUDGET_USD is only supported for Claude/u);
