@@ -205,6 +205,8 @@ export class SqliteContinuityStore {
   private readonly shared: SharedModuleContext | undefined;
   readonly databasePath: string;
   private closed = false;
+  private transactionDepth = 0;
+  private savepointSequence = 0;
 
   constructor(input: string | SharedModuleContext, migrations: readonly ContinuityMemoryMigration[] = []) {
     this.shared = typeof input === "string" ? undefined : input;
@@ -858,7 +860,23 @@ export class SqliteContinuityStore {
         throw ownStoreError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
       }
     }
+    // Fork adoption runs under the parent's read barrier on this same connection.
+    if (this.transactionDepth > 0) {
+      const savepoint = `continuity_${++this.savepointSequence}`;
+      this.database.exec(`SAVEPOINT ${savepoint}`);
+      try {
+        if (taskCorrelation !== undefined) this.assertCompatibleTask(taskCorrelation);
+        const result = operation();
+        this.database.exec(`RELEASE ${savepoint}`);
+        return result;
+      } catch (cause) {
+        const failure = ownStoreError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
+        retainCleanupFailure(failure, "CONTINUITY_SAVEPOINT_ROLLBACK_FAILED", () => this.database.exec(`ROLLBACK TO ${savepoint}; RELEASE ${savepoint};`));
+        throw failure;
+      }
+    }
     this.database.exec("BEGIN IMMEDIATE;");
+    this.transactionDepth += 1;
     try {
       if (taskCorrelation !== undefined) this.assertCompatibleTask(taskCorrelation);
       const result = operation();
@@ -870,6 +888,8 @@ export class SqliteContinuityStore {
       // The primary failure wins; a failed ROLLBACK is kept only as a tagged secondary diagnostic.
       retainCleanupFailure(failure, "CONTINUITY_ROLLBACK_FAILED", () => this.database.exec("ROLLBACK;"));
       throw failure;
+    } finally {
+      this.transactionDepth -= 1;
     }
   }
 
