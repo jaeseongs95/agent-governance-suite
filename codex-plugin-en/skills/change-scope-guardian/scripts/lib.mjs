@@ -21,13 +21,16 @@ export function toPosix(value) {
   return value.split(sep).join("/").replace(/^\.\//, "");
 }
 
-function runGit(root, args, encoding = "utf8") {
+const maxGitOutputBytes = 64 * 1024 * 1024;
+
+function runGit(root, args, encoding = "utf8", input) {
   try {
     return execFileSync("git", ["-C", root, ...args], {
       encoding,
-      maxBuffer: 64 * 1024 * 1024,
+      maxBuffer: maxGitOutputBytes,
+      input,
       windowsHide: true,
-      stdio: ["ignore", "pipe", "pipe"]
+      stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"]
     });
   } catch (error) {
     const detail = error?.stderr ? String(error.stderr).trim() : error.message;
@@ -81,21 +84,84 @@ function parsePorcelainV2(buffer) {
 
 function listRepositoryFiles(root, maxFiles, comparisonTarget, commit) {
   const args = comparisonTarget === "commit"
-    ? ["ls-tree", "-r", "-z", "--name-only", commit]
+    ? ["ls-tree", "-r", "-z", commit]
     : comparisonTarget === "index"
-      ? ["ls-files", "-z", "--cached"]
+      ? ["ls-files", "-z", "--cached", "--stage"]
       : ["ls-files", "-z", "--cached", "--others", "--exclude-standard"];
   const raw = runGit(root, args, "buffer");
-  const files = raw.toString("utf8").split("\0").filter(Boolean);
+  const records = raw.toString("utf8").split("\0").filter(Boolean);
+  const objects = new Map();
+  const files = records.map((record) => {
+    if (comparisonTarget === "working-tree") return record;
+    const tab = record.indexOf("\t");
+    const [mode, second, third] = record.slice(0, tab).split(" ");
+    const path = record.slice(tab + 1);
+    // Keep gitlink's git-show representation and unmerged-index failures unchanged.
+    if (mode !== "160000" && (comparisonTarget === "commit" || third === "0")) {
+      objects.set(path, comparisonTarget === "commit" ? third : second);
+    }
+    return path;
+  });
   if (files.length > maxFiles) throw new Error(hostText("skillScripts.changeScope.fileCountExceeds", { count: files.length, maxFiles }));
-  return files;
+  return { files, objects };
 }
 
-function inspectPath(root, path, statusInfo, comparisonTarget, commit, inTarget) {
+function hashGitObjects(root, objectIds) {
+  const ids = [...new Set(objectIds)];
+  const hashes = new Map();
+  if (ids.length === 0) return hashes;
+  const fail = (detail) => { throw new Error(hostText("skillScripts.changeScope.gitFailed", { detail })); };
+  const metadata = runGit(root, ["cat-file", "--batch-check"], "utf8", `${ids.join("\n")}\n`).trimEnd().split("\n");
+  if (metadata.length !== ids.length) fail("git cat-file returned an incomplete object list");
+  let batch = [];
+  let batchBytes = 0;
+  const flush = () => {
+    if (batch.length === 0) return;
+    const output = runGit(root, ["cat-file", "--batch"], "buffer", `${batch.map((item) => item.id).join("\n")}\n`);
+    let offset = 0;
+    for (const { id, size } of batch) {
+      const end = output.indexOf(10, offset);
+      if (end < offset || output.toString("ascii", offset, end) !== `${id} blob ${size}`) fail(`git cat-file returned an invalid header for ${id}`);
+      offset = end + 1;
+      if (offset + size >= output.length || output[offset + size] !== 10) fail(`git cat-file returned incomplete content for ${id}`);
+      hashes.set(id, { sha256: sha256(output.subarray(offset, offset + size)), size });
+      offset += size + 1;
+    }
+    if (offset !== output.length) fail("git cat-file returned unexpected trailing content");
+    batch = [];
+    batchBytes = 0;
+  };
+  for (let index = 0; index < ids.length; index += 1) {
+    const id = ids[index];
+    const [actualId, type, rawSize] = metadata[index].split(" ");
+    const size = Number(rawSize);
+    if (actualId !== id || type !== "blob" || !Number.isSafeInteger(size) || size < 0) fail(`git cat-file could not read blob ${id}: ${metadata[index]}`);
+    const responseBytes = id.length + " blob ".length + rawSize.length + 2 + size;
+    // Bound aggregate blob buffers below the existing cap. Read large blobs raw
+    // so batch framing does not lower the existing per-blob maxBuffer limit.
+    if (responseBytes > maxGitOutputBytes / 2) {
+      flush();
+      const content = runGit(root, ["cat-file", "blob", id], "buffer");
+      if (content.length !== size) fail(`git cat-file returned incomplete content for ${id}`);
+      hashes.set(id, { sha256: sha256(content), size });
+      continue;
+    }
+    if (batch.length > 0 && batchBytes + responseBytes > maxGitOutputBytes / 2) flush();
+    batch.push({ id, size });
+    batchBytes += responseBytes;
+  }
+  flush();
+  return hashes;
+}
+
+function inspectPath(root, path, statusInfo, comparisonTarget, commit, inTarget, objectHash) {
   if (comparisonTarget === "index" || comparisonTarget === "commit") {
     // Only a successful target listing proves absence; a failed blob read does not.
     if (!inTarget) {
       return { path, status: statusInfo?.status ?? "deleted", sha256: null, size: null, kind: "missing", originalPath: statusInfo?.originalPath ?? null };
+    }
+    if (objectHash) {
+      return { path, status: statusInfo?.status ?? "clean", ...objectHash, kind: statusInfo?.kind ?? "file", originalPath: statusInfo?.originalPath ?? null };
     }
     const spec = comparisonTarget === "index" ? `:${path}` : `${commit}:${path}`;
     const content = runGit(root, ["show", spec], "buffer");
@@ -148,13 +214,15 @@ export function captureBaseline(request, now = new Date()) {
       else statuses.set(path, { ...info, status: info.status[0] });
     }
   }
-  const listedFiles = new Set(listRepositoryFiles(repository.root, maxFiles, comparisonTarget, targetCommit));
+  const listed = listRepositoryFiles(repository.root, maxFiles, comparisonTarget, targetCommit);
+  const listedFiles = new Set(listed.files);
+  const objectHashes = hashGitObjects(repository.root, listed.objects.values());
   const files = new Set(listedFiles);
   for (const [path, info] of statuses) {
     files.add(path);
     if (info.originalPath) files.add(info.originalPath);
   }
-  const entries = [...files].sort((a, b) => a.localeCompare(b)).map((path) => inspectPath(repository.root, path, statuses.get(path), comparisonTarget, targetCommit, listedFiles.has(path)));
+  const entries = [...files].sort((a, b) => a.localeCompare(b)).map((path) => inspectPath(repository.root, path, statuses.get(path), comparisonTarget, targetCommit, listedFiles.has(path), objectHashes.get(listed.objects.get(path))));
   let head = null;
   try {
     head = runGit(repository.root, ["rev-parse", "--verify", "HEAD"]).trim() || null;
