@@ -349,6 +349,7 @@ export function workflowChangeNotice(data: unknown, receipt: (runId: string) => 
   return [
     ...(stage ? [msg("server.workflowChange.stage", { stageId: stage.stageId, capability: stage.requiredCapability, provider: stage.skillId })] : []),
     msg("server.workflowChange.skills", { targets: installedSkillTargets() }),
+    msg("hooks.checkpointCue.refresh", {}),
     ...(classificationConfigured ? [msg("server.workflowChange.classification", {})] : []),
   ];
 }

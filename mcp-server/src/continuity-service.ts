@@ -714,17 +714,20 @@ export class ContinuityService implements ContinuityGateway {
   /** Recheck the parent's exact current, then atomically adopt into the empty child's own current. */
   private loadForkParent(candidate: CandidatePayload, binding: ToolBindingPayload): ContinuitySnapshotV1 {
     if (candidate.s !== "direct") throw new WorkflowContractError("BINDING_INVALID", msg("continuity.restore.candidateMismatch", {}));
-    return this.currentReadValue(this.store.readCurrentState(candidate.c, candidate.e, "direct", () => {
+    const loaded = this.currentReadValue(this.store.readCurrentState(candidate.c, candidate.e, "direct", () => {
       const snapshot = this.store.getCurrent(candidate.c, candidate.e);
       if (!snapshot?.memory || snapshot.stateToken !== candidate.t || snapshot.memoryDigest !== candidate.d) {
-        throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.forkParentStale", {}), { reasonCode: "CONTINUITY_STATE_STALE" });
+        return { kind: "parent-stale" } as const;
       }
-      this.verifyCurrentMemory(snapshot);
       // Parent read and child adoption share the store transaction: a concurrent parent save cannot slip between them.
       const adopted = this.store.adoptCurrent(binding.c, binding.e, snapshot, this.now().toISOString());
-      if (!adopted) throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.forkChildHasState", {}));
-      return adopted;
+      return adopted ? { kind: "loaded", snapshot: adopted } as const : { kind: "child-has-state" } as const;
     }));
+    // Keep semantic errors outside the store wrapper so they remain distinct from database failures.
+    if (loaded.kind === "parent-stale") throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.forkParentStale", {}), { reasonCode: "CONTINUITY_STATE_STALE" });
+    if (loaded.kind === "child-has-state") throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.forkChildHasState", {}));
+    this.verifyCurrentMemory(loaded.snapshot);
+    return loaded.snapshot;
   }
 
   suppressContextRestore(value: unknown, caller: VerifiedCaller): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }> {
