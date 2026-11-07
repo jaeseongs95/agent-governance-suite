@@ -1,6 +1,6 @@
 # Orchestration Integration Contract
 
-이 문서는 미래 오케스트레이션 플러그인이 standalone 패널을 호출하고 결과를 읽기 위한 최소 연결 규칙만 정의한다. 플러그인, audit-gate 또는 외부 권한을 구현하지 않는다.
+이 문서는 미래 오케스트레이션 플러그인이 standalone 패널을 호출하고 결과를 읽기 위한 최소 연결 규칙만 정의한다. 플러그인, audit-gate 또는 외부 권한을 만들지 않는다.
 
 ## 호출
 

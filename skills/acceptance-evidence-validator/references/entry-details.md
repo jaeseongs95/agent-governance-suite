@@ -9,11 +9,11 @@ node scripts/cli.mjs --input request.json
 node scripts/validate-report.mjs --request request.json --request-artifact request-artifact.json --report report.json
 ```
 
-명령은 JSON을 stdin으로도 받으며 JSON만 stdout으로 반환한다. 테스트를 대신 실행하거나 파일을 수정하지 않는다.
+명령은 JSON을 stdin으로도 받으며 JSON만 stdout으로 반환한다. 시험을 대신 실행하거나 파일을 수정하지 않는다.
 
 ## 절차
 
-1. commit, diff, artifact 또는 관측 상태의 식별자와 digest를 고정한다.
+1. 결과물(예: commit, diff, artifact) 또는 관측 상태의 식별자와 digest를 고정한다.
 2. 각 `acceptanceCriteria` 원문 UTF-8의 SHA-256 앞 12 hex에 `AC-`를 붙여 내용 ID를 만든다. 정렬·trim으로 원문을 바꾸지 않는다. 이전 위치 ID 근거는 동결된 원문↔ID의 `criterionBindings`로 이관하며, 결속표가 없으면 충족으로 사용하지 않고 `BLOCKED` 한계를 남긴다. 상세 이관 규칙은 evidence protocol을 따른다.
 3. 각 evidence가 한 개 이상의 유효한 기준 ID와 현재 대상 digest를 가리키는지 확인한다.
 4. 검증되고 현재 대상에 맞는 반증이 있으면 `unsatisfied`, 지지 근거가 있으면 `satisfied`로 둔다.
@@ -24,7 +24,7 @@ node scripts/validate-report.mjs --request request.json --request-artifact reque
 ## 권한과 경계
 
 - 요청된 검증만 실행하고 새 외부 작업, 배포, 승인 또는 권한을 만들지 않는다.
-- 파일 존재나 테스트 이름만으로 동작 충족을 추정하지 않는다.
+- 파일 존재나 시험 이름만으로 동작 충족을 추정하지 않는다.
 - 다른 commit·artifact에서 얻은 결과를 현재 근거로 사용하지 않는다.
 - 선언된 verification command가 현재 대상과 다르면 해당 기준을 완료하지 않고, 현재 대상에서 종료 코드가 0이 아니면 반증으로 처리한다.
 - 수용 기준 밖의 보안·복구·운영 실패 모드를 독립 감사처럼 확장하지 않는다.
