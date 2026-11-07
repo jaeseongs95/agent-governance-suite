@@ -91,11 +91,12 @@ export function underVersionControl(target: string): boolean {
 function productEditTargets(observation: InputObservation, host: string, environment: NodeJS.ProcessEnv,
   locale: SupportedLocale): { product: Map<string, string>; unversioned: string[] } {
   const targets = observation.editTargets ?? [];
-  if (targets.length === 0) {
-    // Each such call is its own file: one shared key would let unread edits repeat without ever reaching the limit.
+  // Each unread target is its own file: one shared key would let unread edits repeat without ever reaching the limit.
+  const unread = (): [string, string] => {
     const unknown = render(msg("hooks.editGate.unknownPath", { tool: observation.toolName ?? "edit" }), locale);
-    return { product: new Map([[`${unknown}#${observation.callId ?? randomUUID()}`, unknown]]), unversioned: [] };
-  }
+    return [`${unknown}#${observation.callId ?? randomUUID()}`, unknown];
+  };
+  if (targets.length === 0) return { product: new Map([unread()]), unversioned: [] };
   const roots = exemptEditRoots(host, environment);
   const product = new Map<string, string>();
   const unversioned = new Map<string, string>();
@@ -104,6 +105,7 @@ function productEditTargets(observation: InputObservation, host: string, environ
     if (product.has(key) || unversioned.has(key) || isExemptEditPath(key, roots)) continue;
     (underVersionControl(target) ? product : unversioned).set(key, path.resolve(target));
   }
+  if (observation.editTargetsIncomplete) product.set(...unread());
   return { product, unversioned: [...unversioned.values()] };
 }
 

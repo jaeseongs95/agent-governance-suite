@@ -88,6 +88,7 @@ describe("AGS3-D-0005 observable shell write targets", () => {
 
   it("EG09/EG11: does not turn PostToolUse or unresolved variables into literal write targets", () => {
     expect(adaptHostInput(boundary("Bash", { command: "printf a > src/a.ts" }, { hook_event_name: "PostToolUse" }), "claude-code").observation.editTargets).toBeUndefined();
-    expect(adaptHostInput(boundary("Bash", { command: "printf a > \"$TARGET\"" }), "claude-code").observation.editTargets).toBeUndefined();
+    // An unresolved variable is not fabricated into a file name; the write still counts as one unnamed file (AGS3-D-0005).
+    expect(adaptHostInput(boundary("Bash", { command: "printf a > \"$TARGET\"" }), "claude-code").observation.editTargets).toEqual([]);
   });
 });

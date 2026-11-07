@@ -110,8 +110,10 @@ describe("edit target extraction", () => {
     // agy 1.4.12 CLI hook input (test server capture): write_file and edit_file, mapped to Write and Edit, name Path.
     expect(adaptHostInput(edit("antigravity", "Write", { Path: file("p.ts"), Content: "x", Overwrite: true }), "antigravity").observation.editTargets).toEqual([file("p.ts")]);
     expect(adaptHostInput(edit("antigravity", "Edit", { Path: file("p.ts"), Target: "x", Replacement: "y" }), "antigravity").observation.editTargets).toEqual([file("p.ts")]);
-    // Shell, delegation and read tools are not edits; an edit tool without a readable target is still an edit.
-    expect(adaptHostInput(edit("claude-code", "Bash", { command: "sed -i s/a/b/ x" }), "claude-code").observation.editTargets).toBeUndefined();
+    // A shell in-place edit names its file (AGS3-D-0005); a read-only shell command is not an edit, and an edit tool
+    // without a readable target is still an edit.
+    expect(adaptHostInput(edit("claude-code", "Bash", { command: "sed -i s/a/b/ x" }), "claude-code").observation.editTargets).toEqual([file("x")]);
+    expect(adaptHostInput(edit("claude-code", "Bash", { command: "sed -n 1p x" }), "claude-code").observation.editTargets).toBeUndefined();
     expect(adaptHostInput(edit("codex", "apply_patch", {}), "codex").observation.editTargets).toEqual([]);
   });
 });
