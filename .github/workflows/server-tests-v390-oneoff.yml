@@ -1,0 +1,28 @@
+name: Server tests (one-off, v3.9.0 candidate)
+
+# One-off substitute for the Linux test server while it refuses submissions.
+# Lives only on this scratch branch; never merged.
+on:
+  push:
+    branches:
+      - ci/v390-server-linux
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: "3.12"
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: test:server (full scope)
+        run: pnpm test:server
