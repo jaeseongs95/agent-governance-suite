@@ -909,20 +909,22 @@ export class ContinuityService implements ContinuityGateway {
     if (task.suppressed) return null;
     const summary = this.summary(task);
     if (!summary) return this.checkpointCue(task, true);
-    if (task.pendingConsumed || task.pendingSource !== summary.source) return null;
     if (summary.source === "direct") {
-      if (task.pendingStateToken !== summary.stateToken || task.pendingDigest !== summary.memoryDigest) return null;
       const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", current => {
         const snapshot = this.store.getCurrent(current.taskCorrelation, current.currentEpoch);
-        if (!snapshot?.memory || snapshot.stateToken !== summary.stateToken || snapshot.memoryDigest !== summary.memoryDigest) return null;
+        // A checkpoint may have advanced the pending current since the earlier summary read. Compare both fresh rows
+        // under this barrier so the newest valid body is restored once, never the pre-compaction body from history.
+        if (!snapshot?.memory || !snapshot.memoryDigest || current.pendingSource !== "direct" || current.pendingConsumed
+          || current.pendingStateToken !== snapshot.stateToken || current.pendingDigest !== snapshot.memoryDigest) return null;
         this.verifyCurrentMemory(snapshot);
-        if (!this.store.consumeDirectMarker(current.taskCorrelation, current.currentEpoch, snapshot.stateToken, summary.memoryDigest, this.now().toISOString())) return null;
+        if (!this.store.consumeDirectMarker(current.taskCorrelation, current.currentEpoch, snapshot.stateToken, snapshot.memoryDigest, this.now().toISOString())) return null;
         return [msg("continuity.restore.current", { stateToken: snapshot.stateToken, body: JSON.stringify(snapshot.memory) })];
       });
       const restored = selected.kind === "available" ? selected.value : null;
       const card = task.rootId ? this.workflowProjection(task) : null;
       return restored && card ? [...restored, ...this.formatWorkflowCard(card)] : restored;
     }
+    if (task.pendingConsumed || task.pendingSource !== summary.source) return null;
     if (task.pendingRevision !== summary.revision || task.pendingDigest !== summary.snapshotDigest) return null;
     const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "workflow",
       current => this.workflowProjection(current));
