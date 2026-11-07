@@ -179,7 +179,8 @@ export function createAdminRequestHandler(dependencies: AdminPageDependencies) {
     const body = await readJson(request);
     if (url.pathname === "/api/intent") {
       if (body.bootstrap !== undefined && typeof body.bootstrap !== "boolean") throw new HttpError(400, "REQUEST_INVALID", { field: "bootstrap" });
-      return json(response, 200, service.prepareIntent(body.change, body.bootstrap === true));
+      if (body.baseHash !== undefined && body.baseHash !== null && (typeof body.baseHash !== "string" || body.baseHash.length > 200)) throw new HttpError(400, "REQUEST_INVALID", { field: "baseHash" });
+      return json(response, 200, service.prepareIntent(body.change, body.bootstrap === true, body.baseHash as string | null | undefined));
     }
     if (url.pathname === "/api/commit") {
       const assertion = body.assertion as Record<string, unknown> | null;

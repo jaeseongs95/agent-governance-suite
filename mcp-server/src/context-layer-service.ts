@@ -302,7 +302,7 @@ export class ContextLayerService {
       if (full || before?.globalToken !== globalToken) {
         for (const failure of failures) {
           lines.push(msg("hooks.contextLayers.verifyFailed", { layer: failure.layer, revision: failure.revision === null ? "none" : String(failure.revision),
-            code: failure.code, adminUrl: this.pageText }));
+            reason: failure.code, adminUrl: this.pageText }));
         }
         if (global && (full || before?.globalToken?.split("#")[0] !== global.stateToken)) {
           // An emptied layer is announced only to an actor that may still hold the earlier body.
@@ -379,7 +379,7 @@ export class ContextLayerService {
    * Builds the intent the user's passkey signs. Checked against the current state first, so a change that would be
    * refused is refused before the passkey prompt. `bootstrap` is the first-key registration: refused once any key exists.
    */
-  prepareIntent(change: unknown, bootstrap: boolean): { intent: string; challenge: string; allowCredentials: string[] } {
+  prepareIntent(change: unknown, bootstrap: boolean, baseHash?: string | null): { intent: string; challenge: string; allowCredentials: string[] } {
     const now = this.now().toISOString();
     return this.with(true, store => {
       const state = this.fold(store);
@@ -392,6 +392,8 @@ export class ContextLayerService {
       const signer = bootstrap && parsed.change.op === "key.add" ? parsed.change.credentialId : [...state.keys.keys()][0]!;
       checkChange(state, parsed.change, signer);
       const head = state.heads.get(parsed.target)?.recordHash ?? null;
+      // The page names the revision its edit started from; a target that moved since is a conflict, not a silent overwrite.
+      if (baseHash !== undefined && baseHash !== head) throw new AdminError("ADMIN_TARGET_STALE", { actualStateToken: head });
       const signed = buildIntent(parsed.change, head, now);
       return { intent: signed, challenge: intentChallenge(signed), allowCredentials: bootstrap ? [signer] : [...state.keys.keys()] };
     }, null as never);

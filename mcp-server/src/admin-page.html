@@ -1,0 +1,1352 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGS 관리자</title>
+<link rel="icon" href="data:,">
+<style nonce="__CSP_NONCE__">
+:root{
+  --bg:#F6F6F3;--fg:#1C1C1A;--muted:#55544F;--line:#DEDDD7;--line2:#ECEBE6;--input:#C9C8C1;--soft:#FBFBF9;
+  --pri:#1F4FB8;--pri-d:#163C8C;--pri-l:#E3EAF8;
+  --ok-bg:#EEF6EC;--ok-bd:#B9D3B4;--ok-fg:#2B5A24;
+  --warn-bg:#FFF4E2;--warn-bd:#E8C48A;--warn-fg:#5C3300;--warn-d:#7A4300;
+  --info-bg:#EEF3FC;--info-bd:#B8C8EC;--info-fg:#163C8C;
+  --err-bg:#FDECEA;--err-bd:#F0B8B0;--err-fg:#8A1C12;--err-d:#B42318;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+code,.mono,pre{font-family:ui-monospace,Consolas,"D2Coding",monospace;font-size:13px}
+[hidden]{display:none!important}
+.app{min-height:100vh;display:flex;flex-direction:column}
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:14px 24px;background:#fff;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand b{font-size:18px}
+.brand span{font-size:13px;color:var(--muted)}
+.grow{flex-grow:1}
+.pill{font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid}
+.pill.ok{border-color:var(--ok-bd);background:var(--ok-bg);color:var(--ok-fg)}
+.pill.warn{border-color:var(--warn-bd);background:var(--warn-bg);color:var(--warn-d)}
+.boot{font-size:12px;color:var(--muted)}
+.band{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 24px;border-bottom:1px solid;font-size:14px}
+.band>.txt{flex:1 1 320px;min-width:0;overflow-wrap:anywhere}
+.band.warn{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn-fg)}
+.band.info{background:var(--info-bg);border-color:var(--info-bd);color:var(--info-fg)}
+.band.fail,.band.err{background:var(--err-bg);border-color:var(--err-bd);color:var(--err-fg)}
+.band .acts{display:flex;flex-wrap:wrap;gap:6px}
+.layout{display:flex;flex-wrap:wrap;flex-grow:1;align-content:flex-start}
+.row>.al{margin-top:22px}
+nav.side{flex:1 1 200px;max-width:240px;padding:20px 12px;display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--line);background:var(--soft)}
+.nav-group{font-size:12px;color:var(--muted);padding:12px 10px 4px}
+.nav-btn{text-align:left;padding:10px 12px;border-radius:6px;border:0;background:transparent;font-size:14px;cursor:pointer}
+.nav-btn:hover{background:#EFEFEA}
+.nav-btn[aria-current="page"]{background:var(--pri-l);color:var(--pri-d);font-weight:700}
+main{flex:999 1 560px;min-width:0;padding:28px 32px 120px;display:flex;flex-direction:column;gap:24px}
+main:focus{outline:none}
+.split{display:flex;flex-wrap:wrap;gap:28px}
+.split>.col.main-col{flex:999 1 520px}
+.split>aside{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.col{min-width:0;display:flex;flex-direction:column;gap:18px}
+.head{display:flex;flex-direction:column;gap:6px}
+h1{margin:0;font-size:24px}
+h2{margin:0;font-size:16px}
+h1:focus,h2:focus{outline:none}
+.desc{margin:0;font-size:14px;color:var(--muted);line-height:1.6}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.err-t{color:var(--err-fg)}
+.box{padding:16px;background:#fff;border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;gap:10px}
+.btn{padding:8px 14px;border-radius:6px;border:1px solid var(--input);background:#fff;cursor:pointer;white-space:nowrap}
+.btn.sm{padding:6px 12px}
+.btn.pri{border-color:var(--pri);background:var(--pri);color:#fff}
+.btn.pri-o{border-color:var(--pri);color:var(--pri)}
+.btn.dashed{border:1px dashed #8C8B85;background:transparent}
+.btn.danger{color:var(--err-fg)}
+.btn.link-danger{border:0;background:transparent;color:var(--err-fg);text-decoration:underline;padding:8px 12px}
+.btn.warn-o{border-color:var(--warn-d);color:var(--warn-fg)}
+.btn.warn-f{border-color:var(--warn-d);background:var(--warn-d);color:#fff}
+.btn:disabled{border-color:#B9B8B1;background:#E6E5E0;color:var(--muted);cursor:not-allowed;text-decoration:none}
+.txt-in{padding:8px 10px;border:1px solid var(--input);border-radius:6px;background:#fff;min-width:0}
+.txt-in.invalid{border:2px solid var(--err-d)}
+.hint{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.hint.err{color:var(--err-fg)}
+.field{display:flex;flex-direction:column;gap:4px;flex:1 1 280px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.row.center{align-items:center}
+.status{font-size:14px}
+.status:empty{display:none}
+.status.st-busy,.status.st-checking{color:var(--info-fg)}
+.status.st-error{color:var(--err-fg)}
+.status.st-unknown{color:var(--warn-fg)}
+.status.st-ok{color:var(--ok-fg)}
+.status.st-info{color:var(--info-fg)}
+.status code{margin-left:4px}
+.status .btn{margin-left:8px}
+.note-ok{padding:12px 16px;border:1px solid var(--ok-bd);background:var(--ok-bg);border-radius:8px;color:var(--ok-fg)}
+.note-warn{padding:14px 16px;border:1px solid var(--warn-bd);background:var(--warn-bg);border-radius:8px;color:var(--warn-fg);display:flex;flex-direction:column;gap:10px}
+.note-info{padding:12px 16px;border:1px solid var(--info-bd);background:var(--info-bg);border-radius:8px;color:var(--info-fg);display:flex;flex-direction:column;gap:10px}
+.note-err{padding:12px 16px;border:1px solid var(--err-bd);background:var(--err-bg);border-radius:8px;color:var(--err-fg);display:flex;flex-direction:column;gap:8px}
+.meter-row{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.meter{height:8px;background:#E6E5E0;border-radius:4px;overflow:hidden}
+.meter>div{height:100%;width:0;background:var(--pri)}
+.meter.over>div{background:var(--err-d)}
+.over-t{color:var(--err-fg);font-weight:700}
+ol.rules{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+ol.rules li{padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;gap:8px}
+ol.rules label{font-size:13px;color:var(--muted)}
+ol.rules textarea{width:100%;padding:8px 10px;border:1px solid var(--input);border-radius:6px;resize:vertical;line-height:1.6}
+.rule-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 16px;font-size:12px;color:var(--muted)}
+ul.hist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px}
+.hist-btn{width:100%;text-align:left;padding:10px 12px;border:1px solid transparent;border-radius:6px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.hist-btn[aria-pressed="true"]{border-color:var(--pri);background:var(--pri-l)}
+.hist-btn .t{font-size:14px;font-weight:500}
+.tag{display:inline-block;font-size:12px;padding:0 6px;margin-left:6px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-weight:400}
+.tag.new{border-color:var(--ok-bd);background:var(--ok-bg);color:var(--ok-fg);font-weight:700}
+.diff{margin:0;padding:8px 0;background:#fff;border:1px solid var(--line2);border-radius:6px;max-height:360px;overflow:auto}
+.diff div{padding:0 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.diff .add{background:#E9F5E6;color:var(--ok-fg)}
+.diff .del{background:#FBE9E7;color:var(--err-fg)}
+.cmp{display:flex;flex-wrap:wrap;gap:12px}
+.cmp>div{flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:4px}
+.cmp pre,pre.body{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line2);border-radius:6px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;max-height:320px;overflow:auto;color:var(--fg)}
+.tbl-wrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%}
+.tbl-wrap table{min-width:760px}
+.tbl-wrap td:first-child{min-width:180px}
+.tbl-wrap td:nth-child(4){min-width:150px}
+caption{text-align:left;padding:12px;font-size:14px;font-weight:700}
+th{text-align:left;font-weight:500;font-size:13px;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px;border-bottom:1px solid var(--line2);font-size:14px;vertical-align:top}
+td.nowrap{white-space:nowrap}
+td .acts{display:flex;flex-wrap:nowrap;gap:6px;align-items:center}
+td .acts .small{white-space:normal;min-width:160px}
+.empty{margin:0;padding:24px;text-align:center;background:#fff;border:1px dashed var(--input);border-radius:8px;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip-r{padding:6px 12px;border-radius:999px;border:1px solid var(--input);background:#fff;font-size:13px;cursor:pointer}
+.chip-r[aria-checked="true"]{border-color:var(--pri);background:var(--pri-l);color:var(--pri-d);font-weight:700}
+ul.cards{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.card{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding:16px 18px;background:#fff;border-radius:8px;border:1px solid var(--line)}
+.card.req{border-color:#8FA9E0;box-shadow:inset 4px 0 0 var(--pri)}
+.card .c1{flex:1 1 360px;min-width:0;display:flex;flex-direction:column;gap:4px}
+.card .c2{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:4px}
+.card .c3{flex:0 0 auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.card .c4{flex:1 1 100%}
+.card .ttl{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.card .doing{font-size:16px;font-weight:700;overflow-wrap:anywhere}
+.card .ids{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.role-t{font-size:15px;overflow-wrap:anywhere}
+.role-t.bound{font-weight:700}
+.role-t.req{font-weight:700;color:var(--info-fg)}
+.role-t.none{color:var(--muted)}
+.st{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid}
+.st.on{background:var(--ok-bg);color:var(--ok-fg);border-color:var(--ok-bd)}
+.st.off{background:#EFEFEC;color:var(--muted);border-color:var(--input)}
+.st.warn{background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-bd)}
+details.guide{font-size:13px;color:var(--muted)}
+details summary{cursor:pointer;color:var(--pri);width:fit-content}
+details.guide ul{margin:8px 0 0;padding-left:18px;line-height:1.7}
+dl.kv{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:14px;line-height:1.5}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0;overflow-wrap:anywhere}
+.savebar{position:sticky;bottom:0;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:14px 24px;background:#fff;border-top:1px solid var(--line);z-index:5}
+.savebar .txt{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:2px}
+dialog.dlg{width:min(560px,calc(100vw - 32px));padding:24px;border:0;border-radius:10px;background:#fff;color:var(--fg)}
+dialog.dlg.narrow{width:min(480px,calc(100vw - 32px))}
+dialog.dlg.combo-host{overflow:visible}
+dialog::backdrop{background:rgba(20,20,18,.45)}
+.dlg-in{display:flex;flex-direction:column;gap:14px}
+.dlg-in h2{font-size:18px}
+.dlg-acts{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;align-items:center}
+.dlg-acts .why{flex:1 1 100%;text-align:right}
+.dlg-acts .why:empty{display:none}
+.del-list{margin:8px 0 0;padding:8px 12px;list-style:none;max-height:160px;overflow-y:auto;border:1px solid var(--line2);border-radius:6px;background:var(--soft);display:flex;flex-direction:column;gap:4px}
+.del-list li{overflow-wrap:anywhere}
+.combo{position:relative}
+.combo input{width:100%;padding:10px 36px 10px 12px;border:1px solid #8C8B85;border-radius:6px;font-size:15px;background:#fff;cursor:pointer}
+.combo .chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:12px}
+.combo-pop{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:10;border:1px solid var(--input);border-radius:6px;background:#fff;box-shadow:0 8px 20px rgba(20,20,18,.14);overflow:hidden}
+.combo-pop ul{margin:0;padding:4px;list-style:none;max-height:220px;overflow-y:auto}
+.combo-pop li[role="option"]{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:4px;cursor:pointer}
+.combo-pop li[role="option"][aria-selected="true"]{background:var(--pri-l)}
+.combo-pop li.active{outline:2px solid var(--pri);outline-offset:-2px}
+.combo-pop li .n{font-size:14px;font-weight:500;overflow-wrap:anywhere}
+.combo-pop li.nomatch{padding:10px;font-size:13px;color:var(--muted)}
+.combo-foot{padding:6px 12px;border-top:1px solid var(--line2);font-size:12px;color:var(--muted);background:var(--soft)}
+.picked{padding:10px 12px;border:1px solid var(--info-bd);background:#F3F6FD;border-radius:6px;display:flex;flex-direction:column;gap:2px}
+.picked b{font-size:15px;overflow-wrap:anywhere}
+select:disabled{background:#EFEFEC}
+@media (max-width:760px){
+  header.top{padding:12px 16px}
+  .band{padding:10px 16px}
+  nav.side{max-width:none;flex:1 1 100%;flex-direction:row;flex-wrap:wrap;align-items:center;padding:8px 12px;border-right:0;border-bottom:1px solid var(--line)}
+  .nav-group{display:none}
+  .nav-btn{padding:8px 10px}
+  main{padding:20px 16px 120px}
+  .savebar{padding:12px 16px}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top" id="top"></header>
+  <div id="bands"></div>
+  <div class="layout">
+    <nav class="side" id="nav" aria-label="관리 항목"></nav>
+    <main id="main" tabindex="-1"><p class="muted">불러오는 중…</p></main>
+  </div>
+  <div class="savebar" id="savebar" hidden></div>
+</div>
+<noscript>이 페이지는 JavaScript가 있어야 동작합니다.</noscript>
+<script nonce="__CSP_NONCE__">
+'use strict';
+(function () {
+  const LS_KEY = 'ags-admin-credentials';
+  const LIMIT = 50;
+
+  // ---------- 상태 ----------
+  const S = {
+    data: null, loadError: null, storeError: null,
+    tab: 'global', busy: null, status: {},
+    g: { init: false, baseToken: null, baseRules: [], rules: [], conflict: false, compareOpen: false, saved: null, justRev: null, histSel: null },
+    r: { query: '', newName: '', renaming: null },
+    b: { filter: 'active', limit: LIMIT },
+    newKeyLabel: '', firstKeyNotice: false,
+    dialog: null,
+  };
+  let ruleSeq = 0;
+  let loadSeq = 0;
+
+  // ---------- 작은 도구 ----------
+  const $ = (id) => document.getElementById(id);
+  function h(tag, props, ...kids) {
+    const el = document.createElement(tag);
+    if (props) for (const k of Object.keys(props)) {
+      const v = props[k];
+      if (v == null || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k === 'value') el.value = v;
+      else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? '' : String(v));
+    }
+    for (const c of kids.flat(Infinity)) {
+      if (c == null || c === false) continue;
+      el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    }
+    return el;
+  }
+  const idSafe = (s) => String(s).replace(/[^A-Za-z0-9_-]/g, (c) => '_' + c.charCodeAt(0).toString(16));
+  const num = (n) => Number(n || 0).toLocaleString('en-US');
+  const p2 = (n) => String(n).padStart(2, '0');
+  function fmtTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+  }
+  function fmtHM(iso) {
+    const d = iso ? new Date(iso) : new Date();
+    return isNaN(d.getTime()) ? '—' : p2(d.getHours()) + ':' + p2(d.getMinutes());
+  }
+  const short = (id) => String(id || '').slice(0, 8);
+  const norm = (v) => String(v).normalize('NFC').trim().toLowerCase();
+  const enc = new TextEncoder();
+  const utf8len = (s) => enc.encode(s).length;
+  const b64u = {
+    enc(buf) {
+      const b = new Uint8Array(buf); let s = '';
+      for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    },
+    dec(str) {
+      const s = String(str).replace(/-/g, '+').replace(/_/g, '/');
+      const bin = atob(s + '='.repeat((4 - (s.length % 4)) % 4));
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    },
+  };
+
+  // ---------- 오류 문장 (계약의 코드 전부) ----------
+  const MSG = {
+    ADMIN_CHANGE_INVALID: '변경 내용이 서버가 받는 형식과 맞지 않습니다.',
+    ADMIN_INTENT_NONCANONICAL: '서명할 내용이 표준 형식(canonical JSON)이 아닙니다.',
+    ADMIN_SIGNATURE_INVALID: '패스키 서명이 맞지 않습니다.',
+    ADMIN_CHALLENGE_MISMATCH: '패스키가 서명한 내용이 저장하려는 내용과 다릅니다.',
+    ADMIN_RPID_MISMATCH: '패스키의 사이트 정보가 맞지 않습니다. 주소창이 http://localhost:… 인지 확인하세요.',
+    ADMIN_USER_VERIFICATION_MISSING: '패스키에서 본인 확인(PIN·생체 인식)이 되지 않았습니다.',
+    ADMIN_ALGORITHM_UNSUPPORTED: '이 패스키의 서명 방식은 지원하지 않습니다(ES256·RS256·EdDSA만 받습니다).',
+    WEBAUTHN_PUBLIC_KEY_UNAVAILABLE: '브라우저가 새 패스키의 공개키를 내주지 않았습니다. 다른 브라우저나 인증기를 써 보세요.',
+    ADMIN_INTENT_EXPIRED: '서명을 준비한 뒤 시간이 너무 지났습니다. 다시 저장하세요.',
+    REQUEST_INVALID: '요청 형식이 잘못되었습니다.',
+    ADMIN_ORIGIN_REJECTED: '이 주소에서 보낸 요청은 받지 않습니다. http://localhost:… 주소로 여세요.',
+    ADMIN_KEY_NOT_REGISTERED: '등록된 패스키가 없어 저장할 수 없습니다.',
+    ADMIN_KEY_UNKNOWN: '목록에 없는 패스키로 서명했습니다.',
+    ADMIN_KEY_REVOKED: '삭제된 패스키로 서명했습니다.',
+    HOST_REJECTED: '허용되지 않은 주소(Host)로 접속했습니다.',
+    ADMIN_PROPOSAL_NOT_FOUND: '요청이 없거나 이미 처리되었습니다.',
+    NOT_FOUND: '서버에서 찾을 수 없는 경로입니다.',
+    ADMIN_TARGET_STALE: '다른 곳에서 먼저 저장해 기준이 바뀌었습니다.',
+    ADMIN_ALREADY_BOOTSTRAPPED: '이미 패스키가 있어 첫 등록을 할 수 없습니다. 기존 패스키로 추가하세요.',
+    ADMIN_LAST_KEY_REVOKE_REFUSED: '마지막 패스키는 삭제할 수 없습니다.',
+    ADMIN_LOG_REGRESSED: '저장 기록이 이전보다 줄었습니다(되돌려진 흔적). 사용자가 직접 확인해야 합니다.',
+    REQUEST_TOO_LARGE: '요청이 너무 큽니다(64KiB 상한).',
+    CONTENT_TYPE_REJECTED: '요청 형식(Content-Type)을 서버가 받지 않습니다.',
+    STORE_UNAVAILABLE: '저장소를 읽거나 쓸 수 없습니다.',
+    NETWORK: '관리자 서버에 연결할 수 없습니다.',
+    BAD_RESPONSE: '서버 응답을 읽을 수 없습니다.',
+    WEBAUTHN_UNSUPPORTED: '이 브라우저는 패스키(WebAuthn)를 지원하지 않습니다.',
+  };
+  const REASON = {
+    ROLE_NAME_TAKEN: '같은 이름(대소문자 무시)의 역할이 이미 있습니다.',
+    ROLE_ID_TAKEN: '역할 ID가 겹쳤습니다. 다시 시도하세요.',
+    ROLE_NOT_FOUND: '역할이 이미 없어졌습니다.',
+    KEY_ALREADY_KNOWN: '이미 등록된 패스키입니다.',
+    TOO_LARGE: '크기 상한을 넘었습니다.',
+    TARGET_MISMATCH: '요청한 대상과 변경 대상이 다릅니다.',
+  };
+  const SIGN_CODES = new Set(['ADMIN_SIGNATURE_INVALID', 'ADMIN_CHALLENGE_MISMATCH', 'ADMIN_RPID_MISMATCH', 'ADMIN_USER_VERIFICATION_MISSING',
+    'ADMIN_ALGORITHM_UNSUPPORTED', 'ADMIN_KEY_UNKNOWN', 'ADMIN_KEY_REVOKED', 'ADMIN_KEY_NOT_REGISTERED', 'ADMIN_INTENT_NONCANONICAL', 'ADMIN_INTENT_EXPIRED']);
+  function describe(code, details) {
+    let m = MSG[code] || '알 수 없는 오류입니다.';
+    const reason = details && details.reason;
+    if (reason) m += ' ' + (REASON[reason] || '사유: ' + reason);
+    return m;
+  }
+  const codeText = (code, details) => code + (details && details.reason ? ' / ' + details.reason : '');
+
+  // ---------- 서버 호출 ----------
+  async function api(method, path, body) {
+    let res;
+    try {
+      res = await fetch(path, {
+        method, cache: 'no-store', credentials: 'same-origin',
+        headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+    } catch (e) { throw { kind: 'NETWORK' }; }
+    let json;
+    try { json = await res.json(); } catch (e) { throw { kind: 'BAD_RESPONSE', status: res.status }; }
+    return { ok: res.ok, status: res.status, json };
+  }
+  function errOf(r) {
+    const e = r.json && r.json.error;
+    return { code: (e && e.code) || 'HTTP_' + r.status, details: (e && e.details) || {} };
+  }
+
+  async function loadState() {
+    const seq = ++loadSeq;
+    let r;
+    try { r = await api('GET', '/api/state'); }
+    catch (e) { if (seq === loadSeq) { S.loadError = { code: e.kind, details: {} }; render(); } return false; }
+    if (seq !== loadSeq) return false; // 늦게 온 이전 응답은 버린다
+    if (!r.ok) {
+      S.loadError = errOf(r);
+      if (S.loadError.code === 'STORE_UNAVAILABLE') S.storeError = S.loadError;
+      render(); return false;
+    }
+    S.loadError = null; S.storeError = null;
+    applyState(r.json);
+    render();
+    return true;
+  }
+
+  // ---------- 전역 컨텍스트 편집 모델 ----------
+  const splitRules = (body) => (body ? String(body).split('\n\n') : []);
+  const joinRules = (texts) => texts.filter((t) => t.trim() !== '').join('\n\n');
+  const mkRule = (text) => ({ id: 'rule-' + (++ruleSeq), text });
+  const editTexts = () => S.g.rules.map((r) => r.text);
+  const editBody = () => joinRules(editTexts());
+  const isGlobalDirty = () => S.g.init && editBody() !== joinRules(S.g.baseRules);
+  function resetGlobal(body, token) {
+    S.g.baseRules = splitRules(body);
+    S.g.rules = S.g.baseRules.map(mkRule);
+    S.g.baseToken = token; S.g.conflict = false; S.g.compareOpen = false; S.g.init = true;
+  }
+  function changeCount() {
+    const base = S.g.baseRules.filter((t) => t.trim() !== ''), mine = editTexts().filter((t) => t.trim() !== '');
+    const b = base.slice(); let added = 0;
+    for (const t of mine) { const i = b.indexOf(t); if (i >= 0) b.splice(i, 1); else added++; }
+    return Math.max(added, b.length);
+  }
+
+  function applyState(d) {
+    for (const k of ['keys', 'resets', 'globalHistory', 'roles', 'sessions', 'proposals', 'failures']) if (!Array.isArray(d[k])) d[k] = [];
+    S.data = d;
+    const body = d.global ? d.global.body : '';
+    const token = d.global ? d.global.stateToken : null;
+    if (!S.g.init || !isGlobalDirty()) resetGlobal(body, token);
+    else if (token !== S.g.baseToken) {
+      // 내 편집이 이미 최신과 같으면(방금 내가 저장) 충돌이 아니다.
+      if (editBody() === joinRules(splitRules(body))) resetGlobal(body, token);
+      else S.g.conflict = true;
+    }
+    if (S.r.renaming && !d.roles.some((r) => r.roleId === S.r.renaming.roleId)) S.r.renaming = null;
+  }
+  function reapplyMine() {
+    // ponytail: 규칙(빈 줄 단위) 3방향 병합. 다른 경로가 추가한 규칙은 끝에 붙는다(순서 보존 안 함).
+    const base = S.g.baseRules, mine = editTexts();
+    const latestBody = S.data.global ? S.data.global.body : '';
+    const latest = splitRules(latestBody);
+    const out = [];
+    for (const t of mine) { if (base.includes(t)) { if (latest.includes(t)) out.push(t); } else out.push(t); }
+    for (const t of latest) if (!base.includes(t) && !out.includes(t)) out.push(t);
+    S.g.baseRules = latest; S.g.baseToken = S.data.global ? S.data.global.stateToken : null;
+    S.g.rules = out.map(mkRule); S.g.conflict = false; S.g.compareOpen = false;
+    setStatus('global', { kind: 'info', text: '최신 판 r' + (S.data.global ? S.data.global.revision : 0) + ' 위에 내 변경을 다시 적용했습니다. 내용을 확인한 뒤 저장하세요.' });
+  }
+
+  // ---------- 줄 단위 비교 ----------
+  function lineDiff(a, b) {
+    // ponytail: O(n·m) LCS. 본문이 2,000 byte 이하라 충분하다.
+    const A = String(a).split('\n'), B = String(b).split('\n'), n = A.length, m = B.length;
+    const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    const out = []; let i = 0, j = 0;
+    while (i < n && j < m) {
+      if (A[i] === B[j]) { out.push([' ', A[i]]); i++; j++; }
+      else if (dp[i + 1][j] >= dp[i][j + 1]) out.push(['-', A[i++]]);
+      else out.push(['+', B[j++]]);
+    }
+    while (i < n) out.push(['-', A[i++]]);
+    while (j < m) out.push(['+', B[j++]]);
+    return out;
+  }
+  function diffView(a, b, label) {
+    const rows = lineDiff(a, b);
+    return h('div', { class: 'diff', role: 'region', 'aria-label': label, tabindex: '0' },
+      rows.map(([t, s]) => h('div', { class: t === '+' ? 'add' : t === '-' ? 'del' : '' }, (t === '+' ? '+ ' : t === '-' ? '− ' : '  ') + s)));
+  }
+  function compareView(leftTitle, left, rightTitle, right) {
+    return h('div', { class: 'cmp' },
+      h('div', null, h('span', { class: 'small muted' }, leftTitle), h('pre', { tabindex: '0' }, left || '(비어 있음)')),
+      h('div', null, h('span', { class: 'small muted' }, rightTitle), h('pre', { tabindex: '0' }, right || '(비어 있음)')));
+  }
+
+  // ---------- 저장 상태 표시 ----------
+  function setStatus(slot, st) { if (st) S.status[slot] = st; else delete S.status[slot]; render(); }
+  const slotBlocked = (slot) => { const st = S.status[slot]; return !!st && (st.kind === 'checking' || st.kind === 'unknown'); };
+  function statusEl(slot) {
+    const st = S.status[slot];
+    const box = h('div', { id: 'st-' + idSafe(slot), class: 'status' + (st ? ' st-' + st.kind : ''), role: 'status', 'aria-live': 'polite' });
+    if (st) {
+      box.append(h('span', null, st.text));
+      if (st.code) box.append(h('code', null, st.code));
+      if (st.retry) box.append(h('button', { type: 'button', class: 'btn sm', id: 'retry-' + idSafe(slot), onclick: st.retry, disabled: !!S.busy }, '다시 확인'));
+    }
+    return box;
+  }
+  const hasKeys = () => !!(S.data && S.data.keys.length);
+  // 패스키 서명이 필요한 버튼
+  function signBtn(o) {
+    const off = !!S.busy || !hasKeys() || slotBlocked(o.slot) || !!o.off;
+    return h('button', { type: 'button', id: o.id, class: 'btn ' + (o.cls || 'pri'), disabled: off, onclick: o.onclick, 'aria-describedby': o.why || null },
+      S.busy === o.slot ? '저장 중…' : o.label);
+  }
+
+  function webauthnFail(slot, e, cancelText) {
+    const name = (e && e.name) || 'Error';
+    let text;
+    if (name === 'NotAllowedError' || name === 'AbortError') text = cancelText || '패스키 확인을 취소했습니다(또는 시간이 지났습니다). 변경은 그대로 있습니다.';
+    else if (name === 'InvalidStateError') text = '이 인증기에는 이미 이 사이트용 패스키가 있습니다.';
+    else if (name === 'SecurityError') text = '브라우저가 보안 문제로 패스키를 막았습니다. 주소가 http://localhost:… 인지 확인하세요.';
+    else if (name === 'NotSupportedError') text = '이 인증기는 지원하는 서명 방식이 없습니다.';
+    else text = '패스키 확인에 실패했습니다. 변경은 그대로 있습니다.';
+    setStatus(slot, { kind: 'error', text, code: name });
+  }
+  function httpFail(slot, r) {
+    const { code, details } = errOf(r);
+    if (code === 'STORE_UNAVAILABLE') S.storeError = { code, details };
+    const pre = SIGN_CODES.has(code) ? '패스키 확인에 실패했습니다. ' : '저장하지 못했습니다. ';
+    setStatus(slot, { kind: 'error', text: pre + describe(code, details) + ' 변경은 그대로 있습니다.', code: codeText(code, details) });
+    return code;
+  }
+
+  // 서명해서 저장: intent → 패스키 get() → commit. 응답 불명이면 같은 requestId로 조회만 한다.
+  async function runSigned(o) {
+    if (S.busy) return;
+    const slot = o.slot;
+    S.busy = slot;
+    setStatus(slot, { kind: 'busy', text: '저장을 준비하는 중…' });
+    try {
+      if (!window.PublicKeyCredential || !navigator.credentials) { setStatus(slot, { kind: 'error', text: MSG.WEBAUTHN_UNSUPPORTED, code: 'WEBAUTHN_UNSUPPORTED' }); return; }
+      let r;
+      try { r = await api('POST', '/api/intent', { change: o.change, bootstrap: !!o.bootstrap, ...(o.baseHash !== undefined ? { baseHash: o.baseHash } : {}) }); }
+      catch (e) { setStatus(slot, { kind: 'error', text: '저장하지 못했습니다. ' + MSG[e.kind] + ' 아무것도 보내지 않았고 변경은 그대로 있습니다.', code: e.kind }); return; }
+      if (!r.ok) { const code = httpFail(slot, r); if (code === 'ADMIN_TARGET_STALE' && o.onStale) await o.onStale(); return; }
+      const { intent, challenge, allowCredentials } = r.json;
+      setStatus(slot, { kind: 'busy', text: '패스키 창에서 본인 확인을 해 주세요…' });
+      let cred;
+      try {
+        cred = await navigator.credentials.get({ publicKey: {
+          challenge: b64u.dec(challenge), rpId: S.data.rpId,
+          allowCredentials: (o.allow || allowCredentials || []).map((id) => ({ type: 'public-key', id: b64u.dec(id) })),
+          userVerification: 'required', timeout: 120000 } });
+      } catch (e) { webauthnFail(slot, e, o.cancelText); return; }
+      if (!cred) { webauthnFail(slot, { name: 'NotAllowedError' }, o.cancelText); return; }
+      const a = cred.response;
+      const assertion = { credentialId: b64u.enc(cred.rawId), authenticatorData: b64u.enc(a.authenticatorData), clientDataJSON: b64u.enc(a.clientDataJSON), signature: b64u.enc(a.signature) };
+      const requestId = crypto.randomUUID();
+      setStatus(slot, { kind: 'busy', text: '저장 중…' });
+      let c;
+      try { c = await api('POST', '/api/commit', { intent, assertion, requestId, proposalId: o.proposalId || null }); }
+      catch (e) { S.busy = null; await checkUnknown(slot, requestId, o.onDone); return; }
+      if (!c.ok) { const code = httpFail(slot, c); if (code === 'ADMIN_TARGET_STALE' && o.onStale) await o.onStale(); return; }
+      if (!c.json || !c.json.record) { S.busy = null; await checkUnknown(slot, requestId, o.onDone); return; }
+      S.busy = null;
+      await finish(slot, c.json.record, o.onDone);
+    } finally {
+      if (S.busy === slot) { S.busy = null; render(); }
+    }
+  }
+  async function checkUnknown(slot, requestId, onDone) {
+    S.busy = slot;
+    setStatus(slot, { kind: 'checking', text: '저장 결과를 확인하는 중입니다…' });
+    let r = null;
+    try { r = await api('GET', '/api/request/' + encodeURIComponent(requestId)); } catch (e) { r = null; }
+    S.busy = null;
+    if (!r || !r.ok) {
+      setStatus(slot, { kind: 'unknown', text: '저장 결과를 확인하지 못했습니다. 같은 요청을 다시 보내지 않았습니다. 서버가 다시 응답하면 [다시 확인]을 누르세요.', code: 'request ' + short(requestId), retry: () => checkUnknown(slot, requestId, onDone) });
+      return;
+    }
+    if (r.json && r.json.record) { await finish(slot, r.json.record, onDone); return; }
+    setStatus(slot, { kind: 'error', text: '저장되지 않았습니다. 변경은 그대로 있습니다. 다시 저장할 수 있습니다.' });
+  }
+  async function finish(slot, record, onDone) {
+    delete S.status[slot];
+    const loaded = await loadState();
+    if (onDone) onDone(record, loaded);
+    if (!loaded) setStatus(slot, { kind: 'ok', text: '저장됨 · 기록 #' + record.seq + ' · ' + fmtHM(record.createdAt) + '. 최신 상태를 불러오지 못했습니다. [다시 불러오기]를 누르세요.' });
+    render();
+  }
+
+  // ---------- localStorage (이 브라우저가 등록한 패스키) ----------
+  function lsRead() {
+    try { const v = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []; }
+    catch (e) { return null; }
+  }
+  function lsWrite(list) { try { localStorage.setItem(LS_KEY, JSON.stringify(list)); } catch (e) { /* 저장소를 쓸 수 없으면 기억만 못 한다 */ } }
+  function remember(id) { const l = lsRead() || []; if (!l.includes(id)) { l.push(id); lsWrite(l); } }
+  function forget(id) { const l = lsRead(); if (l) lsWrite(l.filter((x) => x !== id)); }
+
+  // ---------- 화면 공통 ----------
+  const TABS = [
+    { key: 'global', label: '전역 컨텍스트', group: '컨텍스트' },
+    { key: 'roles', label: '역할' },
+    { key: 'bindings', label: '세션 결속' },
+    { key: 'jev', label: 'JEV', group: '도구' },
+    { key: 'general', label: '일반 설정' },
+    { key: 'passkey', label: '패스키', group: '보안' },
+  ];
+  function go(tab, focusId) {
+    S.tab = tab; S.b.limit = LIMIT;
+    render();
+    const f = focusId && $(focusId);
+    if (f) f.focus();
+  }
+  function head(id, title, desc) {
+    return h('div', { class: 'head' }, h('h1', { id, tabindex: '-1' }, title), desc ? h('p', { class: 'desc' }, desc) : null);
+  }
+  const globalProposals = () => S.data.proposals.filter((p) => p.target === 'global' || (p.change && p.change.op === 'global.set'));
+  const bindingProposals = () => S.data.proposals.filter((p) => p.change && p.change.op === 'binding.set')
+    .slice().sort((x, y) => String(y.createdAt).localeCompare(String(x.createdAt)));
+  const roleById = (id) => S.data.roles.find((r) => r.roleId === id) || null;
+  const roleName = (id) => { const r = roleById(id); return r ? r.name : '알 수 없는 역할(' + short(id) + ')'; };
+
+  function render() {
+    const ae = document.activeElement;
+    const inDialog = !!(ae && ae.closest && ae.closest('dialog'));
+    const fid = !inDialog && ae && ae !== document.body ? ae.id : null;
+    let sel = null;
+    if (fid) { try { if (typeof ae.selectionStart === 'number') sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) { sel = null; } }
+    renderTop(); renderBands(); renderNav(); renderMain(); renderSaveBar();
+    if (S.dialog && S.dialog.refresh) S.dialog.refresh();
+    if (fid) {
+      const el = $(fid);
+      if (el && el !== document.activeElement && !el.disabled) {
+        el.focus({ preventScroll: true });
+        if (sel && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* 선택 범위를 못 쓰는 칸 */ } }
+      }
+    }
+  }
+
+  function renderTop() {
+    const top = $('top');
+    const kids = [h('div', { class: 'brand' }, h('b', null, 'AGS 관리자'), h('span', null, '· 이 PC 전용')), h('div', { class: 'grow' })];
+    if (S.data) {
+      const d = S.data;
+      if (d.bootstrap) kids.push(h('span', { class: 'boot' }, '최초 등록 ' + fmtTime(d.bootstrap.at) + ' · 지문 ', h('code', null, d.bootstrap.fingerprint)));
+      kids.push(d.keys.length
+        ? h('span', { class: 'pill ok' }, '패스키 ' + d.keys.length + '개 등록됨 · 저장할 때 확인')
+        : h('span', { class: 'pill warn' }, '패스키 없음 · 보기만 가능'));
+    }
+    top.replaceChildren(...kids);
+  }
+
+  const LAYER = { global: '전역 컨텍스트', keys: '패스키 목록', roles: '역할', binding: '세션 결속' };
+  function renderBands() {
+    const out = [];
+    const err = S.storeError || S.loadError;
+    if (err) {
+      out.push(h('div', { class: 'band err', role: 'alert' },
+        h('span', { class: 'txt' }, (err.code === 'STORE_UNAVAILABLE' ? '저장소를 읽을 수 없습니다. ' : '상태를 불러오지 못했습니다. ') + describe(err.code, err.details) + ' 편집 중인 내용은 그대로 있습니다. ', h('code', null, codeText(err.code, err.details))),
+        h('div', { class: 'acts' }, h('button', { type: 'button', class: 'btn sm', id: 'reload-top', onclick: () => loadState() }, '다시 불러오기'))));
+    }
+    if (S.data) {
+      const d = S.data;
+      for (const f of d.failures) {
+        const slot = 'fail-' + f.target;
+        const acts = h('div', { class: 'acts' },
+          f.change ? signBtn({ id: 'adopt-' + idSafe(f.target), slot, cls: 'btn sm', label: '서명해서 채택', onclick: () => runSigned({ slot, change: f.change, onDone: () => setStatus(slot, null) }) }) : null,
+          signBtn({ id: 'ack-' + idSafe(f.target), slot, cls: 'btn sm', label: '버리기', onclick: () => runSigned({ slot, change: { op: 'ack', target: f.target }, onDone: () => setStatus(slot, null) }) }));
+        out.push(h('div', { class: 'band fail', role: 'alert' },
+          h('span', { class: 'txt' }, h('b', null, '검증 실패 · ' + (LAYER[f.layer] || f.layer) + ' · ' + (f.revision != null ? 'r' + f.revision + ' 적용 중' : '기본값 적용 중') + ' · '), h('code', null, f.code),
+            f.target !== f.layer ? h('span', { class: 'small' }, ' (대상 ' + f.target + ')') : null,
+            h('br'), h('span', { class: 'small' }, '서명 기록을 검증하지 못해 유효한 마지막 판을 쓰고 있습니다. 에이전트는 고칠 수 없습니다. ' + (f.change ? '[서명해서 채택]은 기록된 변경을 내 패스키로 다시 서명합니다. ' : '') + '[버리기]는 지금 적용 중인 상태를 유지합니다.'),
+            statusEl(slot)),
+          acts));
+      }
+      if (d.resets.length) {
+        const r0 = d.resets[0];
+        out.push(h('div', { class: 'band warn', role: 'note' }, h('span', { class: 'txt' },
+          '패스키 기록이 재설정된 적이 있습니다 · 최근 ' + fmtTime(r0.at) + ' · 총 ' + d.resets.length + '회 · 이전 기록 끝 ', h('code', null, String(r0.resetOf || '').slice(0, 12) || '—'),
+          ' · 재설정 뒤 사람이 바꾸는 항목은 기본값에서 다시 시작했습니다.')));
+      }
+      if (!d.keys.length) {
+        out.push(h('div', { class: 'band warn', role: 'status' },
+          h('span', { class: 'txt' }, '패스키가 없어 설정을 저장할 수 없습니다. 보기는 됩니다. 처음 등록한 패스키는 확인 없이 받으니, 등록 뒤 목록의 등록 시각·지문이 내 것인지 확인하세요.'),
+          S.tab !== 'passkey' ? h('button', { type: 'button', class: 'btn sm warn-o', id: 'go-passkey', onclick: () => go('passkey', 'new-key-label') }, '패스키 등록') : null));
+      } else {
+        const mine = lsRead();
+        if (mine) {
+          const missing = mine.filter((id) => !d.keys.some((k) => k.credentialId === id));
+          const anyMine = d.keys.some((k) => mine.includes(k.credentialId));
+          if (missing.length) {
+            out.push(h('div', { class: 'band warn', role: 'alert' }, h('span', { class: 'txt' },
+              '이 브라우저에서 등록한 패스키 ' + missing.length + '개가 목록에 없습니다. 다른 곳에서 삭제되었거나 기록이 재설정·교체되었을 수 있습니다. 패스키 목록의 등록 시각·지문을 확인하세요.'),
+              S.tab !== 'passkey' ? h('button', { type: 'button', class: 'btn sm warn-o', onclick: () => go('passkey') }, '패스키 확인') : null));
+          } else if (!anyMine && d.bootstrap) {
+            out.push(h('div', { class: 'band info', role: 'note' }, h('span', { class: 'txt' },
+              '이 브라우저에서 등록한 패스키가 없습니다. 최초 등록 패스키(' + fmtTime(d.bootstrap.at) + ' · 지문 ', h('code', null, d.bootstrap.fingerprint), ')를 내가 등록했는지 확인하세요. 다른 브라우저에서 등록했다면 그대로 두면 됩니다.')));
+          }
+        }
+      }
+    }
+    $('bands').replaceChildren(...out);
+  }
+
+  function renderNav() {
+    const nReq = S.data ? bindingProposals().length : 0;
+    const nGreq = S.data ? globalProposals().length : 0;
+    const kids = [];
+    for (const t of TABS) {
+      if (t.group) kids.push(h('span', { class: 'nav-group', 'aria-hidden': 'true' }, t.group));
+      const extra = t.key === 'bindings' && nReq ? ' · 요청 ' + nReq : t.key === 'global' && nGreq ? ' · 요청 ' + nGreq : '';
+      kids.push(h('button', { type: 'button', class: 'nav-btn', id: 'nav-' + t.key, 'aria-current': S.tab === t.key ? 'page' : null, onclick: () => go(t.key) }, t.label + extra));
+    }
+    $('nav').replaceChildren(...kids);
+  }
+
+  function renderMain() {
+    const main = $('main');
+    if (!S.data) {
+      main.replaceChildren(S.loadError
+        ? h('div', { class: 'note-err' }, '관리자 서버에서 상태를 불러오지 못했습니다. 위 띠의 코드를 확인하고 [다시 불러오기]를 누르세요.')
+        : h('p', { class: 'muted' }, '불러오는 중…'));
+      return;
+    }
+    const v = { global: viewGlobal, roles: viewRoles, bindings: viewBindings, jev: viewJev, general: viewGeneral, passkey: viewPasskey }[S.tab];
+    main.replaceChildren(v());
+  }
+
+  // ---------- 전역 컨텍스트 ----------
+  function gMax() { return S.data.globalMaxBytes || (S.data.global && S.data.global.maxBytes) || 2000; }
+  function ruleMeta(text) {
+    if (!S.g.baseRules.includes(text)) return text.trim() === '' ? '새 규칙 · 비어 있으면 저장하지 않습니다' : '저장 안 된 변경';
+    const hist = S.data.globalHistory;
+    let since = null, broke = false;
+    for (const e of hist) { if (splitRules(e.body).includes(text)) since = e.revision; else { broke = true; break; } }
+    const cur = S.data.global ? S.data.global.revision : null;
+    if (since == null) return cur != null ? '판 r' + cur + '부터 있음' : '';
+    const last = hist[hist.length - 1];
+    return broke || (last && last.revision === 1) ? '판 r' + since + '부터 있음' : '판 r' + since + ' 또는 그 이전부터 있음';
+  }
+  function meterEl() {
+    return h('div', { class: 'col', id: 'g-meter-box' },
+      h('div', { class: 'meter-row' }, h('span', { class: 'muted' }, '크기(UTF-8, 편집 중 미리 계산)'), h('span', { id: 'g-meter-text' })),
+      h('div', { class: 'meter', id: 'g-meter', role: 'meter', 'aria-label': '전역 컨텍스트 크기', 'aria-valuemin': '0', 'aria-valuemax': String(gMax()) }, h('div', { id: 'g-meter-bar' })));
+  }
+  function paintMeter() {
+    const t = $('g-meter-text'); if (!t) return;
+    const bytes = utf8len(editBody()), max = gMax(), over = bytes - max;
+    t.textContent = num(bytes) + ' / ' + num(max) + ' byte' + (over > 0 ? ' · ' + num(over) + ' byte 초과' : '');
+    t.className = over > 0 ? 'over-t' : '';
+    const m = $('g-meter'); m.classList.toggle('over', over > 0); m.setAttribute('aria-valuenow', String(bytes)); m.setAttribute('aria-valuetext', t.textContent);
+    $('g-meter-bar').style.width = Math.min(100, (bytes / max) * 100) + '%';
+  }
+  function rowsFor(text) { return Math.max(2, Math.min(14, String(text).split('\n').length + 1)); }
+  function onRuleInput(rule, ta) {
+    rule.text = ta.value; ta.rows = rowsFor(ta.value);
+    if (S.g.saved) { S.g.saved = null; const s = $('g-saved'); if (s) s.remove(); }
+    const st = S.status.global; if (st && (st.kind === 'error' || st.kind === 'info')) delete S.status.global;
+    paintMeter();
+    for (const r of S.g.rules) { const m = $('meta-' + r.id); if (m) m.textContent = ruleMeta(r.text); }
+    renderSaveBar();
+  }
+  function viewGlobal() {
+    const d = S.data, g = S.g;
+    const sec = h('section', { class: 'col main-col', 'aria-labelledby': 'g-title' },
+      head('g-title', '전역 컨텍스트', '이 PC에서 AGS에 연결된 모든 세션과 서브에이전트가 시작·재개·압축 때 받습니다. 저장한 변경은 각 세션의 다음 시작·재개·압축부터 적용됩니다. 규칙은 빈 줄로 나뉩니다.'));
+    for (const p of globalProposals()) sec.append(globalProposalCard(p));
+    if (g.conflict) {
+      const latest = d.global || { body: '', revision: 0, updatedAt: null };
+      const h0 = d.globalHistory[0];
+      sec.append(h('div', { class: 'note-warn', role: 'alert' },
+        h('strong', null, fmtTime(latest.updatedAt) + '에 다른 경로가 먼저 저장했습니다'),
+        h('span', null, '저장된 판: r' + latest.revision + (h0 && h0.keyLabel ? ' · 패스키 「' + h0.keyLabel + '」 서명' : '') + '. 내 변경 ' + changeCount() + '건은 지우지 않았습니다. 최신 내용과 비교한 뒤 다시 적용해 저장하세요.'),
+        h('div', { class: 'row' },
+          h('button', { type: 'button', class: 'btn warn-o', id: 'g-compare', 'aria-expanded': String(g.compareOpen), onclick: () => { g.compareOpen = !g.compareOpen; render(); } }, g.compareOpen ? '비교 닫기' : '최신 내용과 비교'),
+          h('button', { type: 'button', class: 'btn warn-f', id: 'g-reapply', onclick: () => { reapplyMine(); const f = $('g-save'); if (f && !f.disabled) f.focus(); } }, '내 변경을 최신 위에 다시 적용')),
+        g.compareOpen ? compareView('최신(서버) · r' + latest.revision, latest.body, '내 변경', editBody()) : null));
+    }
+    if (g.saved) sec.append(h('div', { class: 'note-ok', role: 'status', id: 'g-saved' }, '저장됨 · 판 r' + g.saved.revision + ' · ' + fmtHM(g.saved.at) + ' · 다음 시작·재개·압축부터 적용됩니다.'));
+    sec.append(meterEl());
+    const ol = h('ol', { class: 'rules', 'aria-label': '규칙 목록' });
+    g.rules.forEach((rule, i) => {
+      const ta = h('textarea', { id: rule.id, rows: String(rowsFor(rule.text)), value: rule.text, 'aria-describedby': 'meta-' + rule.id });
+      ta.addEventListener('input', () => onRuleInput(rule, ta));
+      ol.append(h('li', null,
+        h('label', { for: rule.id }, '규칙 ' + (i + 1)), ta,
+        h('div', { class: 'rule-foot' }, h('span', { id: 'meta-' + rule.id }, ruleMeta(rule.text)),
+          h('button', { type: 'button', class: 'btn sm danger', id: 'del-' + rule.id, onclick: () => {
+            const idx = g.rules.indexOf(rule); g.rules.splice(idx, 1); g.saved = null; render();
+            const next = g.rules[idx] || g.rules[idx - 1];
+            const f = next ? $('del-' + next.id) : $('g-add'); if (f) f.focus();
+          } }, '이 규칙 삭제'))));
+    });
+    if (!g.rules.length) sec.append(h('p', { class: 'empty' }, '아직 규칙이 없습니다. [규칙 추가]로 시작하세요.'));
+    else sec.append(ol);
+    sec.append(h('div', null, h('button', { type: 'button', class: 'btn dashed', id: 'g-add', onclick: () => {
+      const r = mkRule(''); g.rules.push(r); g.saved = null; render(); const t = $(r.id); if (t) t.focus();
+    } }, '규칙 추가')));
+    queueMicrotask(paintMeter);
+    return h('div', { class: 'split' }, sec, viewHistory());
+  }
+  function viewHistory() {
+    const d = S.data, hist = d.globalHistory, cur = d.global ? d.global.revision : null;
+    const aside = h('aside', { 'aria-labelledby': 'h-title' }, h('h2', { id: 'h-title' }, '변경 이력'));
+    if (!hist.length) { aside.append(h('p', { class: 'muted' }, '이력이 없습니다.')); return aside; }
+    const shown = hist.slice(0, LIMIT);
+    const ul = h('ul', { class: 'hist' });
+    for (const e of shown) {
+      const on = S.g.histSel === e.revision;
+      ul.append(h('li', null, h('button', { type: 'button', class: 'hist-btn', id: 'hist-' + e.revision, 'aria-pressed': String(on), onclick: () => { S.g.histSel = on ? null : e.revision; render(); } },
+        h('span', { class: 't' }, 'r' + e.revision + ' · ' + fmtTime(e.updatedAt),
+          e.revision === S.g.justRev ? h('span', { class: 'tag new' }, '방금') : null,
+          e.revision === cur ? h('span', { class: 'tag' }, '현재') : null),
+        h('span', { class: 'small muted' }, e.keyLabel ? '패스키 「' + e.keyLabel + '」 서명' : e.credentialId ? '패스키 ' + short(e.credentialId) + ' 서명' : '서명 정보 없음'))));
+    }
+    aside.append(ul);
+    if (hist.length > LIMIT) aside.append(h('p', { class: 'small muted' }, '최근 ' + LIMIT + '개만 표시합니다(전체 ' + hist.length + '개).'));
+    const sel = hist.find((e) => e.revision === S.g.histSel);
+    if (sel) {
+      const curBody = d.global ? d.global.body : '';
+      aside.append(h('h2', null, 'r' + sel.revision + ' → 현재' + (cur != null ? '(r' + cur + ')' : '') + ' 차이'),
+        sel.body === curBody ? h('p', { class: 'muted' }, '현재 판과 같습니다.')
+          : h('div', { class: 'col' }, h('span', { class: 'small muted' }, '− 그 판에만 있는 줄 · + 현재에만 있는 줄'), diffView(sel.body, curBody, 'r' + sel.revision + '과 현재의 차이')));
+    }
+    return aside;
+  }
+  function globalProposalCard(p) {
+    const slot = 'prop-' + p.id;
+    const cur = S.data.global ? S.data.global.body : '';
+    const body = p.change && typeof p.change.body === 'string' ? p.change.body : '';
+    return h('div', { class: 'note-info', role: 'region', 'aria-label': '전역 컨텍스트 변경 요청' },
+      h('strong', null, '에이전트가 전역 컨텍스트 변경을 요청했습니다'),
+      h('span', { class: 'small' }, (p.actor ? p.actor + ' · ' : '') + (p.host || '') + ' ', h('span', { class: 'mono', title: p.sessionId || '' }, short(p.sessionId)), ' · ' + fmtTime(p.createdAt) + ' · 승인 전에는 적용되지 않습니다.'),
+      p.baseChanged ? h('span', { class: 'err-t' }, '요청한 뒤 전역 컨텍스트가 바뀌었습니다. 승인하면 요청 본문이 그대로 저장되어 그 사이 변경을 덮어씁니다.') : null,
+      compareView('현재', cur, '요청', body),
+      utf8len(body) > gMax() ? h('span', { class: 'err-t' }, '요청 본문이 ' + num(utf8len(body) - gMax()) + ' byte 초과입니다.') : null,
+      h('div', { class: 'row center' },
+        signBtn({ id: 'gp-ok-' + idSafe(p.id), slot, label: '승인', onclick: () => runSigned({ slot, change: p.change, proposalId: p.id, onDone: (rec, ok) => { if (ok && S.data.global) { S.g.justRev = S.data.global.revision; S.g.saved = { revision: S.data.global.revision, at: rec.createdAt }; } } }) }),
+        h('button', { type: 'button', class: 'btn link-danger', id: 'gp-no-' + idSafe(p.id), disabled: !!S.busy, onclick: () => rejectProposal(p, slot) }, '거절')),
+      statusEl(slot));
+  }
+  async function rejectProposal(p, slot) {
+    if (S.busy) return;
+    S.busy = slot; setStatus(slot, { kind: 'busy', text: '거절하는 중…' });
+    let r = null, kind = null;
+    try { r = await api('POST', '/api/proposals/' + encodeURIComponent(p.id) + '/reject', {}); } catch (e) { kind = e.kind; }
+    S.busy = null;
+    if (kind) { setStatus(slot, { kind: 'error', text: '거절하지 못했습니다. ' + MSG[kind] + ' 목록을 다시 불러와 확인하세요.', code: kind }); return; }
+    if (!r.ok) { const e = errOf(r); setStatus(slot, { kind: 'error', text: '거절하지 못했습니다. ' + describe(e.code, e.details), code: codeText(e.code, e.details) }); if (e.code === 'ADMIN_PROPOSAL_NOT_FOUND') await loadState(); return; }
+    delete S.status[slot];
+    S.status['bind-screen'] = { kind: 'ok', text: '요청을 거절했습니다 · ' + fmtHM() };
+    await loadState();
+  }
+  async function saveGlobal() {
+    if (S.busy) return;
+    const body = editBody();
+    if (utf8len(body) > gMax() || S.g.conflict || !hasKeys()) return;
+    S.busy = 'global'; setStatus('global', { kind: 'busy', text: '최신 상태를 확인하는 중…' });
+    const ok = await loadState(); // 편집을 시작한 판과 서버 판을 먼저 대조한다(충돌이면 경고 띠)
+    S.busy = null;
+    if (!ok) { setStatus('global', { kind: 'error', text: '최신 상태를 확인하지 못해 저장하지 않았습니다. 변경은 그대로 있습니다.', code: S.loadError ? S.loadError.code : '' }); return; }
+    if (S.g.conflict) { setStatus('global', null); return; }
+    await runSigned({ slot: 'global', change: { op: 'global.set', body }, baseHash: S.g.baseToken,
+      onStale: async () => { await loadState(); if (isGlobalDirty()) S.g.conflict = true; render(); },
+      onDone: (rec, loaded) => { if (loaded && S.data.global) { S.g.justRev = S.data.global.revision; S.g.saved = { revision: S.data.global.revision, at: rec.createdAt }; } } });
+  }
+  function renderSaveBar() {
+    const bar = $('savebar');
+    const dirty = S.data && S.tab === 'global' && isGlobalDirty();
+    const st = S.status.global;
+    if (!S.data || S.tab !== 'global' || (!dirty && !st)) { bar.hidden = true; bar.replaceChildren(); return; }
+    const bytes = utf8len(editBody()), over = bytes - gMax();
+    let why = '';
+    if (!hasKeys()) why = '패스키가 없어 저장할 수 없습니다 · 패스키 메뉴에서 먼저 등록하세요';
+    else if (over > 0) why = num(over) + ' byte를 줄여야 저장할 수 있습니다';
+    else if (S.g.conflict) why = '최신 내용 위에 다시 적용한 뒤 저장할 수 있습니다';
+    else if (slotBlocked('global')) why = '앞 저장의 결과를 확인한 뒤 저장할 수 있습니다';
+    const n = changeCount();
+    const off = !!why || !dirty || !!S.busy;
+    bar.hidden = false;
+    bar.replaceChildren(
+      h('div', { class: 'txt' },
+        h('span', null, dirty ? (n ? '변경 ' + n + '건' : '규칙 순서·공백 변경') + ' · 저장할 때 패스키를 확인합니다' : '저장할 변경이 없습니다'),
+        why ? h('span', { id: 'save-why', class: 'small err-t' }, why) : null,
+        statusEl('global')),
+      h('button', { type: 'button', class: 'btn', id: 'g-undo', disabled: !dirty || !!S.busy, onclick: () => {
+        const d = S.data; resetGlobal(d.global ? d.global.body : '', d.global ? d.global.stateToken : null); delete S.status.global; render(); const a = $('g-add'); if (a) a.focus();
+      } }, '변경 취소'),
+      h('button', { type: 'button', class: 'btn pri', id: 'g-save', disabled: off, 'aria-describedby': why ? 'save-why' : null, onclick: saveGlobal }, S.busy === 'global' ? '저장 중…' : '패스키로 저장'));
+  }
+
+  // ---------- 역할 ----------
+  function checkName(raw, exceptId) {
+    const max = S.data.roleNameMaxLength || 100;
+    const name = String(raw).normalize('NFC').trim();
+    if (!name) return { name, err: raw.length ? '앞뒤 공백을 지우면 빈 이름입니다. 이름을 입력하세요.' : null, off: true };
+    const chars = Array.from(name).length; // 서버와 같은 기준(코드 포인트)
+    if (chars > max) return { name, err: '이름이 ' + max + '자를 넘습니다(지금 ' + chars + '자).', off: true };
+    const lower = name.toLowerCase();
+    const same = S.data.roles.find((r) => r.roleId !== exceptId && String(r.name).normalize('NFC').toLowerCase() === lower);
+    if (same) return { name, off: true, err: same.name === name
+      ? '같은 이름의 역할 「' + same.name + '」가 이미 있습니다.'
+      : '저장될 이름 「' + name + '」가 기존 역할 「' + same.name + '」와 대소문자만 다릅니다. 기존 역할을 쓰거나 다른 이름을 입력하세요.' };
+    return { name, err: null, off: false };
+  }
+  const ROLE_HINT = '앞뒤 공백을 지우고 유니코드 정규화(NFC)한 이름으로 저장합니다.';
+  function paintNameHint(input, hint, c) {
+    input.classList.toggle('invalid', !!c.err);
+    input.setAttribute('aria-invalid', c.err ? 'true' : 'false');
+    hint.className = 'hint' + (c.err ? ' err' : '');
+    hint.textContent = c.err || (c.name ? '저장될 이름: 「' + c.name + '」 · ' + ROLE_HINT : ROLE_HINT);
+  }
+  function roleSize(r) {
+    if (r.contextError) return '읽기 오류 · ' + r.contextError;
+    if (!r.context) return '본문 없음';
+    return num(r.context.bytes) + ' / ' + num(r.context.maxBytes || S.data.roleMaxBytes) + ' byte';
+  }
+  function viewRoles() {
+    const d = S.data, roles = d.roles;
+    const sec = h('section', { class: 'col', 'aria-labelledby': 'r-title' },
+      head('r-title', '역할', '여기서 만든 역할에만 세션을 결속할 수 있습니다. 역할마다 담당 컨텍스트(' + num(d.roleMaxBytes || 1000) + ' byte)가 하나 있고, 결속된 세션이 읽고 씁니다. 본문은 에이전트가 쓰므로 여기서는 보기만 합니다.'));
+    sec.append(statusEl('roles-screen'));
+    if (!S.dialog) { for (const k of ['role-del']) if (S.status[k] && S.status[k].kind !== 'busy') sec.append(statusEl(k)); }
+    if (!roles.length) {
+      sec.append(h('p', { class: 'empty' }, '역할이 없습니다. 역할을 추가해야 세션을 결속할 수 있습니다.'));
+    } else {
+      const count = h('span', { class: 'small muted', id: 'role-count', 'aria-live': 'polite' });
+      const tbody = h('tbody', { id: 'role-tbody' });
+      // 검색칸은 다시 만들지 않는다(한글 조합 유지). 표 본문과 개수만 다시 그린다.
+      const paintRows = () => {
+        const q = norm(S.r.query);
+        const hit = roles.filter((r) => norm(r.name).includes(q));
+        const shown = hit.slice(0, LIMIT);
+        count.textContent = hit.length > LIMIT ? '전체 ' + roles.length + '개 · 일치 ' + hit.length + '개 중 ' + LIMIT + '개 표시' : '전체 ' + roles.length + '개 · 일치 ' + hit.length + '개';
+        tbody.replaceChildren(...shown.map(roleRow));
+        if (!shown.length) tbody.append(h('tr', null, h('td', { colspan: '5', class: 'muted' }, '「' + S.r.query.trim() + '」와 일치하는 역할이 없습니다.')));
+      };
+      const search = h('input', { id: 'role-search', type: 'search', class: 'txt-in', placeholder: '이름으로 찾기', autocomplete: 'off', value: S.r.query, 'aria-describedby': 'role-count' });
+      search.addEventListener('input', () => { S.r.query = search.value; paintRows(); });
+      paintRows();
+      sec.append(h('div', { class: 'row center' }, h('label', { for: 'role-search' }, h('b', null, '역할 검색')), search, count));
+      sec.append(h('div', { class: 'tbl-wrap' }, h('table', null, h('caption', null, '역할 목록'),
+        h('thead', null, h('tr', null, ['역할', '결속 세션', '담당 컨텍스트', '마지막 저장', '동작'].map((t) => h('th', { scope: 'col' }, t)))), tbody)));
+    }
+    // 추가
+    const c = checkName(S.r.newName, null);
+    const input = h('input', { id: 'new-role', type: 'text', class: 'txt-in', autocomplete: 'off', value: S.r.newName, 'aria-describedby': 'new-role-hint' });
+    const hint = h('span', { id: 'new-role-hint', class: 'hint' });
+    paintNameHint(input, hint, c);
+    const addBtn = signBtn({ id: 'role-add', slot: 'role-add', cls: 'pri-o al', label: '추가', off: c.off, onclick: addRole });
+    input.addEventListener('input', () => {
+      S.r.newName = input.value; const c2 = checkName(input.value, null); paintNameHint(input, hint, c2);
+      addBtn.disabled = !!S.busy || !hasKeys() || slotBlocked('role-add') || c2.off;
+    });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229 && !addBtn.disabled) { e.preventDefault(); addRole(); } });
+    sec.append(h('div', { class: 'box' }, h('h2', null, '역할 추가'),
+      h('div', { class: 'row' }, h('div', { class: 'field' }, h('label', { for: 'new-role', class: 'small muted' }, '역할 이름 (' + (d.roleNameMaxLength || 100) + '자 이내)'), input, hint),
+        addBtn),
+      !hasKeys() ? h('span', { class: 'small muted' }, '패스키가 없어 추가할 수 없습니다 · 패스키 메뉴에서 먼저 등록하세요') : null,
+      statusEl('role-add')));
+    return sec;
+  }
+  function roleRow(r) {
+    const ren = S.r.renaming && S.r.renaming.roleId === r.roleId ? S.r.renaming : null;
+    let nameCell;
+    if (ren) {
+      const c = checkName(ren.value, r.roleId);
+      const unchanged = c.name === r.name;
+      const inp = h('input', { id: 'rename-' + idSafe(r.roleId), type: 'text', class: 'txt-in', value: ren.value, autocomplete: 'off', 'aria-label': '「' + r.name + '」의 새 이름', 'aria-describedby': 'rename-hint-' + idSafe(r.roleId) });
+      const hint = h('span', { class: 'hint', id: 'rename-hint-' + idSafe(r.roleId) });
+      const slot = 'rename-' + r.roleId;
+      const save = signBtn({ id: 'rename-save-' + idSafe(r.roleId), slot, cls: 'btn sm pri', label: '패스키로 저장', off: c.off || unchanged, onclick: () => doRename(r) });
+      const paint = () => { const c2 = checkName(ren.value, r.roleId); paintNameHint(inp, hint, c2); if (!c2.err && c2.name === r.name) hint.textContent = '바뀐 것이 없습니다.'; save.disabled = !!S.busy || !hasKeys() || slotBlocked(slot) || c2.off || c2.name === r.name; };
+      paint();
+      inp.addEventListener('input', () => { ren.value = inp.value; paint(); });
+      inp.addEventListener('keydown', (e) => {
+        if (e.isComposing || e.keyCode === 229) return;
+        if (e.key === 'Escape') { e.preventDefault(); cancelRename(r); }
+        else if (e.key === 'Enter' && !save.disabled) { e.preventDefault(); doRename(r); }
+      });
+      nameCell = h('td', null, h('div', { class: 'field' }, inp, hint,
+        h('div', { class: 'row' }, save, h('button', { type: 'button', class: 'btn sm', id: 'rename-cancel-' + idSafe(r.roleId), onclick: () => cancelRename(r) }, '취소')), statusEl(slot)));
+    } else nameCell = h('td', null, h('b', null, r.name));
+    const ctx = r.context;
+    return h('tr', null, nameCell,
+      h('td', null, String(r.bindingCount || 0)),
+      h('td', { class: 'nowrap' }, roleSize(r)),
+      h('td', null, ctx && ctx.updatedAt ? (ctx.updatedBy ? ctx.updatedBy + ' · ' : '') + fmtTime(ctx.updatedAt) : '—'),
+      h('td', null, h('div', { class: 'acts' },
+        h('button', { type: 'button', class: 'btn sm', id: 'role-view-' + idSafe(r.roleId), onclick: () => openView(r) }, '본문 보기'),
+        h('button', { type: 'button', class: 'btn sm', id: 'role-ren-' + idSafe(r.roleId), disabled: !!ren, onclick: () => { S.r.renaming = { roleId: r.roleId, value: r.name }; render(); const f = $('rename-' + idSafe(r.roleId)); if (f) f.focus(); } }, '이름 변경'),
+        h('button', { type: 'button', class: 'btn sm danger', id: 'role-del-' + idSafe(r.roleId), onclick: () => openDelete(r) }, '삭제'))));
+  }
+  function cancelRename(r) { S.r.renaming = null; delete S.status['rename-' + r.roleId]; render(); const f = $('role-ren-' + idSafe(r.roleId)); if (f) f.focus(); }
+  function doRename(r) {
+    const c = checkName(S.r.renaming.value, r.roleId);
+    if (c.off || c.name === r.name) return;
+    const slot = 'rename-' + r.roleId;
+    runSigned({ slot, change: { op: 'role.rename', roleId: r.roleId, name: c.name },
+      onStale: () => loadState(),
+      onDone: () => { S.r.renaming = null; S.status['roles-screen'] = { kind: 'ok', text: '이름을 「' + c.name + '」로 바꿨습니다 · ' + fmtHM() + ' · 결속된 세션에는 다음 시작·재개·압축부터 보입니다.' }; } });
+  }
+  function addRole() {
+    const c = checkName(S.r.newName, null);
+    if (c.off) return;
+    runSigned({ slot: 'role-add', change: { op: 'role.add', roleId: 'role-' + crypto.randomUUID(), name: c.name },
+      onStale: () => loadState(),
+      onDone: () => { S.r.newName = ''; S.status['role-add'] = { kind: 'ok', text: '역할 「' + c.name + '」를 추가했습니다 · ' + fmtHM() }; } });
+  }
+
+  // ---------- 대화상자 ----------
+  function openDialog(o) {
+    if (S.dialog) S.dialog.el.close();
+    const el = h('dialog', { class: 'dlg ' + (o.cls || ''), 'aria-labelledby': 'dlg-title' });
+    const inner = h('div', { class: 'dlg-in' });
+    el.append(inner);
+    const openerId = o.opener && o.opener.id;
+    const dlg = { el, close: () => el.close(), refresh: () => {
+      // 다시 그려도 대화상자 안의 초점·커서를 유지한다.
+      const ae = document.activeElement, fid = ae && el.contains(ae) ? ae.id : null;
+      let sel = null;
+      if (fid) { try { if (typeof ae.selectionStart === 'number') sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) { sel = null; } }
+      inner.replaceChildren(...[].concat(o.build(dlg)).filter((n) => n != null && n !== false));
+      const f = fid && $(fid);
+      if (f && f !== document.activeElement && !f.disabled) { f.focus({ preventScroll: true }); if (sel && f.setSelectionRange) { try { f.setSelectionRange(sel[0], sel[1]); } catch (e) { /* 선택 범위 없음 */ } } }
+    } };
+    el.addEventListener('close', () => {
+      el.remove(); if (S.dialog === dlg) S.dialog = null;
+      render();
+      const back = (openerId && $(openerId)) || (o.fallbackFocus && $(o.fallbackFocus)) || document.querySelector('main h1');
+      if (back) back.focus();
+    });
+    document.body.append(el);
+    S.dialog = dlg;
+    dlg.refresh();
+    el.showModal();
+    const f = o.focus && $(o.focus); if (f) f.focus();
+    return dlg;
+  }
+  function openView(r) {
+    const opener = $('role-view-' + idSafe(r.roleId));
+    openDialog({ opener, focus: 'dlg-close', build: () => {
+      const c = r.context;
+      return [h('h2', { id: 'dlg-title' }, r.name + ' · 담당 컨텍스트'),
+        h('p', { class: 'small muted' }, roleSize(r) + (c && c.updatedBy ? ' · ' + c.updatedBy : '') + (c && c.updatedAt ? ' · ' + fmtTime(c.updatedAt) + ' 저장' : '') + ' · 보기만'),
+        r.contextError ? h('p', { class: 'err-t' }, '본문을 읽지 못했습니다: ' + r.contextError) : null,
+        c && c.body ? h('pre', { class: 'body', tabindex: '0', 'aria-label': '담당 컨텍스트 본문' }, c.body) : h('p', { class: 'muted' }, '아직 본문이 없습니다. 결속된 세션이 쓰면 여기에 보입니다.'),
+        h('div', { class: 'dlg-acts' }, h('button', { type: 'button', class: 'btn', id: 'dlg-close', onclick: () => S.dialog && S.dialog.close() }, '닫기'))];
+    } });
+  }
+  function openDelete(r0) {
+    const opener = $('role-del-' + idSafe(r0.roleId));
+    let typed = '';
+    delete S.status['role-del'];
+    openDialog({ opener, cls: 'narrow', focus: 'del-confirm', fallbackFocus: 'r-title', build: (dlg) => {
+      const r = roleById(r0.roleId) || r0;
+      const bound = S.data.sessions.filter((s) => s.binding && s.binding.roleId === r.roleId);
+      const n = r.bindingCount || 0;
+      const bytes = r.context ? r.context.bytes : 0;
+      const inp = h('input', { id: 'del-confirm', type: 'text', class: 'txt-in', autocomplete: 'off', value: typed, 'aria-describedby': 'del-why' });
+      const btn = signBtn({ id: 'del-go', slot: 'role-del', cls: 'btn danger', label: '패스키로 삭제', off: typed !== r.name, why: 'del-why', onclick: () => runSigned({
+        slot: 'role-del', change: { op: 'role.delete', roleId: r.roleId }, onStale: () => loadState(),
+        onDone: () => { S.status['roles-screen'] = { kind: 'ok', text: '역할 「' + r.name + '」를 삭제했습니다 · ' + fmtHM() }; dlg.close(); } }) });
+      const why = h('span', { id: 'del-why', class: 'small muted why' }, !hasKeys() ? '패스키가 없어 삭제할 수 없습니다.' : typed === r.name ? '' : '역할 이름을 정확히 입력하면 삭제 버튼이 켜집니다.');
+      inp.addEventListener('input', () => {
+        typed = inp.value;
+        btn.disabled = !!S.busy || !hasKeys() || slotBlocked('role-del') || typed !== r.name;
+        why.textContent = !hasKeys() ? '패스키가 없어 삭제할 수 없습니다.' : typed === r.name ? '' : '역할 이름을 정확히 입력하면 삭제 버튼이 켜집니다.';
+      });
+      const items = bound.map((s) => h('li', null, s.hostLabel + ' · ', h('span', { class: 'mono', title: s.sessionId }, short(s.sessionId)), ' · ' + (s.summary || '요약 없음')));
+      if (n > bound.length) items.push(h('li', { class: 'muted' }, '현황판에 보이지 않는 세션 ' + (n - bound.length) + '개'));
+      return [h('h2', { id: 'dlg-title' }, '「' + r.name + '」 역할을 삭제할까요?'),
+        h('dl', { class: 'kv' }, h('dt', null, '결속'), h('dd', null, n ? '세션 ' + n + '개가 이 역할을 잃습니다' : '결속된 세션이 없습니다'),
+          h('dt', null, '담당 컨텍스트'), h('dd', null, num(bytes) + ' byte가 지워지며 ', h('strong', null, '되돌릴 수 없습니다'))),
+        n ? h('details', null, h('summary', null, '세션 ' + n + '개 보기'), h('ul', { class: 'del-list', tabindex: '0', 'aria-label': '결속된 세션' }, items)) : null,
+        h('label', { for: 'del-confirm' }, h('b', null, '삭제하려면 역할 이름 「' + r.name + '」를 입력하세요')), inp,
+        statusEl('role-del'),
+        h('div', { class: 'dlg-acts' }, why, h('button', { type: 'button', class: 'btn', id: 'del-cancel', onclick: () => dlg.close() }, '취소'), btn)];
+    } });
+  }
+
+  // ---------- 세션 결속 ----------
+  const isActive = (s) => s.state !== 'ended';
+  const bound = (s) => !!(s.binding && !s.binding.lapsed);
+  function sessionModels() {
+    const props = bindingProposals();
+    const list = S.data.sessions.map((s) => ({ s, prop: props.find((p) => p.change.host === s.host && p.change.sessionId === s.sessionId) || null }));
+    for (const p of props) if (!list.some((x) => x.prop === p) && !list.some((x) => x.s.host === p.change.host && x.s.sessionId === p.change.sessionId)) {
+      list.push({ s: { host: p.change.host, hostLabel: p.change.host, sessionId: p.change.sessionId, state: 'unlisted', cwd: null, summary: null, selfRole: null, lastSeenAt: null, binding: null }, prop: p });
+    }
+    return list;
+  }
+  const STATE = { online: ['활성', 'on'], unreachable: ['연결 안 됨', 'warn'], ended: ['종료', 'off'], unlisted: ['현황판에 없음', 'warn'] };
+  function viewBindings() {
+    const d = S.data;
+    const all = sessionModels();
+    const counts = { active: all.filter((x) => isActive(x.s)).length, unbound: all.filter((x) => isActive(x.s) && !bound(x.s)).length, ended: all.filter((x) => !isActive(x.s)).length };
+    const f = S.b.filter;
+    const pick = (x) => f === 'ended' ? !isActive(x.s) : f === 'unbound' ? isActive(x.s) && !bound(x.s) : isActive(x.s);
+    const rank = (x) => x.prop ? 0 : !bound(x.s) ? 1 : 2;
+    const list = all.filter(pick).sort((a, b) => rank(a) - rank(b) || String(b.s.lastSeenAt || '').localeCompare(String(a.s.lastSeenAt || '')));
+    const sec = h('section', { class: 'col', 'aria-labelledby': 'sb-title' });
+    sec.append(h('div', { class: 'head' }, h('h1', { id: 'sb-title', tabindex: '-1' }, '세션 결속'),
+      h('p', { class: 'desc' }, '메인 세션마다 역할을 정합니다. 서브에이전트는 메인 세션의 역할을 따릅니다.'),
+      h('details', { class: 'guide' }, h('summary', null, '이 목록의 기준'), h('ul', null,
+        h('li', null, '이 PC 세션 현황판에 있는 메인 세션만 보입니다. 서브에이전트는 따로 나오지 않습니다.'),
+        h('li', null, '활성·종료는 현황판의 연결 상태를 따릅니다.'),
+        h('li', null, '같은 세션을 재개하면 결속이 유지되고, 30일 동안 쓰지 않으면 풀립니다(만료).'),
+        h('li', null, '「세션이 적은 역할」은 세션의 자기 소개라 권한이 아닙니다. 결속만 권한을 줍니다.')))));
+    if (d.sessionsError) sec.append(h('div', { class: 'note-err', role: 'alert' }, h('span', null, '세션 현황판을 읽지 못했습니다. 목록이 비었거나 오래되었을 수 있습니다. ', h('code', null, d.sessionsError.code)),
+      h('div', null, h('button', { type: 'button', class: 'btn sm', id: 'sess-reload', onclick: () => loadState() }, '다시 불러오기'))));
+    const chips = [['active', '활성 ' + counts.active], ['unbound', '역할 없음 ' + counts.unbound], ['ended', '종료 ' + counts.ended]];
+    const group = h('div', { class: 'chips', role: 'radiogroup', 'aria-label': '세션 범위' });
+    chips.forEach(([k, label], i) => {
+      const on = f === k;
+      const b = h('button', { type: 'button', class: 'chip-r', role: 'radio', id: 'chip-' + k, 'aria-checked': String(on), tabindex: on ? '0' : '-1', onclick: () => { S.b.filter = k; S.b.limit = LIMIT; render(); $('chip-' + k).focus(); } }, label);
+      b.addEventListener('keydown', (e) => {
+        const dir = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+        if (!dir) return;
+        e.preventDefault();
+        const nk = chips[(i + dir + chips.length) % chips.length][0];
+        S.b.filter = nk; S.b.limit = LIMIT; render(); $('chip-' + nk).focus();
+      });
+      group.append(b);
+    });
+    sec.append(group);
+    const nReq = all.filter((x) => x.prop).length;
+    if (nReq && f !== 'ended') sec.append(h('div', { class: 'note-info', role: 'status' }, '에이전트가 결속을 요청한 세션이 ' + nReq + '개 있습니다. 요청은 승인해야 적용됩니다.'));
+    sec.append(statusEl('bind-screen'));
+    if (!S.dialog) for (const k of ['bind', 'unbind']) if (S.status[k] && S.status[k].kind !== 'busy') sec.append(statusEl(k));
+    if (!list.length) { sec.append(h('p', { class: 'empty' }, '이 범위에 세션이 없습니다.')); return sec; }
+    const ul = h('ul', { class: 'cards', 'aria-label': '세션' });
+    for (const x of list.slice(0, S.b.limit)) ul.append(sessionCard(x));
+    sec.append(ul);
+    if (list.length > S.b.limit) {
+      const rest = list.length - S.b.limit;
+      sec.append(h('div', null, h('span', { class: 'small muted' }, '전체 ' + list.length + '개 중 ' + S.b.limit + '개 표시 '),
+        h('button', { type: 'button', class: 'btn', id: 'sess-more', onclick: () => { S.b.limit += LIMIT; render(); } }, Math.min(LIMIT, rest) + '개 더 보기 (남은 ' + rest + '개)')));
+    }
+    return sec;
+  }
+  function sessionCard(x) {
+    const s = x.s, p = x.prop, key = idSafe(s.host + '-' + s.sessionId);
+    const [stLabel, stCls] = STATE[s.state] || [String(s.state), 'off'];
+    let roleText, roleCls, notes = [];
+    const acts = [];
+    if (p) {
+      roleText = p.change.roleId == null ? '결속 해제 요청' : '결속 요청: ' + roleName(p.change.roleId);
+      roleCls = 'req';
+      notes.push('세션의 에이전트가 요청했습니다 · 승인 전에는 적용되지 않음' + (s.binding ? ' · 지금: ' + roleName(s.binding.roleId) + (s.binding.lapsed ? '(만료)' : '') : ''));
+      if (p.baseChanged) notes.push('요청한 뒤 이 세션의 결속이 바뀌었습니다');
+      const slot = 'prop-' + p.id;
+      acts.push(signBtn({ id: 'ap-' + key, slot, label: '승인', off: false, onclick: (e) => p.change.roleId == null ? openUnbind(x, e.currentTarget, p) : openBind(x, 'approve', e.currentTarget) }));
+      if (p.change.roleId != null) acts.push(h('button', { type: 'button', class: 'btn', id: 'alt-' + key, disabled: !!S.busy, onclick: (e) => openBind(x, 'alt', e.currentTarget) }, '다른 역할로'));
+      acts.push(h('button', { type: 'button', class: 'btn link-danger', id: 'rej-' + key, disabled: !!S.busy, onclick: () => rejectProposal(p, slot) }, '거절'));
+    } else if (bound(s)) {
+      roleText = roleName(s.binding.roleId); roleCls = 'bound';
+      notes.push('서브에이전트 포함 · ' + fmtTime(s.binding.boundAt) + ' 결속' + (s.binding.lastUsedAt ? ' · 마지막 사용 ' + fmtTime(s.binding.lastUsedAt) : ''));
+      acts.push(h('button', { type: 'button', class: 'btn', id: 'chg-' + key, disabled: !!S.busy, onclick: (e) => openBind(x, 'change', e.currentTarget) }, '역할 바꾸기'));
+      acts.push(h('button', { type: 'button', class: 'btn link-danger', id: 'unb-' + key, disabled: !!S.busy, onclick: (e) => openUnbind(x, e.currentTarget) }, '해제'));
+    } else if (s.binding && s.binding.lapsed) {
+      roleText = roleName(s.binding.roleId) + ' (만료됨)'; roleCls = 'none';
+      notes.push('30일 동안 쓰지 않아 결속이 풀렸습니다 · 다시 정하면 적용됩니다');
+      acts.push(h('button', { type: 'button', class: 'btn pri', id: 'set-' + key, disabled: !!S.busy, onclick: (e) => openBind(x, 'set', e.currentTarget) }, '역할 다시 정하기'));
+      acts.push(h('button', { type: 'button', class: 'btn link-danger', id: 'unb-' + key, disabled: !!S.busy, onclick: (e) => openUnbind(x, e.currentTarget) }, '해제'));
+    } else {
+      roleText = '역할 없음'; roleCls = 'none';
+      if (isActive(s)) acts.push(h('button', { type: 'button', class: 'btn pri', id: 'set-' + key, disabled: !!S.busy, onclick: (e) => openBind(x, 'set', e.currentTarget) }, '역할 정하기'));
+    }
+    return h('li', { class: 'card' + (p ? ' req' : '') },
+      h('div', { class: 'c1' },
+        h('div', { class: 'ttl' }, h('span', { class: 'doing' }, s.summary || '(지금 하는 일 없음)'), h('span', { class: 'small muted' }, s.hostLabel || s.host), h('span', { class: 'st ' + stCls }, stLabel)),
+        h('span', { class: 'ids' }, h('span', { class: 'mono', title: s.sessionId }, short(s.sessionId)), ' · ', h('span', { class: 'mono' }, s.cwd || '작업 폴더 모름'),
+          s.lastSeenAt ? ' · 마지막 확인 ' + fmtTime(s.lastSeenAt) : '')),
+      h('div', { class: 'c2' }, h('span', { class: 'small muted' }, '역할'), h('span', { class: 'role-t ' + roleCls }, roleText),
+        notes.map((t) => h('span', { class: 'small muted' }, t)),
+        s.selfRole ? h('span', { class: 'small muted' }, '세션이 적은 역할: ' + s.selfRole + ' (권한 아님)') : null),
+      h('div', { class: 'c3' }, acts),
+      p && S.status['prop-' + p.id] ? h('div', { class: 'c4' }, statusEl('prop-' + p.id)) : null);
+  }
+  function sessionLine(s) { return '「' + (s.summary || '지금 하는 일 없음') + '」 · ' + (s.hostLabel || s.host) + ' ' + short(s.sessionId); }
+
+  // 역할 선택 콤보박스
+  function buildCombo(ctx) {
+    let open = false, query = '', active = -1, shown = [];
+    const input = h('input', { id: 'role-combo', type: 'text', role: 'combobox', 'aria-expanded': 'false', 'aria-controls': 'role-listbox', 'aria-autocomplete': 'list', autocomplete: 'off', 'aria-describedby': 'combo-picked' });
+    const chev = h('span', { class: 'chev', 'aria-hidden': 'true' }, '▼');
+    const list = h('ul', { id: 'role-listbox', role: 'listbox', 'aria-label': '역할' });
+    const foot = h('div', { class: 'combo-foot', 'aria-live': 'polite' });
+    const pop = h('div', { class: 'combo-pop', hidden: true }, list, foot);
+    const wrap = h('div', { class: 'combo' }, input, chev, pop);
+    const note = (r) => '결속 세션 ' + (r.bindingCount || 0) + '개 · 담당 컨텍스트 ' + (r.context ? num(r.context.bytes) : 0) + ' byte';
+    function placeholder() {
+      const r = ctx.pick && roleById(ctx.pick);
+      input.placeholder = r ? r.name + ' (바꾸려면 검색)' : '역할 선택 · 이름으로 검색 (' + S.data.roles.length + '개)';
+    }
+    function paint() {
+      const q = norm(query);
+      const matches = S.data.roles.filter((r) => norm(r.name).includes(q));
+      shown = matches.slice(0, LIMIT);
+      if (active >= shown.length) active = shown.length - 1;
+      list.replaceChildren(...shown.map((r, i) => {
+        const li = h('li', { role: 'option', id: 'role-opt-' + i, 'aria-selected': String(r.roleId === ctx.pick), class: i === active ? 'active' : '' },
+          h('span', { class: 'n' }, r.name), h('span', { class: 'small muted' }, note(r)));
+        li.addEventListener('mousedown', (e) => { e.preventDefault(); choose(r); }); // blur보다 먼저 와야 한다
+        return li;
+      }));
+      if (!matches.length) list.append(h('li', { class: 'nomatch' }, '「' + query.trim() + '」와 일치하는 역할이 없습니다. 「역할」 메뉴에서 먼저 추가하세요.'));
+      foot.textContent = matches.length > LIMIT ? '일치 ' + matches.length + '개 중 ' + LIMIT + '개 표시 · 더 입력해 좁히세요' : '일치 ' + matches.length + '개';
+      if (active >= 0) { input.setAttribute('aria-activedescendant', 'role-opt-' + active); const a = $('role-opt-' + active); if (a) a.scrollIntoView({ block: 'nearest' }); }
+      else input.removeAttribute('aria-activedescendant');
+    }
+    function setOpen(v) {
+      open = v;
+      if (!v) { query = ''; input.value = ''; active = -1; input.removeAttribute('aria-activedescendant'); }
+      input.setAttribute('aria-expanded', String(v)); pop.hidden = !v; chev.textContent = v ? '▲' : '▼';
+      if (v) paint();
+      placeholder();
+    }
+    function choose(r) { ctx.pick = r.roleId; setOpen(false); ctx.onChange(); }
+    input.addEventListener('click', () => setOpen(!open));
+    input.addEventListener('input', () => { query = input.value; active = 0; if (!open) { open = true; input.setAttribute('aria-expanded', 'true'); pop.hidden = false; chev.textContent = '▲'; } paint(); });
+    input.addEventListener('blur', () => { if (open) setOpen(false); });
+    input.addEventListener('keydown', (e) => {
+      if (e.isComposing || e.keyCode === 229) { if (e.key === 'Enter' || e.key === 'Escape') e.preventDefault(); return; } // 한글 조합 중 Enter·Esc 무시
+      if (e.key === 'ArrowDown') { e.preventDefault(); if (!open) { setOpen(true); active = 0; paint(); } else { active = Math.min(active + 1, shown.length - 1); paint(); } }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (open) { active = Math.max(active - 1, 0); paint(); } }
+      else if (e.key === 'Enter') { if (open && active >= 0 && shown[active]) { e.preventDefault(); choose(shown[active]); } }
+      else if (e.key === 'Escape') { if (open) { e.preventDefault(); e.stopPropagation(); setOpen(false); } }
+    });
+    placeholder();
+    return wrap;
+  }
+
+  function openBind(x, mode, opener) {
+    const s = x.s, p = x.prop;
+    const ctx = { pick: mode === 'approve' && p ? p.change.roleId : (mode === 'change' && s.binding ? s.binding.roleId : null), onChange: null };
+    if (ctx.pick && !roleById(ctx.pick)) ctx.pick = null;
+    delete S.status.bind;
+    let combo = null;
+    openDialog({ opener, cls: 'narrow combo-host', focus: S.data.roles.length ? 'role-combo' : 'bind-go-roles', build: (dlg) => {
+      const roles = S.data.roles;
+      const title = mode === 'approve' ? '결속 요청 승인' : mode === 'alt' ? '다른 역할로 승인' : mode === 'change' ? '역할 바꾸기' : '역할 정하기';
+      const cur = s.binding && !s.binding.lapsed ? s.binding.roleId : null;
+      const same = !p && ctx.pick && ctx.pick === cur;
+      const picked = ctx.pick && roleById(ctx.pick);
+      const why = !hasKeys() ? '패스키가 없어 저장할 수 없습니다.' : !ctx.pick ? '역할을 고르면 저장할 수 있습니다.' : same ? '지금 결속된 역할과 같습니다.' : '';
+      const save = signBtn({ id: 'bind-save', slot: 'bind', label: '패스키로 저장', off: !ctx.pick || same, why: 'bind-why', onclick: () => runSigned({
+        slot: 'bind', proposalId: p ? p.id : null,
+        change: { op: 'binding.set', host: s.host, sessionId: s.sessionId, roleId: ctx.pick },
+        onStale: () => loadState(),
+        onDone: () => { S.status['bind-screen'] = { kind: 'ok', text: '결속을 저장했습니다 · ' + (s.hostLabel || s.host) + ' ' + short(s.sessionId) + ' → ' + roleName(ctx.pick) + ' · ' + fmtHM() + ' · 다음 시작·재개·압축부터 적용됩니다.' }; dlg.close(); } }) });
+      if (!combo && roles.length) { ctx.onChange = () => dlg.refresh(); combo = buildCombo(ctx); }
+      return [h('div', { class: 'head' }, h('h2', { id: 'dlg-title' }, title), h('span', null, sessionLine(s))),
+        p && p.baseChanged ? h('p', { class: 'err-t' }, '요청한 뒤 이 세션의 결속이 바뀌었습니다. 지금 상태를 확인하고 승인하세요.') : null,
+        mode === 'approve' && p && !roleById(p.change.roleId) ? h('p', { class: 'err-t' }, '요청한 역할이 목록에 없습니다(삭제됨). 다른 역할을 고르세요.') : null,
+        roles.length
+          ? h('div', { class: 'col' }, h('label', { for: 'role-combo' }, h('b', null, '역할')), combo,
+            picked ? h('div', { class: 'picked', id: 'combo-picked' }, h('span', { class: 'small muted' }, '선택한 역할'), h('b', null, picked.name),
+              h('span', { class: 'small muted' }, '결속 세션 ' + (picked.bindingCount || 0) + '개 · 담당 컨텍스트 ' + (picked.context ? num(picked.context.bytes) : 0) + ' byte')) : h('span', { id: 'combo-picked', class: 'small muted' }, '아직 고르지 않았습니다.'))
+          : h('div', { class: 'note-warn' }, h('span', null, '역할이 없습니다. 「역할」 메뉴에서 먼저 추가하세요.'),
+            h('div', null, h('button', { type: 'button', class: 'btn warn-o', id: 'bind-go-roles', onclick: () => { dlg.close(); go('roles', 'new-role'); } }, '역할 메뉴로 이동'))),
+        h('p', { class: 'small muted' }, '저장하면 이 세션과 서브에이전트가 다음 시작·재개·압축부터 고른 역할의 담당 컨텍스트를 받습니다. 목록에 없는 역할은 「역할」 메뉴에서 먼저 추가하세요.'),
+        statusEl('bind'),
+        h('div', { class: 'dlg-acts' }, h('span', { id: 'bind-why', class: 'small muted why' }, why), h('button', { type: 'button', class: 'btn', id: 'bind-cancel', onclick: () => dlg.close() }, '취소'), save)];
+    } });
+  }
+  function openUnbind(x, opener, p) {
+    const s = x.s;
+    delete S.status.unbind;
+    openDialog({ opener, cls: 'narrow', focus: 'unbind-cancel', build: (dlg) => {
+      const rn = s.binding ? roleName(s.binding.roleId) : null;
+      return [h('h2', { id: 'dlg-title' }, p ? '결속 해제 요청 승인' : '결속 해제'),
+        h('p', null, sessionLine(s) + (rn ? '에서 역할 「' + rn + '」를 뺍니다. ' : '의 결속을 뺍니다. ') + '이 세션과 서브에이전트는 다음 시작·재개·압축부터 그 담당 컨텍스트를 받지 않습니다. 담당 컨텍스트 본문은 지워지지 않습니다.'),
+        statusEl('unbind'),
+        h('div', { class: 'dlg-acts' }, h('button', { type: 'button', class: 'btn', id: 'unbind-cancel', onclick: () => dlg.close() }, '취소'),
+          signBtn({ id: 'unbind-go', slot: 'unbind', cls: 'btn danger', label: '패스키로 해제', onclick: () => runSigned({
+            slot: 'unbind', proposalId: p ? p.id : null, change: { op: 'binding.set', host: s.host, sessionId: s.sessionId, roleId: null }, onStale: () => loadState(),
+            onDone: () => { S.status['bind-screen'] = { kind: 'ok', text: '결속을 해제했습니다 · ' + (s.hostLabel || s.host) + ' ' + short(s.sessionId) + ' · ' + fmtHM() }; dlg.close(); } }) }))];
+    } });
+  }
+
+  // ---------- JEV · 일반 설정 ----------
+  function lockLine(lockedBy, reason, id) {
+    return h('div', { class: 'col', id }, lockedBy ? h('span', { class: 'small muted' }, '환경 변수 ', h('code', null, lockedBy), '로 고정됨 · 페이지에서 바꿀 수 없습니다') : null,
+      reason ? h('span', { class: 'small muted' }, reason) : null);
+  }
+  function viewJev() {
+    const j = (S.data.settings && S.data.settings.jev) || null;
+    const sec = h('section', { class: 'col', 'aria-labelledby': 'j-title' }, head('j-title', 'JEV', '조언 계층입니다. 꺼도 AGS의 판단·관문은 그대로 동작합니다.'));
+    if (!j) { sec.append(h('p', { class: 'empty' }, '서버가 JEV 설정 값을 주지 않았습니다.')); return sec; }
+    sec.append(h('div', { class: 'box' },
+      h('dl', { class: 'kv' },
+        h('dt', null, '사용'), h('dd', null, j.enabled ? '켜짐' : '꺼짐'),
+        h('dt', null, '설정'), h('dd', null, j.configured ? '있음' : '없음'),
+        h('dt', null, '모드'), h('dd', null, j.mode || '—'),
+        h('dt', null, '프리셋'), h('dd', null, (j.profileCount || 0) + '개')),
+      j.error ? h('p', { class: 'err-t' }, '설정을 읽지 못했습니다: ' + j.error) : null,
+      j.editable ? null : lockLine(j.lockedBy, j.reason, 'jev-lock')));
+    return sec;
+  }
+  const SOURCE = { environment: '환경 변수', settings: '설정 파일', package: '패키지 기본값', root: '루트 설정' };
+  function viewGeneral() {
+    const st = S.data.settings || {};
+    const sec = h('section', { class: 'col', 'aria-labelledby': 's-title' }, head('s-title', '일반 설정'));
+    const loc = st.locale;
+    if (loc) {
+      sec.append(h('div', { class: 'box' }, h('label', { for: 'lang' }, h('b', null, '표시 언어')),
+        h('select', { id: 'lang', class: 'txt-in', disabled: !loc.editable, 'aria-describedby': 'lang-lock' },
+          h('option', { value: 'ko', selected: loc.value === 'ko' }, '한국어'), h('option', { value: 'en', selected: loc.value === 'en' }, 'English')),
+        h('span', { class: 'small muted' }, '출처: ' + (SOURCE[loc.source] || loc.source)),
+        loc.editable ? null : lockLine(loc.lockedBy, loc.reason, 'lang-lock')));
+    }
+    const ex = st.editGateExceptions;
+    sec.append(h('div', { class: 'box' }, h('h2', null, '편집 관문 예외 경로'),
+      h('p', { class: 'desc' }, '버전 관리 안에 있지만 제품이 아닌 폴더를 넣으면, 그 안의 편집은 workflow 없이 허용됩니다. OS 임시 폴더와 호스트 메모 폴더는 이미 빠져 있습니다.'),
+      ex && ex.available === false ? h('p', { class: 'muted' }, ex.reason || '이 판에서는 페이지에서 바꿀 수 없습니다.') : h('p', { class: 'muted' }, '서버가 예외 경로 값을 주지 않았습니다.')));
+    return sec;
+  }
+
+  // ---------- 패스키 ----------
+  async function registerKey() {
+    if (S.busy) return;
+    const d = S.data, first = !d.keys.length;
+    const label = (S.newKeyLabel.trim() || '패스키 ' + (d.keys.length + 1)).slice(0, 60);
+    if (!window.PublicKeyCredential || !navigator.credentials) { setStatus('key-add', { kind: 'error', text: MSG.WEBAUTHN_UNSUPPORTED, code: 'WEBAUTHN_UNSUPPORTED' }); return; }
+    S.busy = 'key-add'; setStatus('key-add', { kind: 'busy', text: '패스키 창에서 새 패스키를 만들어 주세요…' });
+    let cred;
+    try {
+      cred = await navigator.credentials.create({ publicKey: {
+        rp: { id: d.rpId, name: 'AGS 관리자' },
+        user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'ags-admin', displayName: 'AGS 관리자' },
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -8 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { userVerification: 'required', residentKey: 'preferred' }, attestation: 'none', timeout: 120000 } });
+    } catch (e) { S.busy = null; webauthnFail('key-add', e, '패스키 만들기를 취소했습니다(또는 시간이 지났습니다).'); return; }
+    S.busy = null;
+    if (!cred) { webauthnFail('key-add', { name: 'NotAllowedError' }, '패스키 만들기를 취소했습니다.'); return; }
+    const pk = typeof cred.response.getPublicKey === 'function' ? cred.response.getPublicKey() : null;
+    if (!pk) { setStatus('key-add', { kind: 'error', text: MSG.WEBAUTHN_PUBLIC_KEY_UNAVAILABLE, code: 'WEBAUTHN_PUBLIC_KEY_UNAVAILABLE' }); return; }
+    const id = b64u.enc(cred.rawId);
+    await runSigned({ slot: 'key-add', bootstrap: first, allow: first ? [id] : null,
+      change: { op: 'key.add', credentialId: id, publicKey: b64u.enc(pk), alg: cred.response.getPublicKeyAlgorithm(), label },
+      cancelText: '패스키 확인을 취소해 등록하지 않았습니다. 인증기에 새로 만든 패스키는 쓰이지 않습니다(인증기에서 지워도 됩니다).',
+      onStale: () => loadState(),
+      onDone: () => { remember(id); S.newKeyLabel = ''; if (first) S.firstKeyNotice = true; S.status['key-add'] = { kind: 'ok', text: '패스키 「' + label + '」를 등록했습니다 · ' + fmtHM() }; } });
+  }
+  function openRevoke(k, opener) {
+    delete S.status['key-del'];
+    openDialog({ opener, cls: 'narrow', focus: 'key-del-cancel', fallbackFocus: 'p-title', build: (dlg) => [
+      h('h2', { id: 'dlg-title' }, '패스키 「' + k.label + '」를 삭제할까요?'),
+      h('p', null, '지문 ', h('code', null, k.fingerprint), ' · ' + fmtTime(k.addedAt) + ' 등록. 삭제하면 이 패스키로는 더 저장할 수 없고, 이 패스키로 서명한 기록도 효력을 잃을 수 있습니다. 남은 패스키로 확인합니다.'),
+      statusEl('key-del'),
+      h('div', { class: 'dlg-acts' }, h('button', { type: 'button', class: 'btn', id: 'key-del-cancel', onclick: () => dlg.close() }, '취소'),
+        signBtn({ id: 'key-del-go', slot: 'key-del', cls: 'btn danger', label: '패스키로 삭제', off: S.data.keys.length <= 1, onclick: () => runSigned({
+          slot: 'key-del', change: { op: 'key.revoke', credentialId: k.credentialId }, onStale: () => loadState(),
+          onDone: () => { forget(k.credentialId); S.status['key-screen'] = { kind: 'ok', text: '패스키 「' + k.label + '」를 삭제했습니다 · ' + fmtHM() }; dlg.close(); } }) }))] });
+  }
+  function viewPasskey() {
+    const d = S.data, keys = d.keys, mine = lsRead();
+    const sec = h('section', { class: 'col', 'aria-labelledby': 'p-title' },
+      head('p-title', '패스키', '설정을 저장할 때 이 패스키로 본인을 확인합니다. 추가·삭제도 기존 패스키 확인이 필요합니다. 처음 하나만 확인 없이 등록됩니다.'));
+    if (S.firstKeyNotice) sec.append(h('div', { class: 'note-ok', role: 'status' }, '처음 등록한 패스키입니다. 목록의 등록 시각·지문이 내 것인지 확인하세요.'));
+    if (d.bootstrap) {
+      const still = keys.some((k) => k.credentialId === d.bootstrap.credentialId);
+      sec.append(h('div', { class: 'box' }, h('h2', null, '최초 등록 패스키'),
+        h('span', null, fmtTime(d.bootstrap.at) + ' · 지문 ', h('code', null, d.bootstrap.fingerprint), still ? '' : ' · 지금 목록에는 없음(삭제됨)'),
+        h('span', { class: 'small muted' }, '처음 등록은 확인 없이 받습니다. 내가 등록한 시각·지문이 아니면 이 PC의 다른 프로그램이 먼저 등록했을 수 있습니다.')));
+    }
+    sec.append(statusEl('key-screen'));
+    if (!S.dialog && S.status['key-del'] && S.status['key-del'].kind !== 'busy') sec.append(statusEl('key-del'));
+    const tbody = h('tbody');
+    if (!keys.length) tbody.append(h('tr', null, h('td', { colspan: '5', class: 'muted' }, '등록된 패스키가 없습니다.')));
+    for (const k of keys) {
+      const last = keys.length <= 1;
+      tbody.append(h('tr', null,
+        h('td', null, h('b', null, k.label), mine && mine.includes(k.credentialId) ? h('span', { class: 'tag' }, '이 브라우저') : null,
+          d.bootstrap && d.bootstrap.credentialId === k.credentialId ? h('span', { class: 'tag' }, '최초') : null),
+        h('td', null, h('code', null, k.fingerprint)),
+        h('td', { class: 'nowrap' }, fmtTime(k.addedAt)),
+        h('td', { class: 'nowrap' }, k.lastUsedAt ? fmtTime(k.lastUsedAt) : '—'),
+        h('td', null, h('div', { class: 'acts' },
+          h('button', { type: 'button', class: 'btn sm danger', id: 'key-del-' + idSafe(k.credentialId), disabled: last || !!S.busy, 'aria-describedby': last ? 'key-last-why' : null, onclick: (e) => openRevoke(k, e.currentTarget) }, '삭제'),
+          last ? h('span', { id: 'key-last-why', class: 'small muted' }, '마지막 패스키는 지울 수 없습니다. 다른 패스키를 먼저 추가하세요.') : null))));
+    }
+    sec.append(h('div', { class: 'tbl-wrap' }, h('table', null, h('caption', null, '등록된 패스키'),
+      h('thead', null, h('tr', null, ['이름', '지문', '등록', '마지막 사용', '동작'].map((t) => h('th', { scope: 'col' }, t)))), tbody)));
+    if (mine === null) sec.append(h('p', { class: 'small muted' }, '이 브라우저 저장소를 쓸 수 없어 「이 브라우저」 표시를 하지 못합니다.'));
+    const first = !keys.length;
+    const lab = h('input', { id: 'new-key-label', type: 'text', class: 'txt-in', maxlength: '60', autocomplete: 'off', value: S.newKeyLabel, placeholder: '예: Windows Hello', 'aria-describedby': 'new-key-hint' });
+    lab.addEventListener('input', () => { S.newKeyLabel = lab.value; });
+    const addBtn = h('button', { type: 'button', class: 'btn pri al', id: 'key-add', disabled: !!S.busy || slotBlocked('key-add'), onclick: registerKey },
+      S.busy === 'key-add' ? '저장 중…' : first ? '첫 패스키 등록' : '패스키 추가(기존 패스키 확인)');
+    sec.append(h('div', { class: 'box' }, h('h2', null, first ? '첫 패스키 등록' : '패스키 추가'),
+      h('div', { class: 'row' }, h('div', { class: 'field' }, h('label', { for: 'new-key-label', class: 'small muted' }, '패스키 이름 (60자 이내, 비우면 「패스키 ' + (keys.length + 1) + '」)'), lab,
+        h('span', { id: 'new-key-hint', class: 'hint' }, first ? '처음 하나는 확인 없이 등록됩니다. 등록 뒤 목록의 시각·지문이 내 것인지 확인하세요.' : '새 패스키를 만든 뒤, 이미 등록된 패스키로 한 번 더 확인합니다.')),
+        addBtn),
+      statusEl('key-add')));
+    return sec;
+  }
+
+  // ---------- 시작 ----------
+  function hasUnsaved() {
+    if (!S.data) return false;
+    if (isGlobalDirty()) return true;
+    if (S.r.newName.trim()) return true;
+    const ren = S.r.renaming; if (ren) { const r = roleById(ren.roleId); if (r && ren.value.normalize('NFC').trim() !== r.name) return true; }
+    return false;
+  }
+  window.addEventListener('beforeunload', (e) => { if (hasUnsaved()) { e.preventDefault(); e.returnValue = ''; } });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !S.busy && S.data) loadState(); });
+  render();
+  loadState();
+})();
+</script>
+</body>
+</html>

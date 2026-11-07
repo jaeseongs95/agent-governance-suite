@@ -76,7 +76,7 @@ export interface MessageParams {
   "hooks.contextLayers.role": { "role": NestedMessage | number | string; "stateToken": NestedMessage | number | string; "changed": string; "body": NestedMessage | number | string; };
   "hooks.contextLayers.cleared": { "layer": string; "role": NestedMessage | number | string; };
   "hooks.contextLayers.parentSituation": { "stateToken": NestedMessage | number | string; "body": NestedMessage | number | string; };
-  "hooks.contextLayers.verifyFailed": { "layer": string; "revision": string; "code": NestedMessage | number | string; "adminUrl": NestedMessage | number | string; };
+  "hooks.contextLayers.verifyFailed": { "layer": string; "revision": string; "reason": NestedMessage | number | string; "adminUrl": NestedMessage | number | string; };
   "hooks.contextLayers.unreadable": { "layer": string; };
   "server.call.reservedCallerField": Record<string, never>;
   "server.call.callerIngressMissing": Record<string, never>;

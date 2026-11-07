@@ -185,6 +185,10 @@ describe("signed admin log: one case per error code", () => {
     signAndCommit(service, owner, { op: "global.set", body: "theirs" });
     expect(adminCode(() => service.commit({ intent: mine.intent, assertion: owner.assert(mine.intent), requestId: randomUUID(), proposalId: null }))).toBe("ADMIN_TARGET_STALE");
     expect(adminCode(() => service.commit({ intent: role.intent, assertion: owner.assert(role.intent), requestId: randomUUID(), proposalId: null }))).toBe("NO_ERROR");
+    // The page names the revision its edit started from; a moved target is refused before the passkey prompt.
+    const current = service.adminState().global!.stateToken;
+    expect(adminCode(() => service.prepareIntent({ op: "global.set", body: "x" }, false, null))).toBe("ADMIN_TARGET_STALE");
+    expect(adminCode(() => service.prepareIntent({ op: "global.set", body: "x" }, false, current))).toBe("NO_ERROR");
   });
 
   it(`${covers("ADMIN_LOG_REGRESSED")} in the process that saw the newer record; tail truncation is a declared limit`, () => {
