@@ -25,9 +25,9 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
   const serverTest = stdioServerTests();
   // The first server of each case starts before the case's time limit starts (stdioServerTests); the limit measures the
   // calls. The restart in the body is the behavior under test (admission replay across a restart), so it stays inside.
-  for (const { host, model, ingress } of [
-    { host: "claude-code", model: "claude-opus-5", ingress: "hook" },
-    { host: "claude-code", model: "claude-opus-5-default-entry-fixture-20261027", ingress: "hook" },
+  for (const { host, model, ingress, catalogAlias, modelClass } of [
+    { host: "claude-code", model: "claude-opus-5", ingress: "hook", catalogAlias: "opus", modelClass: "deep" },
+    { host: "claude-code", model: "claude-opus-5-default-entry-fixture-20261027", ingress: "hook", catalogAlias: null, modelClass: null },
   ]) serverTest(`completes guarded STDIO and keeps restart replay rejection for ${host}/${ingress}/${model}`, async ({ defer, connect }) => {
     const isolated = await mkdtemp(path.join(tmpdir(), "ags-attestation-stdio-"));
     defer(() => rm(isolated, { recursive: true, force: true }));
@@ -63,7 +63,13 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
     const providerCatalog = catalog.providers["anthropic-claude-code"].catalog;
     expect(providerCatalog.matching).toBe("exact-only");
     expect(Object.hasOwn(providerCatalog.models, model)).toBe(false);
-    expect(Object.hasOwn(providerCatalog.aliases ?? {}, model)).toBe(false);
+    if (catalogAlias === null) {
+      // A name resembling a registered alias is still opaque without an exact catalog entry.
+      expect(Object.hasOwn(providerCatalog.aliases ?? {}, model)).toBe(false);
+    } else {
+      expect(providerCatalog.aliases[model]).toBe(catalogAlias);
+      expect(providerCatalog.models[catalogAlias].model_class).toBe(modelClass);
+    }
     let connection = server;
     // Claude's tools/call _meta names only the tool-use ID; the governance hook recorded the caller under it.
     const rawCall = async <T>(name: string, input: Record<string, unknown>, callId?: string) => result<T>(await connection.client.callTool({
@@ -114,9 +120,14 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
     expect(planned.error).toBeNull();
     const plan = planned.data!;
     expect(plan.bootstrapExecution?.context).toMatchObject({
-      model, modelClass: knownPlan.data!.bootstrapExecution!.context.modelClass,
+      model, modelClass,
       reasoningEffort: knownPlan.data!.bootstrapExecution!.context.reasoningEffort,
     });
+    if (catalogAlias === null) {
+      expect(plan.bootstrapExecution?.context.policyNotes).toEqual(["MODEL_NOT_IN_CATALOG"]);
+    } else {
+      expect(plan.bootstrapExecution?.context.policyNotes).toBeUndefined();
+    }
 
     const opaque = await rawCall<WorkflowPlanV1>("plan_workflow", planInput,
       await admitted("plan_workflow", planInput, "opaque-unapproved-default-entry-fixture"));
@@ -153,7 +164,7 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       findings: [], blockers: [], error: null,
     });
     expect(recorded.error).toBeNull();
-    expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ model, reasoningEffort: "high", actorId: hostActorId(host, "fixture-session") });
+    expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ model, modelClass, reasoningEffort: "high", actorId: hostActorId(host, "fixture-session") });
     const final = await call<WorkflowReceiptV1>("finalize_workflow", { runId: receipt.runId, expectedRevision: recorded.data!.revision });
     expect(final.data?.state).toBe("passed");
     await connection.close();
