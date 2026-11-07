@@ -967,7 +967,11 @@ export class SqliteContinuityStore {
 
   private initializeSchema(migrations: readonly ContinuityMemoryMigration[]): void {
     const version = this.assertSupportedSchema();
-    if (version === SCHEMA_VERSION) { this.validateExistingSchema(version); return; }
+    if (version === SCHEMA_VERSION) {
+      this.validateExistingSchema(version);
+      this.initializeIndexes();
+      return;
+    }
     if (version !== 0 && version !== 1 && version !== 2 && version !== 3) {
       throw new ContinuityStoreError(msg("continuity.store.unsupportedSchema", {version}), undefined, "UNSUPPORTED_SCHEMA");
     }
@@ -1044,16 +1048,21 @@ export class SqliteContinuityStore {
       this.database.exec(`UPDATE continuity_tasks SET pending_source=NULL,pending_revision=NULL,pending_digest=NULL,
         pending_root_id=NULL,pending_consumed=0 WHERE pending_source='direct';`);
     }
-    this.database.exec(`CREATE INDEX continuity_current_memory_cleanup ON continuity_current_memory(updated_at,task_correlation);
-      CREATE INDEX continuity_memory_history_cleanup ON continuity_memory_history(archived_at,task_correlation);
+    this.initializeIndexes();
+    if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
+    else this.database.exec(`PRAGMA user_version=${SCHEMA_VERSION};`);
+    this.validateExistingSchema(SCHEMA_VERSION);
+  }
+
+  /** Fresh, migrated and reopened stores share the same additive index repair. */
+  private initializeIndexes(): void {
+    this.database.exec(`CREATE INDEX IF NOT EXISTS continuity_current_memory_cleanup ON continuity_current_memory(updated_at,task_correlation);
+      CREATE INDEX IF NOT EXISTS continuity_memory_history_cleanup ON continuity_memory_history(archived_at,task_correlation);
       CREATE INDEX IF NOT EXISTS continuity_tasks_cleanup ON continuity_tasks(updated_at,task_correlation);
       CREATE INDEX IF NOT EXISTS continuity_requests_cleanup ON continuity_requests(created_at,task_correlation,epoch);
       CREATE INDEX IF NOT EXISTS continuity_tombstones_cleanup ON continuity_tombstones(purged_at,task_correlation,epoch);
       CREATE INDEX IF NOT EXISTS continuity_observations_cleanup ON continuity_observations(observed_at,task_correlation,epoch);
       ${OBSERVATION_EVENT_INDEX}`);
-    if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
-    else this.database.exec(`PRAGMA user_version=${SCHEMA_VERSION};`);
-    this.validateExistingSchema(SCHEMA_VERSION);
   }
 
   private prepareLegacyMigration(version: number, migrations: readonly ContinuityMemoryMigration[]): Array<{
