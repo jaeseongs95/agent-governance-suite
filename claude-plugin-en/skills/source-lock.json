@@ -16,7 +16,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:e0f707c38cc68e89c4f4b023d11fff6ed59ea00fa7a69463bbb6413f713b446d",
+      "integratedChecksum": "sha256:31f168ca13118e0a61d9fa04ba3b28289083200d0b917e0d77c00cff06dc3f08",
       "checksumScope": "relative paths and normalized text bytes under skills/independent-audit-gate"
     },
     {
@@ -34,7 +34,7 @@
       "version": "1.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:0d4fc76b73c7bd356ace7872ff13bdfbe228ccf47f1f8bb9d31a60f62e5a15fa",
+      "integratedChecksum": "sha256:21d0cc88e56e483117234c0b53a60e0821dc6d64183319e3125d78d98f8b5751",
       "checksumScope": "relative paths and normalized text bytes under skills/task-contract"
     },
     {
