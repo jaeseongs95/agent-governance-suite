@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
-import { writeSync } from "node:fs";
-import { writeDiagnostic } from "./hook-error-diagnostics.js";
+import { syncStderr, writeDiagnostic } from "./hook-error-diagnostics.js";
 import { failureContext, producerFailureReason, retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
 
 import { WorkflowContractError, type KoreanProseGlossaryLookupRequestV1, type KoreanProseGlossaryLookupResultV1 } from "../../contracts/types.js";
@@ -125,7 +124,7 @@ function reportGlossaryFailure(phase: "lookup", error: unknown): void {
   try {
     writeDiagnostic("korean-prose-glossary", "glossary-failure", {
       phase, reason: producerFailureReason(error) ?? "GLOSSARY_UNAVAILABLE", context: failureContext(error),
-    }, line => { writeSync(2, line + "\n"); });
+    }, syncStderr);
   } catch { /* A failed diagnostic sink does not replace the operation result/error. */ }
 }
 

@@ -9,10 +9,13 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import { types } from "node:util";
-import { failureCode, failureContext, retainFailureCause, retainFailureSecondary } from "../../runtime/failure-diagnostics.mjs";
+import { failureContext, retainFailureCause, retainFailureSecondary } from "../../runtime/failure-diagnostics.mjs";
+import { diagnosticRecord, streamStderr, writeDiagnostic, writeStageFailure } from "../../runtime/diagnostic-record.mjs";
 import { msg, render, resolveHostLocale } from "../../runtime/i18n.mjs";
 
 let denyLocale = null;
+// The component name of every stderr record this connector writes (AGS3-D-0023 common format).
+const COMPONENT = "antigravity-hook-runner";
 /** A deny reason in the host locale (docs/i18n-design.md 4.1 ①); the locale is read once, when the first reason is shown. */
 function denyReason(key, params) {
   denyLocale ??= resolveHostLocale().locale;
@@ -588,7 +591,7 @@ function reportInspectionFailure(error, options) {
         nativeCode: typeof nativeCode === "string" && ["ENOENT", "EACCES", "EPERM", "ETIMEDOUT", "ENOBUFS", "EIO", "EINVAL", "ESRCH", "ABORT_ERR"].includes(nativeCode) ? nativeCode : null,
         context,
       };
-      console.error(JSON.stringify({ agsAntigravityProcessIdentityFailure: diagnostic }));
+      writeDiagnostic(COMPONENT, "process-identity-failure", diagnostic);
     }
   } catch (secondary) { retainFailureSecondary(failure, secondary); /* Diagnostics do not grant identity or change cleanup. */ }
   return null;
@@ -952,7 +955,7 @@ export function createClaimStateTracker(externalObserver) {
 export function formatSecretFreeClaimDiagnosticLine(claimTracker) {
   if (!claimTracker || typeof claimTracker.getSecretFreeDiagnostic !== "function") return "";
   const diag = claimTracker.getSecretFreeDiagnostic();
-  return `${JSON.stringify({ agsAntigravityHookDiagnostic: diag })}\n`;
+  return `${diagnosticRecord(COMPONENT, "claim-state", diag)}\n`;
 }
 
 // R04-F01, R04-F04, R05-F02, R05-F03, #3313 N3 & #3317 M2 (aligned with central 01a14016 10193bee/10411a0d/796904a4/5eb3d511):
@@ -1739,10 +1742,9 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
  * AGS 3.0 error model R6: a failed stage keeps its fail-open/deny result but leaves one bounded stderr line with
  * the stage and the error's own bounded code. Never a message, path, input or body. A broken sink changes nothing.
  */
-export function reportStageFailure(stage, cause, writeStderr = (line) => process.stderr.write(line)) {
+export function reportStageFailure(stage, cause, writeStderr = streamStderr) {
   try {
-    const code = failureCode(cause);
-    writeStderr(`[agent-governance-suite] antigravity-stage-failure ${JSON.stringify({ stage, ...(code ? { code } : {}) })}\n`);
+    writeStageFailure(COMPONENT, "stage-failure", stage, cause, {}, (line) => writeStderr(`${line}\n`));
   } catch { /* Diagnostics never change the hook decision. */ }
 }
 
@@ -1790,7 +1792,7 @@ export async function runConnectorFromRaw(raw, argv = process.argv, options = {}
   }
 }
 
-export function emitStrandedClaimDiagnosticIfNeeded(claimTracker, env = process.env, writeStderr = (line) => process.stderr.write(line)) {
+export function emitStrandedClaimDiagnosticIfNeeded(claimTracker, env = process.env, writeStderr = streamStderr) {
   if (!claimTracker || typeof claimTracker.getSecretFreeDiagnostic !== "function") return false;
   const diag = claimTracker.getSecretFreeDiagnostic();
   const isStrandedClaim = diag.claimState === "claim-result-unknown" || diag.claimState === "after-claim-before-output";
@@ -1808,7 +1810,7 @@ export function finalizeConnectorOutput(out, claimTracker, options = {}) {
   const env = options?.env ?? process.env;
   const writeStderr = typeof options?.writeStderr === "function"
     ? options.writeStderr
-    : (line) => process.stderr.write(line);
+    : streamStderr;
   const stdoutStream = options?.stdoutStream ?? (!options?.writeStdout ? process.stdout : null);
   const writeStdout = typeof options?.writeStdout === "function"
     ? options.writeStdout

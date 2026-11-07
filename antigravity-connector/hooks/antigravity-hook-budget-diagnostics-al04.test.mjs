@@ -294,7 +294,8 @@ for (const [name, create] of unsafeInspectionFailures) for (const mode of ["thro
     assert.equal(await resolveVerifiedAntigravityHostProcess(options({ resolveHostProcess: resolver, onProcessIdentityFailure: undefined })), null);
     assert.equal(lines.length, 1, "opaque errors must still produce one bounded fallback diagnostic");
     assert.equal(typeof lines[0], "string"); assert.ok(lines[0].length < 4096); assert.equal(lines[0].includes(privateDiagnosticMarker), false);
-    const diagnostic = JSON.parse(lines[0]).agsAntigravityProcessIdentityFailure;
+    const { component, event, ...diagnostic } = JSON.parse(lines[0]);
+    assert.deepEqual([component, event], ["antigravity-hook-runner", "process-identity-failure"]);
     assert.deepEqual(Object.keys(diagnostic).sort(), ["context", "nativeCode", "phase", "reason"]);
     assert.equal(diagnostic.reason, "HOST_PROCESS_INSPECTION_FAILED"); assert.equal(diagnostic.phase, "inspection"); assert.equal(diagnostic.nativeCode, null);
     assert.equal(typeof diagnostic.context, "object");
@@ -311,7 +312,8 @@ test("F4 safe diagnostics retains an allowlisted native code and fixed internal 
   try {
     const result = resolveVerifiedAntigravityHostProcess(options({ onProcessIdentityFailure: undefined }));
     await drain(); assert.equal(await result, null); assert.equal(lines.length, 1);
-    const diagnostic = JSON.parse(lines[0]).agsAntigravityProcessIdentityFailure;
+    const { component, event, ...diagnostic } = JSON.parse(lines[0]);
+    assert.deepEqual([component, event], ["antigravity-hook-runner", "process-identity-failure"]);
     assert.equal(diagnostic.reason, "HOST_PROCESS_INSPECTION_FAILED"); assert.equal(diagnostic.phase, "spawn"); assert.equal(diagnostic.nativeCode, "EACCES");
     assert.equal(lines[0].includes(privateDiagnosticMarker), false);
   } finally { stderr.mockRestore(); }

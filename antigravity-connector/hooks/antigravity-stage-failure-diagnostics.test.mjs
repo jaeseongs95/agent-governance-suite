@@ -5,7 +5,13 @@ import { executeAntigravityHookEvent } from "./antigravity-hook-runner.mjs";
 // AGS 3.0 error model P6 (D-0181 residual): a failed Antigravity stage keeps its fail-open/deny decision but leaves
 // one bounded stderr line with the stage and the error's own code, never the message.
 const failure = () => Object.assign(new Error("PRIVATE /secret/path"), { code: "EACCES" });
-const parse = lines => lines.map(line => JSON.parse(line.slice(line.indexOf("{"))));
+// AGS3-D-0023: each line is exactly one common record; the envelope is checked, the payload compared.
+const parse = lines => lines.map(line => {
+  expect(line).toMatch(/^\{[^\r\n]*\}\n$/u);
+  const { component, event, ...payload } = JSON.parse(line);
+  expect([component, event]).toEqual(["antigravity-hook-runner", "stage-failure"]);
+  return payload;
+});
 
 it("records each failed advisory stage and still fails open", async () => {
   const lines = [];
@@ -16,7 +22,6 @@ it("records each failed advisory stage and still fails open", async () => {
     spawnSync: () => ({ status: 0 }),
   });
   expect(output).toEqual({});
-  expect(lines.every(line => line.startsWith("[agent-governance-suite] antigravity-stage-failure "))).toBe(true);
   // Only the injected session-message stage fails; the separate board record succeeds above.
   expect(parse(lines)).toEqual([{ stage: "session-message", code: "EACCES" }]);
   expect(lines.join("")).not.toContain("PRIVATE");

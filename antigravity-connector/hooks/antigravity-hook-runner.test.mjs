@@ -27,6 +27,19 @@ import {
 } from "./antigravity-hook-runner.mjs";
 
 const runnerPath = fileURLToPath(new URL("./antigravity-hook-runner.mjs", import.meta.url));
+
+/**
+ * AGS3-D-0023: every connector stderr line is one common record ({component, event, ...}). This view checks that
+ * envelope and returns the payload under the event's former name, so the payload assertions below stay unchanged.
+ */
+const EVENT_VIEWS = { "claim-state": "agsAntigravityHookDiagnostic", "process-identity-failure": "agsAntigravityProcessIdentityFailure" };
+function recordView(line) {
+  assert.match(line, /^[^\r\n]+\n?$/u, "one record per line");
+  const { component, event, ...payload } = JSON.parse(line);
+  assert.equal(component, "antigravity-hook-runner");
+  assert.ok(Object.hasOwn(EVENT_VIEWS, event), `known event: ${event}`);
+  return { [EVENT_VIEWS[event]]: payload };
+}
 const TEST_SESSION_ID = "00000000-0000-4000-8000-000000000001";
 const TEST_TARGET_SESSION_ID = "00000000-0000-4000-8000-000000000002";
 
@@ -984,7 +997,7 @@ try {
     assert.equal(emittedUnknown, true);
     assert.equal(stderrLines.length, 1);
     assert.equal(stderrLines[0].includes("msg-"), false, "Diagnostic line must never contain messageIds or body");
-    assert.deepEqual(JSON.parse(stderrLines[0]), {
+    assert.deepEqual(recordView(stderrLines[0]), {
       agsAntigravityHookDiagnostic: {
         claimState: "claim-result-unknown",
         messageCount: 0,
@@ -995,7 +1008,7 @@ try {
     });
     assert.equal(
       formatSecretFreeClaimDiagnosticLine(trackerC),
-      '{"agsAntigravityHookDiagnostic":{"claimState":"after-claim-before-output","messageCount":1,"reentered":true,"observerError":false,"hostConsumedConfirmed":false}}\n',
+      '{"claimState":"after-claim-before-output","messageCount":1,"reentered":true,"observerError":false,"hostConsumedConfirmed":false,"component":"antigravity-hook-runner","event":"claim-state"}\n',
     );
     // `stdout-written-not-consumed` does NOT emit stderr unless `AGS_ANTIGRAVITY_DIAGNOSTIC_STDERR === "1"`
     assert.equal(emitStrandedClaimDiagnosticIfNeeded(trackerA, {}, (line) => stderrLines.push(line)), false);
@@ -1192,7 +1205,7 @@ try {
       1,
       "#3317 M1: non-empty out with claim-result-unknown must still emit default stderr diagnostic without env=1",
     );
-    assert.deepEqual(JSON.parse(stderrLinesM1[0]), {
+    assert.deepEqual(recordView(stderrLinesM1[0]), {
       agsAntigravityHookDiagnostic: {
         claimState: "claim-result-unknown",
         messageCount: 0,
@@ -1346,7 +1359,7 @@ try {
     assert.equal(streamCbThenErr.getErrorListenerCount(), 0, "R10-F02: error listener must be cleaned up after consuming stream error");
     assert.equal(trackerCbThenErr.getSnapshot().state, "after-claim-before-output");
     assert.equal(stderrCbThenErr.length, 1);
-    assert.deepEqual(JSON.parse(stderrCbThenErr[0]), {
+    assert.deepEqual(recordView(stderrCbThenErr[0]), {
       agsAntigravityHookDiagnostic: {
         claimState: "after-claim-before-output",
         messageCount: 1,
@@ -1696,7 +1709,7 @@ try {
     assert.equal(defaultPathFailures[0].code, "HOST_PROCESS_INSPECTION_FAILED");
     assert.equal(defaultPathFailures[0].cause?.code, "HOOK_BUDGET_EXPIRED");
     assert.equal(stderrLinesDefault.length, 1);
-    const parsedDefaultDiag = JSON.parse(stderrLinesDefault[0]).agsAntigravityProcessIdentityFailure;
+    const parsedDefaultDiag = recordView(stderrLinesDefault[0]).agsAntigravityProcessIdentityFailure;
     assert.equal(parsedDefaultDiag.reason, "HOST_PROCESS_INSPECTION_FAILED");
     assert.equal(parsedDefaultDiag.phase, "inspection");
 
@@ -1719,7 +1732,7 @@ try {
     assert.equal(isolatedChildRes.signal, null);
     const childStderrLines = isolatedChildRes.stderr.trim().split(/\r?\n/u).filter(Boolean);
     assert.equal(childStderrLines.length >= 1, true, `Expected isolated child stderr diagnostic, got: ${isolatedChildRes.stderr}`);
-    const childDiag = JSON.parse(childStderrLines[0]).agsAntigravityProcessIdentityFailure;
+    const childDiag = recordView(childStderrLines[0]).agsAntigravityProcessIdentityFailure;
     assert.equal(childDiag.reason, "HOST_PROCESS_INSPECTION_FAILED");
     assert.equal(childDiag.phase, "spawn");
     assert.equal(childDiag.nativeCode, "ENOENT");
