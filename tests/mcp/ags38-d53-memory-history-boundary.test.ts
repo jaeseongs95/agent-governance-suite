@@ -40,8 +40,10 @@ describe("D53 API·hook·cleanup의 현재 전용 경계", () => {
     const oldCandidate = f.service.inspectContext({ schemaVersion: "1.0.0" }, f.caller).data!;
     f.service.markPreCompact(f.session);
     const b = direct(f.save(memory(NEW_B), "b").data);
-    const staleCompact = hook(f.service, f.session, "compact");
-    expect(JSON.stringify(staleCompact)).not.toContain(OLD_A);
+    const refreshedCompact = hook(f.service, f.session, "compact");
+    expect(JSON.stringify(refreshedCompact)).toContain(NEW_B);
+    expect(JSON.stringify(refreshedCompact)).not.toContain(OLD_A);
+    expect(hook(f.service, f.session, "compact")).toEqual({});
     const loaded = f.service.loadContext({ schemaVersion: "1.0.0" }, f.caller);
     expect(direct(loaded.data)).toEqual(b);
     const inspected = f.service.inspectContext({ schemaVersion: "1.0.0" }, f.caller);
@@ -52,7 +54,7 @@ describe("D53 API·hook·cleanup의 현재 전용 경계", () => {
     expect(replay).toMatchObject({ ok: false, error: { code: "STALE_REVISION" } });
     const resumeHook = hook(f.service, f.session, "resume");
     expect(JSON.stringify(resumeHook)).toContain(NEW_B);
-    const outputs: unknown[] = [loaded, inspected, replay, staleCompact, resumeHook];
+    const outputs: unknown[] = [loaded, inspected, replay, refreshedCompact, resumeHook];
     if (oldCandidate.restoreToken) {
       const stale = f.service.loadContext({ schemaVersion: "1.0.0", candidateToken: oldCandidate.restoreToken }, f.caller);
       expect(stale.ok).toBe(false);
@@ -69,6 +71,47 @@ describe("D53 API·hook·cleanup의 현재 전용 경계", () => {
     for (const output of outputs) expect(JSON.stringify(output)).not.toContain(OLD_A);
     expect(histories(f.databasePath)).toHaveLength(1);
     expect(JSON.stringify(histories(f.databasePath))).toContain(OLD_A); // private TEST oracle proves canary existed.
+  });
+
+  it("D53-REFRESH: 같은 epoch 최신 B를 한 번 복구하고 소비 뒤 checkpoint/no-op/late replay로 재개방하지 않는다", () => {
+    const f = own(fixture());
+    expect(f.save(memory(OLD_A), "a").ok).toBe(true);
+    const a = f.current();
+    f.service.markPreCompact(f.session);
+    const requestB = { schemaVersion: "1.0.0", requestId: "b", expectedStateToken: a.stateToken, ...memory(NEW_B) };
+    const b = direct(f.service.checkpointContext(requestB, f.caller).data);
+    expect(b.epoch).toBe(a.epoch);
+    expect(f.save(memory(NEW_B), "b-noop").data).toEqual(b);
+    const first = hook(f.service, f.session, "compact");
+    expect(JSON.stringify(first)).toContain(NEW_B);
+    expect(JSON.stringify(first)).not.toContain(OLD_A);
+    expect(hook(f.service, f.session, "compact")).toEqual({});
+    const c = direct(f.save(memory("CURRENT_C_소비뒤갱신"), "c").data);
+    expect(c.epoch).toBe(b.epoch);
+    expect(hook(f.service, f.session, "compact")).toEqual({});
+    expect(f.save(c.memory!, "c-noop").data).toEqual(c);
+    expect(hook(f.service, f.session, "compact")).toEqual({});
+    const lateReplay = f.service.checkpointContext(requestB, f.caller);
+    expect(lateReplay).toMatchObject({ ok: false, error: { code: "STALE_REVISION" } });
+    expect(JSON.stringify(lateReplay)).not.toContain(OLD_A);
+    expect(JSON.stringify(lateReplay)).not.toContain(NEW_B);
+    expect(hook(f.service, f.session, "compact")).toEqual({});
+    expect(f.current()).toEqual(c);
+  });
+
+  it.each(["clear", "purge", "suppressed"] as const)("D53-REFRESH: %s 경계 뒤에는 pending A나 최신 B를 자동복원하지 않는다", action => {
+    const f = own(fixture());
+    expect(f.save(memory(OLD_A), "a").ok).toBe(true);
+    f.service.markPreCompact(f.session);
+    expect(f.save(memory(NEW_B), "b").ok).toBe(true);
+    if (action === "clear") f.service.clearSession(f.session);
+    else if (action === "purge") expect(f.service.purgeDirectContext({ schemaVersion: "1.0.0", requestId: "purge-b",
+      expectedStateToken: f.current().stateToken }, f.caller).ok).toBe(true);
+    else expect(f.service.suppressContextRestore({ schemaVersion: "1.0.0", expectedEpoch: f.current().epoch }, f.caller).ok).toBe(true);
+    const afterBoundary = hook(f.service, f.session, "compact");
+    for (const marker of [OLD_A, NEW_B]) expect(JSON.stringify(afterBoundary)).not.toContain(marker);
+    expect(f.service.restoreCurrentForSession(f.session)).toBeNull();
+    if (action !== "suppressed") expect(f.current().memory).toBeNull();
   });
 
   it("D53-BOUNDARY hook: 일반 턴은 본문 없이 갱신 cue, qualified progress callId는 한 번만 cue", () => {
