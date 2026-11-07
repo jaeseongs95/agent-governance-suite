@@ -880,6 +880,8 @@ export class ContinuityService implements ContinuityGateway {
   private checkpointCue(task: ContinuityTaskRecord, missingOnly = false): HookText | null {
     const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", current => {
       const snapshot = this.store.getCurrent(current.taskCorrelation, current.currentEpoch);
+      // An initial empty current invites a save; a purged empty current preserves the explicit erasure choice.
+      if (!snapshot?.memory && this.store.getTombstone(current.taskCorrelation, current.currentEpoch)) return null;
       if (missingOnly && snapshot?.memory) return null;
       return [
         msg("hooks.checkpointCue.status", { state: missingOnly ? "missing" : snapshot?.memory ? "saved" : "none" }),
