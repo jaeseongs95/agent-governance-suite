@@ -27,9 +27,10 @@ function fixture() {
   return { directory, calls };
 }
 function launch(f, preload) {
+  // These fixtures exercise full generic collection, independently of the parent test shard.
   return spawnSync(process.execPath, [...(preload ? ["--import", pathToFileURL(preload).href] : []),
     path.join(f.directory, "scripts", "run-tests.mjs")],
-  { encoding: "utf8", timeout: 20_000, windowsHide: true });
+  { env: { ...process.env, AGS_TEST_SCOPE: "all" }, encoding: "utf8", timeout: 20_000, windowsHide: true });
 }
 function diagnostics(result) {
   const records = result.stderr.trim().split(/\r?\n/u).flatMap(line => {
