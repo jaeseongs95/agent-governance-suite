@@ -474,6 +474,14 @@ export class SqliteContinuityStore {
       if (current.memory === null || serializeContinuityMemory(current.memory).json !== serialized.json) {
         this.archiveCurrent(current, now, "update");
         snapshot = this.writeCurrent(taskCorrelation, epoch, memory, now, current.memory ? current.createdAt : now);
+        // Follow an unconsumed pre-compact marker through this exact current replacement only.
+        if (!task.suppressed && task.pendingSource === "direct" && !task.pendingConsumed
+          && current.memoryDigest !== null && task.pendingStateToken === current.stateToken && task.pendingDigest === current.memoryDigest) {
+          this.database.prepare(`UPDATE continuity_tasks SET pending_state_token=?,pending_digest=?,updated_at=?
+            WHERE task_correlation=? AND current_epoch=? AND suppressed=0 AND pending_source='direct' AND pending_consumed=0
+              AND pending_state_token=? AND pending_digest=?`)
+            .run(snapshot.stateToken, snapshot.memoryDigest, now, taskCorrelation, epoch, current.stateToken, current.memoryDigest);
+        }
       }
       const resultJson = JSON.stringify({
         schemaVersion: "1.0.0",
