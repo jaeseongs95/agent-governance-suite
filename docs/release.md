@@ -15,7 +15,7 @@
 - 임시 SQLite DB를 사용한 MCP 회귀 테스트에서 서버 인스턴스를 다시 만든 뒤에도 기존 run, `revision`, run ID sequence와 계획 서명 키가 유지된다.
 - 기본 사용자 상태 디렉터리와 `AGENT_GOVERNANCE_DB_PATH`로 지정한 경로에 DB를 만들고 다시 열 수 있다.
 - workflow SQLite v1~v4 DB를 v5로 열었을 때 기존 run, metadata, 계획 서명 키, run sequence, `plugin_update_state`와 convergence guard 이력이 유지되고 cleanup index·claim 및 trusted execution observation claim 저장소가 추가된다.
-- continuity SQLite v1 DB를 v2로 열었을 때 기존 task·snapshot·request·tombstone·observation이 유지되고 보존 기간 조회 index가 추가된다.
+- continuity SQLite schema 1·2·3을 4로 이관할 때 2000 byte 이하 current와 명시적 삭제 의사, 비공개 이전 내용이 보존되고, 초과 current에는 의미를 보존한 mapping이 필요하다. current/history 분리, 실패 시 원 schema 유지와 원자 rollback, receiver 소유 task의 보호를 확인한다.
 - 업데이트 확인의 24시간 캐시, 실패 후 1시간 재시도, 버전당 한 번 안내와 비차단 실패 경로를 fixture로 검증한다.
 - 배포 후보의 현재 버전과 공개 저장소의 최신 안정 tag를 비교하고, 업데이트 알림이 설치 파일이나 마켓플레이스 설정을 변경하지 않는지 확인한다.
 - 포함 스킬의 품질 평가 상태와 runtime 활성 상태를 공개 문서에 분리해 기록한다. 품질 게이트를 통과하지 못한 스킬은 기본적으로 비활성화하되, 사용자가 현재 후보와 남은 제한을 확인하고 활성 배포를 명시적으로 승인한 경우에는 registry, 직접 descriptor와 implicit invocation을 같은 릴리스에서 일관되게 활성화한다.
@@ -27,6 +27,8 @@
 
 공개 전에는 버전, 변경 요약, 호환성 영향, 알려진 제한을 확인합니다. SQLite 스키마가 바뀌면 기존 DB를 복사해 둔 뒤 릴리스 후보로 열어 호환성을 확인하고, 복구 절차도 변경 요약에 남깁니다. 고위험 변경이 포함되면 독립 감사의 대상 식별자와 판정이 현재 릴리스 후보와 일치하는지도 확인합니다.
 
-workflow SQLite v1~v4를 v5로, continuity SQLite v1을 v2로 올리기 전에는 MCP 서버를 중지하고 `VACUUM INTO`처럼 WAL까지 일관되게 반영하는 방식으로 각 DB를 백업합니다. 롤백 시험은 backup을 별도 경로에 복원하고 이전 MCP로 열어 기존 run, run ID sequence, 계획 서명 키, 업데이트 상태와 continuity snapshot이 유지되는지 확인합니다. 새 schema DB를 그대로 둔 채 이전 MCP만 다시 설치하는 절차는 롤백으로 인정하지 않습니다. 업그레이드 전 DB가 없었다면 새 DB를 별도 보관하고 원래 경로에서 제거한 상태로 이전 MCP를 시작합니다.
+continuity schema 4의 실제 DB 확인·WAL 백업·current 최적화·이관·구버전 복구는 [3.8.0 이관 가이드](migrate-to-v3.8.0.md)를 따른다. workflow DB는 continuity 이관 CLI의 대상이 아니다.
+
+workflow SQLite v1~v4를 v5로 올리기 전에는 MCP 서버를 중지하고 `VACUUM INTO`처럼 WAL까지 일관되게 반영하는 방식으로 각 DB를 백업합니다. 롤백 시험은 backup을 별도 경로에 복원하고 이전 MCP로 열어 기존 run, run ID sequence, 계획 서명 키, 업데이트 상태와 continuity snapshot이 유지되는지 확인합니다. 새 schema DB를 그대로 둔 채 이전 MCP만 다시 설치하는 절차는 롤백으로 인정하지 않습니다. 업그레이드 전 DB가 없었다면 새 DB를 별도 보관하고 원래 경로에서 제거한 상태로 이전 MCP를 시작합니다.
 
 공개 GitHub 저장소를 만들거나 처음 push하기 직전에는 저장소 주소와 공개 범위를 다시 확인합니다. 릴리스 후에는 태그의 `mcp-server/dist/server.mjs`, `.codex-plugin/plugin.json`, `.agents/plugins/marketplace.json`이 같은 버전을 가리키는지 확인합니다. 깨끗한 Codex 환경에서 marketplace를 추가한 뒤 전문 스킬 16개와 오케스트레이터가 발견되고 연속성 MCP 도구(`checkpoint_context` 등)가 `tools/list`에 나오는지, 비활성 스킬이 MCP 라우팅에서 제외되는지 확인합니다. MCP `tools/list`, 대표 계획·실행·중단 흐름과 explicit continuity 도구도 함께 점검합니다.
