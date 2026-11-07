@@ -93,7 +93,7 @@ def validate_policy(root: Path, errors: list[str]) -> None:
             "공유 정본 반영(예: 기본 브랜치 병합), tag/release, 설치·배포, 영구 삭제, 권한 확대와 운영 데이터 변경의 사용자 승인 조건은 유지한다.",
         ), ("프로덕션 배포, 인프라, CI/CD, 장애 대응 또는 서비스 가용성",)),
         ("GOV03-consumer", "references/entry-details.md", (
-            "CI/CD, 프로젝트 전체 설정, 비프로덕션이라는 이름만으로 고위험으로 분류하지 않는다.",
+            "이름(예: CI/CD, 프로젝트 전체 설정, 비프로덕션)만으로 고위험으로 분류하지 않는다.",
         ), ("고위험 가능성을 합리적으로 배제할 수 없으면 게이트 대상으로 승격한다.",)),
         ("GOV04-inline", "references/audit-protocol.md", (
             "전달 형식 자체는 금지나 추가 승인 사유가 아니다.",
