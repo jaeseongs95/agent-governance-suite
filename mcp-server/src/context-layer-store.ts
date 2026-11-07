@@ -227,6 +227,8 @@ export class ContextLayerStore {
 
   addProposal(record: Omit<AdminProposalRecord, "state" | "decidedAt">): AdminProposalRecord {
     return this.transaction(() => {
+      // Decided requests are kept 30 days for the page's history, then dropped.
+      this.database.prepare("DELETE FROM admin_proposals WHERE state <> 'pending' AND decided_at < ?").run(new Date(Date.parse(record.createdAt) - RETAIN_MS).toISOString());
       // One pending request per session and target: a newer request replaces the older one.
       this.database.prepare("UPDATE admin_proposals SET state = 'rejected', decided_at = ? WHERE state = 'pending' AND target = ? AND host = ? AND session_id = ?")
         .run(record.createdAt, record.target, record.host, record.sessionId);

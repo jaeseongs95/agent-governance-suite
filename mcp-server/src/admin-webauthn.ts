@@ -90,6 +90,16 @@ export function isAdminOrigin(origin: unknown): boolean {
   return typeof origin === "string" && /^http:\/\/localhost(?::\d{1,5})?$/.test(origin);
 }
 
+/** The origin the browser wrote into an assertion's client data, or null when it cannot be read. */
+export function assertionOrigin(assertion: Pick<AdminAssertion, "clientDataJSON">): string | null {
+  try {
+    const origin = (JSON.parse(bytes(assertion.clientDataJSON, "clientDataJSON").toString("utf8")) as { origin?: unknown }).origin;
+    return typeof origin === "string" ? origin : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Checks one assertion over an intent: client data type, challenge, origin, RP ID hash, user presence and user
  * verification, then the signature. The sign counter is returned for the record and never decides anything (synced

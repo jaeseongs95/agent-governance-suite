@@ -21,7 +21,7 @@ import {
   roleKey,
   verifyRecord,
 } from "./admin-log.js";
-import { type AdminAssertion, AdminError, intentChallenge } from "./admin-webauthn.js";
+import { type AdminAssertion, AdminError, assertionOrigin, intentChallenge } from "./admin-webauthn.js";
 import { msg, type MessageRef } from "./i18n.js";
 import {
   type AdminProposalRecord,
@@ -407,12 +407,17 @@ export class ContextLayerService {
    * append share one BEGIN IMMEDIATE transaction. A repeated request ID returns the record already stored, so a page
    * that lost the response asks again instead of signing twice.
    */
-  commit(input: { intent: string; assertion: AdminAssertion; requestId: string; proposalId?: string | null }): { record: AdminLogRecord; duplicate: boolean } {
+  commit(input: { intent: string; assertion: AdminAssertion; requestId: string; proposalId?: string | null; origin?: string }): { record: AdminLogRecord; duplicate: boolean } {
     const now = this.now();
     const result = this.with(true, store => store.transaction(() => {
       const existing = store.recordByRequest(input.requestId);
       if (existing) return { record: existing, duplicate: true };
       const intent = parseIntent(input.intent);
+      // The page server accepts only a signature made on its own page: a look-alike page on another localhost port
+      // cannot collect one. Reading the log later accepts any localhost port (the port setting may change).
+      if (input.origin !== undefined && assertionOrigin(input.assertion) !== input.origin) {
+        throw new AdminError("ADMIN_ORIGIN_REJECTED", { expected: input.origin });
+      }
       const issued = Date.parse(intent.issuedAt);
       if (now.getTime() - issued > ADMIN_INTENT_TTL_MS || issued - now.getTime() > 60_000) throw new AdminError("ADMIN_INTENT_EXPIRED");
       const state = this.fold(store);

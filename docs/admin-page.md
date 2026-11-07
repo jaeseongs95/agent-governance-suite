@@ -26,7 +26,7 @@
 - 사람이 바꾸는 항목의 정본은 공유 상태 파일(`context-layers.sqlite3`)의 `admin_log` 하나다. 기록은 추가만 한다.
 - 기록 하나는 패스키가 서명한 canonical JSON 문자열(intent) 하나다. 내용은 `{v, domain:"ags.admin", rpId:"localhost", target, prevTargetHash, change, issuedAt}`이고 challenge는 SHA-256(intent)이다. 읽을 때 `canonicalJson(JSON.parse(s)) === s`를 강제한다.
 - 대상(target)은 `keys`, `global`, `roles`, `binding:<host>:<sessionId>`다. 대상마다 이전 기록의 hash를 이어 거는 사슬이라 서로 무관한 대상끼리는 경합하지 않는다.
-- 검증 항목: client data type(`webauthn.get`), challenge, origin(`http://localhost[:port]`), rpIdHash(`localhost`), 사용자 존재·사용자 확인(UP·UV) 플래그, 서명(ES256·RS256·EdDSA, `node:crypto`만 씀). signCount는 기록만 하고 판정에 쓰지 않는다.
+- 검증 항목: client data type(`webauthn.get`), challenge, origin(`http://localhost[:port]`), rpIdHash(`localhost`), 사용자 존재·사용자 확인(UP·UV) 플래그, 서명(ES256·RS256·EdDSA, `node:crypto`만 씀). signCount는 기록만 하고 판정에 쓰지 않는다. 페이지 서버는 저장할 때 origin이 자기 주소(`http://localhost:<설정 포트>`)와 같아야 받는다. 다른 localhost 포트에 띄운 비슷한 페이지가 받아 낸 서명으로는 저장할 수 없다. 이미 저장된 기록을 읽을 때는 포트 설정이 바뀔 수 있으므로 localhost의 어느 포트든 받는다.
 - 첫 키는 자기 서명으로 등록한다(TOFU). 그 뒤 키 추가·폐기는 유효한 키의 서명이 있어야 한다. 마지막 키는 폐기할 수 없다. 폐기된 키가 그 뒤에 서명한 기록은 무효다.
 - 저장은 검사와 추가를 한 트랜잭션(`BEGIN IMMEDIATE`)으로 한다. 같은 요청 ID로 다시 보내면 이미 저장된 기록을 돌려준다. 응답을 받지 못한 페이지는 다시 보내지 않고 `GET /api/request/:id`로 결과만 확인한다.
 
@@ -72,6 +72,8 @@ node <AGS 설치 경로>/mcp-server/dist/server.mjs admin-reset --yes  # 실제 
 - **꼬리 자르기.** 마지막 기록 몇 개를 지우면 이전 판이 유효한 상태로 보인다. 상주 MCP 서버는 자기가 본 seq보다 줄면 알리지만, 그 서버가 다시 시작된 뒤에는 알 수 없다.
 - **읽지 않고 서명.** 사람이 내용을 읽지 않고 패스키를 누르면 막을 수 없다. 페이지는 서명 전에 바뀌는 내용을 보여 준다.
 - 담당 컨텍스트 본문은 에이전트가 쓰므로 서명 대상이 아니다.
+- **요청 거절.** 요청(proposal)을 거절하는 데에는 서명이 필요 없다. 같은 컴퓨터의 프로그램이 대기 중인 요청을 거절할 수 있지만, 그것으로 바뀌는 설정은 없다. 결정된 요청은 30일 뒤 지운다.
+- **agy 서브에이전트 root 기록.** agy 서브에이전트의 root 세션은 MCP가 남긴 기록 파일로 잇는다. 같은 OS 사용자는 이 파일을 고칠 수 있다.
 
 ## 오류 코드
 

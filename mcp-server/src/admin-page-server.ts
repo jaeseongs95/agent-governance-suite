@@ -189,7 +189,7 @@ export function createAdminRequestHandler(dependencies: AdminPageDependencies) {
       if (!REQUEST_ID.test(requestId)) throw new HttpError(400, "REQUEST_INVALID", { field: "requestId" });
       const proposalId = body.proposalId === null || body.proposalId === undefined ? null : stringField(body, "proposalId", 100);
       const { record, duplicate } = service.commit({
-        intent: stringField(body, "intent", ADMIN_BODY_MAX_BYTES), requestId, proposalId,
+        intent: stringField(body, "intent", ADMIN_BODY_MAX_BYTES), requestId, proposalId, origin,
         assertion: { credentialId: stringField(assertion, "credentialId", 1400), authenticatorData: stringField(assertion, "authenticatorData", 4000),
           clientDataJSON: stringField(assertion, "clientDataJSON", 8000), signature: stringField(assertion, "signature", 2000) },
       });
@@ -197,7 +197,9 @@ export function createAdminRequestHandler(dependencies: AdminPageDependencies) {
     }
     const reject = /^\/api\/proposals\/([^/]+)\/reject$/.exec(url.pathname);
     if (reject) {
-      service.rejectProposal(decodeURIComponent(reject[1]!));
+      let id: string;
+      try { id = decodeURIComponent(reject[1]!); } catch { throw new HttpError(400, "REQUEST_INVALID", { field: "proposalId" }); }
+      service.rejectProposal(id);
       return json(response, 200, { ok: true });
     }
     throw new HttpError(404, "NOT_FOUND");

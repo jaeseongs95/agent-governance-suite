@@ -304,6 +304,26 @@ describe("signed admin log: records, requests and reset", () => {
     expect(service.load("codex", "s1").binding).toBeNull();
   });
 
+  it("drops decided agent requests 30 days after the decision and keeps pending ones", () => {
+    const file = layersFile();
+    let now = Date.parse("2026-11-07T00:00:00.000Z");
+    const service = serviceAt(file, () => new Date(now));
+    const old = service.proposeGlobal({ host: "codex", sessionId: "s1", actor: "a" }, null, "old");
+    service.rejectProposal(old.proposalId);
+    const waiting = service.proposeGlobal({ host: "codex", sessionId: "s2", actor: "a" }, null, "waiting");
+    const count = () => {
+      const database = new DatabaseSync(file);
+      try { return (database.prepare("SELECT id FROM admin_proposals ORDER BY id").all() as Array<{ id: string }>).map(row => row.id); } finally { database.close(); }
+    };
+    now += 29 * 24 * 3600_000;
+    service.proposeGlobal({ host: "codex", sessionId: "s3", actor: "a" }, null, "day 29");
+    expect(count()).toContain(old.proposalId);
+    now += 2 * 24 * 3600_000;
+    service.proposeGlobal({ host: "codex", sessionId: "s4", actor: "a" }, null, "day 31");
+    expect(count()).not.toContain(old.proposalId);
+    expect(count()).toContain(waiting.proposalId);
+  });
+
   it("discards failed records with a signed acknowledgement and keeps the current valid state", () => {
     const file = layersFile();
     const service = serviceAt(file);
@@ -507,6 +527,11 @@ describe("admin page HTTP boundary", () => {
     expect(JSON.parse((await call("GET", `/api/request/${requestId}`)).text)).toEqual({ record: saved.record });
     expect(JSON.parse((await call("GET", `/api/request/${randomUUID()}`)).text)).toEqual({ record: null });
     expect(JSON.parse((await call("GET", "/api/state")).text)).toMatchObject({ global: { body: "from the page" }, keys: [{ credentialId: owner.credentialId }] });
+    // A signature made on a look-alike page at another localhost port is refused by the page server.
+    const elsewhere = JSON.parse((await post("/api/intent", { change: { op: "global.set", body: "phished" }, bootstrap: false })).text) as { intent: string };
+    const phished = await post("/api/commit", { intent: elsewhere.intent, assertion: owner.assert(elsewhere.intent, { origin: "http://localhost:3000" }), requestId: randomUUID(), proposalId: null });
+    expect([phished.status, JSON.parse(phished.text).error.code]).toEqual([403, "ADMIN_ORIGIN_REJECTED"]);
+    expect((await post("/api/proposals/%E0%A4%A/reject", {})).status).toBe(400);
     // A second first registration through the API is refused with 409.
     const again = await post("/api/intent", { change: fakeAuthenticator().addChange(), bootstrap: true });
     expect([again.status, JSON.parse(again.text).error.code]).toEqual([409, "ADMIN_ALREADY_BOOTSTRAPPED"]);
