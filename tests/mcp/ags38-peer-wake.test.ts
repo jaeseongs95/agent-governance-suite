@@ -42,16 +42,20 @@ it("PW01: current verified Claude wake delivers its body at UserPromptSubmit wit
   expect(f.close).toHaveBeenCalledTimes(1);
 });
 
-it("PW02: rejected wake records only a bounded reason and never falls back to claiming", async () => {
+it("PW02: an unrecognized wake records its bounded reason and attaches the waiting body at its own boundary (D0015)", async () => {
   f.request.mockImplementation(async (operation) => operation === "claim-host-wake"
-    ? { recognized: false, managed: false, messages: [], rejectionReason: "WAKE_NONCE_UNKNOWN" } : {});
-  expect(await handleSessionMessageHook(input, "claude-code")).toEqual({});
+    ? { recognized: false, managed: false, messages: [], rejectionReason: "WAKE_NONCE_UNKNOWN" } : { messages: [message] });
+  expect(await handleSessionMessageHook(input, "claude-code")).toMatchObject({ hookSpecificOutput: {
+    hookEventName: "UserPromptSubmit", additionalContext: expect.stringContaining(message.body),
+  } });
   const diagnostics = vi.mocked(console.error).mock.calls.map(([line]) => String(line)).join("\n");
   expect(diagnostics).toContain("WAKE_NONCE_UNKNOWN");
   expect(diagnostics).not.toContain(nonce);
   expect(diagnostics).not.toContain(target.sessionId);
-  expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["claim-host-wake", "observe-native-input"]);
-  expect(f.record).not.toHaveBeenCalled();
+  expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["claim-host-wake", "claim-wake-input"]);
+  // The fallback is the boundary's own fenced claim: target and limits only, never the marker or its receipt.
+  expect(Object.keys(f.request.mock.calls[1]![1]).sort()).toEqual(["maxBodyChars", "maxMessages", "target"]);
+  expect(f.record).toHaveBeenCalledTimes(1);
 });
 
 it("PW03: real store distinguishes invalid observation, unavailable reader, bad receipt and unknown nonce", () => {
@@ -76,8 +80,13 @@ it("PW03: real store distinguishes invalid observation, unavailable reader, bad 
   } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
 });
 
-it("PE01: the builtin Claude adapter enables the existing verified-empty guard", () => {
+it("PE01: the builtin Claude and Codex adapters enable the empty-wake guard; hosts without a wake-only prompt do not", () => {
   expect(hostDeliveryProfile("claude-code", {}).blocksEmptyWakePrompt).toBe(true);
+  // D0054: Codex 0.166.0 UserPromptSubmit decision:block ends the turn before a model request (measured), queue or not.
+  expect(hostDeliveryProfile("codex", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }).blocksEmptyWakePrompt).toBe(true);
+  expect(hostDeliveryProfile("codex", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" }).blocksEmptyWakePrompt).toBe(true);
+  expect(hostDeliveryProfile("gemini", {}).blocksEmptyWakePrompt).toBe(false);
+  expect(hostDeliveryProfile("antigravity", {}).blocksEmptyWakePrompt).toBe(false);
 });
 
 it("PE02: a verified managed empty Claude wake blocks before a model request", async () => {
@@ -104,17 +113,47 @@ it("PE04: an empty claim without a managed binding cannot block Claude input", a
 });
 
 it.each(["WAKE_OBSERVATION_INVALID", "WAKE_READER_UNAVAILABLE", "WAKE_RECEIPT_REJECTED", "WAKE_NONCE_UNKNOWN", "WAKE_GENERATION_NOT_CURRENT"])(
-  "PE05: %s remains diagnostic-only with no fallback body claim or block", async (rejectionReason) => {
+  "PE05: %s with no waiting body stops the wake-only turn before a model request (D0015)", async (rejectionReason) => {
     f.request.mockImplementation(async (operation) => operation === "claim-host-wake"
-      ? { recognized: false, managed: false, messages: [], rejectionReason } : {});
-    expect(await handleSessionMessageHook(input, "claude-code")).toEqual({});
-    expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["claim-host-wake", "observe-native-input"]);
+      ? { recognized: false, managed: false, messages: [], rejectionReason } : { messages: [] });
+    expect(await handleSessionMessageHook(input, "claude-code")).toMatchObject({ decision: "block", reason: expect.any(String) });
+    expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["claim-host-wake", "claim-wake-input"]);
     expect(f.record).not.toHaveBeenCalled();
     const diagnostic = vi.mocked(console.error).mock.calls.map(([line]) => String(line)).join("\n");
     expect(diagnostic).toContain(rejectionReason);
     expect(diagnostic).not.toContain(nonce);
     expect(diagnostic).not.toContain(target.sessionId);
   });
+
+it("PE06: a verified empty Codex wake stops before a model request (D0054)", async () => {
+  vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
+  try {
+    f.request.mockResolvedValue({ recognized: true, managed: true, messages: [] });
+    expect(await handleSessionMessageHook({ ...input, session_id: "codex-wake-target" }, "codex")).toMatchObject({ decision: "block", reason: expect.any(String) });
+    expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["claim-host-wake"]);
+  } finally { vi.unstubAllEnvs(); }
+});
+
+it("PE07: real store claims the waiting body at an unrecognized wake under its lease, fenced by the hook instance (D0015)", () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "ags38-peer-wake-"));
+  const store = new SessionMessageStore(path.join(directory, "messages.sqlite3"));
+  try {
+    const capabilities = { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"] as ("peer-wake" | "tool-boundary" | "turn-end")[], idleWake: "silent" as const };
+    store.startPresence({ ...target, instanceId: "host-process-v1:current", transport: "claude-inbox", wakeVisibility: "silent",
+      canWakeSilently: true, deliveryCapabilities: capabilities }, 1000);
+    store.send({ sender: { host: "claude-code", sessionId: "sender" }, target, messageId: "waiting-body", body: "waiting body" }, 1000);
+    const messagesBefore = store.database.prepare("SELECT * FROM messages").all();
+    // Another generation's hook claims nothing and changes nothing.
+    expect(() => store.claimWakeInput(target, 1001, { instanceId: "host-process-v1:old" })).toThrow();
+    expect(store.database.prepare("SELECT * FROM messages").all()).toEqual(messagesBefore);
+    const claimed = store.claimWakeInput(target, 1002, { instanceId: "host-process-v1:current" });
+    expect(claimed.map((item) => item.messageId)).toEqual(["waiting-body"]);
+    expect(claimed[0]!.claimReceipt).toEqual(expect.any(String));
+    // The lease keeps a concurrent boundary from delivering it again before its ACK.
+    expect(store.claimTurnEnd(target, 1003, { instanceId: "host-process-v1:current" })).toEqual([]);
+    expect(store.acknowledge(target, ["waiting-body"], 1004, [{ messageId: "waiting-body", claimReceipt: claimed[0]!.claimReceipt! }])).toBe(1);
+  } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
+});
 
 it.each(["ordinary user request", `${input.prompt}\nordinary user request`])(
   "PE08: ordinary or mixed user text stays outside the empty-wake guard (%s)", async (prompt) => {

@@ -471,7 +471,9 @@ function antigravityNoteRoots(environment: NodeJS.ProcessEnv): string[] {
 const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   ["codex", {
     adaptInput: adaptCodexHookInput, ownsTool: ownsGovernanceTool,
-    deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", false),
+    // D0054: Codex UserPromptSubmit decision:block ends the turn with no model request and keeps the prompt out of the
+    // thread history (codex-cli 0.166.0, measured with a local provider: 0 requests blocked, 1 allowed).
+    deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", true),
     processPid: (pid) => pid, peerWait: codexNativePeerWait,
     // Codex Stop output is decision/reason only (codex-rs hooks StopCommandOutputWire, deny_unknown_fields; 0.166.0).
     continuesTurnWithReason: true,
@@ -485,12 +487,15 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   }],
   ["gemini", {
     adaptInput: adaptGeminiHookInput, ownsTool: ownsGovernanceTool,
-    // Gemini CLI has no idle wake path of its own; only Antigravity uses the agentapi queue.
+    // Gemini CLI has no idle wake path of its own; only Antigravity uses the agentapi queue. Without peer-wake no
+    // wake-only prompt reaches the empty-wake guard, so there is nothing to block.
     deliveryProfile: () => deliveryProfile("gemini-deferred", false),
     processPid: (pid, observation) => observation ? pid : undefined,
   }],
   ["antigravity", {
     adaptInput: adaptAntigravityHookInput, ownsTool: ownsGovernanceTool, observeExecution: observeAntigravityExecution,
+    // agy has no prompt-submit event: its runner reports a turn's first model call without the prompt text, so no
+    // wake-only prompt is observed and the empty-wake guard cannot apply until agy passes the prompt.
     deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(antigravityQueueEnabled(environment, diagnose, defaultQueueWake) ? "antigravity-queue" : "gemini-deferred", false),
     processPid: (pid, observation) => observation ? pid : undefined, agentNoteRoots: antigravityNoteRoots,
   }],

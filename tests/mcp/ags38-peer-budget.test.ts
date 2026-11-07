@@ -83,6 +83,34 @@ it("PB05: querying time never throws and budgeted receipt operations share an ex
   expect(source).not.toMatch(/^\s+remainingBudget\(budget/u);
 });
 
+// D0022: a budget check written by hand between steps is not a boundary. Only the boundary helpers may assert the budget.
+it("PB06: the hook checks its budget only inside its boundary helpers", () => {
+  const source = readFileSync(new URL("../../mcp-server/src/session-message-hook.ts", import.meta.url), "utf8");
+  const outsideBoundaries = source.replace(/function (?:budgetedStep|budgetedCall|budgetedTimeout)\b[\s\S]*?\n\}/gu, "")
+    .replace(/function assertHookBudget\(/u, "");
+  expect(outsideBoundaries.match(/assertHookBudget\(/gu) ?? []).toEqual([]);
+});
+
+it("PB07: a host process resolver that ends past the deadline stops the hook before any claim", async () => {
+  const resolveHostProcess = vi.fn(() => { f.now = 1000; return { pid: 4242, startToken: "synthetic-start" }; });
+  const result = await runSessionMessageHookOutcome("claude-code", input, undefined, { executionBudget: budget, resolveHostProcess });
+  expect(result).toMatchObject({ ok: false, failure: { phase: "handle", reason: "HOOK_BUDGET_EXPIRED" } });
+  expect(resolveHostProcess).toHaveBeenCalledTimes(1);
+  expect(f.request).not.toHaveBeenCalled();
+});
+
+it("PB08: a claim that answers past the deadline is still reported to the claim observer", async () => {
+  const onClaimState = vi.fn();
+  f.request.mockImplementation(async (_operation, _payload, _directory, options) => {
+    options?.onOperationWrite?.(); f.now = 1000; return { messages: [message] };
+  });
+  const result = await runSessionMessageHookOutcome("claude-code", input, undefined, { executionBudget: budget, onClaimState });
+  expect(result).toMatchObject({ ok: false, failure: { reason: "HOOK_BUDGET_EXPIRED", step: "claim-turn-end" } });
+  expect(onClaimState.mock.calls.map(([state]) => state)).toEqual([
+    { phase: "request-attempted", messageIds: [] }, { phase: "response-received", messageIds: [message.messageId] }]);
+  expect(f.open).not.toHaveBeenCalled();
+});
+
 it("PB10: a busy budgeted hook preserves its queue and the next boundary can claim without an ACK", async () => {
   const actual = await vi.importActual<typeof import("../../mcp-server/src/session-message-client.js")>("../../mcp-server/src/session-message-client.js");
   const directory = mkdtempSync(path.join(tmpdir(), "ags38-peer-budget-"));

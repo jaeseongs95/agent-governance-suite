@@ -827,6 +827,28 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
+  /**
+   * D0015: a wake-only prompt whose marker claimHostWake did not recognize (unknown, pruned, another birth's or
+   * unverifiable) still starts a turn of the hook's generation. Like a tool boundary, the hook instance is the fence, and
+   * the bodies are claimed under the same lease, so a concurrent boundary cannot deliver them twice before their ACK.
+   * The marker authorizes nothing: no wake row changes (I1, I2). The turn opens as claimHostWake opens it.
+   */
+  claimWakeInput(target: SessionIdentity, nowMs = AUTHORITY_NOW, limits: ClaimLimits = {}): SessionMessage[] {
+    boundedIdentity(target);
+    if (!this.inTransaction) return this.transaction(() => this.claimWakeInput(target, nowMs, limits));
+    nowMs = this.time(nowMs);
+    return this.transaction(() => {
+      this.assertHookInstance(target, limits.instanceId, nowMs);
+      this.prune(nowMs);
+      const messages = this.claimLocked(target, nowMs, limits);
+      this.markClaimBoundary(target, nowMs);
+      this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at) VALUES (?, ?, 0, ?)
+        ON CONFLICT (host, session_id) DO UPDATE SET observed_at = excluded.observed_at`)
+        .run(target.host, target.sessionId, iso(nowMs));
+      return messages;
+    });
+  }
+
   clearDeferred(target: SessionIdentity, nowMs = AUTHORITY_NOW, instanceId?: string): void {
     boundedIdentity(target);
     if (!this.inTransaction) return this.transaction(() => this.clearDeferred(target, nowMs, instanceId));

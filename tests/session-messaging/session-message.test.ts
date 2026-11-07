@@ -955,13 +955,14 @@ describe("in-process messaging and vendor-neutral adapter", () => {
         return child.stdout ? JSON.parse(child.stdout) as Record<string, unknown> : {};
       };
       const output = await invoke();
-      if (["submitted", "unknown", "duplicate", "late", "claude"].includes(scenario)) {
+      if (["submitted", "unknown", "duplicate", "late", "claude", "codex"].includes(scenario)) {
         // A verified marker that brings no body stops the empty model turn, also when repeated or from an ended birth.
         expect(output).toMatchObject({ decision: "block" });
         if (scenario === "duplicate") expect(await invoke()).toMatchObject({ decision: "block" });
-      } else if (scenario === "idle") {
+      } else if (scenario === "idle" || scenario === "forged") {
+        // D0015: an unrecognized marker's own boundary still attaches the waiting body.
         expect(output).not.toHaveProperty("decision");
-        expect(JSON.stringify(output)).toContain("body-idle");
+        expect(JSON.stringify(output)).toContain(`body-${scenario}`);
       } else expect(output).toEqual({});
       const verification = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
       try {
@@ -969,7 +970,12 @@ describe("in-process messaging and vendor-neutral adapter", () => {
           // I2: an old-birth marker claims nothing; it records only its late arrival.
           expect(verification.pendingCount(target)).toBe(1);
           expect(verification.managedWakeStatus(target)).toMatchObject({ state: "released", releaseReason: "birth-ended", observation: "late-observed" });
-        } else if (["forged", "mixed"].includes(scenario)) {
+        } else if (scenario === "forged") {
+          // The body is claimed under its lease; the unissued marker changed no wake row before settlement.
+          expect(verification.pendingCount(target)).toBe(0);
+          expect(verification.database.prepare("SELECT state, observed_at, late_observed_at FROM wake_nonces WHERE host = ? AND session_id = ?")
+            .get(target.host, target.sessionId)).toMatchObject({ observed_at: null, late_observed_at: null });
+        } else if (scenario === "mixed") {
           expect(verification.pendingCount(target)).toBe(1);
           expect(verification.managedWakeStatus(target)).toMatchObject({ state: "handed-off" });
         } else if (scenario === "idle") expect(verification.managedWakeStatus(target)).toMatchObject({ state: "observed" });
@@ -1015,8 +1021,8 @@ describe("in-process messaging and vendor-neutral adapter", () => {
         expect(child.status, child.stderr).toBe(0);
         output = child.stdout ? JSON.parse(child.stdout) as Record<string, unknown> : {};
       }
-      if (host === syntheticRootHost || host === "claude-code") expect(output).toMatchObject({ decision: "block" });
-      else expect(output).toEqual({});
+      // D0054: Codex blocks the retired empty marker too.
+      expect(output).toMatchObject({ decision: "block" });
       const verification = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
       try {
         expect(verification.pendingCount(target)).toBe(1);
