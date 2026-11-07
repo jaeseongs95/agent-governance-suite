@@ -1018,7 +1018,7 @@ export function createMcpServer(
           break;
         case "start_guarded_workflow":
           result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true,
-            rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId)), workflowStatusSummary);
+            rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId, caller.actor.role === "child")), workflowStatusSummary);
           break;
         case "get_convergence_status":
           result = withMode("detail", () => service.getConvergenceStatus(String(args.rootId ?? "")), convergenceStatusSummary);
@@ -1031,7 +1031,7 @@ export function createMcpServer(
             const started = service.startMinimalWorkflow(input, observedCaller(caller), {
               priorFileCount: () => continuity.editWindowFileCount(caller.sessionId),
               settle: () => continuity.settleFinishedWorkflow(caller.sessionId),
-              beforeCommit: rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId),
+              beforeCommit: rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId, caller.actor.role === "child"),
               ownsRoot: rootId => continuity.ownsRoot(caller.sessionId, rootId),
               ownerPresence: rootAccess.ownerPresence,
               sessionWorkspace: () => observedSessionWorkspace(sessionBoardPath, caller),

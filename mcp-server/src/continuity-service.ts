@@ -77,6 +77,9 @@ const LINEAGE_ANCHOR_COUNT = 16;
 /** Phase check (design ags30-phase-check 3.2-3.3): a file edit, and the turn-end check that covers it. */
 const PHASE_EDIT_EVENT = "phase-edit";
 const PHASE_CHECK_EVENT = "phase-check";
+/** A root a subagent started or opened in its parent's session: it stays bound (the subagent's edits pass the gate) but
+ * is the subagent's work, so the parent's turn-end phase check does not list it (AGS3-D-0060). Suffix: the root ID. */
+const PHASE_CHILD_ROOT_EVENT = "phase-child-root:";
 /**
  * Workflow enforcement (design ags30-phase-check 7). A window is every observation after the later of the last phase
  * check and the last workflow start. Each distinct product file edited in a window without an active workflow is one
@@ -202,7 +205,7 @@ export interface ContinuityGateway {
   purgeDirectContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuityPurgeResultV1>;
   bindOpenedRoot(caller: VerifiedCaller, rootId: string): boolean;
   /** Called only with the session identity verified by the MCP ingress: binds one more root to the session. */
-  prepareWorkflowStart(rawSessionId: string, rootId: string): void;
+  prepareWorkflowStart(rawSessionId: string, rootId: string, bySubagent?: boolean): void;
   /** Whether this session ever bound the root, in any epoch (start_workflow rootId and ROOT_CONFLICT ownership). */
   ownsRoot(rawSessionId: string, rootId: string): boolean;
   /** Whether another session bound the root (claim frame change and replacement refuse it). False without a store: nobody owns it. */
@@ -778,14 +781,17 @@ export class ContinuityService implements ContinuityGateway {
   bindOpenedRoot(caller: VerifiedCaller, rootId: string): boolean {
     try {
       const binding = this.toolBinding(caller, "open_convergence_root");
-      return this.store.bindRoot(binding.c, binding.e, rootId, this.now().toISOString());
+      const now = this.now().toISOString();
+      if (!this.store.bindRoot(binding.c, binding.e, rootId, now)) return false;
+      if (caller.actor.role === "child") this.store.recordObservation(binding.c, binding.e, PHASE_CHILD_ROOT_EVENT + rootId, null, true, now);
+      return true;
     } catch {
       // The committed workflow result is independent; callers must observe missing correlation.
       return false;
     }
   }
 
-  prepareWorkflowStart(rawSessionId: string, rootId: string): void {
+  prepareWorkflowStart(rawSessionId: string, rootId: string, bySubagent = false): void {
     const now = this.now().toISOString();
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     // Roots bound earlier do not conflict: overlapping paths are the convergence guard's ROOT_CONFLICT. Only a
@@ -799,6 +805,7 @@ export class ContinuityService implements ContinuityGateway {
       throw new WorkflowContractError("STALE_REVISION", msg("continuity.binding.stale", {}), { reason: "CONTINUITY_EPOCH_CHANGED" });
     }
     const { taskCorrelation: c, currentEpoch: e } = task;
+    if (bySubagent) this.store.recordObservation(c, e, PHASE_CHILD_ROOT_EVENT + rootId, null, true, now);
     // A start ends the window and its lock; success marks a start that followed a refused edit.
     this.store.recordObservation(c, e, PHASE_START_EVENT, null, this.locked(c, e), now);
   }
@@ -1047,6 +1054,7 @@ export class ContinuityService implements ContinuityGateway {
       return bound.flatMap(rootId => {
         const snapshot = workflowStore.getConvergenceSnapshot(rootId);
         if (!snapshot || snapshot.root.state === "completed" || snapshot.root.state === "abandoned") return [];
+        if (this.store.hasObservation(task.taskCorrelation, task.currentEpoch, PHASE_CHILD_ROOT_EVENT + rootId)) return [];
         const runId = snapshot.workflowRunIds.at(-1);
         const receipt = runId ? workflowStore.getRun(runId) : null;
         return runId && receipt && !RUN_TERMINAL_STATES.has(receipt.state) ? [{ rootId, runId, snapshot, receipt }] : [];

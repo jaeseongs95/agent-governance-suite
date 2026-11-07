@@ -340,6 +340,38 @@ describe("Stop output", () => {
   });
 });
 
+// AGS3-D-0060: a Claude subagent's hook calls carry its parent's session_id. Its edits stay gated in the parent's
+// window, but neither they nor the workflows it starts may continue the parent's Stop: a parent waiting on background
+// subagents was otherwise woken at every Stop with nothing to do.
+describe("subagent work at the parent's Stop (AGS3-D-0060)", () => {
+  const child = { agent_id: "child-1", agent_type: "general-purpose" };
+  const text = (output: Record<string, unknown>) => JSON.stringify(output);
+
+  it("a subagent's edit does not continue the parent's Stop; the parent's own edit does", () => {
+    const target = service(workflowWith([{ state: "open", rootId: "enforce-root", runState: "running" }]));
+    target.prepareWorkflowStart(session, "enforce-root");
+    expect(handleContinuityHook(write("src/a.ts", child), target, "claude-code", NO_ENV)).toEqual({});
+    expect(handleContinuityHook(stop(), target, "claude-code", NO_ENV)).toEqual({});
+    expect(events(target)).not.toContain("phase-edit");
+    expect(handleContinuityHook(write("src/b.ts"), target, "claude-code", NO_ENV)).toEqual({});
+    expect(text(handleContinuityHook(stop(), target, "claude-code", NO_ENV))).toContain("[AGS 단계 확인]");
+  });
+
+  it("does not list a workflow a subagent started in the parent's phase check, and still passes the subagent's edits in it", () => {
+    const target = service(workflowWith([
+      { state: "open", rootId: "root-parent", runState: "running", scope: "alpha" },
+      { state: "open", rootId: "root-child", runState: "running", scope: "beta" },
+    ]));
+    target.prepareWorkflowStart(session, "root-parent");
+    target.prepareWorkflowStart(session, "root-child", true);
+    expect(handleContinuityHook(write("beta/1.ts", child), target, "claude-code", NO_ENV)).toEqual({});
+    expect(handleContinuityHook(write("alpha/1.ts"), target, "claude-code", NO_ENV)).toEqual({});
+    const cue = text(handleContinuityHook(stop(), target, "claude-code", NO_ENV));
+    expect(cue).toContain("rootId root-parent");
+    expect(cue).not.toContain("root-child");
+  });
+});
+
 // Several workflows per session (3.3.0): each bound root's write scope passes, a gated scope refuses everyone.
 describe("several workflows in one session", () => {
   it("passes edits inside each of two active roots of one session and still counts the paths outside both", () => {
