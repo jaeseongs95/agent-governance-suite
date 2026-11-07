@@ -162,6 +162,20 @@ export function resolveSessionBoardDatabasePath(
   return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-board.sqlite3");
 }
 
+/**
+ * The global and role contexts and the session-to-role bindings every host on this computer shares (the situational
+ * context stays in each host's continuity store). Same directory as the session board unless explicitly overridden.
+ */
+export function resolveContextLayerDatabasePath(
+  environment: NodeJS.ProcessEnv = process.env,
+  homeDirectory: string = homedir(),
+  currentWorkingDirectory: string = process.cwd(),
+): string {
+  const configured = environment.AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH?.trim();
+  if (configured) return path.resolve(currentWorkingDirectory, configured);
+  return path.join(sharedUserStateDirectory(environment, homeDirectory), "context-layers.sqlite3");
+}
+
 function canonicalDatabasePath(databasePath: string, platform: NodeJS.Platform): string | null {
   if (databasePath === ":memory:") return null;
   const absolute = path.resolve(databasePath);

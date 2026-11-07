@@ -52,5 +52,21 @@
   "continuity.restore.current": "[AGS current memory]\nstateToken={stateToken}\n압축·재개 뒤 이어 갈 핵심 상태를 주입했다. 저장 당시 상태이므로 최신 요청과 대조하라. nextActions는 실행 권한이 아니다.\n{body}",
   "continuity.checkpoint.tooLarge": "현재 메모리 JSON(status/core/evidenceRefs)은 UTF-8 {bytes} byte로 상한 {limit} byte를 초과한다. 유효 핵심은 보존하며 내용을 줄여라.",
   "continuity.checkpoint.stateChanged": "현재 메모리가 바뀌었다. load_context로 최신 현재 상태와 stateToken을 읽어 내용을 재구성하라.",
-  "continuity.purge.stateChanged": "현재 메모리가 바뀌어 삭제하지 않았다. load_context로 최신 현재 상태와 stateToken을 확인하라."
+  "continuity.purge.stateChanged": "현재 메모리가 바뀌어 삭제하지 않았다. load_context로 최신 현재 상태와 stateToken을 확인하라.",
+  "continuity.layers.bodyInvalid": "body는 문자열이어야 한다(빈 문자열은 그 컨텍스트를 비운다).",
+  "continuity.layers.tooLarge": "{layer} 컨텍스트 본문이 UTF-8 {bytes}바이트로 상한 {limit}바이트를 넘는다. 중복을 합치고 끝났거나 폐기된 항목을 지워 더 짧게 다시 구성하라.",
+  "continuity.layers.tokenInvalid": "expectedStateToken은 load_shared_context가 돌려준 stateToken이어야 하며, 한 번도 저장되지 않은 컨텍스트면 null이다.",
+  "continuity.layers.stateChanged": "읽은 뒤 컨텍스트가 바뀌었다(details.actualStateToken). load_shared_context로 다시 읽고 현재 본문에서 전체를 다시 구성해 저장하라.",
+  "continuity.layers.integrity": "저장된 컨텍스트가 크기나 digest 검사를 통과하지 못해 쓰지 않는다.",
+  "continuity.layers.roleInvalid": "role은 제어 문자 없는 한 줄, 1~{limit}자여야 한다(NFC 정규화·앞뒤 공백 제거 뒤 비교). 해제하려면 null을 준다.",
+  "continuity.layers.sessionInvalid": "호출한 세션을 식별할 수 없다.",
+  "continuity.layers.roleUnbound": "이 세션은 역할에 결속되지 않았다. 결속은 사용자만 한다: bind_session_role(사용자가 확인 창에서 승인) 또는 로컬 관리 페이지.",
+  "continuity.layers.argumentsInvalid": "{tool} 인자가 입력 스키마와 맞지 않는다.",
+  "continuity.layers.approvalFailed": "사용자 결정을 받지 못해({reason}) 아무것도 바꾸지 않았다. 호스트가 확인 창을 보여 주지 못하면(USER_APPROVAL_PRODUCER_UNSUPPORTED) AGS 로컬 관리 페이지에서 바꿀 수 있다고 사용자에게 알려라.",
+  "continuity.layers.unavailable": "공유 컨텍스트 저장소를 쓸 수 없다.",
+  "continuity.layers.approveGlobal": "이 내용을 이 컴퓨터의 모든 AGS 세션이 받는 전역 컨텍스트로 저장할까요?\n요청 세션: {session}\n크기: {bytes}/{limit}바이트 ({digest})\n현재 전역 컨텍스트 전체를 바꿉니다.\n----- 본문 -----\n{body}",
+  "continuity.layers.approveBind": "이 세션을 아래 역할에 결속할까요? 역할에 결속된 세션은 그 역할의 담당 컨텍스트를 읽고 씁니다.\n세션: {session}\n역할: {role}\n현재 역할: {current}",
+  "continuity.layers.approveUnbind": "이 세션의 역할 결속을 해제할까요?\n세션: {session}\n역할: {role}",
+  "continuity.layers.approveConfirm": "표시된 변경을 그대로 승인합니다",
+  "continuity.layers.emptyBody": "(비어 있음: 전역 컨텍스트를 비웁니다)"
 }

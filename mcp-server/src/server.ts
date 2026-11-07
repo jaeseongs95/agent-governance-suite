@@ -2,6 +2,8 @@ import { ClassificationInitializationError } from "./skill-classification/runtim
 import { admitCaller, RESERVED_CALLER_KEYS, type CallerIngress, type VerifiedCaller } from "./caller-identity.js";
 import { observedCaller } from "./caller-actor.js";
 import { createRootApprovalHandler } from "./root-approval.js";
+import { CONTEXT_LAYER_INPUT_SCHEMAS, createContextLayerToolHandler, isContextLayerTool } from "./context-layer-tools.js";
+import type { ContextLayerService } from "./context-layer-service.js";
 import { existsSync } from "node:fs";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -633,6 +635,8 @@ export function createMcpServer(
   callerIngress: CallerIngress | null = null,
   /** The locale for requests that name none (docs/i18n-design.md 4.1 ②). */
   defaultLocale: SupportedLocale = resolveHostLocale().locale,
+  /** The shared global and role contexts; null leaves their tools unavailable. */
+  contextLayers: ContextLayerService | null = null,
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -641,6 +645,7 @@ export function createMcpServer(
   );
 
   const rootOperation = createRootApprovalHandler(server, service);
+  const contextLayerOperation = createContextLayerToolHandler(server, contextLayers);
 
   // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
   const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[], locale: SupportedLocale): T[] => {
@@ -791,6 +796,30 @@ export function createMcpServer(
         description: description("tools.load_context.description"),
         inputSchema: usesInlineReferences(toolSchemaProfile) ? schemas.loadContextInline : contracts.loadContextRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "load_shared_context",
+        description: description("tools.load_shared_context.description"),
+        inputSchema: CONTEXT_LAYER_INPUT_SCHEMAS.load_shared_context,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "checkpoint_global_context",
+        description: description("tools.checkpoint_global_context.description"),
+        inputSchema: CONTEXT_LAYER_INPUT_SCHEMAS.checkpoint_global_context,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
+      },
+      {
+        name: "bind_session_role",
+        description: description("tools.bind_session_role.description"),
+        inputSchema: CONTEXT_LAYER_INPUT_SCHEMAS.bind_session_role,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "checkpoint_role_context",
+        description: description("tools.checkpoint_role_context.description"),
+        inputSchema: CONTEXT_LAYER_INPUT_SCHEMAS.checkpoint_role_context,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },
       {
         name: "suppress_context_restore",
@@ -972,6 +1001,8 @@ export function createMcpServer(
           }
         }
       }
+    } else if (isContextLayerTool(request.params.name)) {
+      result = await contextLayerOperation(request.params.name, args, caller, locale, extra);
     } else if (request.params.name === "lookup_korean_prose_terms") {
       try {
         const input = validator.koreanProseGlossaryLookupRequest(args);

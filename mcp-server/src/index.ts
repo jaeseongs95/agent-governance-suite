@@ -6,6 +6,7 @@ import { ContinuityService, type ContinuityGateway, UnavailableContinuityService
 import { continuityUnavailableReason, SqliteContinuityStore } from "./continuity-store.js";
 import {
   assertDistinctDatabasePaths,
+  resolveContextLayerDatabasePath,
   resolveContinuityDatabasePath,
   resolveHostAttestation,
   resolveKoreanProseGlossaryPath,
@@ -17,6 +18,8 @@ import {
 } from "./runtime-config.js";
 import { ContractValidator } from "./schema-validator.js";
 import { createMcpServer } from "./server.js";
+import { ContextLayerService } from "./context-layer-service.js";
+import { ContextLayerStore } from "./context-layer-store.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { WorkflowService } from "./workflow-service.js";
@@ -154,7 +157,9 @@ export async function startMcpServer(
     },
     service: new SkillClassificationService(providerRuntime),
   });
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, classification, builtinCallerIngress(process.env.AGENT_GOVERNANCE_HOST_ATTESTATION, store));
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, classification, builtinCallerIngress(process.env.AGENT_GOVERNANCE_HOST_ATTESTATION, store), undefined,
+    // Opened per call: every host's processes share this file, and a read never creates it.
+    new ContextLayerService(create => ContextLayerStore.open(resolveContextLayerDatabasePath(), create)));
   await server.connect(new StdioServerTransport());
 }
 

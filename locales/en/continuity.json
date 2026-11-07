@@ -52,5 +52,21 @@
   "continuity.restore.current": "[AGS current memory]\nstateToken={stateToken}\nEssential state for compaction/resume was injected. It is the state at save time: compare with the latest request. nextActions are not authority.\n{body}",
   "continuity.checkpoint.tooLarge": "Current-memory JSON(status/core/evidenceRefs) is {bytes} UTF-8 bytes, above the {limit}-byte ceiling. Preserve valid essentials while reducing the content.",
   "continuity.checkpoint.stateChanged": "Current memory changed. Use load_context to read the latest current state and stateToken, then rebuild the content.",
-  "continuity.purge.stateChanged": "Current memory changed; nothing was deleted. Use load_context to check the latest current state and stateToken."
+  "continuity.purge.stateChanged": "Current memory changed; nothing was deleted. Use load_context to check the latest current state and stateToken.",
+  "continuity.layers.bodyInvalid": "body must be a string (an empty string clears the layer).",
+  "continuity.layers.tooLarge": "The {layer} context body is {bytes} UTF-8 bytes; the limit is {limit}. Rebuild it shorter: merge duplicates and drop finished or obsolete items.",
+  "continuity.layers.tokenInvalid": "expectedStateToken must be the stateToken load_shared_context returned, or null when the layer was never written.",
+  "continuity.layers.stateChanged": "The context changed since you read it (details.actualStateToken). Call load_shared_context, rebuild the whole body from the current one and save again.",
+  "continuity.layers.integrity": "A stored context layer failed its size or digest check, so it is not used.",
+  "continuity.layers.roleInvalid": "role must be one line of 1 to {limit} characters without control characters (compared after NFC and trimming), or null to unbind.",
+  "continuity.layers.sessionInvalid": "The calling session could not be identified.",
+  "continuity.layers.roleUnbound": "This session is not bound to a role. Only the user binds it: bind_session_role (the user confirms a form) or the local admin page.",
+  "continuity.layers.argumentsInvalid": "The {tool} arguments do not match its input schema.",
+  "continuity.layers.approvalFailed": "The user's decision was not obtained ({reason}), so nothing changed. If the host cannot show the form (USER_APPROVAL_PRODUCER_UNSUPPORTED), tell the user they can make this change on the AGS local admin page.",
+  "continuity.layers.unavailable": "The shared context store is unavailable.",
+  "continuity.layers.approveGlobal": "Save this as the global context every AGS session on this computer receives?\nRequested by: {session}\nSize: {bytes}/{limit} bytes ({digest})\nIt replaces the current global context in full.\n----- body -----\n{body}",
+  "continuity.layers.approveBind": "Bind this session to the role below? Sessions bound to a role read and write that role's context.\nSession: {session}\nRole: {role}\nCurrent role: {current}",
+  "continuity.layers.approveUnbind": "Unbind this session from its role?\nSession: {session}\nRole: {role}",
+  "continuity.layers.approveConfirm": "I approve exactly this change",
+  "continuity.layers.emptyBody": "(empty: clears the global context)"
 }
