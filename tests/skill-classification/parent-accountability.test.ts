@@ -28,9 +28,10 @@ it("binds parent accountability after frozen r27 without changing prior source-s
   const intakeLength = JSON.parse(read("tests/skill-classification/fixtures.intake-length-source-successor.json").toString("utf8"));
   const writtenCases = JSON.parse(read("tests/skill-classification/fixtures.intake-written-cases-source-successor.json").toString("utf8"));
   const delivery = JSON.parse(read("tests/skill-classification/fixtures.intake-delivery-source-successor.json").toString("utf8"));
-  const d38References = JSON.parse(read("tests/skill-classification/fixtures.d38-reference-source-successor.json").toString("utf8"));
+  const v390 = JSON.parse(read("tests/skill-classification/fixtures.v390-intake-source-successor.json").toString("utf8"));
+  const v390Later = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
   const current = loadCurrentSourceBindings(rootDirectory);
-  expect(current.manifest).toMatchObject({revision: d38References.revision});
+  expect(current.manifest).toMatchObject({revision: v390.revision});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(previous.bindings.map((binding: {path: string}) => binding.path));
   for (const binding of manifest.bindings) {
     expect(binding.previousDigest).toBe(previous.bindings.find((row: {path: string}) => row.path === binding.path).digest);
@@ -38,11 +39,14 @@ it("binds parent accountability after frozen r27 without changing prior source-s
     expect(domainLatest.previousDigest).toBe(binding.digest);
     const successor = nativeProcedure.bindings.find((row: {path: string}) => row.path === binding.path);
     if (successor) expect(successor.previousDigest).toBe(domainLatest.digest);
-    const latest = delivery.bindings.find((row: {path: string}) => row.path === binding.path) ?? writtenCases.bindings.find((row: {path: string}) => row.path === binding.path) ?? intakeLength.bindings.find((row: {path: string}) => row.path === binding.path) ?? successor ?? domainLatest;
+    const latest = v390Later(binding.path) ?? delivery.bindings.find((row: {path: string}) => row.path === binding.path) ?? writtenCases.bindings.find((row: {path: string}) => row.path === binding.path) ?? intakeLength.bindings.find((row: {path: string}) => row.path === binding.path) ?? successor ?? domainLatest;
     const actual = read(binding.path);
     expect([actual.length, hash(actual)]).toEqual([latest.bytes, latest.digest]);
     expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest.digest);
   }
+  // The 3.9.0 successor rebinds the orchestrator descriptor and intake; its own test checks them against the live
+  // inventory, so the r28 spans are compared with the live descriptor only while no later successor rebinds it.
+  const liveDescriptor = !v390Later("skills/orchestrator/classification.json");
   const descriptor = JSON.parse(read("skills/orchestrator/classification.json").toString("utf8"));
   const inventory = await loadSkillInventory({root: rootDirectory});
   expect(inventory.issues).toEqual([]);
@@ -51,6 +55,7 @@ it("binds parent accountability after frozen r27 without changing prior source-s
   const changed: string[] = [];
   for (const span of manifest.spanPreservation.spans) {
     const prior = previous.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === span.group && row.index === span.index);
+    if (liveDescriptor) {
     const reference = descriptor[span.group][span.index];
     const source = read(reference.path);
     expect(hash(source)).toBe(reference.digest);
@@ -63,6 +68,7 @@ it("binds parent accountability after frozen r27 without changing prior source-s
       ?? domain.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === span.group && row.index === span.index);
     expect([selected.length, hash(selected)]).toEqual([live.bytes, live.digest]);
     expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    }
     expect([span.path, span.startLine, span.endLine, span.startByte]).toEqual([prior.path, prior.startLine, prior.endLine, prior.startByte]);
     if (span.digest !== prior.digest) changed.push(`orchestrator:${span.group}[${span.index}]`);
     else expect(span).toEqual(prior);

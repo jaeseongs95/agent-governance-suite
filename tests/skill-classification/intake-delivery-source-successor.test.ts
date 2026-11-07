@@ -20,10 +20,20 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const file = "tests/skill-classification/fixtures.intake-delivery-source-successor.json";
 const bytes = readFileSync(path.join(root, file));
 const manifest = JSON.parse(bytes.toString("utf8"));
-const d38ReferencesBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.d38-reference-source-successor.json"));
-const d38References = JSON.parse(d38ReferencesBytes.toString("utf8"));
+// The 3.9.0 successor rebinds all three r36 sources; r36 is checked at its base and the live inventory in its own test.
+const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"));
+const v390 = JSON.parse(v390Bytes.toString("utf8"));
+const v390Later = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], {cwd: root});
+/** r36 bytes: the v390 base for a source the 3.9.0 successor rebinds, otherwise the current file. */
+function deliverySource(file: string): Buffer {
+  const later = v390Later(file);
+  if (!later) return readFileSync(path.join(root, file));
+  const source = execFileSync("git", ["show", `${v390.sourceBaseRevision}:${file}`], {cwd: root});
+  expect(hash(source)).toBe(later.previousDigest);
+  return source;
+}
 const oldCase = "만들거나 바꾸기 전에 무엇을·어디서·어떤 결과면 성공인지 사례를 적는다.";
 const currentCase = ["만들거나 바꾸기 전 요구별 대상·경로·환경·검증 방법·통과 조건을 사례로 적고",
   "사례 정의→실행→동일 사례 확인 순으로 한다."].join(" ");
@@ -49,21 +59,23 @@ it("D36 ID01-04 appends exact delivery sources after frozen r35 and rebinds only
   const descriptor = "skills/orchestrator/classification.json", intake = "skills/orchestrator/references/intake.md";
   expect(manifest.bindings.map((row: {path: string}) => row.path)).toEqual([descriptor, intake, "skills/orchestrator/references/entry-details.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: d38References.revision}, digest: hash(d38ReferencesBytes)});
+  expect(current).toMatchObject({manifest: {revision: v390.revision}, digest: hash(v390Bytes)});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
-    const actual = readFileSync(path.join(root, binding.path));
+    const actual = deliverySource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
-    for (const unbound of [binding.digest, `sha256:${"0".repeat(64)}`]) expect(() => current.resolveDigest(binding.path, unbound)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    const latest = v390Later(binding.path)?.digest ?? binding.digest;
+    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
+    if (latest !== binding.digest) expect(current.resolveDigest(binding.path, binding.digest)).toBe(latest);
+    for (const unbound of [latest, `sha256:${"0".repeat(64)}`]) expect(() => current.resolveDigest(binding.path, unbound)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const beforeIntake = previous(intake).toString("utf8"), afterIntake = readFileSync(path.join(root, intake), "utf8");
+  const beforeIntake = previous(intake).toString("utf8"), afterIntake = deliverySource(intake).toString("utf8");
   expect(beforeIntake.split(oldCase)).toHaveLength(2);
   expect(afterIntake).toBe(beforeIntake.replace(oldCase, currentCase));
   const body = afterIntake.slice("<!-- skill-intake:start -->\n".length, -"\n<!-- skill-intake:end -->\n".length);
   expect([body.length, Buffer.byteLength(body)]).toEqual([4344, 9733]);
   expect(body.length).toBeLessThanOrEqual(4344); expect(Buffer.byteLength(body)).toBeLessThanOrEqual(9783);
-  const before = JSON.parse(previous(descriptor).toString("utf8")), after = JSON.parse(readFileSync(path.join(root, descriptor), "utf8"));
+  const before = JSON.parse(previous(descriptor).toString("utf8")), after = JSON.parse(deliverySource(descriptor).toString("utf8"));
   const stable = (value: Record<string, unknown>) => Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
   expect(stable(after)).toEqual(stable(before));
   const inventory = await loadSkillInventory({root}); expect(inventory.issues).toEqual([]);
@@ -73,7 +85,7 @@ it("D36 ID01-04 appends exact delivery sources after frozen r35 and rebinds only
     expect(after[group]).toHaveLength(before[group].length);
     for (const [index, span] of (after[group] as Span[]).entries()) {
       const prior = selected(previous(before[group][index].path), before[group][index]);
-      const actual = selected(readFileSync(path.join(root, span.path)), span);
+      const actual = selected(deliverySource(span.path), span);
       const row = manifest.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === group && row.index === index);
       if (span.path === intake) {
         expect(row.previous).toEqual({...before[group][index], selectedBytes: prior.length, selectedDigest: hash(prior)});
@@ -84,7 +96,8 @@ it("D36 ID01-04 appends exact delivery sources after frozen r35 and rebinds only
         changed.push(`orchestrator:${group}[${index}]`);
         expect(actual.toString("utf8")).toBe(prior.toString("utf8").replace(oldCase, currentCase));
       }
-      expect(skill[group]).toContain(actual.toString("utf8").trim()); compared++;
+      if (!v390Later(span.path)) expect(skill[group]).toContain(actual.toString("utf8").trim());
+      compared++;
     }
   }
   expect([compared, rebound, unchanged]).toEqual([18, 13, 5]);

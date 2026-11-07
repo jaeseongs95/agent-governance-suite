@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
 import { checkSkillContextOptimization, checkRegistryContextCompatibility, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, matchesSkillPolicyWordingSuccessorBytes, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
-import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin, beforeSpecialistBehaviorSuccessor } from "../../scripts/check-skill-context-optimization.mjs";
+import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin, beforeSpecialistBehaviorSuccessor, beforeGuidanceSuccessor } from "../../scripts/check-skill-context-optimization.mjs";
 
 // The checker prefetches history with `ls-tree` + `cat-file --batch`; a path left out of the listing is read by
 // `git show`, so a test that intercepts `git show` for a path also drops it from the listing.
@@ -129,7 +129,8 @@ describe("skill context optimization", () => {
       const current = readFileSync(new URL(`../../${relative}`, import.meta.url));
       const predecessor = execFileSync("git", ["show", `${report.currentPurposeChange.baselineRevision}:${relative}`], { cwd: fileURLToPath(new URL("../../", import.meta.url)) });
       expect(createHash("sha256").update(predecessor).digest("hex"), relative).toBe(before);
-      expect(createHash("sha256").update(current).digest("hex"), relative).toBe(after);
+      // A 3.9.0 guidance successor may reword a purpose-change file again; it must stand for the exact purpose bytes.
+      expect(createHash("sha256").update(beforeGuidanceSuccessor(relative, current)).digest("hex"), relative).toBe(after);
       expect(readHistoricalSource(relative).equals(current), relative).toBe(false);
     }
   });
@@ -630,10 +631,14 @@ describe("skill context optimization", () => {
       "skills/independent-audit-gate/references/entry-details.md", "skills/independent-audit-gate/references/audit-protocol.md",
       "skills/independent-audit-gate/references/orchestrator-integration.md",
     ]);
+    // The 3.9.0 successor rebinds four of these paths; their r37 bytes are read at its base.
+    const v390 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"), "utf8"));
     for (const binding of manifest.bindings) {
       const old = execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${binding.path}`], { cwd: root });
-      const current = readFileSync(path.join(root, binding.path));
+      const later = v390.bindings.find(row => row.path === binding.path);
+      const current = later ? execFileSync("git", ["show", `${v390.sourceBaseRevision}:${binding.path}`], { cwd: root }) : readFileSync(path.join(root, binding.path));
       const digest = bytes => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+      if (later) expect(later.previousDigest).toBe(binding.digest);
       expect([digest(old), digest(current)]).toEqual([binding.previousDigest, binding.digest]);
       const predecessor = beforeSpecialistBehaviorSuccessor(binding.path, old);
       const accepts = (relative, bytes) => beforeSpecialistBehaviorSuccessor(relative, bytes).equals(predecessor);

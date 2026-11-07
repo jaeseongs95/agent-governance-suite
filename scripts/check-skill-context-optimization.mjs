@@ -597,6 +597,11 @@ function beforeReviewedSuccessors(relative, bytes) {
   }
 }
 
+/** Test hook: the exact predecessor a reviewed guidance successor stands for; any other bytes are returned as they are. */
+export function beforeGuidanceSuccessor(relative, bytes) {
+  return beforeMultiWorkflowGuidance(relative, bytes);
+}
+
 /** Reads a file as the pinned checks see it: a reviewed guidance successor reads as its exact predecessor. */
 function readFileSync(path, encoding) {
   const relative = relativePath(ROOT, String(path)).replaceAll("\\", "/");

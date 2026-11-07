@@ -16,8 +16,10 @@ const cli = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/
 const intakeLength = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-length-source-successor.json"), "utf8"));
 const writtenCases = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-written-cases-source-successor.json"), "utf8"));
 const delivery = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-delivery-source-successor.json"), "utf8"));
-const d38ReferencesBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.d38-reference-source-successor.json"));
-const d38References = JSON.parse(d38ReferencesBytes.toString("utf8"));
+// The 3.9.0 successor (chain end) rebinds some of these sources; its own test checks them against the live inventory.
+const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"));
+const v390 = JSON.parse(v390Bytes.toString("utf8"));
+const v390Later = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], { cwd: root });
 /** r32 assertions read r32 bytes at the first later binding ancestor, never current successor bytes. */
@@ -49,12 +51,12 @@ it("NP04 appends exactly four current sources without rewriting frozen r31 or ch
     "skills/test-engineering/classification.json", "skills/test-engineering/SKILL.md",
   ]);
   const current = loadCurrentSourceBindings(root);
-  expect(current.manifest).toMatchObject({ revision: d38References.revision });
+  expect(current.manifest).toMatchObject({ revision: v390.revision });
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = nativeProcedureSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const later = [...delivery.bindings, ...writtenCases.bindings, ...intakeLength.bindings, ...cli.bindings].find((row: {path: string}) => row.path === binding.path);
+    const later = [...v390.bindings, ...delivery.bindings, ...writtenCases.bindings, ...intakeLength.bindings, ...cli.bindings].find((row: {path: string}) => row.path === binding.path);
     const latest = later?.digest ?? binding.digest;
     expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (later) expect(current.resolveDigest(binding.path, binding.digest)).toBe(latest);
@@ -77,8 +79,10 @@ it("NP04 appends exactly four current sources without rewriting frozen r31 or ch
         const prior = selected(previous(old.path), old);
         const actual = selected(nativeProcedureSource(span.path), span);
         const rebound = [...delivery.spanPreservation.spans, ...writtenCases.spanPreservation.spans, ...intakeLength.spanPreservation.spans].find((row: {skillId: string; group: string; index: number}) => row.skillId === skillId && row.group === group && row.index === index);
-        const live = rebound ? selected(readFileSync(path.join(root, rebound.current.path)), rebound.current) : actual;
-        expect(inventory.skills.find(skill => skill.skillId === skillId)![group]).toContain(live.toString("utf8").trim());
+        if (!v390Later(rebound ? rebound.current.path : span.path)) {
+          const live = rebound ? selected(readFileSync(path.join(root, rebound.current.path)), rebound.current) : actual;
+          expect(inventory.skills.find(skill => skill.skillId === skillId)![group]).toContain(live.toString("utf8").trim());
+        }
         if (!prior.equals(actual)) changed.push(`${skillId}:${group}[${index}]`);
         compared++;
       }

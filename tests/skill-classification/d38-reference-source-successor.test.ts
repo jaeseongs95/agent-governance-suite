@@ -23,6 +23,17 @@ const file = "tests/skill-classification/fixtures.d38-reference-source-successor
 const bytes = readFileSync(path.join(root, file)), manifest = JSON.parse(bytes.toString("utf8"));
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], {cwd: root});
+// The 3.9.0 successor rebinds some r37 sources; r37 is then checked at that successor's base, as each earlier test does.
+const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"));
+const v390 = JSON.parse(v390Bytes.toString("utf8"));
+const laterBinding = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
+function boundSource(file: string): Buffer {
+  const later = laterBinding(file);
+  if (!later) return readFileSync(path.join(root, file));
+  const bytes = execFileSync("git", ["show", `${v390.sourceBaseRevision}:${file}`], {cwd: root});
+  expect(hash(bytes)).toBe(later.previousDigest);
+  return bytes;
+}
 type Span = {path: string; startLine: number; endLine: number; startByte?: number; endByte?: number; digest: string};
 function selected(source: Buffer, span: Span): Buffer {
   expect(hash(source)).toBe(span.digest);
@@ -44,22 +55,26 @@ it("D38 DR01-04 appends five exact r37 bindings and preserves all audit span ide
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.intake-delivery-source-successor.json", bytes: frozen.length, digest: hash(frozen)});
   const r36 = JSON.parse(frozen.toString("utf8"));
   const intake = r36.bindings.find((row: {path: string}) => row.path === "skills/orchestrator/references/intake.md");
-  const producer = readFileSync(path.join(root, intake.path));
+  const producer = boundSource(intake.path);
   expect([producer.length, hash(producer)]).toEqual([intake.bytes, intake.digest]);
   const descriptor = "skills/independent-audit-gate/classification.json", entry = "skills/independent-audit-gate/references/entry-details.md";
   expect(manifest.bindings.map((row: {path: string}) => row.path)).toEqual([descriptor,
     "skills/task-contract/references/entry-details.md", entry,
     "skills/independent-audit-gate/references/audit-protocol.md", "skills/independent-audit-gate/references/orchestrator-integration.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: manifest.revision}, digest: hash(bytes)});
+  expect(current).toMatchObject({manifest: {revision: v390.revision}, digest: hash(v390Bytes)});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
-    const actual = readFileSync(path.join(root, binding.path));
+    const actual = boundSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
-    for (const unbound of [binding.digest, `sha256:${"0".repeat(64)}`]) expect(() => current.resolveDigest(binding.path, unbound)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    const later = laterBinding(binding.path);
+    expect(later ? later.previousDigest : binding.digest).toBe(binding.digest);
+    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(later ? later.digest : binding.digest);
+    if (later) expect(current.resolveDigest(binding.path, binding.digest)).toBe(later.digest);
+    else expect(() => current.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    expect(() => current.resolveDigest(binding.path, `sha256:${"0".repeat(64)}`)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const before = JSON.parse(previous(descriptor).toString("utf8")), after = JSON.parse(readFileSync(path.join(root, descriptor), "utf8"));
+  const before = JSON.parse(previous(descriptor).toString("utf8")), after = JSON.parse(boundSource(descriptor).toString("utf8"));
   const stable = (value: Record<string, unknown>) => Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
   expect(stable(after)).toEqual(stable(before));
   const inventory = await loadSkillInventory({root}); expect(inventory.issues).toEqual([]);
@@ -69,7 +84,7 @@ it("D38 DR01-04 appends five exact r37 bindings and preserves all audit span ide
     expect(after[group]).toHaveLength(before[group].length);
     for (const [index, span] of (after[group] as Span[]).entries()) {
       const old = before[group][index];
-      const prior = selected(previous(old.path), old), source = readFileSync(path.join(root, span.path)), actual = selected(source, span);
+      const prior = selected(previous(old.path), old), source = boundSource(span.path), actual = selected(source, span);
       expect([span.path, span.startLine, span.endLine, span.startByte]).toEqual([old.path, old.startLine, old.endLine, old.startByte]);
       const row = manifest.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === group && row.index === index);
       if (span.path === entry) {
@@ -80,7 +95,9 @@ it("D38 DR01-04 appends five exact r37 bindings and preserves all audit span ide
         expect([row.bytes, row.digest]).toEqual([actual.length, hash(actual)]); rebound++;
       } else {expect(row).toBeUndefined(); expect(span).toEqual(old); unchanged++;}
       if (!actual.equals(prior)) changed.push(`independent-audit-gate:${group}[${index}]`);
-      expect(skill[group]).toContain(actual.toString("utf8").trim()); compared++;
+      // A source the 3.9.0 successor rebinds is checked against the current inventory in that successor's test.
+      if (!laterBinding(span.path)) expect(skill[group]).toContain(actual.toString("utf8").trim());
+      compared++;
     }
   }
   expect([compared, rebound, unchanged]).toEqual([13, 8, 5]);
