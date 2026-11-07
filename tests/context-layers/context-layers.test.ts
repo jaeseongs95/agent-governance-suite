@@ -1,6 +1,5 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { ElicitRequestSchema, type ElicitResult } from "@modelcontextprotocol/sdk/types.js";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { DatabaseSync } from "node:sqlite";
@@ -27,11 +26,13 @@ import { SessionMessageService } from "../../mcp-server/src/session-message-serv
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { callerMeta, metaIngress, rootCaller } from "../helpers/caller.js";
+import { AdminError } from "../../mcp-server/src/admin-webauthn.js";
+import { ensureBootstrapped, fakeAuthenticator, signAndCommit } from "../helpers/fake-authenticator.js";
 
-// Three contexts (AGS3-T-0023, user decisions 2026-11-07): global (every session, 2000 bytes, changed only with the
-// user's approval), role (keyed by the role the user bound the session to, 1000 bytes, shared by that role's sessions)
-// and situational (the session's own current memory, 2000 bytes, unchanged). The role a session may use comes only from
-// the approved bindings table, never from the session board's self-written role line.
+// Three contexts (AGS3-T-0023, user decisions 2026-11-07): global (every session, 2000 bytes, changed only by a record
+// the user's passkey signs on the admin page), role (keyed by the registered role the user bound the session to, 1000
+// bytes, shared by that role's sessions) and situational (the session's own current memory, 2000 bytes, unchanged). The
+// role a session may use comes only from its signed binding (AGS3-T-0024), never from the board's self-written role.
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const directories: string[] = [];
 const cleanups: Array<() => Promise<void> | void> = [];
@@ -46,11 +47,15 @@ function directory(): string {
   return created;
 }
 
-function serviceAt(file: string, now = () => new Date("2026-11-07T00:00:00.000Z")): ContextLayerService {
-  return new ContextLayerService(create => ContextLayerStore.open(file, create), now);
+const ADMIN_URL = "http://localhost:47615/";
+
+function serviceAt(file: string, now = () => new Date()): ContextLayerService {
+  return new ContextLayerService(create => ContextLayerStore.open(file, create), now, ADMIN_URL);
 }
 
-const pageApproval = { kind: "local-admin-page", pageId: "test-page" } as const;
+/** The user's passkey on the admin page (a software authenticator). */
+const admin = fakeAuthenticator(-7, "test admin");
+const caller = (host = "codex", sessionId = "s1") => ({ host, sessionId, actor: hostActorId(host, sessionId) });
 
 function code(action: () => unknown): { code: string; reasonCode: unknown; details: Record<string, unknown> | null } {
   try { action(); } catch (error) {
@@ -60,15 +65,34 @@ function code(action: () => unknown): { code: string; reasonCode: unknown; detai
   throw new Error("expected a contract error");
 }
 
-/** Saves the global body through the same commit an approval leads to. */
+/** Saves the global body the way the admin page does: a record the user's passkey signs. */
 function saveGlobal(service: ContextLayerService, body: string): string {
-  const current = service.load("codex", "any").global?.stateToken ?? null;
-  const saved = service.commit(service.prepareGlobal(current, body), "test-actor", pageApproval);
-  return saved.kind === "global" ? saved.layer.stateToken : "";
+  ensureBootstrapped(service, admin);
+  return signAndCommit(service, admin, { op: "global.set", body }).record.recordHash;
+}
+
+/** The registered role with this (normalized) name; registers it first when the user has not yet. */
+function roleId(service: ContextLayerService, role: string): string {
+  ensureBootstrapped(service, admin);
+  const name = normalizeRoleName(role)!;
+  const found = service.adminState().roles.find(item => item.name.toLowerCase() === name.toLowerCase());
+  if (found) return found.roleId;
+  const id = `role-${Buffer.from(name).toString("hex").slice(0, 60)}`;
+  signAndCommit(service, admin, { op: "role.add", roleId: id, name });
+  return id;
 }
 
 function bind(service: ContextLayerService, host: string, sessionId: string, role: string | null): void {
-  service.commit(service.prepareBinding(host, sessionId, role), "test-actor", pageApproval);
+  ensureBootstrapped(service, admin);
+  signAndCommit(service, admin, { op: "binding.set", host, sessionId, roleId: role === null ? null : roleId(service, role) });
+}
+
+function adminCode(action: () => unknown): string {
+  try { action(); } catch (error) {
+    if (error instanceof AdminError) return error.code;
+    throw error;
+  }
+  throw new Error("expected an admin error");
 }
 
 describe("context layer store and service", () => {
@@ -78,8 +102,8 @@ describe("context layer store and service", () => {
     // 666 Hangul syllables are 1998 bytes; two ASCII bytes reach the limit exactly, one more passes it.
     const atLimit = `${"가".repeat(666)}ab`;
     expect(Buffer.byteLength(atLimit)).toBe(2000);
-    expect(service.prepareGlobal(null, atLimit)).toMatchObject({ kind: "global", bytes: 2000 });
-    expect(code(() => service.prepareGlobal(null, `${atLimit}c`))).toMatchObject({ code: "INVALID_INPUT", reasonCode: "CONTEXT_LAYER_TOO_LARGE", details: { actualBytes: 2001, maxBytes: 2000 } });
+    expect(service.proposeGlobal(caller(), null, atLimit)).toMatchObject({ pending: true, adminUrl: ADMIN_URL });
+    expect(code(() => service.proposeGlobal(caller(), null, `${atLimit}c`))).toMatchObject({ code: "INVALID_INPUT", reasonCode: "CONTEXT_LAYER_TOO_LARGE", details: { actualBytes: 2001, maxBytes: 2000 } });
     bind(service, "codex", "s1", "reviewer");
     const role = `${"가".repeat(333)}a`;
     expect(Buffer.byteLength(role)).toBe(1000);
@@ -88,28 +112,28 @@ describe("context layer store and service", () => {
       .toMatchObject({ code: "INVALID_INPUT", reasonCode: "CONTEXT_LAYER_TOO_LARGE", details: { maxBytes: 1000 } });
   });
 
-  it("lets only the first of two writers that read the same state token save, across two connections", () => {
+  it("lets only the first of two role writers that read the same state token save, across two connections", () => {
     const file = path.join(directory(), "layers.sqlite3");
     const first = new ContextLayerStore(file);
     const second = new ContextLayerStore(file);
     cleanups.push(() => { first.close(); second.close(); });
     const now = "2026-11-07T00:00:00.000Z";
-    const a = first.save("global", "", null, "A", "actor-a", pageApproval, now);
-    const b = second.save("global", "", null, "B", "actor-b", pageApproval, now);
+    const a = first.transaction(() => first.saveRole("role-a", null, "A", "actor-a", now));
+    const b = second.transaction(() => second.saveRole("role-a", null, "B", "actor-b", now));
     expect(a.kind).toBe("saved");
-    expect(b).toEqual({ kind: "stale", actualStateToken: a.kind === "saved" ? a.layer.stateToken : null });
-    expect(second.read("global")?.body).toBe("A");
-    // The history keeps each accepted body with the approval that allowed it.
-    expect(first.history("global").map(entry => [entry.body, entry.approval])).toEqual([["A", pageApproval]]);
+    expect(b).toEqual({ kind: "stale", actualStateToken: a.kind === "saved" ? a.record.stateToken : null });
+    expect(second.readRole("role-a")?.body).toBe("A");
+    // A save outside a transaction is a programming error, not a silent unguarded write.
+    expect(() => first.saveRole("role-a", null, "C", "actor-a", now)).toThrow(/inside a transaction/u);
   });
 
-  it("refuses a stale token before asking the user, and a change that landed while the user decided", () => {
+  it("refuses an agent request on a stale token, and a signed change that lost the race to another one", () => {
     const service = serviceAt(path.join(directory(), "layers.sqlite3"));
     const first = saveGlobal(service, "first");
-    expect(code(() => service.prepareGlobal(null, "x"))).toMatchObject({ code: "STALE_REVISION", reasonCode: "CONTEXT_LAYER_STATE_STALE", details: { actualStateToken: first } });
-    const pending = service.prepareGlobal(first, "mine");
-    const other = saveGlobal(service, "theirs");
-    expect(code(() => service.commit(pending, "a", pageApproval))).toMatchObject({ code: "STALE_REVISION", details: { actualStateToken: other } });
+    expect(code(() => service.proposeGlobal(caller(), null, "x"))).toMatchObject({ code: "STALE_REVISION", reasonCode: "CONTEXT_LAYER_STATE_STALE", details: { actualStateToken: first } });
+    const mine = service.prepareIntent({ op: "global.set", body: "mine" }, false);
+    saveGlobal(service, "theirs");
+    expect(adminCode(() => service.commit({ intent: mine.intent, assertion: admin.assert(mine.intent), requestId: "req-mine-0001", proposalId: null }))).toBe("ADMIN_TARGET_STALE");
     expect(service.load("codex", "s").global?.body).toBe("theirs");
   });
 
@@ -134,15 +158,16 @@ describe("context layer store and service", () => {
     expect(normalizeRoleName("리뷰어")).toBe("리뷰어");
     for (const bad of ["", "   ", "a\nb", "a\u0000", "x".repeat(101), 3]) expect(normalizeRoleName(bad)).toBeNull();
     const service = serviceAt(path.join(directory(), "layers.sqlite3"));
-    expect(code(() => service.prepareBinding("codex", "s", "a\nb"))).toMatchObject({ code: "INVALID_INPUT", reasonCode: "ROLE_NAME_INVALID" });
+    expect(code(() => service.proposeBinding(caller("codex", "s"), "a\nb"))).toMatchObject({ code: "INVALID_INPUT", reasonCode: "ROLE_NAME_INVALID" });
   });
 
-  it("refuses a stored body that fails its digest or limit as an integrity failure", () => {
+  it("refuses a stored role body that fails its digest or limit as an integrity failure", () => {
     const file = path.join(directory(), "layers.sqlite3");
     const service = serviceAt(file);
-    saveGlobal(service, "ok");
+    bind(service, "codex", "s", "reviewer");
+    service.saveRole("codex", "s", null, "ok", "a");
     const store = new ContextLayerStore(file);
-    (store as unknown as { database: { exec(sql: string): void } }).database.exec("UPDATE context_layers SET body = 'tampered'");
+    (store as unknown as { database: { exec(sql: string): void } }).database.exec("UPDATE role_contexts SET body = 'tampered'");
     store.close();
     expect(code(() => service.load("codex", "s"))).toMatchObject({ code: "INTEGRITY_FAILED", reasonCode: "CONTEXT_LAYER_INTEGRITY_FAILED" });
   });
@@ -167,7 +192,7 @@ describe("context layer store and service", () => {
   });
 });
 
-async function server(options: { forms?: boolean; answer?: (message: string) => ElicitResult | Promise<ElicitResult> } = {}) {
+async function server() {
   const root = directory();
   const layers = path.join(root, "layers.sqlite3");
   const validator = new ContractValidator();
@@ -179,13 +204,8 @@ async function server(options: { forms?: boolean; answer?: (message: string) => 
   const mcp = createMcpServer(service, new PluginUpdateService(new InMemoryPluginUpdateStore()), new ContinuityService(continuityStore, validator, store),
     undefined, undefined, validator, "default", null, path.join(root, "board.sqlite3"), new SessionMessageService(messaging), null, null, metaIngress(),
     "en", contextLayers);
-  const client = new Client({ name: "context-layers", version: "1" }, { capabilities: options.forms === false ? {} : { elicitation: { form: {} } } });
-  const forms: string[] = [];
-  if (options.forms !== false) client.setRequestHandler(ElicitRequestSchema, async request => {
-    const message = "message" in request.params ? request.params.message : "";
-    forms.push(message);
-    return options.answer ? options.answer(message) : { action: "accept", content: { confirm: true } };
-  });
+  // No form capability: nothing in these tools asks the client for an approval any more.
+  const client = new Client({ name: "context-layers", version: "1" }, { capabilities: {} });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await mcp.connect(serverTransport);
   await client.connect(clientTransport);
@@ -196,7 +216,14 @@ async function server(options: { forms?: boolean; answer?: (message: string) => 
     const text = (response.content as Array<{ type: string; text?: string }>).find(item => item.type === "text")?.text;
     return JSON.parse(text!) as ApiResultV1<T>;
   };
-  return { call, forms, contextLayers, layers, client };
+  return { call, contextLayers, layers, client };
+}
+
+/** The user approves an agent's request on the page: the requested change, signed, naming the request. */
+function approve(contextLayers: ContextLayerService, proposalId: string) {
+  ensureBootstrapped(contextLayers, admin);
+  const proposal = contextLayers.adminState().proposals.find(item => item.id === proposalId)!;
+  return signAndCommit(contextLayers, admin, proposal.change, { proposalId });
 }
 
 describe("context layer MCP tools", () => {
@@ -206,57 +233,53 @@ describe("context layer MCP tools", () => {
     expect(names).toEqual(expect.arrayContaining(["load_shared_context", "checkpoint_global_context", "bind_session_role", "checkpoint_role_context"]));
   });
 
-  it("saves the global context only after the user accepts a form showing the exact body", async () => {
-    const { call, forms } = await server();
-    const saved = await call<{ stateToken: string; body: string }>("checkpoint_global_context", { expectedStateToken: null, body: "Answer in Korean." });
-    expect(saved).toMatchObject({ ok: true, data: { body: "Answer in Korean.", bytes: 17 } });
-    expect(forms).toHaveLength(1);
-    expect(forms[0]).toContain("Answer in Korean.");
-    expect(forms[0]).toContain("synthetic-host session-a");
-    expect(await call("load_shared_context", {}, "session-b")).toMatchObject({ ok: true, data: { global: { body: "Answer in Korean.", stateToken: saved.data!.stateToken } } });
+  it("stores a global change as a request that applies only after the user signs it on the page", async () => {
+    const { call, contextLayers } = await server();
+    const requested = await call<{ pending: boolean; proposalId: string; adminUrl: string }>("checkpoint_global_context", { expectedStateToken: null, body: "Answer in Korean." });
+    expect(requested).toMatchObject({ ok: true, data: { pending: true, adminUrl: ADMIN_URL } });
+    expect(Object.keys(requested.data!).sort()).toEqual(["adminUrl", "pending", "proposalId"]);
+    // Nothing applies before the signature; the page shows the request with who asked.
+    expect(await call("load_shared_context", {}, "session-b")).toMatchObject({ ok: true, data: { global: null } });
+    expect(contextLayers.adminState().proposals).toMatchObject([{ id: requested.data!.proposalId, host: "synthetic-host", sessionId: "session-a",
+      change: { op: "global.set", body: "Answer in Korean." }, baseChanged: false }]);
+    const { record } = approve(contextLayers, requested.data!.proposalId);
+    expect(await call("load_shared_context", {}, "session-b")).toMatchObject({ ok: true, data: { global: { body: "Answer in Korean.", stateToken: record.recordHash } } });
+    expect(contextLayers.adminState().proposals).toEqual([]);
   });
 
-  it.each([["decline", "USER_APPROVAL_DECLINED"], ["cancel", "USER_APPROVAL_CANCELLED"]] as const)("saves nothing when the user answers %s", async (action, reason) => {
-    const { call } = await server({ answer: () => ({ action }) });
-    expect(await call("checkpoint_global_context", { expectedStateToken: null, body: "x" })).toMatchObject({ ok: false, error: { code: "INVALID_TRANSITION", details: { reasonCode: reason } } });
-    expect(await call("bind_session_role", { role: "reviewer" })).toMatchObject({ ok: false, error: { details: { reasonCode: reason } } });
-    expect((await call<{ global: unknown; binding: unknown }>("load_shared_context", {})).data).toMatchObject({ global: null, binding: null });
+  it("keeps one pending request per session and target, and a rejected request applies nothing", async () => {
+    const { call, contextLayers } = await server();
+    const older = await call<{ proposalId: string }>("checkpoint_global_context", { expectedStateToken: null, body: "old" });
+    const newer = await call<{ proposalId: string }>("checkpoint_global_context", { expectedStateToken: null, body: "new" });
+    expect(contextLayers.adminState().proposals.map(item => item.id)).toEqual([newer.data!.proposalId]);
+    ensureBootstrapped(contextLayers, admin);
+    expect(adminCode(() => signAndCommit(contextLayers, admin, { op: "global.set", body: "old" }, { proposalId: older.data!.proposalId }))).toBe("ADMIN_PROPOSAL_NOT_FOUND");
+    contextLayers.rejectProposal(newer.data!.proposalId);
+    expect(adminCode(() => contextLayers.rejectProposal(newer.data!.proposalId))).toBe("ADMIN_PROPOSAL_NOT_FOUND");
+    expect((await call<{ global: unknown }>("load_shared_context", {})).data).toMatchObject({ global: null });
   });
 
-  it("saves nothing when the form is accepted without the confirmation", async () => {
-    const { call } = await server({ answer: () => ({ action: "accept", content: { confirm: false } }) });
-    expect(await call("checkpoint_global_context", { expectedStateToken: null, body: "x" })).toMatchObject({ ok: false, error: { details: { reasonCode: "USER_APPROVAL_DECLINED" } } });
+  it("refuses a request on a stale token", async () => {
+    const { call, contextLayers } = await server();
+    const current = saveGlobal(contextLayers, "current");
+    expect(await call("checkpoint_global_context", { expectedStateToken: null, body: "x" })).toMatchObject({ ok: false, error: { code: "STALE_REVISION", details: { actualStateToken: current } } });
   });
 
-  it("refuses with its reason when the client cannot show a form, instead of passing", async () => {
-    const { call } = await server({ forms: false });
-    expect(await call("checkpoint_global_context", { expectedStateToken: null, body: "x" })).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { reasonCode: "USER_APPROVAL_PRODUCER_UNSUPPORTED" } } });
-    expect(await call("bind_session_role", { role: "reviewer" })).toMatchObject({ ok: false, error: { details: { reasonCode: "USER_APPROVAL_PRODUCER_UNSUPPORTED" } } });
-    // Reading and a bound session's role save need no form.
-    expect((await call("load_shared_context", {})).ok).toBe(true);
-  });
-
-  it("does not write an accepted body when another save landed while the form was open", async () => {
-    let contextLayers: ContextLayerService | null = null;
-    const harness = await server({ answer: () => {
-      saveGlobal(contextLayers!, "saved meanwhile");
-      return { action: "accept", content: { confirm: true } };
-    } });
-    contextLayers = harness.contextLayers;
-    expect(await harness.call("checkpoint_global_context", { expectedStateToken: null, body: "mine" })).toMatchObject({ ok: false, error: { code: "STALE_REVISION", details: { reasonCode: "CONTEXT_LAYER_STATE_STALE" } } });
-    expect(harness.contextLayers.load("x", "y").global?.body).toBe("saved meanwhile");
-  });
-
-  it("binds a session after approval; its subagents use the binding, other sessions do not; unbinding ends access", async () => {
-    const { call, forms } = await server();
-    expect(await call("checkpoint_role_context", { expectedStateToken: null, body: "x" })).toMatchObject({ ok: false, error: { code: "BINDING_REQUIRED" } });
-    expect(await call("bind_session_role", { role: " 리뷰어 " })).toMatchObject({ ok: true, data: { binding: { role: "리뷰어" } } });
-    expect(forms.at(-1)).toContain("리뷰어");
+  it("binds only to a registered role; after approval the session's subagents inherit it, other sessions do not; unbinding ends access", async () => {
+    const { call, contextLayers } = await server();
+    expect(await call("checkpoint_role_context", { expectedStateToken: null, body: "x" })).toMatchObject({ ok: false, error: { code: "BINDING_REQUIRED", details: { adminUrl: ADMIN_URL } } });
+    expect(await call("bind_session_role", { role: "리뷰어" })).toMatchObject({ ok: false, error: { code: "INVALID_INPUT", details: { reasonCode: "ROLE_NOT_REGISTERED", adminUrl: ADMIN_URL } } });
+    roleId(contextLayers, "리뷰어");
+    const requested = await call<{ proposalId: string }>("bind_session_role", { role: " 리뷰어 " });
+    expect(requested).toMatchObject({ ok: true, data: { pending: true } });
+    expect(await call("load_shared_context", {})).toMatchObject({ data: { binding: null } });
+    approve(contextLayers, requested.data!.proposalId);
     const saved = await call<{ stateToken: string }>("checkpoint_role_context", { expectedStateToken: null, body: "근거 없는 판정 금지" }, "session-a", "child-1");
     expect(saved.ok).toBe(true);
     expect(await call("load_shared_context", {}, "session-a", "child-1")).toMatchObject({ data: { binding: { role: "리뷰어" }, role: { body: "근거 없는 판정 금지" } } });
     expect(await call("load_shared_context", {}, "session-b")).toMatchObject({ data: { binding: null, role: null } });
-    expect(await call("bind_session_role", { role: null })).toMatchObject({ ok: true, data: { binding: null } });
+    const unbind = await call<{ proposalId: string }>("bind_session_role", { role: null });
+    approve(contextLayers, unbind.data!.proposalId);
     expect(await call("checkpoint_role_context", { expectedStateToken: saved.data!.stateToken, body: "y" })).toMatchObject({ ok: false, error: { code: "BINDING_REQUIRED" } });
   });
 
@@ -404,7 +427,7 @@ describe("context layer injection at hook boundaries", () => {
     expect(hook(env, { ...after, tool_use_id: "call-2" }, "codex")).not.toContain("second version");
     // The root actor of the same session has its own delivery mark.
     expect(hook(env, { hook_event_name: "UserPromptSubmit", prompt: "x" }, "codex")).toContain("second version");
-    expect(layers.adminState().history.map(entry => entry.body)).toEqual(["second version", "first version"]);
+    expect(layers.adminState().globalHistory.map(entry => entry.body)).toEqual(["second version", "first version"]);
     expect(hostActorId("codex", session, "agent-1")).not.toBe(hostActorId("codex", session));
   });
 

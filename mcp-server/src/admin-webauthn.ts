@@ -109,7 +109,7 @@ export function verifyAdminAssertion(intent: string, assertion: AdminAssertion, 
   if ((flags & 0x01) === 0 || (flags & 0x04) === 0) throw new AdminError("ADMIN_USER_VERIFICATION_MISSING", { userPresent: (flags & 0x01) !== 0, userVerified: (flags & 0x04) !== 0 });
   const publicKey = importAdminKey(key);
   const signed = Buffer.concat([authenticatorData, sha256(clientDataBytes)]);
-  let valid = false;
+  let valid: boolean;
   try { valid = verify(ALGORITHMS[key.alg]!.hash, signed, publicKey, bytes(assertion.signature, "signature")); } catch { valid = false; }
   if (!valid) throw new AdminError("ADMIN_SIGNATURE_INVALID", { field: "signature" });
   return { signCount: authenticatorData.readUInt32BE(33) };

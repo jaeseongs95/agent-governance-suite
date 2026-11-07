@@ -76,16 +76,18 @@ AGS는 세 가지 컨텍스트를 둡니다. 프로젝트 단위 컨텍스트는
 
 | 컨텍스트 | 누가 받는가 | 상한(UTF-8 본문) | 누가 바꾸는가 | 저장 위치 |
 | --- | --- | --- | --- | --- |
-| 전역 | 이 컴퓨터에서 AGS에 붙은 모든 세션과 그 서브에이전트 | 2000 byte | 사용자가 확인한 저장만 | 공유 상태 폴더의 `context-layers.sqlite3` |
-| 담당 | 그 역할(role)에 결속된 세션들과 그 서브에이전트 | 1000 byte | 그 역할에 결속된 세션 | 같은 파일 |
+| 전역 | 이 컴퓨터에서 AGS에 붙은 모든 세션과 그 서브에이전트 | 2000 byte | 사용자가 로컬 관리 페이지에서 패스키로 서명한 기록만 | 공유 상태 폴더의 `context-layers.sqlite3` |
+| 담당 | 그 역할(role)에 결속된 세션들과 그 서브에이전트 | 1000 byte | 그 역할에 결속된 세션(에이전트가 씀, 서명 대상 아님) | 같은 파일 |
 | 상황 | 그 세션과 그 서브에이전트 | 2000 byte(현재 메모리, 기존 그대로) | 그 세션 | 호스트별 `continuity.sqlite3` |
 
 - 공유 파일은 `AGENT_GOVERNANCE_SHARED_STATE_DIR`(없으면 `~/.agent-governance-suite`) 아래에 있고 `AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH`로 따로 지정할 수 있습니다. hook은 이 파일을 만들지 않습니다. 저장한 적이 없으면 파일도 주입도 없습니다.
-- MCP는 자연어를 해석하지 않습니다. 전역 컨텍스트 저장(`checkpoint_global_context`)과 세션↔역할 결속·해제(`bind_session_role`)는 MCP form elicitation으로 사용자에게 바뀔 내용을 그대로 보여 주고, 사용자가 승인한 경우에만 기록합니다. 클라이언트가 form을 지원하지 않으면 `USER_APPROVAL_PRODUCER_UNSUPPORTED`로 거절하며 조용히 통과시키지 않습니다. 같은 서비스 함수(`ContextLayerService`)를 로컬 관리 페이지도 씁니다.
-- 담당 컨텍스트에 누가 접근하는지는 결속 표로만 정합니다. 세션 현황판의 role(`update_session_status`)은 세션이 스스로 적는 표시용 문구이며 접근 키가 아닙니다. 역할 이름은 NFC 정규화·앞뒤 공백 제거 뒤 키로 씁니다. 결속은 세션 단위이며 새 세션은 다시 확인을 받아야 합니다. 서브에이전트는 호출·hook이 가리키는 부모 세션의 결속을 씁니다.
-- 저장은 항상 본문 전체를 다시 구성해 `expectedStateToken`과 함께 보냅니다. 읽은 뒤 다른 세션이 저장했거나 확인 창이 떠 있는 동안 저장이 끼어들면 `STALE_REVISION`이며 아무것도 쓰지 않습니다. 전역·담당의 저장 이력은 층마다 최근 50개를 승인 출처와 함께 남깁니다.
-- 주입: 세션 시작·재개·압축(`SessionStart` startup/resume/compact/clear/fork)과 서브에이전트 시작(`SubagentStart`) 때 비어 있지 않은 전역·담당 컨텍스트를 넣습니다. 서브에이전트 시작에는 부모 세션의 상황 컨텍스트도 넣습니다. 세션 도중 전역·담당이 바뀌면, 그 실행 주체(`hostActorId`)가 아직 받지 않은 판을 다음 사용자 입력이나 AGS 진행 도구(`start_workflow` 등) 직후에 한 번 넣습니다. 압축 이벤트가 없는 호스트에서 어댑터가 턴 시작을 문맥 시작으로 표시하면(agy) 턴마다 전부 넣습니다.
-- 도구: `load_shared_context`(읽기), `checkpoint_global_context`, `bind_session_role`, `checkpoint_role_context`.
+- 사람이 정하는 항목(전역 컨텍스트, 역할 등록표, 세션↔역할 결속, 패스키 목록)의 정본은 패스키 서명 기록(`admin_log`, 추가만 함) 하나입니다. 읽는 쪽(hook·MCP·페이지)은 매번 서명과 대상별 사슬을 검증하고, 검증에 실패한 기록은 적용하지 않습니다. 자세한 내용은 [로컬 관리 페이지](admin-page.md)를 봅니다.
+- 에이전트는 바꾸지 못하고 요청만 남깁니다. `checkpoint_global_context`와 `bind_session_role`은 요청(proposal)을 저장하고 `pending`·`proposalId`·`adminUrl`을 돌려줍니다. 사용자가 페이지에서 차이를 보고 패스키로 승인해야 적용됩니다. 결속은 역할 등록표에 있는 역할에만 요청할 수 있습니다(없으면 `ROLE_NOT_REGISTERED`).
+- 담당 컨텍스트에 누가 접근하는지는 서명된 결속으로만 정합니다. 세션 현황판의 role(`update_session_status`)은 세션이 스스로 적는 표시용 문구이며 접근 키가 아닙니다. 역할은 불변 ID와 이름(NFC 정규화·앞뒤 공백 제거, 대소문자 무시 고유)을 가지며 결속과 담당 컨텍스트는 ID를 참조합니다. 결속은 root 세션 단위이고 서브에이전트는 root 세션의 결속을 이어받습니다. 같은 세션을 재개하면 유지되고, 마지막 사용 뒤 30일이 지나면 없어집니다.
+- 담당 컨텍스트 저장은 항상 본문 전체를 다시 구성해 `expectedStateToken`과 함께 보냅니다. 읽은 뒤 같은 역할의 다른 세션이 저장했으면 `STALE_REVISION`이며 아무것도 쓰지 않습니다. 담당 컨텍스트 이력은 역할마다 최근 50개를 남기고, 전역 컨텍스트 이력은 서명 기록 그 자체입니다.
+- 주입: 세션 시작·재개·압축(`SessionStart` startup/resume/compact/clear/fork)과 서브에이전트 시작(`SubagentStart`) 때 비어 있지 않은 전역·담당 컨텍스트를 넣습니다. 서브에이전트 시작에는 부모 세션의 상황 컨텍스트도 넣습니다. 세션 도중 전역·담당 컨텍스트가 바뀌면, 그 실행 주체(`hostActorId`)가 아직 받지 않은 판을 다음 사용자 입력이나 AGS 진행 도구(`start_workflow` 등) 직후에 한 번 넣습니다. 압축 이벤트가 없는 호스트에서 어댑터가 턴 시작을 문맥 시작으로 표시하면(agy) 턴마다 전부 넣습니다.
+- 서명 검증에 실패한 대상이 있으면 hook은 그 대상만 마지막 유효 판(없으면 기본값)으로 두고 「검증 실패 · rN 적용 중 · 사용자에게 알릴 것 · 에이전트가 고칠 수 없음」 한 줄을 넣습니다. 전역·담당 컨텍스트는 따로 읽으므로 하나를 읽지 못해도 다른 하나는 넣습니다.
+- 도구: `load_shared_context`(읽기), `checkpoint_global_context`(요청), `bind_session_role`(요청), `checkpoint_role_context`(결속된 세션의 저장).
 
 ## 검사 범위와 한계
 

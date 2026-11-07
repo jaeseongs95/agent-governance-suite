@@ -57,7 +57,7 @@
   "continuity.layers.tooLarge": "{layer} 컨텍스트 본문이 UTF-8 {bytes}바이트로 상한 {limit}바이트를 넘는다. 중복을 합치고 끝났거나 폐기된 항목을 지워 더 짧게 다시 구성하라.",
   "continuity.layers.tokenInvalid": "expectedStateToken은 load_shared_context가 돌려준 stateToken이어야 하며, 한 번도 저장되지 않은 컨텍스트면 null이다.",
   "continuity.layers.stateChanged": "읽은 뒤 컨텍스트가 바뀌었다(details.actualStateToken). load_shared_context로 다시 읽고 현재 본문에서 전체를 다시 구성해 저장하라.",
-  "continuity.layers.integrity": "저장된 컨텍스트가 크기나 digest 검사를 통과하지 못해 쓰지 않는다.",
+  "continuity.layers.integrity": "저장된 담당 컨텍스트가 크기나 digest 검사를 통과하지 못해 쓰지 않는다.",
   "continuity.layers.roleInvalid": "role은 제어 문자 없는 한 줄, 1~{limit}자여야 한다(NFC 정규화·앞뒤 공백 제거 뒤 비교). 해제하려면 null을 준다.",
   "continuity.layers.sessionInvalid": "호출한 세션을 식별할 수 없다.",
   "continuity.layers.roleUnbound": "이 세션은 역할에 결속되지 않았다. 결속은 사용자가 로컬 관리 페이지({adminUrl})에서 패스키로 승인한다. bind_session_role로 요청을 남기고 사용자에게 알려라.",

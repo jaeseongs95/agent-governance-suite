@@ -324,7 +324,7 @@ export function foldAdminLog(records: readonly AdminLogRecord[]): AdminState {
       state.keyLastUsed.set(record.credentialId, record.createdAt);
     } catch (error) {
       if (!(error instanceof AdminError)) throw error;
-      let change: AdminChange | null = null;
+      let change: AdminChange | null;
       try { change = parseIntent(record.intent).change; } catch { change = null; }
       failed.push({ target: record.target, seq: record.seq, code: error.code, change });
     }

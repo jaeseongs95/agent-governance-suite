@@ -94,15 +94,18 @@ function moveToLocalhost(port: number, pathName: string): string {
 async function readJson(request: IncomingMessage): Promise<Record<string, unknown>> {
   const type = (request.headers["content-type"] ?? "").split(";")[0]!.trim().toLowerCase();
   if (type !== "application/json") throw new HttpError(415, "CONTENT_TYPE_REJECTED");
-  const declared = Number(request.headers["content-length"] ?? "0");
-  if (declared > ADMIN_BODY_MAX_BYTES) throw new HttpError(413, "REQUEST_TOO_LARGE", { limit: ADMIN_BODY_MAX_BYTES });
+  // An oversized body is read to its end and dropped (bounded by the request timeout) so the 413 still reaches the page.
   const chunks: Buffer[] = [];
   let size = 0;
-  for await (const chunk of request as AsyncIterable<Buffer>) {
-    size += chunk.length;
-    if (size > ADMIN_BODY_MAX_BYTES) throw new HttpError(413, "REQUEST_TOO_LARGE", { limit: ADMIN_BODY_MAX_BYTES });
-    chunks.push(chunk);
-  }
+  await new Promise<void>((resolve, reject) => {
+    request.on("data", (chunk: Buffer) => {
+      size += chunk.length;
+      if (size <= ADMIN_BODY_MAX_BYTES) chunks.push(chunk);
+    });
+    request.once("end", resolve);
+    request.once("error", reject);
+  });
+  if (size > ADMIN_BODY_MAX_BYTES) throw new HttpError(413, "REQUEST_TOO_LARGE", { limit: ADMIN_BODY_MAX_BYTES });
   let parsed: unknown;
   try { parsed = JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch { throw new HttpError(400, "REQUEST_INVALID", { reason: "JSON" }); }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new HttpError(400, "REQUEST_INVALID", { reason: "OBJECT" });
