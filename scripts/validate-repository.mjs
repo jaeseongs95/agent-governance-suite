@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
@@ -194,6 +195,25 @@ if (errors.length === 0) {
       }
     }
   }
+}
+
+// Work records (cases, specs, results) belong to work branches, build folders or the ledger, not to the published tree (AGS3-D-0059).
+const rootFiles = new Set([
+  ".gitattributes", ".gitignore", ".mcp.json", "AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "GEMINI.md", "LICENSE",
+  "README.en.md", "README.md", "SECURITY.md", "eslint.config.js", "hooks.json", "mcp_config.json", "package.json",
+  "plugin.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "tsconfig.json", "vitest.config.mjs"
+]);
+const workRecordName = /^v\d{3}-/u;
+let trackedFiles = null;
+try {
+  trackedFiles = execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8" }).split("\0").filter(Boolean);
+} catch {
+  // Outside a git checkout (installed tree) there is no published-tree contract to check.
+}
+for (const file of trackedFiles ?? []) {
+  const name = file.split("/").at(-1);
+  if (!file.includes("/") && !rootFiles.has(file)) errors.push(`unexpected tracked root file ${file}; keep work records out of the published tree`);
+  else if (file.startsWith("docs/") && workRecordName.test(name)) errors.push(`work record ${file} must not be published in docs/`);
 }
 
 const secretPattern = /(-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|ghp_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9]{20,})/u;
