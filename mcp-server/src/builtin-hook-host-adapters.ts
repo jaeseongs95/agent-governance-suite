@@ -122,13 +122,15 @@ function adaptInferredRootHookInput(input: Record<string, unknown>, host: string
   const adapted = adaptBuiltinHookInput(input, host, actor);
   if (adapted.lifecycle === "none" && adapted.observation.kind === "unknown" && adapted.continuityAction === undefined) return adapted;
   if (!adapted.observation.sessionId.trim()) actor.reasonCode = `${prefix}_NATIVE_SESSION_ID_INVALID`;
-  else if (adapted.observation.kind === "subagent-start") {
-    // A subagent start is a child by definition (it names the parent session): never inferred as the root.
+  else if (adapted.observation.kind === "subagent-start" || adapted.outputEventName === "SubagentStop") {
+    // A subagent's start and end are a child's by definition (they name the parent session): never the root.
     if (typeof input.agent_id === "string" && input.agent_id.trim()) {
       Object.assign(actor, { role: "child", basis: "observed", reasonCode: `${prefix}_NATIVE_CHILD_AGENT_ID` });
       adapted.observation.agentKey = input.agent_id;
+    } else {
+      const edge = adapted.observation.kind === "subagent-start" ? "START" : "STOP";
+      actor.reasonCode = `${prefix}_NATIVE_SUBAGENT_${edge}_AGENT_ID_INVALID`;
     }
-    else actor.reasonCode = `${prefix}_NATIVE_SUBAGENT_START_AGENT_ID_INVALID`;
   } else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: `${prefix}_ROOT_INFERRED_CHILD_GATE_DEFERRED` });
   return adapted;
 }
@@ -231,6 +233,7 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
       adapted.observation.agentKey = input.agent_id;
     }
   } else if (adapted.observation.kind === "subagent-start") actor.reasonCode = "CLAUDE_NATIVE_SUBAGENT_START_AGENT_ID_INVALID";
+  else if (adapted.outputEventName === "SubagentStop") actor.reasonCode = "CLAUDE_NATIVE_SUBAGENT_STOP_AGENT_ID_INVALID";
   else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT" });
   const transcriptPath = text(input.transcript_path);
   const sessionId = adapted.observation.sessionId;

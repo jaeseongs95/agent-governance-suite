@@ -429,6 +429,18 @@ describe("phase checks per actor (AGS3-D-0060, AGS3-D-0061, AGS3-D-0063)", () =>
     expect(childCue).not.toContain("root-parent");
   });
 
+  it("a SubagentStop without a valid agent_id is never the parent's turn end", () => {
+    for (const host of ["claude-code", "codex"]) {
+      const target = twoRoots();
+      target.prepareWorkflowStart(session, "root-parent");
+      expect(target.gateEditForSession(session, [file("alpha/1.ts")], [file("alpha/1.ts")])).toBeNull();
+      for (const agent of [{}, { agent_id: "" }, { agent_id: 42 }]) {
+        expect(handleContinuityHook({ hook_event_name: "SubagentStop", session_id: session, ...agent }, target, host, NO_ENV)).toEqual({});
+      }
+      expect(text(handleContinuityHook(stop(), target, host, NO_ENV))).toContain("rootId root-parent");
+    }
+  });
+
   it("agy: a subagent's own conversation is checked as that subagent once its tool call names it", () => {
     const parentConversation = session, childConversation = "agy-child-conversation";
     const target = twoRoots();
