@@ -381,6 +381,18 @@ describe("context layer injection at hook boundaries", () => {
     expect(text).toContain("GLOBAL-MARKER-7341");
   });
 
+  it("still gives the shared layers when the session's continuity store cannot be opened (fail-open hook)", () => {
+    const root = directory();
+    const blocked = path.join(root, "not-a-directory");
+    writeFileSync(blocked, "synthetic file");
+    const env = { ...environment(root), AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(blocked, "c.sqlite3"), AGENT_GOVERNANCE_DB_PATH: path.join(blocked, "w.sqlite3") };
+    saveGlobal(serviceAt(env.AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH), "GLOBAL-MARKER-7341");
+    const output = runContinuityHook(JSON.stringify({ hook_event_name: "SessionStart", source: "startup", session_id: session, cwd: tmpdir() }), env, "claude-code");
+    expect(context(output)).toContain("GLOBAL-MARKER-7341");
+    // The governance hook's fail-closed call still sees the store failure.
+    expect(() => runContinuityHook(JSON.stringify({ hook_event_name: "SessionStart", source: "startup", session_id: session }), env, "claude-code", true)).toThrow();
+  });
+
   it("delivers a change to a subagent at the boundary after an AGS progress tool, once", () => {
     const env = environment(directory());
     const layers = serviceAt(env.AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH!);

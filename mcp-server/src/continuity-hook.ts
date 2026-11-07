@@ -388,9 +388,11 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
   let result = "";
   let cleanup: unknown;
   let cleanupFailed = false;
+  let normalizedInput: NormalizedContinuityInput | null = null;
   try {
     const input = JSON.parse(raw) as HookInput;
     const normalized = normalizedContinuityInput(adaptHostInput(input, host));
+    normalizedInput = normalized;
     if (isSubagentStart(normalized)) {
       // The cue reads no state; the shared layers and the session's situational context are read best-effort, so a
       // storage failure takes only them away, never the cue.
@@ -447,6 +449,12 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
   }
   if (failClosed && failed) throw primary;
   if (failClosed && cleanupFailed) throw cleanup;
+  // The shared layers do not live in the continuity store: its failure (reported above) takes only its own context.
+  if (failed && normalizedInput) {
+    const output = withAddedContext({}, normalizedInput.outputEventName,
+      contextLayerText(normalizedInput, host, environment, resolveHostLocale({ environment }).locale));
+    if (Object.keys(output).length > 0) return JSON.stringify(output);
+  }
   return result;
 }
 
