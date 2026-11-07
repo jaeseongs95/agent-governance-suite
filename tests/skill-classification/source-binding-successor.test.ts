@@ -7,6 +7,13 @@ import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
 import {oracleDigest, loadCurrentSourceBindings} from "./evaluation.js";
 import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
+import {PROVIDER_RETENTION_SOURCE_CHANGES} from "./live-bootstrap/provider-retention-sources.mjs";
+// Historical/current-tail regression cases (TEST operation e83da164420a8a51493029c529ab47352a8b08f9fe477981):
+// role, field-neutral, specialist and r27 serialization keep their exact historical hashes/byte counts.
+// The frozen inventory retains all 26 skills/215 spans, including the subsequently retired analyzer.
+// Purpose-changed sources replay their hash-bound predecessors; their live bytes/absence and live spans stay checked.
+// TEST: pnpm exec vitest run tests/skill-classification/source-binding-successor.test.ts
+// Local product/red-green execution: NOT_RUN; root performs TEST on the pushed commit.
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const currentSourceBinding = loadCurrentSourceBindings(root);
 const current = JSON.parse(readFileSync(new URL("./fixtures.json", import.meta.url), "utf8"));
@@ -69,6 +76,23 @@ function sourceAt(revision: string, relativePath: string, digest: string): Buffe
   const bytes = execFileSync("git", ["show", `${revision}:${relativePath}`], {cwd: root, maxBuffer: 4 * 1024 * 1024});
   expect(hash(bytes)).toBe(digest);
   return bytes;
+}
+const purposeChanges = new Map(PROVIDER_RETENTION_SOURCE_CHANGES.map(source => [source.path, source]));
+const purposePredecessors = new Map<string, Buffer>();
+/** The approved role/removal changes are separate from the historical meaning-preserving source chain. */
+function beforePurposeSource(relativePath: string): Buffer {
+  const change = purposeChanges.get(relativePath);
+  if (!change) return readFileSync(path.join(root, relativePath));
+  let live: Buffer | null;
+  try {live = readFileSync(path.join(root, relativePath));}
+  catch (error) {if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; live = null;}
+  expect(live === null ? null : hash(live)).toBe(change.digest);
+  let original = purposePredecessors.get(relativePath);
+  if (!original) {
+    original = sourceAt("14549a2e83fd9143cf8184bd71979db23fd43172", relativePath, change.previousDigest);
+    purposePredecessors.set(relativePath, original);
+  }
+  return original;
 }
 /** A source as the specialist successor bound it: a file a later successor rebound reads at that successor's base. */
 function specialistSource(relativePath: string): Buffer {
@@ -155,7 +179,7 @@ function contractDocsSource(relativePath: string): Buffer {
     }
     contractDocsHistoricalSources = sources;
   }
-  return contractDocsHistoricalSources.get(relativePath) ?? readFileSync(path.join(root, relativePath));
+  return contractDocsHistoricalSources.get(relativePath) ?? beforePurposeSource(relativePath);
 }
 const neutralChanged = (skillId: string, group: string, index: number) => neutral.spanPreservation.changedSpans.includes(`${skillId}:${group}[${index}]`);
 /** A source as the multi-workflow successor bound it: a file the intake premise successor rebound reads at its base. */
@@ -934,7 +958,7 @@ it("chains the field-neutral wording source after the intake blocked-step rule, 
   let spanCount = 0;
   for (const skillId of skillIds) {
     const entry = `skills/${skillId}/SKILL.md`;
-    const previousLines = base(entry).toString("utf8").split("\n"), lines = readFileSync(path.join(root, entry), "utf8").split("\n");
+    const previousLines = base(entry).toString("utf8").split("\n"), lines = contractDocsSource(entry).toString("utf8").split("\n");
     // Words change inside lines; no line is added, removed or moved.
     expect(lines.length).toBe(previousLines.length);
     const changed = lines.flatMap((line, index) => line === previousLines[index] ? [] : [index]);
@@ -1005,7 +1029,9 @@ it("appends the exact specialist behavior successor without changing frozen fixt
 it("rebinds all 215 spans from pinned main to valid current UTF-8 evidence and the real inventory", async () => {
   const liveDescriptorPaths = readdirSync(path.join(root, "skills"), {withFileTypes: true})
     .filter(entry => entry.isDirectory()).map(entry => `skills/${entry.name}/classification.json`).sort();
-  const retiredIds: string[] = retire.retiredSkills.map((row: {skillId: string}) => row.skillId);
+  const retiredIds: string[] = [...retire.retiredSkills.map((row: {skillId: string}) => row.skillId),
+    ...PROVIDER_RETENTION_SOURCE_CHANGES.filter(source => source.digest === null && source.path.endsWith("/classification.json"))
+      .map(source => source.path.split("/")[1]!)];
   for (const skillId of retiredIds) expect(liveDescriptorPaths).not.toContain(`skills/${skillId}/classification.json`);
   // UI/UX was added after this frozen snapshot. Check its live classification in
   // ui-ux-design-registry-compatibility.test.mjs; keep all 26 historical pins intact.
@@ -1027,11 +1053,18 @@ it("rebinds all 215 spans from pinned main to valid current UTF-8 evidence and t
   for (const descriptorPath of descriptorPaths) {
     const before = JSON.parse(mainSource(descriptorPath).toString("utf8"));
     const after = JSON.parse(specialistSource(descriptorPath).toString("utf8"));
+    const purposeChange = purposeChanges.get(descriptorPath);
+    const liveDescriptor = purposeChange?.digest ? JSON.parse(readFileSync(path.join(root, descriptorPath), "utf8")) : null;
     const stableFields = (value: Record<string, unknown>) => Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
     expect(stableFields(after)).toEqual(stableFields(before));
     for (const group of ["applicability", "exclusions"]) {
       expect(after[group]).toHaveLength(before[group].length);
       references += after[group].length;
+      // A changed purpose has its own current evidence; old labels do not stand in for this live inventory.
+      if (liveDescriptor) for (const span of liveDescriptor[group] as SourceSpan[]) {
+        expect(skills.get(descriptorPath.split("/")[1]!)![group as "applicability" | "exclusions"])
+          .toContain(selectedSource(readFileSync(path.join(root, span.path)), span).toString("utf8").trim());
+      }
     }
   }
   expect(references).toBe(215);
@@ -1049,7 +1082,9 @@ it("rebinds all 215 spans from pinned main to valid current UTF-8 evidence and t
     expect(hash(selected)).toBe(span.current.selectedDigest);
     expect(selected.toString("utf8")).toMatch(/[\p{L}\p{N}]/u);
     // A source a later successor rebound is checked against the current inventory in that successor's test.
-    if (!reboundAfterSpecialist.has(span.current.path)) expect(skills.get(span.skillId)![span.group]).toContain(selected.toString("utf8").trim());
+    if (!reboundAfterSpecialist.has(span.current.path) && !purposeChanges.has(span.current.path)) {
+      expect(skills.get(span.skillId)![span.group]).toContain(selected.toString("utf8").trim());
+    }
     if (span.change === "exact-excerpt") expect(selected.equals(previousSelected)).toBe(true);
   }
   expect(specialist.spanPreservation.changedSpans).toEqual(spans.filter(span => span.change !== "exact-excerpt").map(span => `${span.skillId}:${span.group}[${span.index}]`));
@@ -1311,7 +1346,7 @@ it("binds exactly the nine changed skill policy sources across global and per-ca
   expect(references).toBe(58);
   expect(references).toBe(successor.reboundReferences);
   for (const binding of bindings) {
-    expect(hash(readFileSync(path.join(root, binding.path)))).toBe(currentSourceBinding.resolveDigest(binding.path, binding.digest));
+    expect(hash(beforePurposeSource(binding.path))).toBe(currentSourceBinding.resolveDigest(binding.path, binding.digest));
     expect(binding.digest).not.toBe(binding.previousDigest);
   }
 });
