@@ -8,6 +8,11 @@ import { requireLinux, retireGroup, spawnOwned, stopGroups, stopRecordedGroups }
 
 const [mode, host, pluginArgument, runArgument, specArgument, model, effort] = process.argv.slice(2);
 if (!["prepare", "execute"].includes(mode) || !["codex", "claude"].includes(host) || !pluginArgument || !runArgument || !specArgument || !model || !effort) throw new Error("usage: node plugin-run.mjs <prepare|execute> <codex|claude> <installed-pin.json|claudePluginDir> <freshRunDir> <cue|spec.json> <model> <effort>");
+const budget = process.env.CUE_MAX_BUDGET_USD;
+if (budget !== undefined) {
+  if (host !== "claude") throw new Error("CUE_MAX_BUDGET_USD is only supported for Claude");
+  if (!Number.isFinite(Number(budget)) || Number(budget) <= 0) throw new Error("CUE_MAX_BUDGET_USD must be a finite positive number");
+}
 requireLinux();
 const runDir = path.resolve(runArgument), here = import.meta.dirname;
 if (existsSync(runDir)) throw new Error("Never reuse an earlier trial directory");
@@ -69,7 +74,8 @@ try {
     if (result.code !== 0 || result.signal) throw new Error("Fixture preparation failed");
   }
   const args = host === "codex" ? [runDir, repo, String(timeoutSec), model, effort]
-    : [runDir, repo, String(timeoutSec), "--session-id", randomUUID(), "--model", model, "--effort", effort, "--plugin-dir", pluginRoot, "--permission-mode", "bypassPermissions"];
+    : [runDir, repo, String(timeoutSec), "--session-id", randomUUID(), "--model", model, "--effort", effort, "--plugin-dir", pluginRoot, "--permission-mode", "bypassPermissions",
+      ...(budget === undefined ? [] : ["--max-budget-usd", String(Number(budget))])];
   if (mode === "prepare") console.log(JSON.stringify({ state: "PREPARED_NOT_EXECUTED", host, runDir }));
   else {
     attempted = true;
