@@ -8,7 +8,7 @@ import { msg, render, resolveHostLocale, ROOT_LOCALE, type MessageRef, type Supp
 import { sessionMessageRequest } from "./session-message-client.js";
 import { SessionMessageError } from "./session-message-protocol.js";
 
-const OPERATIONS = new Set(["prepare", "send", "claim", "acknowledge", "status", "pending", "wait"]);
+const OPERATIONS = new Set(["prepare", "send", "claim", "acknowledge", "status", "recall", "pending", "wait"]);
 
 /** Vendor-neutral stdin/stdout adapter. Secrets and message bodies never appear in process arguments. */
 export async function runSessionMessageCli(raw: string, stateDirectory?: string): Promise<Record<string, unknown>> {

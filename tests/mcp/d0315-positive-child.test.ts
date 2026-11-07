@@ -24,7 +24,7 @@ const toolWire = (tool: string, extra: Record<string, unknown> = {}) => ({ ...wi
 });
 const events = ["SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop", "PreCompact", "PostCompact"];
 const tools = ["list_session_status", "update_session_status", "prepare_session_message", "send_session_message",
-  "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"];
+  "acknowledge_session_messages", "get_session_message_status", "recall_session_message", "validate_collaboration_decision"];
 const directories: string[] = [];
 afterEach(() => { for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true }); });
 function governanceFixture() {

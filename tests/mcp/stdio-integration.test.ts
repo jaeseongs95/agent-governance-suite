@@ -172,6 +172,7 @@ describe("bundled STDIO MCP server", () => {
         "send_session_message",
         "acknowledge_session_messages",
         "get_session_message_status",
+        "recall_session_message",
       ]);
       expect(listed.tools.every((tool) => tool.inputSchema.type === "object")).toBe(true);
       const sourceText = "MCP와 SQLite는 보호하고 데이터 베이스는 문맥을 확인한다.";
@@ -267,6 +268,7 @@ describe("bundled STDIO MCP server", () => {
         "send_session_message",
         "acknowledge_session_messages",
         "get_session_message_status",
+        "recall_session_message",
       ]);
       expect(listed.tools.find((tool) => tool.name === "plan_workflow")?.annotations).toMatchObject({
         readOnlyHint: false,

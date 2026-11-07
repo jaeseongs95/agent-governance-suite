@@ -13,7 +13,7 @@ import { msg, render, ROOT_LOCALE } from "./i18n.js";
  * process against the shared SQLite file; each store call is one BEGIN IMMEDIATE transaction (docs/ags30-broker-redesign.md 3.1).
  */
 export const SESSION_MESSAGE_OPERATIONS = ["prepare", "send", "claim", "claim-host-wake", "observe-native-input", "claim-deferred",
-  "claim-turn-end", "clear-deferred", "acknowledge", "status", "peer-wait", "pending", "ensure-relay", "grant-relay", "release-relay",
+  "claim-turn-end", "clear-deferred", "acknowledge", "status", "recall", "peer-wait", "pending", "ensure-relay", "grant-relay", "release-relay",
   "relay-tick", "presence-start", "presence-heartbeat", "presence-end", "presence-end-host", "presence", "list-presence", "list-current-presence", "list-known-presence",
   "reserve-wake", "start-wake", "record-wake-outcome", "wake-status", "consume-wake"] as const;
 
@@ -248,6 +248,10 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
       // The guidance is root-locale text with its key and params, so a reader can render it in its own locale.
       const guidance = msg("services.sessionMessage.status.deliveryUnknown", {});
       return { status, ...(status === null ? { guidance: render(guidance, ROOT_LOCALE), guidanceKey: guidance.key, guidanceParams: guidance.params } : {}) };
+    }
+    case "recall": {
+      if (Object.keys(payload).some((key) => !["sender", "messageId"].includes(key))) throw new SessionMessageError(msg("services.sessionMessage.operation.recallFields", {}));
+      return store.recall(identity(payload.sender), string(payload.messageId, "messageId"));
     }
     case "peer-wait": return peerWait(store, payload);
     case "pending": return { count: store.pendingCount(identity(payload.target)) };

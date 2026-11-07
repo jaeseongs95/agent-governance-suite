@@ -332,7 +332,7 @@ describe("generated Claude plugin", () => {
     const matcher = new RegExp(governanceGroups[0].matcher, "u");
     // Cover each former domain plus public reads and a future tool without another tool list.
     const governanceNames = ["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection",
-      "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision",
+      "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "recall_session_message", "validate_collaboration_decision",
       "update_session_status", "list_session_status", ...continuityTools, "get_trust_capabilities", "get_skill_inventory", "future_governance_tool"];
     for (const tool of governanceNames) {
       expect(matcher.test(`${toolPrefix}${tool}`), tool).toBe(true);

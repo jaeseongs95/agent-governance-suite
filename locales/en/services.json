@@ -72,6 +72,7 @@
   "services.sessionMessage.operation.hostWakeReceiptRequired": "Host wake claim requires a non-authorizing hook source receipt.",
   "services.sessionMessage.operation.prepareFields": "prepare accepts sender, target, body and ttlSeconds; IDs are system-issued.",
   "services.sessionMessage.operation.sendFields": "send accepts only sender and the ID returned by prepare; message content is immutable. Retry the known ID or compare saved receipts/status if delivery is unknown.",
+  "services.sessionMessage.operation.recallFields": "recall accepts only sender and the messageId this sender submitted.",
   "services.sessionMessage.operation.unknown": "Unknown session message operation.",
   "services.sessionMessage.peerWait.queryRevisionTooLong": "queryRevision is too long.",
   "services.sessionMessage.peerWait.targetsRange": "targets must contain 1..8 identities.",
