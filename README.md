@@ -54,7 +54,7 @@ AGS에는 전문 스킬 23개와 흐름을 연결하는 `orchestrator`, 현황�
 
 공통 선택 계약은 벤더와 분리되어 있습니다. 현재 배포 catalog에는 OpenAI/Codex, Anthropic/Claude Code, Google/Gemini 계열 adapter가 있고, 실행 호스트는 Claude Code·Codex·Gemini·Antigravity 항목으로 구분합니다. **catalog에 있는 조합이 현재 호스트에서 사용 가능하다는 뜻은 아닙니다.** 실제 호스트가 제공한 지원 정보와 호출 필드를 먼저 확인해야 합니다. Gemini catalog 항목 자체는 별도 Gemini CLI 설치 패키지의 지원 선언이 아닙니다.
 
-선택한 값, 실제 호출에 보낸 값, 호스트에서 관측한 유효 설정을 따로 기록합니다. 지원 정보로 선택이 가능해도 실제 적용까지 확인된 것은 아닙니다. 상속 설정을 볼 수 없으면 미확인으로 남기며, 필수 위험 하한을 확인할 수 없는 호출은 보류합니다. [모델 라우팅과 호스트별 적용](skills/coordinate-subagents/references/model-routing.md)
+선택한 값, 실제 호출에 보낸 값, 호스트에서 관측한 유효 설정을 따로 기록합니다. 지원 정보로 선택이 가능해도 실제 적용까지 확인된 것은 아닙니다. 상속 설정을 볼 수 없으면 미확인으로 남깁니다. 고위험 작업의 `general`·`high` 이상은 추천 순서일 뿐이며, 모델 등급·추론 수준 때문에 위임·결과 기록·종결이 거부되지 않습니다. [모델 라우팅과 호스트별 적용](skills/coordinate-subagents/references/model-routing.md)
 
 ## 설치
 

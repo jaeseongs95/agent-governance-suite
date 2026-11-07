@@ -705,7 +705,7 @@ describe("WorkflowService", () => {
     expect(forged.error?.code).toBe("BINDING_INVALID");
   });
 
-  it("still holds a passing stage to the assurance floor", async () => {
+  it("records a passing stage observed below the high-risk recommendation (AGS3-D-0058)", async () => {
     const { service } = await createService(
       skills,
       undefined,
@@ -740,7 +740,9 @@ describe("WorkflowService", () => {
     const receipt = stageService.startWorkflow(stagePlan.data!).data!;
     const step = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
     delete step.executionContext;
-    expect(stageService.recordStageResult(step, true).error?.code).toBe("GATE_FAILED");
+    const recorded = stageService.recordStageResult(step, true);
+    expect(recorded.ok, recorded.error?.message).toBe(true);
+    expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ modelClass: "lightweight", reasoningEffort: "low" });
   });
 
   it("persists trusted observation claims across service restart", async () => {
@@ -874,11 +876,11 @@ describe("WorkflowService", () => {
     expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ modelClass: "lightweight", reasoningEffort: "low" });
   });
 
-  it("preserves a previously frozen stage floor when new planning has no floor (D0094)", async () => {
+  it("keeps a previously frozen stage value as a recommendation only (D0094, AGS3-D-0058)", async () => {
     const signingKey = Buffer.alloc(32, 9).toString("base64url");
     const store = new InMemoryWorkflowStore();
     store.getOrCreateSecret(PLAN_SIGNING_KEY, () => signingKey);
-    let stageClass: ExecutionContextV1["modelClass"] = "general";
+    const stageClass: ExecutionContextV1["modelClass"] = "general";
     const { service } = await createService(skills, store, null, trustedProvider(binding =>
       trustedExecutionContext(binding, { modelClass: stageClass, reasoningEffort: "high" })));
     const plan = service.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task({
@@ -893,12 +895,12 @@ describe("WorkflowService", () => {
     plan.integrityToken = createHmac("sha256", Buffer.from(signingKey, "base64url"))
       .update(canonicalJson(unsignedPlan)).digest("base64url");
     const receipt = service.startWorkflow(plan).data!;
+    expect(receipt.plan.stages[0]!.executionRequirement).toMatchObject({ minimumModelClass: "deep", minimumReasoningEffort: "high" });
     const result = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
     delete result.executionContext;
-    expect(service.recordStageResult(result, true).error?.code).toBe("GATE_FAILED");
-    expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
-    stageClass = "deep";
-    expect(service.recordStageResult(result, true).ok).toBe(true);
+    const recorded = service.recordStageResult(result, true);
+    expect(recorded.ok, recorded.error?.message).toBe(true);
+    expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ modelClass: "general", reasoningEffort: "high" });
   });
 
   it("rejects non-canonical plan integrity token spellings", async () => {
@@ -933,7 +935,7 @@ describe("WorkflowService", () => {
     expect(service.recordStageResult(result, true).error?.code).toBe("BINDING_REQUIRED");
   });
 
-  it("binds execution requirements and rejects missing or under-provisioned stage execution", async () => {
+  it("binds execution requirements, rejects missing observation and records any observed profile", async () => {
     const { service } = await createService();
     const plan = service.planWorkflow(task()).data!;
 
@@ -966,12 +968,54 @@ describe("WorkflowService", () => {
       modelClass: "lightweight",
       reasoningEffort: "low",
     };
-    expect(service.recordStageResult(weak).error?.code).toBe("GATE_FAILED");
+    const accepted = service.recordStageResult(weak);
+    expect(accepted.ok, accepted.error?.message).toBe(true);
+    expect(accepted.data?.stageResults[0]?.executionContext).toMatchObject({ modelClass: "lightweight", reasoningEffort: "low" });
+  });
 
-    const accepted = service.recordStageResult(
-      passedStage(started.runId, stage, started.revision),
-    );
-    expect(accepted.ok).toBe(true);
+  // AGS3-D-0058: the user's rule is that any agent and model runs. The high-risk general/high value is a recommendation;
+  // a child agent's or caller's lower, unknown or unobserved profile is recorded and finalized, never refused.
+  const BELOW_RECOMMENDATION = [
+    { label: "lightweight/high", modelClass: "lightweight", reasoningEffort: "high" },
+    { label: "general/low", modelClass: "general", reasoningEffort: "low" },
+    { label: "general/unobserved", modelClass: "general", reasoningEffort: null },
+    { label: "unregistered/low", modelClass: null, reasoningEffort: "low" },
+  ] as const;
+
+  it.each(BELOW_RECOMMENDATION)("AGS3-D-0058 records a child agent's high-risk stage observed as $label", async ({ modelClass, reasoningEffort }) => {
+    const { service } = await createService(skills, undefined, null, trustedProvider((binding) => (binding.phase === "bootstrap"
+      ? trustedExecutionContext(binding)
+      : trustedExecutionContext(binding, { model: "fixture-observed", modelClass, reasoningEffort }))));
+    const planned = service.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task({ taskId: "d0058-child-stage" }) }, true);
+    expect(planned.ok, planned.error?.message).toBe(true);
+    const receipt = service.startWorkflow(planned.data!).data!;
+    const stage = receipt.plan.stages[0]!;
+    expect(stage.executionRequirement).toMatchObject({ minimumModelClass: "general", minimumReasoningEffort: "high" });
+    const step = passedStage(receipt.runId, stage, receipt.revision);
+    delete step.executionContext;
+    const child = { actor: "fixture-child-agent", parentChain: ["fixture-root-session"], provenance: "host-observed" as const };
+    const recorded = service.recordStageResult(step, true, child);
+    expect(recorded.ok, JSON.stringify(recorded.error)).toBe(true);
+    expect(recorded.data?.stageResults[0]).toMatchObject({
+      recordedBy: child, executionContext: { model: "fixture-observed", modelClass, reasoningEffort },
+    });
+  });
+
+  it.each(BELOW_RECOMMENDATION)("AGS3-D-0058 records and finalizes every high-risk stage reported as $label", async ({ modelClass, reasoningEffort }) => {
+    const { service } = await createService();
+    const started = service.startWorkflow(service.planWorkflow(task({ taskId: "d0058-finalize" })).data!).data!;
+    expect(started.plan.stages.every(stage => stage.executionRequirement?.minimumModelClass === "general")).toBe(true);
+    let receipt = started;
+    for (const stage of started.plan.stages) {
+      const step = passedStage(receipt.runId, stage, receipt.revision);
+      step.executionContext = { ...TEST_EXECUTION_CONTEXT, model: "fixture-observed", modelClass, reasoningEffort };
+      const recorded = service.recordStageResult(step);
+      expect(recorded.ok, JSON.stringify(recorded.error)).toBe(true);
+      receipt = recorded.data!;
+    }
+    const finalized = service.finalizeWorkflow(receipt.runId, receipt.revision);
+    expect(finalized.ok, JSON.stringify(finalized.error)).toBe(true);
+    expect(finalized.data?.state).toBe("passed");
   });
 
   it("plans from runtime capabilities without persisting a run", async () => {

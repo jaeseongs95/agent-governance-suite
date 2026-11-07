@@ -22,6 +22,7 @@
       ]
     },
     "minimumModelClass": {
+      "description": "Recommended model class recorded with the plan. Advisory only: a lower observed class is recorded, not refused.",
       "type": [
         "string",
         "null"
@@ -35,6 +36,7 @@
       ]
     },
     "minimumReasoningEffort": {
+      "description": "Recommended reasoning effort recorded with the plan. Advisory only: a lower or unobserved effort is recorded, not refused.",
       "type": [
         "string",
         "null"

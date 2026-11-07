@@ -54,7 +54,7 @@ To name a skill yourself, use `$orchestrator` in Codex or `/agent-governance-sui
 
 The shared selection contract is vendor independent. Bundled catalogs currently have OpenAI/Codex, Anthropic/Claude Code, and Google/Gemini provider adapters, with separate execution-host entries for Claude Code, Codex, Gemini, and Antigravity. **A catalog entry does not prove availability in the current host.** Check the host's actual capabilities and invocation fields first. A Gemini catalog entry is not a declaration of a separate Gemini CLI installation package.
 
-Record the requested choice, the arguments actually dispatched, and the effective settings observed from the host separately. A supported selection does not establish actual application. Leave hidden inherited settings unverified, and hold a dispatch when its mandatory risk floor cannot be established. See [model routing and host application](skills/coordinate-subagents/references/model-routing.md).
+Record the requested choice, the arguments actually dispatched, and the effective settings observed from the host separately. A supported selection does not establish actual application. Leave hidden inherited settings unverified. For high-risk work, `general` and `high` or above are only recommended first; model class and reasoning effort never refuse delegation, result recording, or finalization. See [model routing and host application](skills/coordinate-subagents/references/model-routing.md).
 
 ## Installation
 
