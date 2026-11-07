@@ -915,7 +915,7 @@
   "tools.check_for_updates.description": "146db10a737d1c603572d8af6b90ac62ecbe2c5e043443b7a47a0aaabce7fb31",
   "tools.checkpoint_context.description": "8e7b27de0d6172383563b629b1216a17e747a043a2974fd40ec26b4cb3a7767d",
   "tools.claim_workflow_attempt.description": "4ed02323a28a94642ca868434a5ebc7693cbab826a19f5ac4e4f279369d0cf0a",
-  "tools.classify_skills.description": "d5cd8fa288f6c12761fc18640bcdfbf8d323bb4a043bc662b1d9f25a178aa4ec",
+  "tools.classify_skills.description": "e463c1250c95321bc5d2aa185d46dfd144b6c0960090c71a427730394d12aa3e",
   "tools.execute_state_cleanup.description": "b0640652a6fd93c31df52e3fd85c0423a223edacd9af485b3eb803219b106621",
   "tools.finalize_workflow.description": "ee0174b4f104cb55eebe0a4f941a8cd2ded9637bf217e0759b229d88b611cbfa",
   "tools.get_convergence_status.description": "b8a5ea84b890d85048df76619def249c813e8963ab6e01173c48e90a4d071df7",

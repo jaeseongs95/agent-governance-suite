@@ -26,6 +26,19 @@ const retirement = approvedHistory.retiredSkills.find(entry => entry.skillIds.in
 const previous = JSON.parse(execFileSync("git", ["show", `${retirement.revision}:skills/registry.json`], {
   cwd: root, encoding: "utf8",
 }));
+// AGS3-D-0007 (3.9.0): the CS review provider declares the stage validator core runs. That one approved field is
+// removed before the historical digest, exactly as checkRegistryContextCompatibility adds it to the 3.0 contract;
+// any other change to the descriptor still changes the digest.
+const withoutStageValidator = (entry) => entry.skillId !== "cs-engineering" ? entry : {
+  ...entry,
+  providers: entry.providers.map((provider) => {
+    if (!provider.capabilities.includes("cs-implementation-review")) return provider;
+    expect(provider.stageValidator).toBe("skills/cs-engineering/scripts/validate.mjs");
+    const rest = { ...provider };
+    delete rest.stageValidator;
+    return rest;
+  }),
+};
 const withoutAddition = (registry) => {
   expect(registry.skills.filter(entry => retirement.skillIds.includes(entry.skillId))).toHaveLength(0);
   const advisors = registry.skills.filter(entry => entry.skillId === "model-effort-advisor");
@@ -36,7 +49,7 @@ const withoutAddition = (registry) => {
   const retiredIndex = previous.skills.findIndex(entry => retirement.skillIds.includes(entry.skillId));
   expect(retiredIndex).toBeGreaterThanOrEqual(0);
   skills.splice(retiredIndex, 0, previous.skills[retiredIndex]);
-  return { ...registry, skills: skills.filter((entry) => entry.skillId !== "ui-ux-design") };
+  return { ...registry, skills: skills.filter((entry) => entry.skillId !== "ui-ux-design").map(withoutStageValidator) };
 };
 
 describe("additive UI/UX specialist integration", () => {

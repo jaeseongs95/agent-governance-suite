@@ -32,7 +32,7 @@ describe("shared intake: a blocked step holds only itself and its dependents (AG
       "그 단계와 의존 단계만 보류하고",
       "막힌 것·기다리는 대상을 적은 뒤",
       "독립 작업을 계속하며",
-      "턴을 끝내지 않는다",
+      "턴·전체 작업을 끝내지 않는다",
     ]) expect(blockedStep).toContain(fragment);
     expect(blockedStep).not.toMatch(/\b(?:Codex|Claude|Gemini|GPT-[0-9]|SSH)/u);
     // It follows the user-only sentence, which keeps its request and split-the-work rules.

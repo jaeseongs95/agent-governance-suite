@@ -22,6 +22,19 @@ const retirement = approvedHistory.retiredSkills.find(entry => entry.skillIds.in
 const previous = JSON.parse(execFileSync("git", ["show", `${retirement.revision}:skills/registry.json`], {
   cwd: new URL("../../", import.meta.url), encoding: "utf8",
 }));
+// AGS3-D-0007 (3.9.0): the CS review provider declares the stage validator core runs. That one approved field is
+// removed before the historical digest, exactly as checkRegistryContextCompatibility adds it to the 3.0 contract;
+// any other change to the descriptor still changes the digest.
+const withoutStageValidator = (entry) => entry.skillId !== "cs-engineering" ? entry : {
+  ...entry,
+  providers: entry.providers.map((provider) => {
+    if (!provider.capabilities.includes("cs-implementation-review")) return provider;
+    expect(provider.stageValidator).toBe("skills/cs-engineering/scripts/validate.mjs");
+    const rest = { ...provider };
+    delete rest.stageValidator;
+    return rest;
+  }),
+};
 // Restore only the approved removal/purpose predecessors, then the preflight version successor.
 // Every unrelated descriptor, field and ordering change still affects the original 22-descriptor hash.
 // Later additive specialists are excluded explicitly without rewriting that oracle.
@@ -39,7 +52,7 @@ const historicalRegistry = (registry) => {
     ...registry,
     skills: skills.filter((entry) => !["prompt-engineering", "ui-ux-design"].includes(entry.skillId)).map((entry) =>
       entry.skillId === "mutation-risk-preflight" && entry.version === "1.0.3"
-        ? { ...entry, version: "1.0.1" } : entry),
+        ? { ...entry, version: "1.0.1" } : withoutStageValidator(entry)),
   };
 };
 

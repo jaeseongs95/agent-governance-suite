@@ -216,7 +216,7 @@ export function oracleDigest(value: { oracleRevision: string; sourceSpecDigest: 
 }
 
 /** Digest of the current (last) source-binding manifest, fixtures.v390-intake-source-successor.json. */
-export const V390_INTAKE_MANIFEST_DIGEST = "sha256:0252ad648e55499e82fe6be6d62769aad25a3d846abb24f49f45a0ca8790d7fd";
+export const V390_INTAKE_MANIFEST_DIGEST = "sha256:9e08a9f711bf37179e968c88da742c0ab5685e1e5b1d1b68eb10a4232e46c768";
 
 /** 동결 fixture는 덮지 않는다. 검토된 후속 manifest만 현재 원문 결속을 바꾼다. */
 export function loadCurrentSourceBindings(repo: string) {
