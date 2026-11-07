@@ -107,7 +107,8 @@ describe("shared context-start intake", () => {
     // Behavior 6 (d7585d74): the same first call also runs the turn stage after intake; a stub stands in for the
     // continuity hook here (its cue is covered in antigravity-turn-cue.test.mjs) so no real state store is opened.
     const turnHook = path.join(mkdtempSync(path.join(os.tmpdir(), "ags-intake-turn-")), "turn.mjs");
-    writeFileSync(turnHook, "process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: \"UserPromptSubmit\", additionalContext: \"TURN-CUE\" } }));\n");
+    // It answers only the turn stage's UserPromptSubmit; PostInvocation's continuity step reaches it too and gets nothing.
+    writeFileSync(turnHook, "import { readFileSync } from \"node:fs\";\nif (JSON.parse(readFileSync(0, \"utf8\")).hook_event_name === \"UserPromptSubmit\") process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: \"UserPromptSubmit\", additionalContext: \"TURN-CUE\" } }));\n");
     const options = {
       continuityHookPath: turnHook,
       sessionMessageHook: () => ({}),
@@ -122,5 +123,24 @@ describe("shared context-start intake", () => {
       ["PreInvocation", { conversationId: "intake-agy-turn" }],
       ["PostInvocation", { conversationId: "intake-agy-turn", invocationNum: 0 }],
     ] as const) expect(await executeAntigravityHookEvent(input, event, undefined, options)).toEqual({});
+  });
+
+  // AGS3-D-0068: after each model call the continuity hook runs under PostInvocation's own name (a step inside the
+  // turn), and what it adds is a persistent step: a subagent's role context must outlive the next call.
+  it("agy runs the continuity step after each model call and keeps its text", async () => {
+    const seen: string[] = [];
+    await executeAntigravityHookEvent({ conversationId: "agy-step", invocationNum: 2 }, "PostInvocation", undefined, {
+      stageRunner: async (stage: string, _event: string, _raw: unknown, currentToolInput: unknown) => {
+        seen.push(stage);
+        return { output: {}, updatedToolInput: currentToolInput, mutated: false };
+      },
+    });
+    expect(seen).toEqual(["session-message", "continuity"]);
+
+    const echo = path.join(mkdtempSync(path.join(os.tmpdir(), "ags-agy-step-")), "echo.mjs");
+    writeFileSync(echo, "import { readFileSync } from \"node:fs\";\nconst input = JSON.parse(readFileSync(0, \"utf8\"));\nprocess.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: input.hook_event_name, additionalContext: `STEP ${input.hook_event_name} ${input.session_id}` } }));\n");
+    expect(await executeAntigravityHookEvent({ conversationId: "agy-step", invocationNum: 2 }, "PostInvocation", undefined,
+      { continuityHookPath: echo, sessionMessageHook: () => ({}), writeStderr: () => undefined }))
+      .toEqual({ injectSteps: [{ systemMessage: { systemMessage: "STEP PostInvocation agy-step" } }] });
   });
 });

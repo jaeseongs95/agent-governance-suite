@@ -6,8 +6,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { builtinCallerIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
 import { antigravityCallKey } from "../../mcp-server/src/builtin-hook-host-adapters.js";
+import { ContextLayerService } from "../../mcp-server/src/context-layer-service.js";
+import { ContextLayerStore } from "../../mcp-server/src/context-layer-store.js";
+import { runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { adaptHostInput, hookExecutionObserver } from "../../mcp-server/src/host-input-adapter.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { ensureBootstrapped, fakeAuthenticator, signAndCommit } from "../helpers/fake-authenticator.js";
 
 // AGS3-D-0068. Oracle: agy 1.5.3 Linux capture (tests/real-host/binding-capture/agy-subagent-hook-capture.mjs): a
 // subagent's hook input names only its own conversation (conversationId), while its tools/call `_meta` names the root
@@ -90,6 +94,29 @@ describe("AGS3-D-0068 agy subagent hooks inherit the root session", () => {
       agentId: null, execution: hookExecutionObserver("antigravity")!(input, {}), transcriptPath: null });
     expect(serverCall(store, meta(A, S, S), "start_workflow", args)).toMatchObject({
       sessionId: S, execution: { model: "gemini-4-argon", effort: "high" } });
+  });
+
+  // agy runs PostInvocation after each model call (the runner keeps that name for continuity); a subagent usually has
+  // one turn, so its turn start comes before its first AGS call and only a later step can give it its role.
+  it("gives a subagent its role's context at the first model-call step after its first AGS call, once", () => {
+    const layers = path.join(directory, "layers.sqlite3");
+    const environment = { AGENT_GOVERNANCE_DB_PATH: path.join(directory, "workflows.sqlite3"), AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH: layers,
+      AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(directory, "continuity.sqlite3"), AGENT_GOVERNANCE_LOCALE: "en", AGENT_GOVERNANCE_ADMIN_PORT: "0" };
+    const service = new ContextLayerService(create => ContextLayerStore.open(layers, create), () => new Date());
+    const owner = fakeAuthenticator();
+    ensureBootstrapped(service, owner);
+    signAndCommit(service, owner, { op: "role.add", roleId: "role-1", name: "reviewer" });
+    signAndCommit(service, owner, { op: "binding.set", host: "antigravity", sessionId: S, roleId: "role-1" });
+    service.saveRole("antigravity", S, null, "ROLE-BODY-D0068", "a");
+    const step = () => {
+      const output = runContinuityHook(JSON.stringify({ hook_event_name: "PostInvocation", session_id: A }), environment, "antigravity", true);
+      return output ? JSON.parse(output) as { hookSpecificOutput: { hookEventName: string; additionalContext: string } } : null;
+    };
+
+    expect(step()?.hookSpecificOutput.additionalContext ?? "").not.toContain("ROLE-BODY-D0068");
+    serverCall(new InMemoryWorkflowStore(), meta(A, S, S));
+    expect(step()).toMatchObject({ hookSpecificOutput: { hookEventName: "PostInvocation", additionalContext: expect.stringContaining("ROLE-BODY-D0068") } });
+    expect(step()).toBeNull();
   });
 
   it("reports a record that is not this conversation's instead of treating the subagent as a root", () => {

@@ -91,6 +91,8 @@ Codex 소스는 `rust-v0.166.0` raw 파일로 확인했다. sha256: `mcp_tool_ca
 | Claude Code 2.1.314 (Linux), 2.1.316 (Windows) | 2단 중첩(root → A → B) | `claudecode/toolUseId, progressToken` | 해당 없음 | 세 호출 모두 `tool_use_id`=`toolUseId`, `session_id`=root. A·B hook에 서로 다른 `agent_id`, 둘 다 `agent_type` `general-purpose`. `transcript_path`는 셋 다 root transcript다. **부모 agent를 가리키는 필드는 없다** |
 | agy 1.4.12 (Linux) | 2단 중첩(root → A → B) | 위와 같음 | A: `conversation_id`=A, `parent_conversation_id`=root. B: `conversation_id`=B, `parent_conversation_id`=A. 셋 다 `root_conversation_id`=root | hook `conversationId`=그 호출의 대화 |
 | agy 1.4.12 (Windows) | 미실행 | | | 시험 서버의 agy가 Google 로그인 전이다(`Authentication required`). 사용자 로그인이 필요하다 |
+| agy 1.5.3 (Linux, 2026-11-07, AGS3-D-0068) | subagent(`invoke_subagent`) hook | (1.4.12와 같음) | 해당 없음 | subagent hook 입력 키는 `artifactDirectoryPath, conversationId, lastUserInput, modelName, transcriptPath, workspacePaths`뿐이다. `conversationId`=subagent 대화이고 root·부모를 가리키는 값은 없다. 장치: `tests/real-host/binding-capture/agy-subagent-hook-capture.mjs`, 작업 `bd82cd7e…`·`21da9975…` |
+| 〃 | hook 출력의 컨텍스트 전달 | | | 같은 `injectSteps` 출력이 PostToolUse hook에서는 다음 모델 호출에 전달되지 않았고(0/0), PostInvocation hook에서는 전달됐다(1/1) |
 
 채집으로 바뀐 결정:
 
@@ -98,6 +100,7 @@ Codex 소스는 `rust-v0.166.0` raw 파일로 확인했다. sha256: `mcp_tool_ca
 2. Claude: admission(D)을 그대로 쓴다. `toolUseId`가 없거나 다를 때 `updatedInput`을 유지한다는 조건은 해당하지 않는다. hook 입력에 model이 없으므로 model은 2.2대로 transcript 발신 항목이나 세션 model 기록에서 온다.
 3. agy: arg proof(E)를 지우고 `_meta` ingress(`antigravity-meta`)로 옮긴다. 호출 ID가 없으므로 one-use 회수가 없고, 실행 관측은 `unavailable`이다. 현행에도 agy에는 실행 관측 token 발급 경로가 없다.
 4. 중첩: Codex·agy는 호출마다 root와 **직속 부모**를 준다. Claude는 root와 agent 자신만 주고 부모 agent는 주지 않는다. 그래서 사슬은 「호스트가 준 만큼」 기록하고 완전성을 따로 표시한다(2.1). 요청 버전 Codex 0.165는 두 서버 모두 0.166.0만 설치되어 있어 0.166.0으로 채집했다. Windows Claude는 2.1.316이다.
+5. agy subagent hook(1.5.3): hook 입력에 root가 없으므로, MCP ingress가 subagent의 첫 AGS 호출 `_meta`에서 본 「대화→root」를 기록하고 agy hook adapter가 그 기록으로 root 세션과 child(agentKey=subagent 대화)를 준다. 첫 AGS 호출 전의 hook(SessionStart, 첫 턴 시작)은 subagent 자기 대화로 남는다. 그래서 담당 컨텍스트는 턴 안의 단계 경계(`turn-step`, agy는 PostInvocation)에서 그 actor가 아직 받지 않은 부분으로 준다. PostToolUse 출력은 agy가 전달하지 않으므로 쓰지 않는다.
 
 ## 2. 설계
 

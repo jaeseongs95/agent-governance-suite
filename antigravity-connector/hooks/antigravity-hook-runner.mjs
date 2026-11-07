@@ -1483,9 +1483,12 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
       : STAGE_TIMEOUT_MS;
     const effectiveTimeoutMs = Math.max(250, Math.min(STAGE_TIMEOUT_MS, Math.floor(remainingBudgetMs)));
     const preservedSessionBinding = cleanArgs._sessionBinding;
-    const hookPath = fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
+    const hookPath = typeof options?.continuityHookPath === "string" ? options.continuityHookPath
+      : fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
+    // PostInvocation keeps its own name here: continuity reads it as a step inside the turn, not as a tool's end.
     const res = spawnSync(process.execPath, [hookPath, "--host=antigravity"], {
-      input: JSON.stringify({ ...inputWithCurrentArgs, ...(toolBoundary ? { tool_input: cleanArgs } : {}) }),
+      input: JSON.stringify({ ...inputWithCurrentArgs, ...(event === "PostInvocation" ? { hook_event_name: event } : {}),
+        ...(toolBoundary ? { tool_input: cleanArgs } : {}) }),
       encoding: "utf8",
       stdio: ["pipe", "pipe", "ignore"],
       timeout: effectiveTimeoutMs,
@@ -1679,7 +1682,11 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
       ? [explicitHook]
       : event === "SessionStart"
         ? ["session-message", "continuity"]
-        : turnStart ? ["session-message", "intake", "turn"] : ["session-message"];
+        : turnStart ? ["session-message", "intake", "turn"]
+          // After each model call the shared layers that changed reach the next one. A subagent's hooks name its root
+          // only after its first AGS call, so this is where that subagent first gets its role (AGS3-D-0068).
+          // ponytail: one more node process per model call; check the conversation-root record in-process if it costs.
+          : event === "PostInvocation" ? ["session-message", "continuity"] : ["session-message"];
     const injected = [];
     const seenTexts = new Set();
 

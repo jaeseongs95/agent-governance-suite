@@ -296,8 +296,10 @@ const CONTEXT_START_ACTIONS: ReadonlySet<string> = new Set(["startup", "fork", "
 /**
  * Which actor gets the shared context layers at this boundary, and whether in full (a context start: session start,
  * resume, compaction, a subagent's start, or a turn start the adapter marks as a context start) or only the layers that
- * changed since that actor last received them (a later user prompt, or the boundary after an AGS progress tool, where
- * a subagent gets them too). The actor key is the same hostActorId the server and the phase checks use.
+ * changed since that actor last received them (a later user prompt, the boundary after an AGS progress tool, or a step
+ * between model calls inside a turn; a subagent gets these two too). The actor key is the same hostActorId the server
+ * and the phase checks use. A subagent whose hooks learn their root session only mid-turn gets its layers at the first
+ * such step after that.
  */
 function contextLayerTarget(input: NormalizedContinuityInput, host: string): { sessionId: string; actorId: string; full: boolean } | null {
   const { observation, action } = input;
@@ -312,6 +314,7 @@ function contextLayerTarget(input: NormalizedContinuityInput, host: string): { s
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "after" && localToolName(host, observation.toolName ?? "", PROGRESS_TOOLS)) {
     return { sessionId, actorId, full: false };
   }
+  if (observation.kind === "turn-step") return { sessionId, actorId, full: false };
   return null;
 }
 

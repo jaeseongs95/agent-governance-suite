@@ -88,6 +88,9 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
   else if (event === "SubagentStop") kind = "turn-end";
   // Claude Code and Codex 0.166 name the hook that adds context to a new subagent SubagentStart; it carries agent_id.
   else if (event === "SubagentStart") kind = "subagent-start";
+  // agy runs PostInvocation after each model call of a turn, and a hook's injected step reaches the next call
+  // (agy 1.5.3 capture: delivered there, not from PostToolUse; AGS3-D-0068).
+  else if (event === "PostInvocation") kind = "turn-step";
   if (event === "PreCompact") continuityAction = { kind: "pre-compact" };
   else if (event === "PostCompact") {
     const turnId = input.turn_id, error = input.error;
