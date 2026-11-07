@@ -10,7 +10,7 @@ node scripts/validate-handoff.mjs --input validation-input.json
 node scripts/validate-task-binding.mjs --input task-binding-input.json
 ```
 
-모든 CLI는 stdin도 지원하고 JSON만 stdout으로 반환한다.
+모든 스크립트는 stdin도 지원하고 JSON만 stdout으로 반환한다.
 
 ## 절차
 
