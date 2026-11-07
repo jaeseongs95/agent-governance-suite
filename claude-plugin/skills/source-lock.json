@@ -133,7 +133,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:85f26ccc696aa960b09d78de927f0c947f853b216f0a19d999b146fb59f4e96e",
+      "integratedChecksum": "sha256:2e112c1e70e33fc16d3105a8c058185c5fdfd33ecbc453bf70ce6bd769d53a7f",
       "checksumScope": "relative paths and normalized text bytes under skills/evaluation-validity-auditor"
     },
     {
