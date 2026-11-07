@@ -1005,15 +1005,12 @@ export class SqliteContinuityStore {
         event TEXT NOT NULL, turn_hash TEXT, success INTEGER NOT NULL CHECK(success IN(0,1)), observed_at TEXT NOT NULL
       );
     `);
-    if (version > 0) {
-      // Preserve legacy erasure receipts; their numeric generations are migration data only.
-      const oldTombstones = this.database.prepare("SELECT * FROM continuity_tombstones").all() as Array<{
-        task_correlation: string; epoch: number; revision: number; payload_digest: string; purged_at: string;
-      }>;
-      for (const row of oldTombstones) this.database.prepare(`INSERT INTO continuity_metadata(key,value) VALUES(?,?)`)
-        .run(`legacy-tombstone:${row.task_correlation}:${row.epoch}`, JSON.stringify(row));
-      this.database.exec("DROP TABLE continuity_tombstones;");
-    }
+    const oldTombstones = version > 0 ? this.database.prepare("SELECT * FROM continuity_tombstones").all() as Array<{
+      task_correlation: string; epoch: number; revision: number; payload_digest: string; purged_at: string;
+    }> : [];
+    for (const erased of oldTombstones) this.database.prepare("INSERT INTO continuity_metadata(key,value) VALUES(?,?)")
+      .run(`legacy-tombstone:${erased.task_correlation}:${erased.epoch}`, JSON.stringify(erased));
+    if (version > 0) this.database.exec("DROP TABLE continuity_tombstones;");
     this.database.exec(`CREATE TABLE continuity_tombstones(
       task_correlation TEXT NOT NULL, epoch INTEGER NOT NULL, state_token TEXT NOT NULL, empty_state_token TEXT NOT NULL,
       payload_digest TEXT NOT NULL, purged_at TEXT NOT NULL, PRIMARY KEY(task_correlation,epoch)
@@ -1034,6 +1031,16 @@ export class SqliteContinuityStore {
           .run(`${LINEAGE_ANCHOR_EVENT}${current.stateToken}:${current.memoryDigest}`, original.taskCorrelation, original.epoch,
             `lineage-anchor:${original.revision}:${original.snapshotDigest}`);
       }
+    }
+    for (const erased of oldTombstones) {
+      const current = this.database.prepare("SELECT epoch,state_token,memory_json FROM continuity_current_memory WHERE task_correlation=?")
+        .get(erased.task_correlation) as Pick<CurrentRow, "epoch" | "state_token" | "memory_json"> | undefined;
+      // A current-epoch erasure remains attached to its actual empty current. Old epochs stay old.
+      const emptyStateToken = current?.epoch === erased.epoch && current.memory_json === null
+        ? current.state_token : randomBytes(24).toString("hex");
+      this.database.prepare(`INSERT INTO continuity_tombstones(task_correlation,epoch,state_token,empty_state_token,payload_digest,purged_at)
+        VALUES(?,?,?,?,?,?)`).run(erased.task_correlation, erased.epoch, randomBytes(24).toString("hex"),
+        emptyStateToken, erased.payload_digest, erased.purged_at);
     }
     if (version > 0) {
       // Every legacy payload has been copied losslessly before its old table is removed.
