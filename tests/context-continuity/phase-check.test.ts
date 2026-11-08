@@ -241,7 +241,7 @@ describe("phase check hook", () => {
   it("opens the workflow store at Stop to read the bound root", async () => {
     const directory = await mkdtemp(join(tmpdir(), "phase-check-"));
     directories.push(directory);
-    const env = { AGENT_GOVERNANCE_DB_PATH: join(directory, "workflow.sqlite3"), AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join(directory, "continuity.sqlite3") };
+    const env = { AGENT_GOVERNANCE_DB_PATH: join(directory, "workflow.sqlite3"), AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join(directory, "continuity.sqlite3"), AGENT_GOVERNANCE_SHARED_STATE_DIR: join(directory, "shared") };
     const workflow = new SqliteWorkflowStore(env.AGENT_GOVERNANCE_DB_PATH);
     try { expect(workflow.insertConvergenceRoot(workflowRoot("completed"))).toBeNull(); } finally { workflow.close(); }
     const service = createService(null, env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);

@@ -120,7 +120,9 @@ async function harness() {
   const registryPath = join(directory, "skills", "registry.json");
   await writeFile(registryPath, JSON.stringify({ schemaVersion: "2.0.0", skills: [descriptor] }), "utf8");
   const env = { AGENT_GOVERNANCE_DB_PATH: join(directory, "workflows.sqlite3"),
-    AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join(directory, "continuity.sqlite3") };
+    AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join(directory, "continuity.sqlite3"),
+    // AGS3-D-0076: the shared state (context layers, board) stays in the fixture, never the tester's home.
+    AGENT_GOVERNANCE_SHARED_STATE_DIR: join(directory, "shared") };
   const workflow = new SqliteWorkflowStore(env.AGENT_GOVERNANCE_DB_PATH);
   const continuity = new SqliteContinuityStore(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
   stores.add(workflow); stores.add(continuity);

@@ -35,6 +35,7 @@ async function environment() {
     env: {
       AGENT_GOVERNANCE_DB_PATH: join(directory, "workflows.sqlite3"),
       AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join(directory, "continuity.sqlite3"),
+      AGENT_GOVERNANCE_SHARED_STATE_DIR: join(directory, "shared"),
     } as NodeJS.ProcessEnv,
   };
 }

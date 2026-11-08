@@ -77,7 +77,7 @@ describe("subagent start cue", () => {
     // A file stands where each database's parent directory should be: opening either store would fail.
     const blocked = join(directory, "not-a-directory");
     writeFileSync(blocked, "synthetic file");
-    const environment = { AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join(blocked, "c.sqlite3"), AGENT_GOVERNANCE_DB_PATH: join(blocked, "w.sqlite3") };
+    const environment = { AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join(blocked, "c.sqlite3"), AGENT_GOVERNANCE_DB_PATH: join(blocked, "w.sqlite3"), AGENT_GOVERNANCE_SHARED_STATE_DIR: join(directory, "shared") };
     // Positive control: any other event opens the store here and fails closed.
     expect(() => runContinuityHook(JSON.stringify({ hook_event_name: "UserPromptSubmit", session_id: parent, prompt: "x" }), environment, "codex", true)).toThrow();
     const output = JSON.parse(runContinuityHook(JSON.stringify(codexStart), environment, "codex", true)) as Record<string, unknown>;
