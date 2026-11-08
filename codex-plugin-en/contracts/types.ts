@@ -411,8 +411,13 @@ export interface SessionBoardEntryV2 {
   repo: { root: string; repoId: string; branch: string | null } | null;
   summary: string | null;
   summaryAt: string | null;
-  /** The role the user gave the session, as that session wrote it: a claim, not an authority. Null when none. */
+  /**
+   * The session's role: the binding the user signed on the admin page when there is one, else what that session wrote.
+   * Neither grants authority. Null when none.
+   */
   role: string | null;
+  /** Where `role` came from: `signed` (the user's binding), `self` (the session's own claim), or null when there is none. */
+  roleSource: "signed" | "self" | null;
   /** Null when no user prompt was ever observed for the session. */
   summaryStale: boolean | null;
   lastPromptAt: string | null;
