@@ -11,6 +11,7 @@ import { type AdminPageState, type ContextLayerService, GLOBAL_CONTEXT_MAX_BYTES
 import type { AdminSettingsView } from "./admin-settings.js";
 import { failureCode } from "./failure-diagnostics.js";
 import { writeDiagnostic } from "./hook-error-diagnostics.js";
+import { hostMarksNoSubagents } from "./host-input-adapter.js";
 import { readAdminPageRecord, resolveAdminPageRecordPath } from "./runtime-config.js";
 
 /**
@@ -33,6 +34,13 @@ export interface AdminSessionView {
   /** The role line the session wrote on the board itself; grants nothing. */
   selfRole: string | null;
   lastSeenAt: string | null;
+  /** The page cannot tell a main session from a subagent; the user decides (AGS3-D-0091). */
+  kindUnknown?: boolean;
+}
+
+/** On a host without a subagent marker, a session that has written nothing about itself may be a subagent. */
+export function sessionKindUnknown(session: { host: string; summary: string | null; role: string | null }): boolean {
+  return hostMarksNoSubagents(session.host) && !session.summary && !session.role;
 }
 
 export type { AdminSettingsView };

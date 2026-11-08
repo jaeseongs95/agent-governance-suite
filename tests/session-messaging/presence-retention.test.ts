@@ -11,6 +11,7 @@ import { SessionMessageService } from "../../mcp-server/src/session-message-serv
 import * as protocol from "../../mcp-server/src/session-message-protocol.js";
 import * as storeModule from "../../mcp-server/src/session-message-store.js";
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
+import { sessionKindUnknown } from "../../mcp-server/src/admin-page-server.js";
 import { antigravityConversationRootDirectory, recordAntigravityConversationRoot } from "../../mcp-server/src/antigravity-conversation-roots.js";
 import { adaptHostInput, hostSessionIsSubagent, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { recordWakeHookObservation, wakeHookObservationReader } from "../../mcp-server/src/session-message-wake-port.js";
@@ -152,6 +153,15 @@ it("knows an agy conversation is a subagent only once its root is recorded", () 
   expect(hostSessionIsSubagent("antigravity", "child-conversation")).toBe(true);
   expect(hostSessionIsSubagent("antigravity", "root-conversation")).toBe(false);
   expect(hostSessionIsSubagent("codex", "child-conversation")).toBe(false);
+});
+
+it("calls a session's kind unknown only on a host with no subagent marker and only while it has written nothing", () => {
+  const session = { host: "antigravity", summary: null, role: null };
+  expect(sessionKindUnknown(session)).toBe(true);
+  expect(sessionKindUnknown({ ...session, summary: "working" })).toBe(false);
+  expect(sessionKindUnknown({ ...session, role: "reviewer" })).toBe(false);
+  expect(sessionKindUnknown({ ...session, host: "codex" })).toBe(false);
+  expect(sessionKindUnknown({ ...session, host: "claude-code" })).toBe(false);
 });
 
 it("keeps an ended or lapsed row until exactly the retention period after its lease end", () => {

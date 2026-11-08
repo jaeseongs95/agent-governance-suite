@@ -209,6 +209,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
 'use strict';
 (function () {
   const LS_KEY = 'ags-admin-credentials';
+  const HIDDEN_KEY = 'ags-admin-hidden-sessions';
   const LIMIT = 50;
 
   // ---------- 상태 ----------
@@ -1078,25 +1079,53 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     return list;
   }
   const STATE = { online: ['활성', 'on'], unreachable: ['연결 안 됨', 'warn'], ended: ['종료', 'off'], unlisted: ['현황판에 없음', 'warn'] };
+  const sessionKey = (s) => s.host + '/' + s.sessionId;
+  /** 사용자가 목록에서 뺀 세션. 이 브라우저의 표시만 바꾸며 세션과 결속에는 영향이 없다. */
+  function hiddenSessions() {
+    if (!S.b.hidden) {
+      try { const v = JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]'); S.b.hidden = new Set(Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []); }
+      catch (e) { S.b.hidden = new Set(); }
+    }
+    return S.b.hidden;
+  }
+  function setSessionHidden(s, hide) {
+    const listed = new Set(S.data.sessions.map(sessionKey));
+    const next = new Set([...hiddenSessions()].filter((k) => listed.has(k)));
+    if (hide) next.add(sessionKey(s)); else next.delete(sessionKey(s));
+    S.b.hidden = next;
+    let saved = true;
+    try { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...next])); } catch (e) { saved = false; }
+    const done = short(s.sessionId) + (hide ? ' 세션을 목록에서 뺐습니다. 「뺀 세션」에서 되돌릴 수 있습니다.' : ' 세션을 「구분 불가」로 되돌렸습니다.');
+    setStatus('bind-screen', { kind: 'info', text: done + (saved ? '' : ' 이 브라우저에 저장하지 못해 페이지를 새로 열면 원래대로 보입니다.') });
+    $('chip-' + S.b.filter).focus();
+  }
+  /** 호스트가 서브에이전트를 표시하지 않아 메인 세션인지 알 수 없는 세션. 결속이나 결속 요청이 있으면 사용자가 이미 메인으로 다룬 것이다. */
+  const kindUnknown = (x) => !x.prop && !!x.s.kindUnknown && !x.s.binding && isActive(x.s);
   function viewBindings() {
     const d = S.data;
     const all = sessionModels();
-    const counts = { active: all.filter((x) => isActive(x.s)).length, unbound: all.filter((x) => isActive(x.s) && !bound(x.s)).length, ended: all.filter((x) => !isActive(x.s)).length };
+    const hidden = hiddenSessions();
+    const isHidden = (x) => kindUnknown(x) && hidden.has(sessionKey(x.s));
+    const known = (x) => isActive(x.s) && !kindUnknown(x);
+    const counts = { active: all.filter(known).length, unbound: all.filter((x) => known(x) && !bound(x.s)).length,
+      unknown: all.filter((x) => kindUnknown(x) && !isHidden(x)).length, hidden: all.filter(isHidden).length, ended: all.filter((x) => !isActive(x.s)).length };
     const f = S.b.filter;
-    const pick = (x) => f === 'ended' ? !isActive(x.s) : f === 'unbound' ? isActive(x.s) && !bound(x.s) : isActive(x.s);
+    const pick = (x) => f === 'ended' ? !isActive(x.s) : f === 'unbound' ? known(x) && !bound(x.s) : f === 'unknown' ? kindUnknown(x) && !isHidden(x) : f === 'hidden' ? isHidden(x) : known(x);
     const rank = (x) => x.prop ? 0 : !bound(x.s) ? 1 : 2;
     const list = all.filter(pick).sort((a, b) => rank(a) - rank(b) || String(b.s.lastSeenAt || '').localeCompare(String(a.s.lastSeenAt || '')));
     const sec = h('section', { class: 'col', 'aria-labelledby': 'sb-title' });
     sec.append(h('div', { class: 'head' }, h('h1', { id: 'sb-title', tabindex: '-1' }, '세션 결속'),
       h('p', { class: 'desc' }, '메인 세션마다 역할을 정합니다. 서브에이전트는 메인 세션의 역할을 따릅니다.'),
       h('details', { class: 'guide' }, h('summary', null, '이 목록의 기준'), h('ul', null,
-        h('li', null, '이 PC 세션 현황판에 있는 메인 세션만 보입니다. 서브에이전트는 따로 나오지 않습니다.'),
+        h('li', null, '이 PC 세션 현황판에 있는 세션이 보입니다. 서브에이전트로 확인된 세션은 나오지 않습니다.'),
+        h('li', null, '호스트가 서브에이전트를 표시하지 않아 메인 세션인지 알 수 없고 요약·역할도 없는 세션은 「구분 불가」에 모읍니다. 메인 세션이면 역할을 정하고, 아니면 목록에서 빼세요.'),
+        h('li', null, '목록에서 빼도 이 브라우저의 표시만 바뀌고 세션에는 영향이 없습니다. 「뺀 세션」에서 되돌릴 수 있습니다.'),
         h('li', null, '활성·종료는 현황판의 연결 상태를 따릅니다.'),
         h('li', null, '같은 세션을 재개하면 결속이 유지되고, 30일 동안 쓰지 않으면 풀립니다(만료).'),
         h('li', null, '「세션이 적은 역할」은 세션의 자기 소개라 권한이 아닙니다. 결속만 권한을 줍니다.')))));
     if (d.sessionsError) sec.append(h('div', { class: 'note-err', role: 'alert' }, h('span', null, '세션 현황판을 읽지 못했습니다. 목록이 비었거나 오래되었을 수 있습니다. ', h('code', null, d.sessionsError.code)),
       h('div', null, h('button', { type: 'button', class: 'btn sm', id: 'sess-reload', onclick: () => loadState() }, '다시 불러오기'))));
-    const chips = [['active', '활성 ' + counts.active], ['unbound', '역할 없음 ' + counts.unbound], ['ended', '종료 ' + counts.ended]];
+    const chips = [['active', '활성 ' + counts.active], ['unbound', '역할 없음 ' + counts.unbound], ['unknown', '구분 불가 ' + counts.unknown], ['hidden', '뺀 세션 ' + counts.hidden], ['ended', '종료 ' + counts.ended]];
     const group = h('div', { class: 'chips', role: 'radiogroup', 'aria-label': '세션 범위' });
     chips.forEach(([k, label], i) => {
       const on = f === k;
@@ -1153,6 +1182,11 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     } else {
       roleText = '역할 없음'; roleCls = 'none';
       if (isActive(s)) acts.push(h('button', { type: 'button', class: 'btn pri', id: 'set-' + key, disabled: !!S.busy, onclick: (e) => openBind(x, 'set', e.currentTarget) }, '역할 정하기'));
+      if (kindUnknown(x)) {
+        const out = hiddenSessions().has(sessionKey(s));
+        notes.push('서브에이전트일 수 있습니다');
+        acts.push(h('button', { type: 'button', class: 'btn', id: (out ? 'show-' : 'hide-') + key, disabled: !!S.busy, onclick: () => setSessionHidden(s, !out) }, out ? '다시 보이기' : '목록에서 빼기'));
+      }
     }
     return h('li', { class: 'card' + (p ? ' req' : '') },
       h('div', { class: 'c1' },

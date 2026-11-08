@@ -46,7 +46,7 @@ import { createNativeClassificationAdapters, type NativeClassificationAdapterDef
 import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
 import { failureContext } from "./failure-diagnostics.js";
 import { writeDiagnostic, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
-import { type AdminSessionView, startAdminPage } from "./admin-page-server.js";
+import { type AdminSessionView, sessionKindUnknown, startAdminPage } from "./admin-page-server.js";
 import { type AdminPageState } from "./context-layer-service.js";
 import { adminSettingsView, type AdminSettingsView, type JevInstallationView, type JevProfileFor, type JevProviderView } from "./admin-settings.js";
 import { composeJev } from "./skill-classification/jev-composition.js";
@@ -251,6 +251,7 @@ async function adminSessions(sessionMessages: SessionMessageService, boardPath: 
     host: session.host, hostLabel: session.host, sessionId: session.sessionId,
     state: session.presence === "online" || session.presence === "unreachable" ? session.presence : "ended",
     cwd: session.cwd, summary: session.summary, selfRole: session.role, lastSeenAt: session.lastSeenAt,
+    kindUnknown: sessionKindUnknown(session),
   }));
 }
 

@@ -148,6 +148,11 @@ function selectedHookHostAdapter(host: string): Readonly<HookHostAdapter> | unde
   return hookHostAdapters.get(host);
 }
 
+/** A host that gives no subagent marker: a session of it not known to be a subagent may still be one. */
+export function hostMarksNoSubagents(host: string): boolean {
+  return selectedHookHostAdapter(host)?.isSubagentSession !== undefined;
+}
+
 export function hostSessionIsSubagent(host: string, sessionId: string): boolean {
   return selectedHookHostAdapter(host)?.isSubagentSession?.(sessionId) === true;
 }
