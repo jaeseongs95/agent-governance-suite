@@ -10,7 +10,7 @@ const INSTALLED_INTAKE = new URL("orchestrator/references/intake.md", SKILLS_DIR
 
 /**
  * The shared intake: the block of the installed skills/orchestrator/references/intake.md in its frame, carried by the MCP
- * server instructions. The block stays the installed file's text, so it is in the package language (docs/i18n-design.md
+ * server instructions. The block stays the installed file's text, so it is in the package language (docs/contributing/i18n.md
  * 4.2); only the frame around it follows `locale`.
  */
 export function skillIntakeText(locale: SupportedLocale): string {

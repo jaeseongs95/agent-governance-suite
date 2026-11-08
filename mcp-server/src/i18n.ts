@@ -8,7 +8,7 @@ import { resolvePackageLocalePath, resolveUserSettingsPath } from "./runtime-con
 export { ROOT_LOCALE, SUPPORTED_LOCALES, type SupportedLocale };
 export type MessageKey = keyof MessageParams;
 
-/** A message to show: the key and its params are the contract, the rendered text is display (docs/i18n-design.md 3). */
+/** A message to show: the key and its params are the contract, the rendered text is display (docs/contributing/i18n.md 3). */
 export interface MessageRef<K extends MessageKey = MessageKey> {
   readonly key: K;
   readonly params: MessageParams[K];
@@ -29,7 +29,7 @@ export function isCatalogKey(key: string): boolean {
   return Object.hasOwn(CATALOGS[ROOT_LOCALE], key);
 }
 
-/** MCP SEP-2792 request and response keys in `_meta` (docs/i18n-design.md 4.1 ②). */
+/** MCP SEP-2792 request and response keys in `_meta` (docs/contributing/i18n.md 4.1 ②). */
 export const ACCEPT_LANGUAGE_META = "io.modelcontextprotocol/acceptLanguage";
 export const CONTENT_LANGUAGE_META = "io.modelcontextprotocol/contentLanguage";
 export const LOCALE_ENVIRONMENT = "AGENT_GOVERNANCE_LOCALE";
@@ -120,7 +120,7 @@ function readLocaleFile(file: string | null, readText: (file: string) => string)
 }
 
 /**
- * Host-side locale (docs/i18n-design.md 4.1 ①): environment, the locale signed on the admin page (docs/admin-page.md),
+ * Host-side locale (docs/contributing/i18n.md 4.1 ①): environment, the locale signed on the admin page (docs/user/admin-page.md),
  * user settings, installed package, then the root locale. The environment wins over the signed value; the page shows
  * the locale as locked by it. The signed value is read only when the environment does not set one.
  */
@@ -151,7 +151,7 @@ export function resolveHostLocale(inputs: HostLocaleInputs = {}): ResolvedLocale
   return { locale: ROOT_LOCALE, source: "root", skipped };
 }
 
-/** Service-side locale for one request (docs/i18n-design.md 4.1 ②): the request's `_meta` value, else the service default. */
+/** Service-side locale for one request (docs/contributing/i18n.md 4.1 ②): the request's `_meta` value, else the service default. */
 export function resolveRequestLocale(meta: unknown, fallback: SupportedLocale): SupportedLocale {
   if (meta === null || typeof meta !== "object") return fallback;
   const ranges = parseLanguageList((meta as Record<string, unknown>)[ACCEPT_LANGUAGE_META]);

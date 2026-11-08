@@ -6,7 +6,7 @@ export interface PeerWaitDecision {
   reason: "async-resume" | "unchanged-peer-state" | "resume-unconfirmed" | "peer-unconfirmed";
   transmission: "observed" | "unknown";
   resume: "observed" | "unknown";
-  /** Root-locale text; a hook renders `guidanceKey` and `guidanceParams` in its host locale (docs/i18n-design.md 3). */
+  /** Root-locale text; a hook renders `guidanceKey` and `guidanceParams` in its host locale (docs/contributing/i18n.md 3). */
   guidance: string;
   guidanceKey: PeerWaitGuidanceKey;
   guidanceParams: Readonly<Record<string, unknown>>;

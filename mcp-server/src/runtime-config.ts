@@ -82,7 +82,7 @@ export function resolveHostIdPath(
   return path.join(sharedUserStateDirectory(environment, homeDirectory), "host-id");
 }
 
-/** The default locale the installed package was built for (docs/i18n-design.md 4.1 ①). */
+/** The default locale the installed package was built for (docs/contributing/i18n.md 4.1 ①). */
 export function resolvePackageLocalePath(moduleUrl: string = import.meta.url): string {
   return fileURLToPath(new URL("../../runtime/locale.json", moduleUrl));
 }

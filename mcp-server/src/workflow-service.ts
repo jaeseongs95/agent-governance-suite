@@ -365,7 +365,7 @@ function minimalTask(request: MinimalStartRequest, workspace: string, priorFileC
     riskLevel: "medium",
     workUnits: [{ id: "work", objective: request.goal, dependencies: [], writeTargets: [...request.writeTargets] }],
     requiredCapabilities: [...request.stages],
-    // Stored in the root locale like every stored message (docs/i18n-design.md 3.2); readers map it back with recordMessageRef.
+    // Stored in the root locale like every stored message (docs/contributing/i18n.md 3.2); readers map it back with recordMessageRef.
     constraints: priorFileCount > 0 ? [render(lateAdoptionConstraint(priorFileCount), ROOT_LOCALE)] : [],
     authorization: { allowedActions: [], prohibitedActions: [], approvalRequired: [] },
     decision: { complexity: "complex", hasConflicts: false },

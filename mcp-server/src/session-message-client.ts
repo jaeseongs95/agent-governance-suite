@@ -15,7 +15,7 @@ export { SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 export const WAKE_PREFIX = "[agent-governance-suite:wake:";
 
 /**
- * In-process session messaging (docs/ags30-broker-redesign.md 3.1). There is no broker process, socket, lock or
+ * In-process session messaging (docs/archive/ags30-broker-redesign.md 3.1). There is no broker process, socket, lock or
  * endpoint file: each process opens the shared SQLite file once and every operation is one BEGIN IMMEDIATE transaction.
  */
 

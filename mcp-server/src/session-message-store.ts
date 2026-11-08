@@ -1256,7 +1256,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /**
-   * Peer-wait resume evidence (docs/peer-wait-policy.md 3-4) from durable rows only: the sender's current online birth,
+   * Peer-wait resume evidence (docs/contributing/session-messaging.md 3-4) from durable rows only: the sender's current online birth,
    * its live lease bound to a host birth, and an attempt of that birth and relay observed by a verified host hook within
    * 30 seconds. No PID is consulted; a relay that died loses the lease within RELAY_LEASE_MS.
    */

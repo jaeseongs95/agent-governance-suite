@@ -8,7 +8,7 @@ import { HOST_ATTESTATION_TOOLS, hostActorId } from "./host-attestation.js";
 import type { WorkflowStore } from "./workflow-store.js";
 import { msg } from "./i18n.js";
 
-// Host fact sources: tests/real-host/binding-capture (2026-11-01) and docs/ags30-session-binding-design.md 1.5.
+// Host fact sources: tests/real-host/binding-capture (2026-11-01) and docs/archive/ags30-session-binding-design.md 1.5.
 
 function text(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null;

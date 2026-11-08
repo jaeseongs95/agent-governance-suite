@@ -138,7 +138,7 @@ export function workflowFailureCode(cause: unknown): string {
   return failureReason(cause).reason ?? "UNEXPECTED_FAILURE";
 }
 
-/** Hook output lines: catalog messages the hook entry renders in the host locale, one per line (docs/i18n-design.md 6). */
+/** Hook output lines: catalog messages the hook entry renders in the host locale, one per line (docs/contributing/i18n.md 6). */
 export type HookText = readonly MessageRef[];
 
 /** The text a hook shows, or null when there is nothing to show. */

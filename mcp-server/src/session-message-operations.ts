@@ -10,7 +10,7 @@ import { msg, render, ROOT_LOCALE } from "./i18n.js";
 
 /**
  * The validated operation table of session messaging. Every caller (MCP service, hooks, CLI, relay) runs it in its own
- * process against the shared SQLite file; each store call is one BEGIN IMMEDIATE transaction (docs/ags30-broker-redesign.md 3.1).
+ * process against the shared SQLite file; each store call is one BEGIN IMMEDIATE transaction (docs/archive/ags30-broker-redesign.md 3.1).
  */
 export const SESSION_MESSAGE_OPERATIONS = ["prepare", "send", "claim", "claim-host-wake", "observe-native-input", "claim-deferred",
   "claim-turn-end", "claim-wake-input", "clear-deferred", "acknowledge", "status", "recall", "peer-wait", "pending", "ensure-relay", "grant-relay", "release-relay",

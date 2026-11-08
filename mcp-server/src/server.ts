@@ -77,7 +77,7 @@ function embeddedSchema(source: Record<string, unknown>): ObjectSchema {
 type ContractDocuments = typeof contractSchemas;
 
 /**
- * The catalog key of the schema `description` at `pointer` in a contract file (docs/i18n-design.md 5.2):
+ * The catalog key of the schema `description` at `pointer` in a contract file (docs/contributing/i18n.md 5.2):
  * schema.<file name in camel case>.<pointer segments>, e.g. stage-result.v1.schema.json#/$defs/evidence/description
  * is schema.stageResultV1.defs.evidence.description.
  */
@@ -660,7 +660,7 @@ export function createMcpServer(
   trust: TrustService | null = null,
   classification: SkillClassificationGateway | null = null,
   callerIngress: CallerIngress | null = null,
-  /** The locale for requests that name none (docs/i18n-design.md 4.1 ②). */
+  /** The locale for requests that name none (docs/contributing/i18n.md 4.1 ②). */
   defaultLocale: SupportedLocale = resolveHostLocale().locale,
   /** The shared global and role contexts; null leaves their tools unavailable. */
   contextLayers: ContextLayerService | null = null,

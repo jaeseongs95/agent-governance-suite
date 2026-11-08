@@ -9,7 +9,7 @@ import type { ProviderProfile, ProviderProfileRegistry } from "./skill-classific
 /**
  * The settings the admin page edits (AGS3-T-0024), read the one way every reader uses: the signed admin log, folded and
  * verified on each read (admin-log.ts). A record that fails is not applied; the setting keeps its last valid revision,
- * else its default. The precedence with the older environment settings (docs/admin-page.md):
+ * else its default. The precedence with the older environment settings (docs/user/admin-page.md):
  * - The display locale and the edit gate's exempt paths: an environment value set for the process wins; the page shows
  *   the item as locked by it. Without one, the signed value applies; without that, the earlier default.
  * - JEV (4.0.0): only the signed settings and the provider AGS ships. The installation's classification config, its

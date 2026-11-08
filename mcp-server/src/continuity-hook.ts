@@ -280,7 +280,7 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
   return {};
 }
 
-/** The host locale is read once per hook call (docs/i18n-design.md 4.1 ①); a test may pin it. */
+/** The host locale is read once per hook call (docs/contributing/i18n.md 4.1 ①); a test may pin it. */
 export function handleContinuityHook(input: HookInput, service: ContinuityService, host = "codex",
   environment: NodeJS.ProcessEnv = process.env, locale: SupportedLocale = resolveHostLocale({ environment }).locale): Record<string, unknown> {
   return handleNormalizedContinuityHook(normalizedContinuityInput(adaptHostInput(input, host)), service, host, environment, locale);

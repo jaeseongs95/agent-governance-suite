@@ -29,7 +29,7 @@ export interface RelayOptions {
   transport: SessionMessageTransport;
   /** The host process the granting hook resolved. */
   parentPid: number;
-  /** The grant's holder id; the store fences every other relay of this lease (docs/ags30-broker-redesign.md 3.3). */
+  /** The grant's holder id; the store fences every other relay of this lease (docs/archive/ags30-broker-redesign.md 3.3). */
   relayId: string;
   /** The spawning hook's own start: a process with the host PID born later is not the host (3.4). */
   hostAliveAt?: string;

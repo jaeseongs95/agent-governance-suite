@@ -60,7 +60,7 @@ function failureReasonCode(failure: unknown): string {
  * PreToolUse for AGS tools on hosts whose tools/call `_meta` lacks the model: Claude Code (only the tool-use ID) and
  * agy (only the conversation IDs). The hook records the observed execution under the host adapter's call ID; the
  * server claims the row once. It never rewrites arguments and never decides permission, so the host's own approval
- * flow runs unchanged. Codex needs no hook: its `_meta` names the caller and model (docs/ags30-session-binding-design.md 2.2).
+ * flow runs unchanged. Codex needs no hook: its `_meta` names the caller and model (docs/archive/ags30-session-binding-design.md 2.2).
  */
 export async function runGovernanceHook(
   host: string, raw: string, environment: NodeJS.ProcessEnv = process.env,

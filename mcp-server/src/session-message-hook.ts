@@ -463,7 +463,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   progress: { step?: HookFailureStep | undefined } = {}): Promise<Record<string, unknown>> {
   options = snapshotOptions(options);
   const budget = options.executionBudget;
-  // Read once, and only when this call shows text (docs/i18n-design.md 4.1 ①).
+  // Read once, and only when this call shows text (docs/contributing/i18n.md 4.1 ①).
   let hostLocale: SupportedLocale | undefined;
   const locale = (): SupportedLocale => (hostLocale ??= resolveHostLocale().locale);
   // A host adapter may read host files (the Claude transcript lineage), so it is a synchronous I/O boundary.

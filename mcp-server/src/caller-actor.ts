@@ -3,8 +3,8 @@ import type { VerifiedCaller } from "./caller-identity.js";
 
 /**
  * The one source of observed callers (lease actor, stage recorder, reviewer), taken from the server-admitted host
- * caller (docs/ags30-session-binding-design.md 2.1). Binding's provenance says the caller's identity was observed;
- * here it says whose work a record is (docs/ags30-gates-design.md 3.8), so two cases stay "unavailable":
+ * caller (docs/archive/ags30-session-binding-design.md 2.1). Binding's provenance says the caller's identity was observed;
+ * here it says whose work a record is (docs/archive/ags30-gates-design.md 3.8), so two cases stay "unavailable":
  * - the root: it may record a result on behalf of an agent the host never showed, so its own work and a relay look
  *   the same (3.8 counts a root-recorded result as unobserved);
  * - a child whose chain the host did not give up to the direct parent: a delegation through a missing ancestor

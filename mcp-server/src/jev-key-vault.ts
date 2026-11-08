@@ -10,7 +10,7 @@ import path from "node:path";
  *
  * What it protects: the shared state file copied or read on its own (a backup, a support bundle, an agent reading the
  * SQLite file) does not reveal a key. What it does not: a program running as the same OS user can read the data key
- * file too and decrypt (docs/admin-page.md, what this cannot stop).
+ * file too and decrypt (docs/user/admin-page.md, what this cannot stop).
  */
 const FORMAT = "v1";
 const DATA_KEY_BYTES = 32;

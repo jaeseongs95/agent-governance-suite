@@ -1,7 +1,7 @@
 import { msg, render, SUPPORTED_LOCALES, type MessageRef, type StoredMessageRef } from "./i18n.js";
 
 /**
- * Sentences a workflow record keeps (docs/i18n-design.md 3.2). TaskEnvelope.constraints is a signed string list, so the
+ * Sentences a workflow record keeps (docs/contributing/i18n.md 3.2). TaskEnvelope.constraints is a signed string list, so the
  * record holds the root-locale text; readers map a known text back to its key and params here and render it themselves.
  */
 export const LATE_ADOPTION_LABEL = msg("workflowRecord.lateAdoption.label", {});

@@ -150,7 +150,7 @@ export function isBodyFreeRequestReceipt(value: Record<string, unknown> | null):
 }
 
 export class ContinuityStoreError extends Error {
-  /** `message` is the root-locale text; callers render `ref` in their own locale (docs/i18n-design.md 3). */
+  /** `message` is the root-locale text; callers render `ref` in their own locale (docs/contributing/i18n.md 3). */
   constructor(readonly ref: MessageRef, readonly causeValue?: unknown, readonly reason: ContinuityUnavailableReason = "STORE_UNAVAILABLE") {
     super(render(ref, ROOT_LOCALE));
     this.name = "ContinuityStoreError";

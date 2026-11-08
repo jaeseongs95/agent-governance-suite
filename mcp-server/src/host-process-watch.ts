@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { tagProducerFailure } from "./failure-diagnostics.js";
 
 /**
- * The relay's only process-identity need: has its host process ended? (docs/ags30-broker-redesign.md 3.4)
+ * The relay's only process-identity need: has its host process ended? (docs/archive/ags30-broker-redesign.md 3.4)
  * Nothing here runs inside a hook, MCP request or test deadline. A start token has the format earlier adapters already
  * produce: Linux /proc starttime ticks, Windows StartTime.ToUniversalTime().ToString('o'), other POSIX `ps -o lstart=`.
  *
