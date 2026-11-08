@@ -24,8 +24,7 @@ import {
   WorkflowContractError,
   contractErrorBody,
 } from "../../contracts/types.js";
-import { CONTENT_LANGUAGE_META, MODEL_LOCALE, msg, render, ROOT_LOCALE, type MessageKey, type MessageRef, type SupportedLocale } from "./i18n.js";
-import { CATALOGS } from "./i18n-catalog.generated.js";
+import { CONTENT_LANGUAGE_META, isCatalogKey, MODEL_LOCALE, msg, render, ROOT_LOCALE, type MessageKey, type MessageRef, type SupportedLocale } from "./i18n.js";
 import { BoardFormatError, locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../runtime/session-board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
 import { contractFailure, failureContext, failureReason, retainFailureSecondary } from "./failure-diagnostics.js";
@@ -99,7 +98,7 @@ function localizeContract(document: Record<string, unknown>, locale: SupportedLo
       const at = [...pointer, name];
       if (name !== "description" || typeof value !== "string") return [name, walk(value, at)];
       const key = schemaDescriptionKey(file, at);
-      return [name, key in CATALOGS[ROOT_LOCALE] ? render({ key, params: {} }, locale) : value];
+      return [name, isCatalogKey(key) ? render({ key, params: {} }, locale) : value];
     }));
   };
   return walk(document, []) as Record<string, unknown>;

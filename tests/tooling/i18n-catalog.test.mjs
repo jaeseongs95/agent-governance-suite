@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { ROOT } from "../../scripts/lib.mjs";
-import { checkCatalogs, GENERATED, renderGenerated } from "../../scripts/i18n.mjs";
+import { checkCatalogs, GENERATED, loadCatalogs, renderGenerated } from "../../scripts/i18n.mjs";
 
 const roots = [];
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
@@ -66,5 +66,23 @@ describe("message catalog checks (docs/contributing/i18n.md 5.3)", () => {
   it("ships a clean catalog and a fresh generated module", () => {
     expect(checkCatalogs(ROOT)).toEqual([]);
     expect(readFileSync(path.join(ROOT, GENERATED), "utf8")).toBe(renderGenerated(ROOT));
+  });
+
+  it("embeds each locale's catalog as ASCII JSON text that parses back to the locale files, non-ASCII and astral characters included", () => {
+    const root = fixture({ ko: { "cli.files": "{where}에 파일 {count, number}개 😀 \"q\" \\ \n" } });
+    const generated = renderGenerated(root);
+    expect(generated).not.toMatch(/\P{ASCII}/u);
+    const literal = /^ {2}"ko": (".*"),$/mu.exec(generated)[1];
+    expect(JSON.parse(JSON.parse(literal))).toEqual(JSON.parse(readFileSync(path.join(root, "locales/ko/cli.json"), "utf8")));
+  });
+
+  it("embeds every shipped message of every locale", () => {
+    const { catalog, messages } = loadCatalogs(ROOT);
+    const generated = readFileSync(path.join(ROOT, GENERATED), "utf8");
+    for (const locale of catalog.locales) {
+      const literal = new RegExp(`^ {2}"${locale}": (".*"),$`, "mu").exec(generated)[1];
+      const expected = Object.assign({}, ...Object.keys(catalog.domains).map((domain) => messages[locale][domain]));
+      expect(JSON.parse(JSON.parse(literal))).toEqual(expected);
+    }
   });
 });

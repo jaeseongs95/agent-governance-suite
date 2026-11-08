@@ -152,25 +152,39 @@ function errorText(errors: ErrorObject[] | null | undefined): string {
 }
 
 export class ContractValidator {
-  private readonly validators: Record<string, ValidateFunction>;
+  private contractAjv: Ajv2020 | undefined;
+  private readonly validators = new Map<string, ValidateFunction>();
 
-  constructor() {
-    const ajv = new Ajv2020({ allErrors: true, strict: false });
+  /**
+   * A contract is compiled when it is first validated against: compiling all of them in the constructor took 0.66 s of the
+   * MCP server's 1.16 s to initialize (T-0033, 2026-11-08), and a session uses a few. tests/mcp/contract-schemas-compile.test.ts
+   * compiles every one, so a broken contract still fails before it ships rather than on its first use.
+   */
+  private validator(name: string): ValidateFunction | undefined {
+    const known = this.validators.get(name);
+    if (known) return known;
+    const ajv = this.contractAjv ?? this.createContractAjv();
+    // Every contract schema's $id is https://skill-suite.local/contracts/<file name>.
+    const validate = name === "stateCleanupRootProtection"
+      ? ajv.compile({ $ref: `${contractSchemas.stateCleanupPlan.$id as string}#/properties/rootProtection` })
+      : Object.hasOwn(contractSchemas, name) ? ajv.getSchema(contractSchemas[name as keyof typeof contractSchemas].$id as string) : undefined;
+    if (validate) this.validators.set(name, validate);
+    return validate;
+  }
+
+  private createContractAjv(): Ajv2020 {
+    // Checking each packaged contract against its meta-schema took 0.17 s per process; the same test checks them at build time.
+    const ajv = new Ajv2020({ allErrors: true, strict: false, validateSchema: false });
     addFormats(ajv);
     for (const schema of Object.values(contractSchemas)) {
       ajv.addSchema(schema);
     }
-    // Every contract schema's $id is https://skill-suite.local/contracts/<file name>.
-    this.validators = Object.fromEntries(
-      Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id as string)!]),
-    );
-    this.validators.stateCleanupRootProtection = ajv.compile({
-      $ref: `${contractSchemas.stateCleanupPlan.$id as string}#/properties/rootProtection`,
-    });
+    this.contractAjv = ajv;
+    return ajv;
   }
 
-  private assert<T>(name: keyof ContractValidator["validators"], value: unknown): T {
-    const validate = this.validators[name];
+  private assert<T>(name: string, value: unknown): T {
+    const validate = this.validator(name);
     if (!validate) {
       throw new WorkflowContractError("INVALID_INPUT", msg("workflow.schema.validatorNotRegistered", { name }));
     }

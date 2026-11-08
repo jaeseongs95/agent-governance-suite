@@ -1,6 +1,6 @@
 import { IntlMessageFormat } from "intl-messageformat";
 
-import { CATALOGS, ROOT_LOCALE, SUPPORTED_LOCALES, type MessageParams, type SupportedLocale } from "./i18n-catalog.generated.js";
+import { CATALOG_TEXT, ROOT_LOCALE, SUPPORTED_LOCALES, type MessageParams, type SupportedLocale } from "./i18n-catalog.generated.js";
 
 export { ROOT_LOCALE, SUPPORTED_LOCALES, type SupportedLocale };
 export type MessageKey = keyof MessageParams;
@@ -21,9 +21,22 @@ export function msg<K extends MessageKey>(key: K, params: MessageParams[K]): Mes
   return { key, params };
 }
 
+// Every hook is a new process, and building the catalogs as object literals took about a fifth of a hook's run
+// (T-0033, 2026-11-08: 104 ms against 82 ms without them), so a catalog is parsed when a message of its locale is first needed.
+const parsedCatalogs = new Map<SupportedLocale, Readonly<Record<string, string>>>();
+
+function catalog(locale: SupportedLocale): Readonly<Record<string, string>> {
+  let parsed = parsedCatalogs.get(locale);
+  if (!parsed) {
+    parsed = JSON.parse(CATALOG_TEXT[locale]) as Readonly<Record<string, string>>;
+    parsedCatalogs.set(locale, parsed);
+  }
+  return parsed;
+}
+
 /** Whether this catalog can render a key reported by another process (e.g. a skill CLI) in any locale. */
 export function isCatalogKey(key: string): boolean {
-  return Object.hasOwn(CATALOGS[ROOT_LOCALE], key);
+  return Object.hasOwn(catalog(ROOT_LOCALE), key);
 }
 
 /** MCP SEP-2792 response key in `_meta`: the language of the returned text, always MODEL_LOCALE. */
@@ -48,7 +61,7 @@ function formatter(locale: SupportedLocale, key: string): IntlMessageFormat | nu
     const id = `${candidate}\u0000${key}`;
     const cached = formatters.get(id);
     if (cached) return cached;
-    const source = CATALOGS[candidate][key];
+    const source = catalog(candidate)[key];
     if (source === undefined) continue;
     const compiled = new IntlMessageFormat(source, candidate, undefined, { ignoreTag: true });
     formatters.set(id, compiled);
