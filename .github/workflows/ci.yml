@@ -71,7 +71,7 @@ jobs:
       # directly. CI keeps the tests whose verdict cannot depend on runner
       # speed; the Linux and Windows test servers run everything, including
       # the installed-runtime smoke (pnpm test:server). See
-      # docs/ci-and-test-servers.md.
+      # docs/contributing/testing-and-ci.md.
       - name: Test (CI scope)
         shell: bash
         env:

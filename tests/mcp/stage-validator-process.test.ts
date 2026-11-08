@@ -30,7 +30,7 @@ function failure(script: string): WorkflowContractError {
   throw new Error("validator did not fail");
 }
 
-describe("stage validator child failures (docs/i18n-design.md 6)", () => {
+describe("stage validator child failures (docs/contributing/i18n.md 6)", () => {
   it("nests a child's catalog key so the reader's locale renders it", async () => {
     const error = failure(await child({ status: "ERROR", code: "IO_ERROR", message: "호스트 문장", messageKey: "practices.cli.ioError", params: {} }));
     expect(render(error.ref, "en")).toBe("Could not read or execute the explicitly requested local input.");

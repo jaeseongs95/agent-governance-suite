@@ -10,7 +10,7 @@ import { ciScope, serverOnlyTests, serverScope } from "./scripts/test-scope.mjs"
 // time. Individual tests may still declare a longer timeout of their own.
 // AGS_TEST_SCOPE=ci leaves out the tests the Linux and Windows test servers
 // measure, and AGS_TEST_SCOPE=server runs only those (see scripts/test-scope.mjs
-// and docs/ci-and-test-servers.md).
+// and docs/contributing/testing-and-ci.md).
 export default defineConfig({
   test: {
     testTimeout: 30_000,

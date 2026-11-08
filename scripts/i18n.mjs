@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Message catalog checks and the generated key types (docs/i18n-design.md 5).
+// Message catalog checks and the generated key types (docs/contributing/i18n.md 5).
 //   node scripts/i18n.mjs --write           regenerate mcp-server/src/i18n-catalog.generated.ts
 //   node scripts/i18n.mjs --check           fail on catalog problems or a stale generated file
 //   node scripts/i18n.mjs --accept <tag>    record the current source digests for <tag>'s translations (after review)

@@ -10,7 +10,7 @@ import { closeSessionMessaging, runSessionMessageOperation, sessionMessageReques
 import { runSessionMessageRelay } from "../../mcp-server/src/session-message-relay.js";
 import type { WakeDispatchPort } from "../../mcp-server/src/session-message-wake-port.js";
 
-// docs/ags30-broker-redesign.md 3.4 and 7 (techniques 5 and 6): the relay's only process-identity need is "has the host
+// docs/archive/ags30-broker-redesign.md 3.4 and 7 (techniques 5 and 6): the relay's only process-identity need is "has the host
 // ended". Every oracle here is an event (bound/exited settle), never a duration.
 
 const children: ChildProcess[] = [];

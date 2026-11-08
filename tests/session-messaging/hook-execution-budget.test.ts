@@ -36,7 +36,7 @@ const syntheticRootHost = syntheticCore.SYNTHETIC_CORE_HOST;
 import { sessionMessageRequest as mockedRequest } from "../../mcp-server/src/session-message-client.js";
 
 // The hook budget is a same-process performance.now() deadline (mocked here). Messaging runs in this process
-// (docs/ags30-broker-redesign.md 3.1): no socket, endpoint or broker spawn exists to bound.
+// (docs/archive/ags30-broker-redesign.md 3.1): no socket, endpoint or broker spawn exists to bound.
 const budget = () => ({ deadlineMonotonicMs: 1000, postClaimReserveMs: 200 });
 const input = { hook_event_name: "Stop", session_id: "budget-target" };
 const start = { ...input, agent_id: "", hook_event_name: "SessionStart" };

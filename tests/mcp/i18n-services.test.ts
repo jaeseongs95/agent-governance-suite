@@ -26,7 +26,7 @@ const caller: VerifiedCaller = {
   parentChain: [], parentChainComplete: true, provenance: "host-observed", execution: { unavailable: "TEST" },
 };
 
-describe("services catalog messages (docs/i18n-design.md 3, 6)", () => {
+describe("services catalog messages (docs/contributing/i18n.md 3, 6)", () => {
   it("keeps the root-locale text of a server failure and renders its key in each locale", () => {
     const body = contractFailure(new Error("private")).toBody();
     expect(body).toMatchObject({ code: "MCP_UNAVAILABLE", message: "The server could not complete the request.",

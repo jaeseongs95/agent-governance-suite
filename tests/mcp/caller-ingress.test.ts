@@ -27,7 +27,7 @@ import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
 
-// Oracle: key shapes captured on real hosts (docs/ags30-session-binding-design.md 1.5), not the adapters' code.
+// Oracle: key shapes captured on real hosts (docs/archive/ags30-session-binding-design.md 1.5), not the adapters' code.
 const S = "019a-root-session";
 const A = "019a-child-a";
 const B = "019a-child-b";

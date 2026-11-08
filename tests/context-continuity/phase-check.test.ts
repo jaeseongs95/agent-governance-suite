@@ -14,7 +14,7 @@ import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js"
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { InMemoryWorkflowStore, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
-// Design docs/ags30-phase-check-design.md 3.2-3.4, 4 and 7 (enforcement, 3.1.0). Synthetic store and hook inputs only.
+// Design docs/archive/ags30-phase-check-design.md 3.2-3.4, 4 and 7 (enforcement, 3.1.0). Synthetic store and hook inputs only.
 const stores = new Set<SqliteContinuityStore>();
 const directories: string[] = [];
 const session = "phase-check-session";

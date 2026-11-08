@@ -105,7 +105,7 @@ async function runNodeChild(
 }
 
 /**
- * A live, host-bound relay lease of a fixture birth (docs/ags30-broker-redesign.md 3.3): presence with a reported host,
+ * A live, host-bound relay lease of a fixture birth (docs/archive/ags30-broker-redesign.md 3.3): presence with a reported host,
  * a granted relay_id, and the first tick that binds the host birth. Returns the granted fence.
  */
 function bindFixtureRelay(store: SessionMessageStore, input: { host: string; sessionId: string; instanceId: string; transport: string;

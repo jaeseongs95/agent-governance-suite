@@ -34,7 +34,7 @@ async function connect(defaultLocale: SupportedLocale) {
   };
 }
 
-describe("server locale edge (docs/i18n-design.md 4.1 ②, 6)", () => {
+describe("server locale edge (docs/contributing/i18n.md 4.1 ②, 6)", () => {
   it("renders the top-level error in the request's SEP-2792 language and says which", async () => {
     const fixture = await connect("en");
     try {

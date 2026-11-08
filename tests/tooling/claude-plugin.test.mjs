@@ -90,7 +90,7 @@ describe("generated Claude plugin", () => {
         version: release.version,
         ref: `v${release.version}`,
       }),
-      // The English-only package (docs/i18n-design.md 8) releases with the same version.
+      // The English-only package (docs/contributing/i18n.md 8) releases with the same version.
       expect.objectContaining({
         name: "agent-governance-suite-en",
         source: `./${OUTPUT_DIRECTORY}-en`,

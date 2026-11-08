@@ -6,7 +6,7 @@ import { dispatchSessionMessageOperation } from "../../mcp-server/src/session-me
 import { RELAY_START_GRACE_MS, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 
 // Same host process, new presence generation (SessionStart compact/resume): the old relay R1 is fenced by its relay_id.
-// It can neither renew the lease the new generation holds nor, on a late exit, remove it (docs/ags30-broker-redesign.md 3.3).
+// It can neither renew the lease the new generation holds nor, on a late exit, remove it (docs/archive/ags30-broker-redesign.md 3.3).
 const target = { host: "codex", sessionId: "relay-fence-session" };
 const transport = "codex-queue";
 const t0 = Date.UTC(2026, 9, 30);

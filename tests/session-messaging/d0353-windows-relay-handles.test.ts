@@ -19,7 +19,7 @@ syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "code
 // D0353 (Windows, ported from cf81921c): Codex runs hook commands through PowerShell and waits for EOF on the hook's
 // output pipes. PowerShell hands the hook its inherited host pipe handles as inheritable handles, and node's spawn passes
 // them to the detached relay, so Codex timed the hook out after 10 s and terminated the hook's job with the relay in it.
-// There is no broker process any more (docs/ags30-broker-redesign.md), so only the relay launch is isolated.
+// There is no broker process any more (docs/archive/ags30-broker-redesign.md), so only the relay launch is isolated.
 const platform = Object.getOwnPropertyDescriptor(process, "platform")!;
 const relayId = "0b7f6c1e-5d3a-4c8e-9f21-7a6b5c4d3e2f";
 let root: string;

@@ -1,7 +1,7 @@
 # Agent Governance Suite 향후 로드맵
 
 <!-- release-version:start -->
-문서 기준일은 2026년 10월 8일이다. 현재 공개 릴리스는 `v3.9.0`이다. 3.0은 2.x와 호환하지 않으며 결함 수정을 우선한다. 바뀐 점은 [3.0.0 릴리스 노트](release-notes-v3.0.0.md), [3.0.1 릴리스 노트](release-notes-v3.0.1.md), [3.0.2 릴리스 노트](release-notes-v3.0.2.md), [3.1.0 릴리스 노트](release-notes-v3.1.0.md), [3.2.0 릴리스 노트](release-notes-v3.2.0.md), [3.2.1 릴리스 노트](release-notes-v3.2.1.md), [3.3.0 릴리스 노트](release-notes-v3.3.0.md), [3.4.0 릴리스 노트](release-notes-v3.4.0.md), [3.5.0 릴리스 노트](release-notes-v3.5.0.md), [3.5.1 릴리스 노트](release-notes-v3.5.1.md), [3.5.2 릴리스 노트](release-notes-v3.5.2.md), [3.5.3 릴리스 노트](release-notes-v3.5.3.md), [3.6.0 릴리스 노트](release-notes-v3.6.0.md)에 정리했다. JEV 계층을 통한 스킬의 발견·분류·평가·추천을 지원하고 AGENT가 적용 조건을 대조해 최종 선택한다. 실제 사용에는 승인된 JEV 또는 현재 벤더의 분류 설정·지원 프로필·예산과 호스트 발견 자료가 필요하다. 운영 DB 이전·공용 MCP 전환, 실제 현재 host 관측과 양 Cloud 검증은 후속 과제로 남는다. 기존 권한·암호화·세션 메시지·유효기간과 중복 소비 계약 및 한국어 산문 품질 미평가 상태를 유지한다.
+문서 기준일은 2026년 10월 8일이다. 현재 공개 릴리스는 `v3.9.0`이다. 3.0은 2.x와 호환하지 않으며 결함 수정을 우선한다. 바뀐 점은 [3.0.0 릴리스 노트](../release-notes/release-notes-v3.0.0.md), [3.0.1 릴리스 노트](../release-notes/release-notes-v3.0.1.md), [3.0.2 릴리스 노트](../release-notes/release-notes-v3.0.2.md), [3.1.0 릴리스 노트](../release-notes/release-notes-v3.1.0.md), [3.2.0 릴리스 노트](../release-notes/release-notes-v3.2.0.md), [3.2.1 릴리스 노트](../release-notes/release-notes-v3.2.1.md), [3.3.0 릴리스 노트](../release-notes/release-notes-v3.3.0.md), [3.4.0 릴리스 노트](../release-notes/release-notes-v3.4.0.md), [3.5.0 릴리스 노트](../release-notes/release-notes-v3.5.0.md), [3.5.1 릴리스 노트](../release-notes/release-notes-v3.5.1.md), [3.5.2 릴리스 노트](../release-notes/release-notes-v3.5.2.md), [3.5.3 릴리스 노트](../release-notes/release-notes-v3.5.3.md), [3.6.0 릴리스 노트](../release-notes/release-notes-v3.6.0.md)에 정리했다. JEV 계층을 통한 스킬의 발견·분류·평가·추천을 지원하고 AGENT가 적용 조건을 대조해 최종 선택한다. 실제 사용에는 승인된 JEV 또는 현재 벤더의 분류 설정·지원 프로필·예산과 호스트 발견 자료가 필요하다. 운영 DB 이전·공용 MCP 전환, 실제 현재 host 관측과 양 Cloud 검증은 후속 과제로 남는다. 기존 권한·암호화·세션 메시지·유효기간과 중복 소비 계약 및 한국어 산문 품질 미평가 상태를 유지한다.
 <!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
@@ -302,4 +302,4 @@ source lock, 업데이트 후보 탐지, 릴리스 버전 생성과 SQLite 보�
 - [스킬 저장소 동기화 방안 찾기](codex://threads/01a0842d-b038-75b0-bf5d-70106f6bfad9): 원본 저장소, source lock과 업데이트 자동화
 - [요금제별 서브에이전트 최적화](codex://threads/01a085f9-6a92-77a3-9bc6-dc58d5424729): resource profile 검토와 수동 선택 유지
 
-현재 동작과 제한은 [아키텍처](architecture.md), 배포 절차는 [릴리스 문서](release.md), 기존 계약 확장안은 [추가 스킬 구현 계획](additional-skills-implementation-plan.md)을 기준으로 다시 확인한다. 이 문서와 실제 구현이 달라지면 구현 상태와 검증 근거를 우선하고 로드맵을 함께 갱신한다.
+현재 동작과 제한은 [아키텍처](architecture.md), 배포 절차는 [릴리스 문서](release.md), 기존 계약 확장안은 [추가 스킬 구현 계획](../archive/additional-skills-implementation-plan.md)을 기준으로 다시 확인한다. 이 문서와 실제 구현이 달라지면 구현 상태와 검증 근거를 우선하고 로드맵을 함께 갱신한다.

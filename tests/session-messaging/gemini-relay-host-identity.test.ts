@@ -14,7 +14,7 @@ import { handleSessionMessageHook } from "../../mcp-server/src/session-message-h
 
 // Owned synthetic schema; these are core host-process binding tests, not native capture.
 // The hook never queries a process identity (D0331): it passes the host PID it resolved and, only when the adapter
-// observed one, that birth; the relay's host watcher binds and compares it (docs/ags30-broker-redesign.md 3.4).
+// observed one, that birth; the relay's host watcher binds and compares it (docs/archive/ags30-broker-redesign.md 3.4).
 const syntheticCore = await import(new URL("./fixtures/synthetic-core-hook-driver.mjs", import.meta.url).href) as {
   registerSyntheticCoreAdapters: (register: typeof registerHookHostAdapter, selectTransport: () => "codex-deferred") => void;
 };

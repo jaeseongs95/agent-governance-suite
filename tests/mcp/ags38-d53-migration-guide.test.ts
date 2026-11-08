@@ -13,7 +13,7 @@ import { bytes, histories, legacyFixture, memory, NEW_B, OLD, OLD_A, sizedMemory
 // The r1 technical fences are retained in the plan evidence. The r2 sizes block
 // changes only to mask administrative input failures; all other fence bytes stay fixed.
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
-const GUIDE = join(ROOT, "docs", "migrate-to-v3.8.0.md");
+const GUIDE = join(ROOT, "docs", "user", "migrate-to-v3.8.0.md");
 const HELPERS = ["backup-sqlite.mjs", "check-continuity-schema.mjs", "memory-sizes.mjs"];
 const JS_HASHES = [
   "5f7fe1c0388cb0de5c53e430d1a9c62d7631137d19f1ea1a47284224e451b5ed",

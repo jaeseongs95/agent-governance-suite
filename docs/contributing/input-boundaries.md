@@ -1,5 +1,7 @@
 # 입력 출처와 작업 경계
 
+이 문서는 입력의 출처 구분, 메시지 수신·재전달 경계, workflow 원장의 쓰기 대상 식별을 다룹니다. 메시지 ID·ACK·깨우기 계약은 [세션 메시지 계약](session-messaging.md)에 있습니다.
+
 AGS는 입력의 출처, 사용자가 허용한 작업, 메시지 전달과 실제 실행 결과를 구분합니다. 메시지가 도착하거나 ACK되었다는 사실은 사용자 승인이나 실행 성공을 뜻하지 않습니다. 이 기능은 협조적 환경에서 출처 혼동과 원장 우회를 줄이며, 임의 shell 실행이나 같은 OS 사용자의 파일 변조를 통제하는 보안 경계는 아닙니다.
 
 ## 공통 계약과 호스트 adapter
@@ -10,13 +12,7 @@ AGS는 입력의 출처, 사용자가 허용한 작업, 메시지 전달과 실�
 
 ## Codex queue wake 설정
 
-Codex adapter는 기본적으로 `codex-deferred`를 사용합니다. 보이는 queue wake를 선택하려면 해당 플러그인의 hook 환경이 제공한 절대 `PLUGIN_DATA` 아래 `session-messaging.json`을 다음과 같이 설정합니다. 설치 캐시 안의 파일이나 공용 broker DB가 아니라 플러그인 데이터 파일입니다. 이 설정은 Claude Code의 `claude-inbox`나 공통 큐 계약을 바꾸지 않습니다.
-
-```json
-{"schemaVersion":"1.0.0","codex":{"queueWake":true}}
-```
-
-명시적인 `AGENT_GOVERNANCE_CODEX_QUEUE_WAKE`가 파일보다 우선합니다. 정확히 `1`이면 켜고 `0`이면 파일이 `true`여도 끕니다. 다른 값은 진단 후 끕니다. ENV가 없을 때만 파일을 읽으며 `codex.queueWake`는 boolean이어야 합니다. `false`, 파일 누락이나 `PLUGIN_DATA` 부재는 기본 지연을 유지합니다. 상대 경로, 불량 JSON·UTF-8·schema·타입, 일반 파일이 아닌 대상, 4096바이트 초과나 읽기 오류는 켜지 않고 제한된 진단만 stderr에 남깁니다. 경로·본문·비밀을 진단에 넣거나 cwd·다른 플러그인·전역 설정에서 대신 찾지 않습니다.
+설정 파일·환경 변수와 우선순위는 [세션 협업의 Codex queue wake 설정](../user/collaboration.md#codex-queue-wake-설정)에 있습니다. 이 설정은 Claude Code의 `claude-inbox`나 공통 큐 계약을 바꾸지 않습니다.
 
 설정을 바꾼 뒤에는 수신 세션의 새 `SessionStart`(시작·재개·clear·compact)가 필요합니다. 이때 선택한 동일 profile이 새 presence instance와 relay의 명시적 transport에 전달됩니다. 기존 relay는 시작할 때 받은 transport를 유지하므로 설정 파일만 쓰거나 MCP 서버만 재시작한 상태를 전환 완료로 보지 않습니다. 설정을 한 generation 동안 유지하고, 새 presence instance와 transport를 확인한 뒤 메시지를 보냅니다. 새 번들 설치에 필요한 host reload와 hook 신뢰 검토는 해당 호스트의 절차를 따릅니다.
 
@@ -80,8 +76,6 @@ glob은 첫 패턴 앞 디렉터리로 보수적으로 확장하며 접두 경�
 - `[id].tsx` 같은 경로는 glob 보수 확장으로 더 넓게 충돌할 수 있습니다. 충돌 이유를 함께 확인해야 합니다.
 - 승인 발급, 보호된 승인 UI, root 교체의 승인 토큰, OS 권한 격리는 별도 후속 작업입니다.
 
-## Peer wait execution boundary
+## Peer 대기 실행 경계
 
-The exact local Codex app `mcp__codex_app__wait_threads` hook surface is adapted separately from the host-neutral peer wait policy. All targets must correspond to unexpired broker peer metadata, and the hook must observe a main actor. A fresh current-generation presence, an instance-bound live relay, and a wake nonce reserved and consumed in that same generation are required for enforcement. Unknown, stale, mixed-target, remote, unsupported-tool and unknown-actor cases cannot create resume evidence. The hook can deny before the native call; the MCP server cannot intercept unrelated native calls or code nested in arbitrary execution tools.
-
-The portable CLI `wait` operation consumes the same broker decision before its own delay. It performs no delay or extra query when denied; unconfirmed resume uses at most one 1000ms delay and one refresh. A receipt, ACK, transport name or supplied JSON capability is not task completion, approval or proof of resume. Broker restart drops bounded in-memory evidence; new user input, changed metadata/cursor and 30-second expiry restore the first snapshot. Neither path creates a timer or poller while idle. See [peer wait policy](peer-wait-policy.md) for limits and validation boundaries.
+Codex `mcp__codex_app__wait_threads` 호출 전 제한과 공개 CLI `wait`의 판정은 [세션 메시지 계약의 peer 결과 대기 판정](session-messaging.md#peer-결과-대기-판정)에 있습니다.

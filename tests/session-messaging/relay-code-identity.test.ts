@@ -13,7 +13,7 @@ const directories: string[] = [];
 const directory = () => { const dir = mkdtempSync(path.join(os.tmpdir(), "ags-relay-code-")); directories.push(dir); return dir; };
 afterEach(() => { for (const store of stores.splice(0)) store.close(); for (const dir of directories.splice(0)) rmSync(dir, {recursive: true, force: true}); });
 
-// Code identity belongs to the grant (docs/ags30-broker-redesign.md 3.6): the board compares the current holder's
+// Code identity belongs to the grant (docs/archive/ags30-broker-redesign.md 3.6): the board compares the current holder's
 // grant digest with the installed relay entry. Times are explicit fixture times.
 function fixture(database = ":memory:") {
   const store = new SessionMessageStore(database); stores.push(store);

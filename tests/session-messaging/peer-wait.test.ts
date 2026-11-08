@@ -313,7 +313,7 @@ describe("peer wait policy boundaries", () => {
 
 // State-directory tests: this process uses the in-process client; packaged hook and CLI processes open the same file.
 // This process opens it with a frozen clock ahead of the wall clock. Every process decides with the persisted authority
-// high-water (docs/ags30-broker-redesign.md 3.2), so all of them see exactly this instant and no 30 s window can lapse.
+// high-water (docs/archive/ags30-broker-redesign.md 3.2), so all of them see exactly this instant and no 30 s window can lapse.
 const FROZEN_NOW = Date.parse("2099-01-01T00:00:00.000Z");
 const op = <T = unknown>(directory: string, operation: string, payload: Record<string, unknown>) =>
   runSessionMessageOperation<T>(operation, payload, directory, { clock: () => FROZEN_NOW });

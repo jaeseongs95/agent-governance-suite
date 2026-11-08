@@ -82,11 +82,11 @@ function changedBetween(from, to, path) {
 }
 // Reviewed guidance successors: these exact bytes stand for their predecessor at `revision`, so every existing pin
 // keeps checking the same chain. Altered bytes are never projected.
-// - 3.3.0 multi-workflow guidance (docs/ags30-phase-check-design.md 7.5)
-// - 3.4.0 JEV layer paragraph (docs/release-notes-v3.4.0.md): JEV is the advisory slot, TypeSafe one implementation.
-// - 3.5.1 intake line (docs/release-notes-v3.5.1.md): separate tasks start separate workflows with non-overlapping writeTargets.
-// - 3.5.2 mutation-risk-preflight overwrite line (docs/release-notes-v3.5.2.md): ask before overwriting user state that cannot be backed up.
-// - 3.5.2 intake line (docs/release-notes-v3.5.2.md): ask once before the first write on an undetermined premise that changes the structure.
+// - 3.3.0 multi-workflow guidance (docs/archive/ags30-phase-check-design.md 7.5)
+// - 3.4.0 JEV layer paragraph (docs/release-notes/release-notes-v3.4.0.md): JEV is the advisory slot, TypeSafe one implementation.
+// - 3.5.1 intake line (docs/release-notes/release-notes-v3.5.1.md): separate tasks start separate workflows with non-overlapping writeTargets.
+// - 3.5.2 mutation-risk-preflight overwrite line (docs/release-notes/release-notes-v3.5.2.md): ask before overwriting user state that cannot be backed up.
+// - 3.5.2 intake line (docs/release-notes/release-notes-v3.5.2.md): ask once before the first write on an undetermined premise that changes the structure.
 // - 3.6.0 intake lines (9c438be1): name checkpoint_context instead of the retired context-continuity skill, re-check
 //   skills each message, reconcile plans; coordinate-subagents gives a verification agent an independent judgment.
 // - 3.6.0 orchestrator stage line (155c3d15): a stage's provider is the contract its result is recorded under and does
@@ -1013,7 +1013,7 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     // D0095 reviewed source: eb30ea34168b4d4c3831f2fa8b9c82d9fc06b06c; historical baselines stay frozen.
     "skills/coordinate-subagents/references/model-routing.md": "49b0e564b80a52475670e850c8272f0c348626ef5d32e4746fd484a262023fe5",
     "skills/evaluation-validity-auditor/classification.json": "46b94a039e643a333f021f4792f92edb3b19263e47206c1f1b75e1afcbbbb9df",
-    // AGS 3.0 gates (docs/ags30-gates-design.md): audit target binds the signed plan; unobserved claims are recorded.
+    // AGS 3.0 gates (docs/archive/ags30-gates-design.md): audit target binds the signed plan; unobserved claims are recorded.
     "skills/orchestrator/references/specialist-handoffs.md": "9767d9d899acdd3fabf57d094c16bf64788dddf324a1bf001d6b970d285fecd9",
     // D0336 reviewed source: worker independence that v1 cannot observe is BLOCKED, not PASS.
     "skills/evaluation-validity-auditor/references/audit-protocol.md": "cb31b803db1debadc5292edc7906b5c0654b95ffcdc5e511545687fa74080f37",
@@ -1038,7 +1038,7 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json": "ef19894512527f8dfac6b4acff6d6cb347b6a2183b140260ae8426e0183ae241",
     "skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json": "684d92828e97be4763d7c8ace6250288b8df0b450f23b89f5b65842da7278d8e",
     "skills/recovery-strategy-selector/references/selection-protocol.md": "5d9d8070948ef8ec4ce0c1cf16de179586ce96dc660e1ce3b6a214ae4dbe8f7c",
-    // AGS 3.0 session board redesign (docs/ags30-session-board-design.md); historical baselines stay frozen.
+    // AGS 3.0 session board redesign (docs/archive/ags30-session-board-design.md); historical baselines stay frozen.
     "skills/session-board/references/entry-details.md": "1db28dc5c1ea4319e3c61f24270e3a5d52fe7e4acd00b7b5ad025a9131ffe778",
     "skills/session-board/scripts/board-store.d.mts": "df77f6a8d0ce1e576782c394ad6b78261003de23f32a03e9b6a4ef05de762bc0",
   },
@@ -1097,12 +1097,12 @@ const ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/SKILL.md": "4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
   "skills/orchestrator/classification.json": "c43f537d2c0fff5c8f9f569cb224d8d6925076d271fdf47b78253bc41ba5ace4",
 });
-// Phase check (docs/ags30-phase-check-design.md 3.1): staged change work starts with plan_workflow; exact successor bytes only.
+// Phase check (docs/archive/ags30-phase-check-design.md 3.1): staged change work starts with plan_workflow; exact successor bytes only.
 const ORCHESTRATOR_PHASE_CHECK_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/SKILL.md": "9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
   "skills/orchestrator/classification.json": "268eae71468978406b87e29774029fabbee8a7b576d06e4fd95ca269b284c55e",
 });
-// Workflow enforcement (docs/ags30-phase-check-design.md 7): start_workflow is the minimal start; exact successor bytes only.
+// Workflow enforcement (docs/archive/ags30-phase-check-design.md 7): start_workflow is the minimal start; exact successor bytes only.
 const ORCHESTRATOR_WORKFLOW_ENFORCEMENT_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/SKILL.md": "e9be18c4d7f14a8aca9a3ce521501e6a673626a96d5bb07735f562e11c153001",
   "skills/orchestrator/classification.json": "52d8d444e8c8fdadd4786d730191b37c6430c97993dcb93e447cccb5c69dfe02",

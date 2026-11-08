@@ -72,7 +72,7 @@ function rendered(locale: SupportedLocale): Set<string> {
   return new Set(["tools", "schema"].flatMap((domain) => Object.keys(catalog("en", domain)).map((key) => render({ key, params: {} }, locale))));
 }
 
-describe("tool descriptions per request language (docs/i18n-design.md 4.1 ②, 6)", () => {
+describe("tool descriptions per request language (docs/contributing/i18n.md 4.1 ②, 6)", () => {
   it.each(PROFILES)("renders every advertised description from the catalog in the requested language (%s)", async (profile) => {
     const fixture = await connect("ko", profile);
     try {
@@ -124,7 +124,7 @@ describe("tool descriptions per request language (docs/i18n-design.md 4.1 ②, 6
   });
 });
 
-describe("schema description catalog (docs/i18n-design.md 5.2)", () => {
+describe("schema description catalog (docs/contributing/i18n.md 5.2)", () => {
   // Contract files are not edited (CONTENT_LOCK); the English catalog must follow them, so a changed schema text fails here.
   it("has the English text of the contract file at each key's position", () => {
     const fromFiles = new Map<string, string>();
@@ -158,7 +158,7 @@ describe("schema description catalog (docs/i18n-design.md 5.2)", () => {
   });
 });
 
-describe("server instructions (docs/i18n-design.md 4.2, 6)", () => {
+describe("server instructions (docs/contributing/i18n.md 4.2, 6)", () => {
   it("renders the frame and session guidance in the service default locale around the installed intake block", async () => {
     const shared = readFileSync(new URL("skills/orchestrator/references/intake.md", root), "utf8");
     const intake = shared.split("<!-- skill-intake:start -->\n")[1]?.split("\n<!-- skill-intake:end -->")[0] ?? "";
@@ -197,7 +197,7 @@ describe("server instructions size (AGS3-D-0032)", () => {
   });
 });
 
-describe("server.ts error messages (docs/i18n-design.md 6)", () => {
+describe("server.ts error messages (docs/contributing/i18n.md 6)", () => {
   it("renders a server error from its key in the request language", async () => {
     const fixture = await connect("en");
     try {

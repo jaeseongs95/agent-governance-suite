@@ -1,6 +1,35 @@
 # 개발 참고
 
-[README](../README.md)의 기본 검증 명령 외에, 동결 평가와 스킬 편입 절차를 정리합니다.
+개발 환경, 검증 명령, 생성물, 동결 평가, 스킬 편입 절차를 정리합니다. 기여 원칙은 [기여 안내](../../CONTRIBUTING.md)에 있습니다.
+
+## 개발 환경과 검증 명령
+
+Node.js 24.0.0 이상과 `pnpm@11.19.0`을 씁니다. 주요 명령은 `package.json`의 `scripts`가 정본입니다.
+
+| 명령 | 하는 일 |
+| --- | --- |
+| `pnpm dev` | 개발용 MCP 서버 |
+| `pnpm lint` | ESLint, 저장소 계약 검사(`validate-repository.mjs`), 메시지 카탈로그 검사, 관리자 페이지 생성물 검사, 도메인 중립 문구 검사 |
+| `pnpm build` | TypeScript 검사와 배포 번들 생성 |
+| `pnpm test` | 번들 생성 뒤 vitest와 node:test 회귀 시험 |
+| `pnpm bundle:check` | 커밋된 번들의 신선도와 구성 검사 |
+| `pnpm runtime:check` | `node_modules` 없는 설치물 형태의 공개 CLI 검사 |
+| `pnpm validate:all` | 저장소·스킬 전체 검증 |
+| `pnpm validate:official` | Codex 공식 validator 검사 |
+| `pnpm claude:build`, `pnpm claude:check`, `pnpm claude:drift` | Claude Code 배포물 생성·검사·차이 경고 |
+| `pnpm en:build`, `pnpm en:check` | 영어 전용 배포물 생성·검사 |
+
+전체 검증은 `pnpm install --frozen-lockfile` 뒤 `pnpm bundle:check`를 빌드보다 먼저 실행합니다. 이어 `pnpm claude:drift`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`를 실행합니다. 빌드가 stale 번들을 덮어쓸 수 있으므로 순서를 바꾸지 않습니다. 어떤 시험을 어디서 돌리는지는 [시험과 CI](testing-and-ci.md)에 있습니다.
+
+## 생성물
+
+`mcp-server/dist/`, `claude-plugin/`, `claude-plugin-en/`, `codex-plugin-en/`, `mcp-server/src/admin-page.generated.ts`는 생성물이며 직접 고치지 않습니다. 생성물이 포함하는 원본(`README.md`, `README.en.md`, `contracts/`, `skills/` 등)을 바꾸면 다음으로 다시 만들어 함께 커밋합니다.
+
+```bash
+corepack pnpm run build && corepack pnpm run claude:build && corepack pnpm run en:build && node scripts/admin-page.mjs --write
+```
+
+영어 전용 배포물은 `README.en.md`를 `README.md`로 담습니다. 공용 원본과 호스트별 부분의 경계는 [AGENTS.md](../../AGENTS.md)의 「Claude Code 배포물」 절을 따릅니다.
 
 ## 한국어 산문 평가
 
@@ -44,5 +73,19 @@ pnpm validate:skill --name <skill-name>
 ```
 
 편입 명령은 임시 checkout에서 지정한 Git `ref`의 파일만 가져옵니다. `.git`, `__pycache__`, `evals/results`, 일반적인 빌드 산출물은 제외하며, 원본 경로, tag 또는 commit, peeled full SHA와 원본/통합 `checksum`을 `skills/source-lock.json`에 기록합니다. 편입 PR에서는 자동 생성된 `fixture`를 실제 동작 사례로 교체해야 합니다.
+
+### 편입 실패 뒤 복구 상태
+
+`import-skill.mjs`는 실패 원인과 `recovery` 정보를 함께 반환한다. 최초 실패는 `cause`와 `errors` 연결을 따라 확인할 수 있다.
+
+- `state: completed`, `transactionState: removed`: rollback과 transaction 정리가 끝났다. transactionDirectory·previousSkill.path·metadataOriginals는 null이며, 남아 있는 백업 경로가 아니다.
+- `state: incomplete`, `preserveTransaction: true`: transaction을 보존한다. metadataOriginals는 변경 전 registry/source-lock의 원본 바이트이며, previousSkill.state로 이전 스킬의 복원·보존 여부를 구분한다. previousSkill.path는 state가 retained일 때 보존된 백업을 가리킨다.
+- cleanup 자체가 실패하면 복구가 완료된 경우에도 남은 디렉터리의 실제 상태를 별도로 확인해야 한다. 이전 경로가 모두 남았다고 가정하지 않는다.
+
+저장소 루트의 `.agent-governance-import-*` transaction은 복구 자료가 조용히 사라지지 않도록 현재 의도적으로 숨기거나 자동 삭제하지 않는다. 실패 후에는 error.recovery에 표시된 해당 transaction만 확인하고, 다른 실행의 transaction을 정리 대상으로 삼지 않는다. 정상 성공과 완전한 rollback은 기존처럼 자동 정리한다.
+
+이 동작은 프로세스 종료·전원 손실에 대한 내구성 보장이 아니다. CLI catch→cleanup 전체 경로의 fault 회귀는 아직 별도 검증이 필요하며, helper 회귀가 이를 대신하지 않는다.
+
+## 계약과 버전
 
 공개 계약은 `contracts/`에 JSON Schema 2020-12로 정의되어 있습니다. 기존 버전과 호환되는 스킬 추가는 `minor`, 동작 수정은 `patch`, 계약·권한·식별자의 호환성을 깨는 변경은 `major` 버전으로 관리합니다.

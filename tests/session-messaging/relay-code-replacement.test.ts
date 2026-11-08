@@ -16,7 +16,7 @@ import { readRelayCodeDigest } from "../../mcp-server/src/relay-code-identity.js
 import { dispatchSessionMessageOperation } from "../../mcp-server/src/session-message-operations.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 
-// D0348 (docs/ags30-broker-redesign.md 3.6): a relay granted to other installed code is replaced once at a boundary,
+// D0348 (docs/archive/ags30-broker-redesign.md 3.6): a relay granted to other installed code is replaced once at a boundary,
 // and the replaced relay is fenced by its relay_id. Time advances only through the injected clock.
 const RELAY_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
 const target = {host: "portable", sessionId: "relay-code-replacement"};

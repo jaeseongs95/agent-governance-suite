@@ -43,7 +43,7 @@ describe("RFC 4647 Lookup", () => {
   });
 });
 
-describe("host locale (docs/i18n-design.md 4.1 ①)", () => {
+describe("host locale (docs/contributing/i18n.md 4.1 ①)", () => {
   it("takes the environment, then user settings, then the package, then en", () => {
     const all = { [SETTINGS]: '{"locale":"en"}', [PACKAGE]: '{"locale":"ko"}' };
     expect(host({ AGENT_GOVERNANCE_LOCALE: "ko-KR" }, { [SETTINGS]: '{"locale":"en"}' })).toMatchObject({ locale: "ko", source: "environment" });
@@ -82,7 +82,7 @@ describe("host locale (docs/i18n-design.md 4.1 ①)", () => {
   });
 });
 
-describe("request locale (docs/i18n-design.md 4.1 ②)", () => {
+describe("request locale (docs/contributing/i18n.md 4.1 ②)", () => {
   it("uses the SEP-2792 _meta value and falls back to the service default", () => {
     expect(resolveRequestLocale({ [ACCEPT_LANGUAGE_META]: "ko-KR, en;q=0.5" }, "en")).toBe("ko");
     expect(resolveRequestLocale({ [ACCEPT_LANGUAGE_META]: "fr" }, "ko")).toBe("ko");

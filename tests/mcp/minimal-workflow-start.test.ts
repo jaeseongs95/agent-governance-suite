@@ -25,7 +25,7 @@ import { WorkflowService, type MinimalWorkflowStartV1 } from "../../mcp-server/s
 import { recordMessageRef } from "../../mcp-server/src/workflow-record-messages.js";
 import { codexCallMeta } from "../helpers/caller.js";
 
-// Design docs/ags30-phase-check-design.md 7.5-7.6: start_workflow plans, opens, claims and starts in one transaction.
+// Design docs/archive/ags30-phase-check-design.md 7.5-7.6: start_workflow plans, opens, claims and starts in one transaction.
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const SESSION = "minimal-start-session";
 const repo = path.resolve(process.platform === "win32" ? "C:\\work\\minimal-repo" : "/work/minimal-repo");
@@ -125,7 +125,7 @@ describe("start_workflow minimal start", () => {
     expect(isDeny(writeFile("c.ts"))).toBe(true);
     const started = await call<MinimalWorkflowStartV1>(minimal);
     expectLateAdoption(started.data?.lateAdoption, 2);
-    // The record keeps the root-locale text, which maps back to its key and params (docs/i18n-design.md 3.2).
+    // The record keeps the root-locale text, which maps back to its key and params (docs/contributing/i18n.md 3.2).
     const [constraint] = rootConstraints();
     expect(constraint).toBe("Late adoption, evidence unverified: product files in this window had already changed before the workflow started (count: 2).");
     expect(recordMessageRef(constraint!)).toEqual({ key: "workflowRecord.lateAdoption.constraint", params: { priorFileCount: 2 } });

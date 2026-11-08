@@ -22,7 +22,7 @@ const syntheticCore = await import(new URL("./fixtures/synthetic-core-hook-drive
 syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "codex-deferred");
 const host = syntheticCore.SYNTHETIC_CORE_HOST;
 
-// Boundary recovery (docs/ags30-broker-redesign.md 3.3): the store's hint names the relay-less generation and the host
+// Boundary recovery (docs/archive/ags30-broker-redesign.md 3.3): the store's hint names the relay-less generation and the host
 // process it reported; the hook compares that pid with its own host, asks grant-relay, and spawns with the granted id.
 // Mocked request/spawn regression fixture only, not native capture.
 const port: WakeDispatchPort = { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" }, resendBaseMs: 600_000,

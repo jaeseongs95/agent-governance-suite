@@ -13,7 +13,7 @@ import { adaptHostInput, registerHookHostAdapter } from '../../mcp-server/src/ho
 import { recordWakeHookObservation, wakeBackoffDelay, wakeHookObservationReader } from '../../mcp-server/src/session-message-wake-port.ts';
 import { ContractValidator } from '../../mcp-server/src/schema-validator.ts';
 
-// AGS 3.0 doorbell (docs/ags30-wake-doorbell-design.md r3.2). These cases were rewritten from the 2.x "permanent latch"
+// AGS 3.0 doorbell (docs/archive/ags30-wake-doorbell-design.md r3.2). These cases were rewritten from the 2.x "permanent latch"
 // rules: a hand-off now ends by a later claim boundary, the end of its birth or its resend deadline (2.6), and the
 // invariants I1, I2, I5, I6 and I11 are kept. Clocks are explicit arguments.
 // The process fixture binds the same target identity.
