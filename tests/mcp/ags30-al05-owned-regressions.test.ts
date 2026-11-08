@@ -1,13 +1,10 @@
-import { mkdtempSync, rmSync, truncateSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CallerExecution } from "../../mcp-server/src/caller-identity.js";
-import {
-  CLAUDE_TRANSCRIPT_LINE_MAX_BYTES,
-  observeClaudeExecution,
-} from "../../mcp-server/src/host-attestation-hook.js";
+import { observeClaudeExecution } from "../../mcp-server/src/host-attestation-hook.js";
 import {
   HostAttestationProvider,
   type HostExecutionAdapter,
@@ -49,28 +46,31 @@ function qualify(selected: HostExecutionAdapter, execution: CallerExecution, pro
 const directories: string[] = [];
 afterEach(() => { for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true }); });
 
-// The whole-file limit was removed (a 490 MB session transcript refused every call); memory is bounded per line instead.
+// The whole-file limit was removed (a 490 MB session transcript refused every call). Since AGS3-D-0074 only the newest
+// 2 MiB window is read, which also bounds memory.
 describe("AGS-D-0032 bounded Claude transcript reads", () => {
-  it("retains exact observations at the byte boundary", () => {
+  const WINDOW_BYTES = 2 * 1024 * 1024;
+
+  it("retains exact observations at the window boundary", () => {
     const directory = mkdtempSync(path.join(tmpdir(), "ags-al05-boundary-"));
     directories.push(directory);
     const file = path.join(directory, "fixture.jsonl");
     const row = line();
-    writeFileSync(file, " ".repeat(CLAUDE_TRANSCRIPT_LINE_MAX_BYTES - Buffer.byteLength(row)) + row, "utf8");
+    // The issuing row starts right after the newline that opens the window.
+    writeFileSync(file, " ".repeat(64) + "\n" + " ".repeat(WINDOW_BYTES - 1 - Buffer.byteLength(row)) + row, "utf8");
     expect(observeClaudeExecution({ ...input, transcript_path: file }, { maxWaitMs: 0, now }))
       .toMatchObject({ model, effort: "high", provenance: "claude-code:transcript-tool-use" });
   });
 
-  it("refuses an oversized line before a fallback model is consulted", () => {
+  it("skips a row cut by the window start before a fallback model is consulted", () => {
     const directory = mkdtempSync(path.join(tmpdir(), "ags-al05-oversize-"));
     directories.push(directory);
     const file = path.join(directory, "fixture.jsonl");
-    writeFileSync(file, line(), "utf8");
-    truncateSync(file, CLAUDE_TRANSCRIPT_LINE_MAX_BYTES + 1);
+    writeFileSync(file, line() + " ".repeat(WINDOW_BYTES) + "\n", "utf8");
     const cache = vi.fn(() => session("2026-10-25T00:00:20.000Z"));
-    expect(() => observeClaudeExecution({ ...input, transcript_path: file }, { maxWaitMs: 0, now, readSessionModel: cache }))
-      .toThrow("TRANSCRIPT_LINE_LIMIT_EXCEEDED");
-    expect(cache).not.toHaveBeenCalled();
+    expect(observeClaudeExecution({ ...input, transcript_path: file }, { maxWaitMs: 0, now, readSessionModel: cache }))
+      .toMatchObject({ model, provenance: "claude-code:model-switch" });
+    expect(cache).toHaveBeenCalledTimes(1);
   });
 });
 

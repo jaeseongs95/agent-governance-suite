@@ -1,5 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import os from "node:os";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -106,13 +105,13 @@ describe("shared context-start intake", () => {
 
     // Behavior 6 (d7585d74): the same first call also runs the turn stage after intake; a stub stands in for the
     // continuity hook here (its cue is covered in antigravity-turn-cue.test.mjs) so no real state store is opened.
-    const turnHook = path.join(mkdtempSync(path.join(os.tmpdir(), "ags-intake-turn-")), "turn.mjs");
     // It answers only the turn stage's UserPromptSubmit; PostInvocation's continuity step reaches it too and gets nothing.
-    writeFileSync(turnHook, "import { readFileSync } from \"node:fs\";\nif (JSON.parse(readFileSync(0, \"utf8\")).hook_event_name === \"UserPromptSubmit\") process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: \"UserPromptSubmit\", additionalContext: \"TURN-CUE\" } }));\n");
+    const turnHook = (raw: string) => JSON.parse(raw).hook_event_name === "UserPromptSubmit"
+      ? JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: "TURN-CUE" } }) : "";
     const options = {
-      continuityHookPath: turnHook,
+      continuityHook: turnHook,
       sessionMessageHook: () => ({}),
-      spawnSync: () => ({ status: 0 }),
+      sessionBoardHook: async () => "",
       writeStderr: () => undefined,
       intakeHook: (input: Record<string, unknown>, host: string) => intakeHookOutput(input, host, resolveHostLocale().locale),
     };
@@ -137,10 +136,12 @@ describe("shared context-start intake", () => {
     });
     expect(seen).toEqual(["session-message", "continuity"]);
 
-    const echo = path.join(mkdtempSync(path.join(os.tmpdir(), "ags-agy-step-")), "echo.mjs");
-    writeFileSync(echo, "import { readFileSync } from \"node:fs\";\nconst input = JSON.parse(readFileSync(0, \"utf8\"));\nprocess.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: input.hook_event_name, additionalContext: `STEP ${input.hook_event_name} ${input.session_id}` } }));\n");
+    const echo = (raw: string) => {
+      const input = JSON.parse(raw) as { hook_event_name: string; session_id: string };
+      return JSON.stringify({ hookSpecificOutput: { hookEventName: input.hook_event_name, additionalContext: `STEP ${input.hook_event_name} ${input.session_id}` } });
+    };
     expect(await executeAntigravityHookEvent({ conversationId: "agy-step", invocationNum: 2 }, "PostInvocation", undefined,
-      { continuityHookPath: echo, sessionMessageHook: () => ({}), writeStderr: () => undefined }))
+      { continuityHook: echo, sessionMessageHook: () => ({}), writeStderr: () => undefined }))
       .toEqual({ injectSteps: [{ systemMessage: { systemMessage: "STEP PostInvocation agy-step" } }] });
   });
 });

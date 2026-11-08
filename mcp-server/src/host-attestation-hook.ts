@@ -19,8 +19,7 @@ import { resolveHookHost } from "./host-input-adapter.js";
 type HookInput = Record<string, unknown>;
 
 type HookObservationFailureCode = "TRANSCRIPT_READ_FAILED" | "CURRENT_CALL_INVALID_JSON"
-  | "SESSION_MODEL_READ_FAILED" | "SESSION_MODEL_INVALID" | "SESSION_MODEL_WRITE_FAILED" | "INVALID_HOOK_INPUT" | "CURRENT_CALL_INVALID_SHAPE"
-  | "TRANSCRIPT_LINE_LIMIT_EXCEEDED";
+  | "SESSION_MODEL_READ_FAILED" | "SESSION_MODEL_INVALID" | "SESSION_MODEL_WRITE_FAILED" | "INVALID_HOOK_INPUT" | "CURRENT_CALL_INVALID_SHAPE";
 
 /** The failed step is the code; the actual I/O or parse error is kept as the cause. */
 class HookObservationFailure extends Error {
@@ -77,36 +76,28 @@ function text(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
-/**
- * The longest single transcript line that is examined; a longer line fails closed (TRANSCRIPT_LINE_LIMIT_EXCEEDED).
- * There is no whole-file limit: the file is scanned in fixed windows, so memory stays near this bound plus one window.
- */
-export const CLAUDE_TRANSCRIPT_LINE_MAX_BYTES = 8 * 1024 * 1024;
-const CLAUDE_TRANSCRIPT_WINDOW_BYTES = 1024 * 1024;
-
 /*
- * Why the whole file is scanned instead of only its tail. The issuing message being "at the end or nowhere" holds for
- * no fixed tail size:
- * - Claude Code writes the transcript asynchronously and it "may lag the in-memory conversation"
- *   (https://code.claude.com/docs/en/hooks, common input field transcript_path); interactive sessions write the
- *   issuing message only after the call ends (docs/release-notes-v1.20.1.md), headless ones before the hook.
- * - Between the issuing row and this PreToolUse, the host may append other rows of the same batch (earlier tool
- *   results and progress), whose size has no bound.
- * A row cut off by a tail window could be the current call's issuer from another session or a sidechain, and its
- * absence would let the session model authorize the call. So a partial history never authorizes a model fallback:
- * every line of the size observed at open is read. The search for an issuer runs newest first and stops at the first
- * one, so a transcript that already holds it (headless) costs one window; absence costs one full pass.
- * Within one observation that pass is not repeated (D-0074): the polls and the probe share it, and a later open reads
- * only what was appended after the last complete line. The complete lines already read keep what they showed (the
- * newest issuer, the oldest probe verdict); a file that was replaced, truncated or rewritten there is read again in full.
+ * Only the newest part of the transcript is read: at most the last 2 MiB and 4000 lines, the window the lineage read
+ * uses (builtin-hook-host-adapters.ts, CLAUDE_LINEAGE_MAX_BYTES and CLAUDE_LINEAGE_MAX_LINES). The issuing message of a
+ * call is a recent row, and not finding it in the window costs nothing that reading the whole history would protect:
+ * the main thread has no model or effort floor, so its session model may stand in for any call (3.1.1), and a subagent
+ * never gets that stand-in (observeClaudeExecution) and stays CLAUDE_MODEL_UNOBSERVED. A row cut by the window start is
+ * dropped, never parsed as a fragment. The last segment may still be written by the host, so it is read as a line.
+ * Message bodies are never returned: only the issuer's model and effort.
  */
-function openTranscript(file: string): { descriptor: number; size: number; identity: string } | null {
+const CLAUDE_TRANSCRIPT_TAIL_BYTES = 2 * 1024 * 1024;
+const CLAUDE_TRANSCRIPT_TAIL_LINES = 4000;
+
+/** The lines of the transcript window, newest first; null when the file does not exist (normal absence). */
+function readTranscriptTail(file: string): string[] | null {
   let descriptor: number;
   try { descriptor = openSync(file, "r"); }
   catch (cause) {
     if ((cause as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw new HookObservationFailure("TRANSCRIPT_READ_FAILED", cause);
   }
+  let failure: HookObservationFailure | null = null;
+  let content = "";
   try {
     const stats = fstatSync(descriptor);
     if (!stats.isFile()) {
@@ -114,149 +105,41 @@ function openTranscript(file: string): { descriptor: number; size: number; ident
       if (stats.isDirectory()) readSync(descriptor, Buffer.alloc(1), 0, 1, 0);
       throw new HookObservationFailure("TRANSCRIPT_READ_FAILED");
     }
-    return { descriptor, size: stats.size, identity: `${stats.dev}:${stats.ino}` };
-  } catch (cause) {
-    const failure = cause instanceof HookObservationFailure ? cause : new HookObservationFailure("TRANSCRIPT_READ_FAILED", cause);
-    try { closeSync(descriptor); } catch (cleanup) { retainHookFailureSecondary(failure, cleanup); }
-    throw failure;
-  }
-}
-
-function readWindow(descriptor: number, buffer: Buffer, length: number, position: number): void {
-  let bytes: number;
-  try { bytes = readSync(descriptor, buffer, 0, length, position); }
-  catch (cause) { throw new HookObservationFailure("TRANSCRIPT_READ_FAILED", cause); }
-  // A shorter read means the file shrank or failed under the scan; it is not a complete history.
-  if (bytes !== length) throw new HookObservationFailure("TRANSCRIPT_READ_FAILED");
-}
-
-/** Joins the pieces of one line; a line over the bound is refused rather than truncated. */
-class LineAssembler {
-  private pieces: Buffer[] = [];
-  private bytes = 0;
-  add(piece: Buffer, atStart: boolean): void {
-    if (piece.length === 0) return;
-    this.bytes += piece.length;
-    if (this.bytes > CLAUDE_TRANSCRIPT_LINE_MAX_BYTES) throw new HookObservationFailure("TRANSCRIPT_LINE_LIMIT_EXCEEDED");
-    const copy = Buffer.from(piece); // The window buffer is reused.
-    if (atStart) this.pieces.unshift(copy); else this.pieces.push(copy);
-  }
-  take(last?: Buffer, atStart = false): string {
-    if (last) this.add(last, atStart);
-    const line = Buffer.concat(this.pieces, this.bytes).toString("utf8");
-    this.pieces = [];
-    this.bytes = 0;
-    return line;
-  }
-}
-
-/**
- * Lines of the bytes [start, size), newest first, each with the offset it starts at; the same segments as
- * `content.split("\n").reverse()`. `start` is 0 or just after a newline, so the oldest segment is a whole line.
- */
-function* linesNewestFirst(descriptor: number, start: number, size: number): Generator<[line: string, offset: number]> {
-  const window = Buffer.alloc(Math.min(CLAUDE_TRANSCRIPT_WINDOW_BYTES, Math.max(size - start, 1)));
-  const line = new LineAssembler();
-  let position = size;
-  while (position > start) {
-    const length = Math.min(window.length, position - start);
-    position -= length;
-    readWindow(descriptor, window, length, position);
-    let end = length;
-    while (end > 0) {
-      // A negative offset would count from the buffer end, so the loop stops at 0.
-      const newline = window.lastIndexOf(0x0a, end - 1);
-      if (newline < 0) break;
-      yield [line.take(window.subarray(newline + 1, end), true), position + newline + 1];
-      end = newline;
+    const length = Math.min(stats.size, CLAUDE_TRANSCRIPT_TAIL_BYTES);
+    const buffer = Buffer.alloc(length);
+    // A shorter read means the file shrank under the read; it is not the window that was asked for.
+    if (readSync(descriptor, buffer, 0, length, stats.size - length) !== length) throw new HookObservationFailure("TRANSCRIPT_READ_FAILED");
+    content = buffer.toString("utf8");
+    if (stats.size > length) {
+      const newline = content.indexOf("\n");
+      content = newline < 0 ? "" : content.slice(newline + 1);
     }
-    line.add(window.subarray(0, end), true);
-  }
-  yield [line.take(), start];
-}
-
-function newlineAt(descriptor: number, position: number): boolean {
-  const byte = Buffer.alloc(1);
-  readWindow(descriptor, byte, 1, position);
-  return byte[0] === 0x0a;
-}
-
-type OpenedTranscript = NonNullable<ReturnType<typeof openTranscript>>;
-
-/** Runs `scan` over one opened transcript file; null when the file does not exist (normal absence). */
-function scanTranscriptFile<T>(file: string, scan: (opened: OpenedTranscript) => T): T | null {
-  const opened = openTranscript(file);
-  if (!opened) return null;
-  let failure: unknown;
-  let failed = false;
-  let result: T | null = null;
-  try {
-    result = scan(opened);
   } catch (cause) {
-    failed = true;
     failure = cause instanceof HookObservationFailure ? cause : new HookObservationFailure("TRANSCRIPT_READ_FAILED", cause);
-  } finally {
-    try { closeSync(opened.descriptor); }
-    catch (cleanup) {
-      if (failed) retainHookFailureSecondary(failure, cleanup);
-      else { failed = true; failure = new HookObservationFailure("TRANSCRIPT_READ_FAILED", cleanup); }
-    }
   }
-  if (failed) throw failure;
-  return result;
+  try { closeSync(descriptor); }
+  catch (cleanup) {
+    if (failure) retainHookFailureSecondary(failure, cleanup);
+    else failure = new HookObservationFailure("TRANSCRIPT_READ_FAILED", cleanup);
+  }
+  if (failure) throw failure;
+  // The complete lines are bounded; the last segment (empty after a final newline) is always kept.
+  return content.split("\n").slice(-(CLAUDE_TRANSCRIPT_TAIL_LINES + 1)).reverse();
 }
 
 /** Where the issuing message of one call is looked up: the host's transcript files, or injected text (tests). */
 interface TranscriptReader {
-  /** As findToolUseObservation over the whole current file. */
   find(file: string): TranscriptObservation | null;
-  /** As probeIssuingMessage over the whole current file. */
   probe(file: string): IssuingMessageProbe;
 }
 
-/** What the complete lines before `end` showed: the newest issuer among them (undefined: none) and the oldest probe verdict. */
-interface ReadPrefix { identity: string; end: number; issuer: TranscriptObservation | null | undefined; verdict: IssuingMessageProbe | null }
-
-/**
- * Reads each transcript file once per observation: a later find or probe reads only the bytes after the complete lines
- * already read and keeps what those lines showed. The last segment may still be written, so it is read again each time.
- */
 function fileTranscriptReader(toolUseId: string, sessionId: string, agentId: string | null): TranscriptReader {
-  const prefixes = new Map<string, ReadPrefix>();
-  const scan = (file: string, want: "find" | "probe") => {
-    const result = scanTranscriptFile(file, ({ descriptor, size, identity }) => {
-      let prior = prefixes.get(file);
-      // Only lines the host appended to the same file extend what was read; anything else is read again in full.
-      if (prior && (prior.identity !== identity || size < prior.end || (prior.end > 0 && !newlineAt(descriptor, prior.end - 1)))) {
-        prior = undefined;
-      }
-      let newest: TranscriptObservation | null | undefined; // over the new bytes, the last segment included
-      let issuer: TranscriptObservation | null | undefined; // over the complete new lines
-      let verdict: IssuingMessageProbe | null = null; // the oldest verdict of the complete new lines
-      let last: { offset: number; verdict: IssuingMessageProbe | null } | null = null;
-      for (const [line, offset] of linesNewestFirst(descriptor, prior?.end ?? 0, size)) {
-        const lineIssuer = issuerInLine(line, toolUseId, sessionId, agentId);
-        if (newest === undefined && lineIssuer !== undefined) {
-          newest = lineIssuer;
-          // An accepted newest issuer decides the search; no older line can change it.
-          if (newest && want === "find") return { found: newest, verdict: null };
-        }
-        const lineVerdict = probeLine(line, toolUseId);
-        if (!last) { last = { offset, verdict: lineVerdict }; continue; }
-        if (issuer === undefined) issuer = lineIssuer;
-        if (lineVerdict) verdict = lineVerdict;
-      }
-      const read: ReadPrefix = { identity, end: last?.offset ?? prior?.end ?? 0,
-        issuer: issuer !== undefined ? issuer : prior?.issuer, verdict: prior?.verdict ?? verdict };
-      prefixes.set(file, read);
-      return { found: newest !== undefined ? newest : read.issuer ?? null, verdict: read.verdict ?? last?.verdict ?? null };
-    });
-    if (!result) prefixes.delete(file);
-    return result;
-  };
   return {
-    find: file => scan(file, "find")?.found ?? null,
-    probe: file => scan(file, "probe")?.verdict ?? { state: "absent" },
+    find: (file) => {
+      const newestFirst = readTranscriptTail(file);
+      return newestFirst ? findToolUseObservationInLines(newestFirst, toolUseId, sessionId, agentId) : null;
+    },
+    probe: (file) => probeIssuingMessageInLines((readTranscriptTail(file) ?? []).reverse(), toolUseId),
   };
 }
 
@@ -629,8 +512,8 @@ export function observeClaudeExecution(input: HookInput, options: HostAttestatio
     if (probed && "unavailable" in probed) return probed;
     observation = probed;
   }
-  // Only proven absence reaches the session model. Subagents get no SessionStart or model-switch hooks,
-  // so only their own written message counts.
+  // Only an issuer absent from the transcript window reaches the session model. Subagents get no SessionStart or
+  // model-switch hooks, so only their own written message counts.
   const session = observation || agentId ? null : options.readSessionModel?.(sessionId) ?? null;
   // ponytail: polling under the hook's 10 s limit; a batch still streaming after the wait stays unobserved.
   if (!observation && !session && waited < maxWaitWithoutSessionModelMs && elapsedMs() < maxWaitWithoutSessionModelMs) {
@@ -658,21 +541,26 @@ export function sessionModelDirectory(databasePath: string = resolveWorkflowData
   return path.join(path.dirname(databasePath), "host-models");
 }
 
-/** SessionStart and PostModelSwitch record the main thread's model; other events produce nothing. */
-function main(): void {
+/**
+ * SessionStart and PostModelSwitch record the main thread's model; other events produce nothing and nothing is printed.
+ * `raw` is the read input or its reader, so a read failure keeps the stdin phase. Every failure is reported, never thrown:
+ * the Claude launcher calls this in its own process and must not block the host.
+ */
+export function runHostAttestationHook(raw: string | (() => string), environment: NodeJS.ProcessEnv = process.env,
+  host = "claude-code"): void {
   let phase = "stdin";
   try {
-    const raw = readFileSync(0, "utf8");
+    const text = typeof raw === "function" ? raw() : raw;
     phase = "input";
-    const input = record(JSON.parse(raw));
+    const input = record(JSON.parse(text));
     if (!input) throw new HookObservationFailure("INVALID_HOOK_INPUT");
     phase = "host-entry";
     // Only Claude Code reports a session model here; other hosts' fields are never read as one.
-    if (resolveHookHost(process.argv.slice(2), "claude-code") !== "claude-code") return;
+    if (host !== "claude-code") return;
     phase = "input";
     const update = sessionModelUpdate(input);
     phase = "storage";
-    if (update) writeSessionModel(sessionModelDirectory(), update.sessionId, update.record);
+    if (update) writeSessionModel(sessionModelDirectory(resolveWorkflowDatabasePath(environment)), update.sessionId, update.record);
   } catch (cause) {
     // Failure stays distinct from normal absence, without logging native input or raw errors.
     // An OS cause (stdin EIO/EPIPE, for example) keeps its own class instead of one generic code.
@@ -682,4 +570,6 @@ function main(): void {
   }
 }
 
-if (isHookEntry(import.meta.url, "host-attestation-hook")) main();
+if (isHookEntry(import.meta.url, "host-attestation-hook")) {
+  runHostAttestationHook(() => readFileSync(0, "utf8"), process.env, resolveHookHost(process.argv.slice(2), "claude-code"));
+}

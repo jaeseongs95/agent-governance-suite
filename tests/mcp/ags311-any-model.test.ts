@@ -109,35 +109,35 @@ describe("AGS 3.1.1 agy call observation", () => {
   });
 
   // The board hook itself is covered by the session-board tests; here only what the runner hands it, without a child process.
-  const preInvocation = async (spawnSync: (...args: unknown[]) => unknown) => {
+  // The board bundle runs in the runner's process (AGS3-D-0079); options.sessionBoardHook stands in for its entry.
+  const preInvocation = async (sessionBoardHook: (host: string, raw: string) => Promise<string>) => {
     const runner = await import(new URL("../../antigravity-connector/hooks/antigravity-hook-runner.mjs", import.meta.url).href) as {
       executeAntigravityHookEvent: (input: unknown, event: string, hook: string | undefined, options: unknown) => Promise<unknown>;
     };
     const stderr: string[] = [];
     await runner.executeAntigravityHookEvent({ conversationId: conversation, workspacePaths: [workspace], modelName: "gemini-4-argon-medium" },
-      "PreInvocation", undefined, { sessionMessageHook: () => ({}), spawnSync, writeStderr: (line: string) => stderr.push(line) });
+      "PreInvocation", undefined, { sessionMessageHook: () => ({}), sessionBoardHook, writeStderr: (line: string) => stderr.push(line) });
     return stderr;
   };
   const workspace = path.join(tmpdir(), "ags311-project");
 
   it("hands the agy session's workspace to the board hook at PreInvocation", async () => {
-    const calls: Array<{ args: string[]; input: unknown }> = [];
-    const stderr = await preInvocation((_cmd, args, options) => {
-      calls.push({ args: args as string[], input: JSON.parse((options as { input: string }).input) });
-      return { status: 0 };
+    const calls: Array<{ host: string; input: unknown }> = [];
+    const stderr = await preInvocation(async (host, raw) => {
+      calls.push({ host, input: JSON.parse(raw) });
+      return "";
     });
-    expect(calls.map(({ args, input }) => ({ hook: path.basename(args[0] ?? ""), input }))).toEqual([
-      { hook: "session-board-hook.mjs", input: { hook_event_name: "UserPromptSubmit", session_id: conversation, cwd: workspace } }]);
+    expect(calls).toEqual([
+      { host: "antigravity", input: { hook_event_name: "UserPromptSubmit", session_id: conversation, cwd: workspace } }]);
     expect(stderr).toEqual([]);
   });
 
-  it("reports a board hook that timed out or failed instead of dropping it silently", async () => {
-    const timedOut = await preInvocation(() => ({ status: null, signal: "SIGTERM", error: Object.assign(new Error("spawnSync ETIMEDOUT"), { code: "ETIMEDOUT" }) }));
+  it("reports a board hook that failed instead of dropping it silently", async () => {
+    const failed = await preInvocation(async () => { throw Object.assign(new Error("PRIVATE board failure"), { code: "EACCES" }); });
     // 3.9.0 (AGS3-D-0023): one common-format record per line, naming the component and event.
     const record = { component: "antigravity-hook-runner", event: "stage-failure", stage: "session-board" };
-    expect(timedOut.map((line) => JSON.parse(line))).toEqual([{ ...record, code: "ETIMEDOUT" }]);
-    const failed = await preInvocation(() => ({ status: 1, signal: null }));
-    expect(failed.map((line) => JSON.parse(line))).toEqual([{ ...record, code: "HOOK_EXIT_NONZERO" }]);
+    expect(failed.map((line) => JSON.parse(line))).toEqual([{ ...record, code: "EACCES" }]);
+    expect(failed.join("")).not.toContain("PRIVATE");
   });
 
   it("records only the tools the server observes", async () => {

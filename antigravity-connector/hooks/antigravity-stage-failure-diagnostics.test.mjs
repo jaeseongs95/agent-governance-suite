@@ -18,8 +18,8 @@ it("records each failed advisory stage and still fails open", async () => {
   const output = await executeAntigravityHookEvent({ conversationId: "stage-failure-session", workspacePaths: [os.tmpdir()] }, "PreInvocation", "", {
     stageRunner: async () => { throw failure(); },
     writeStderr: line => lines.push(line),
-    // The record-only board hook is outside this advisory-stage fixture; never launch it against shared state.
-    spawnSync: () => ({ status: 0 }),
+    // The record-only board hook is outside this advisory-stage fixture; never run it against shared state.
+    sessionBoardHook: async () => "",
   });
   expect(output).toEqual({});
   // Only the injected session-message stage fails; the separate board record succeeds above.

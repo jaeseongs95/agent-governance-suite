@@ -1,5 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -168,17 +169,13 @@ describe("Claude launcher stage diagnostics", () => {
     expect(diagnostics(result.stderr)).toEqual([{ launcher: "session-message-hook", stage: "outcome", code: "LAUNCHER_OUTCOME_INVALID" }]);
   });
 
-  it("continuity-hook: reports a failing shared hook exit and stays quiet without plugin data", async () => {
-    const directory = await install("continuity-hook.mjs", "process.exit(3);\n");
-    const data = path.join(directory, "data");
-    const failed = run(directory, "continuity-hook.mjs", { ...process.env, CLAUDE_PLUGIN_DATA: data });
-    expect(failed.status).toBe(0);
-    expect(failed.stdout).toBe("");
-    expect(diagnostics(failed.stderr)).toEqual([{ launcher: "continuity-hook", stage: "hook-exit", status: 3 }]);
+  it("continuity-hook: stays quiet without plugin data and never loads the bundle", async () => {
+    const directory = await install("continuity-hook.mjs", 'throw Object.assign(new Error("loaded"), { code: "BUNDLE_LOADED" });\n');
     const env = { ...process.env };
     delete env.CLAUDE_PLUGIN_DATA;
     const absent = run(directory, "continuity-hook.mjs", env);
     expect(absent.status).toBe(0);
+    expect(absent.stdout).toBe("");
     expect(diagnostics(absent.stderr)).toEqual([]);
   });
 
@@ -199,11 +196,69 @@ describe("Claude launcher stage diagnostics", () => {
     }
   });
 
-  it("continuity-hook: a successful shared hook emits no diagnostic", async () => {
-    const directory = await install("continuity-hook.mjs", "process.exit(0);\n");
-    const result = run(directory, "continuity-hook.mjs", { ...process.env, CLAUDE_PLUGIN_DATA: path.join(directory, "data") });
+});
+
+// AGS3-D-0079: the continuity and attestation launchers ran their bundle in a second node process, which doubled each
+// hook's start-up cost. They now call the bundle's export in their own process, with the plugin databases and the host.
+describe("Claude launchers run the shared bundle in their own process", () => {
+  for (const [launcher, exportName, databases, output] of [
+    ["continuity-hook.mjs", "runContinuityHook",
+      { AGENT_GOVERNANCE_DB_PATH: "workflows.sqlite3", AGENT_GOVERNANCE_CONTINUITY_DB_PATH: "continuity.sqlite3" },
+      JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: "D0079-CONTEXT" } })],
+    ["host-attestation-hook.mjs", "runHostAttestationHook", { AGENT_GOVERNANCE_DB_PATH: "workflows.sqlite3" }, ""],
+  ]) {
+    const name = launcher.replace(/\.mjs$/u, "");
+    const input = JSON.stringify({ hook_event_name: "SessionStart", session_id: "d0079-session", model: "d0079-model" });
+    const launch = (directory) => spawnSync(process.execPath, [path.join(directory, "hooks", launcher)], {
+      input, encoding: "utf8", env: { ...process.env, CLAUDE_PLUGIN_DATA: path.join(directory, "data") }, windowsHide: true,
+    });
+
+    it(`${name}: calls ${exportName} in the launcher process with the plugin databases and host`, async () => {
+      const directory = await install(launcher, "");
+      const seen = path.join(directory, "seen.json");
+      await writeFile(path.join(directory, "mcp-server", "dist", launcher), [
+        'import { writeFileSync } from "node:fs";',
+        `export function ${exportName}(raw, environment, host) {`,
+        `  writeFileSync(${JSON.stringify(seen)}, JSON.stringify({ pid: process.pid, host, raw,`,
+        `    databases: Object.fromEntries(${JSON.stringify(Object.keys(databases))}.map((key) => [key, environment[key]])) }));`,
+        `  return ${JSON.stringify(output)};`,
+        "}",
+        "",
+      ].join("\n"));
+      const result = launch(directory);
+      expect(result.status).toBe(0);
+      expect(existsSync(seen), "the bundle export was not called").toBe(true);
+      expect(JSON.parse(await readFile(seen, "utf8"))).toEqual({ pid: result.pid, host: "claude-code", raw: input,
+        databases: Object.fromEntries(Object.entries(databases).map(([key, file]) => [key, path.join(directory, "data", file)])) });
+      expect(result.stdout).toBe(output);
+      expect(diagnostics(result.stderr)).toEqual([]);
+    });
+
+    for (const [stage, bundle, code] of [
+      ["import", null, "ERR_MODULE_NOT_FOUND"],
+      ["export", `export function ${exportName}Renamed() { return ""; }\n`, "LAUNCHER_EXPORT_MISSING"],
+      ["run", `export function ${exportName}() { throw Object.assign(new Error("PRIVATE_RUN_MESSAGE"), { code: "EACCES" }); }\n`, "EACCES"],
+    ]) {
+      it(`${name}: reports a failed ${stage} stage with its code, prints nothing and exits 0`, async () => {
+        const directory = await install(launcher, bundle);
+        const result = launch(directory);
+        expect(result.status).toBe(0);
+        expect(result.stdout).toBe("");
+        expect(diagnostics(result.stderr)).toEqual([{ launcher: name, stage, code }]);
+        expect(result.stderr).not.toContain("PRIVATE_");
+        expect(result.stderr).not.toContain(directory);
+      });
+    }
+  }
+
+  it("continuity-hook: reports an output that is not text as the outcome stage", async () => {
+    const directory = await install("continuity-hook.mjs", "export function runContinuityHook() { return { ok: true }; }\n");
+    const result = spawnSync(process.execPath, [path.join(directory, "hooks", "continuity-hook.mjs")], {
+      input: "{}", encoding: "utf8", env: { ...process.env, CLAUDE_PLUGIN_DATA: path.join(directory, "data") }, windowsHide: true,
+    });
     expect(result.status).toBe(0);
-    expect(diagnostics(result.stderr)).toEqual([]);
+    expect(result.stdout).toBe("");
+    expect(diagnostics(result.stderr)).toEqual([{ launcher: "continuity-hook", stage: "outcome", code: "LAUNCHER_OUTCOME_INVALID" }]);
   });
 });
 
@@ -241,24 +296,14 @@ describe("attestation launcher diagnostic proposal (parent-owned shared test)", 
     expect(result.stderr).not.toContain("PRIVATE_");
   });
 
-  for (const [label, bundle, status] of [["missing shared bundle", null, 1], ["failed shared hook", "process.exit(3);\n", 3]]) {
-    it(`reports ${label} status without rewriting the tool input and exits 0`, async () => {
-      const directory = await install(launcher, bundle);
-      const result = invoke(directory, path.join(directory, "data"));
-      expect(result.status).toBe(0);
-      expect(result.stdout).toBe("");
-      expect(diagnostics(result.stderr)).toEqual([{ launcher: "host-attestation-hook", stage: "hook-exit", status }]);
-      expect(JSON.stringify(diagnostics(result.stderr))).not.toContain("PRIVATE_");
-      expect(JSON.stringify(diagnostics(result.stderr))).not.toContain(directory);
-    });
-  }
-
-  it("passes successful hook output through without a launcher diagnostic", async () => {
-    const output = { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { fixture: true } } };
-    const directory = await install(launcher, `process.stdout.write(${JSON.stringify(JSON.stringify(output))});\n`);
+  // The in-process stages (import, export, run) are covered in "Claude launchers run the shared bundle in their own process".
+  it("reports a failed shared hook without rewriting the tool input and exits 0", async () => {
+    const directory = await install(launcher, "export function runHostAttestationHook() { throw Object.assign(new Error(\"PRIVATE_X\"), { code: \"EIO\" }); }\n");
     const result = invoke(directory, path.join(directory, "data"));
     expect(result.status).toBe(0);
-    expect(JSON.parse(result.stdout)).toEqual(output);
-    expect(diagnostics(result.stderr)).toEqual([]);
+    expect(result.stdout).toBe("");
+    expect(diagnostics(result.stderr)).toEqual([{ launcher: "host-attestation-hook", stage: "run", code: "EIO" }]);
+    expect(result.stderr).not.toContain("PRIVATE_");
+    expect(result.stderr).not.toContain(directory);
   });
 });
