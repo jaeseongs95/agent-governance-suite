@@ -35,8 +35,13 @@ const atBase = (relative: string) => execFileSync("git", ["show", `${manifest.so
 const v410 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v410-code-review-source-successor.json"), "utf8"));
 const rebound = (relative: string) => (v410.bindings as Binding[]).find(row => row.path === relative);
 /** r41 moves code-review on (AGS3-D-0094); this file keeps judging r40 against the bytes r41 started from. */
-const r40Source = (relative: string) => rebound(relative)
-  ? execFileSync("git", ["show", `${v410.sourceBaseRevision}:${relative}`], {cwd: root, maxBuffer: 4 * 1024 * 1024}) : readFileSync(path.join(root, relative));
+// 5.0.0 rewords coordinate-subagents (AGS3-D-0095), a purpose change outside this chain; it too is judged at the bytes before.
+const v500Reworded = (relative: string) => ["skills/coordinate-subagents/SKILL.md", "skills/coordinate-subagents/classification.json"].includes(relative);
+const r40Base = (relative: string) => rebound(relative) ? v410.sourceBaseRevision as string : v500Reworded(relative) ? "e67caf843ae94b752def7d0cf4a1f8fb66c2b208" : null;
+const r40Source = (relative: string) => {
+  const base = r40Base(relative);
+  return base ? execFileSync("git", ["show", `${base}:${relative}`], {cwd: root, maxBuffer: 4 * 1024 * 1024}) : readFileSync(path.join(root, relative));
+};
 const liveOrNull = (relative: string) => existsSync(path.join(root, relative)) ? r40Source(relative) : null;
 type Binding = {path: string; previousDigest: string; digest: string | null; bytes: number};
 type Span = {path: string; startLine: number; endLine: number; startByte?: number; endByte?: number; digest: string};
@@ -224,7 +229,7 @@ it("MI3 changes only the reviewed text and points every rebound span at the same
         expect(span.digest).toBe(hash(r40Source(span.path)));
         const actual = selected(r40Source(span.path), span), previous = selected(atBase(old.path), old);
         const text = actual.toString("utf8");
-        if (!rebound(span.path)) expect(skill[group]).toContain(text.trim());
+        if (!r40Base(span.path)) expect(skill[group]).toContain(text.trim());
         expect(text).not.toContain("ponytail");
         if (old.path === intake) {
           const [file, startLine, endLine, head, tail] = intakeSpans.get(`${group}[${index}]`)!;

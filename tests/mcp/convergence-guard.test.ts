@@ -1153,7 +1153,7 @@ describe("local MCP convergence guard", () => {
       leaseId: lease.leaseId,
       expectedRootRevision: lease.rootRevision,
       plan: legacyProposal.plan,
-      skills: [{ skillId: "minimal-implementation", reason: "test" }],
+      skills: [{ skillId: "fixture-editor", reason: "test" }],
     }, true).error?.code).toBe("BINDING_REQUIRED");
   });
 
