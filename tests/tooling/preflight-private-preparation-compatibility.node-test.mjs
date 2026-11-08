@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import {
+  beforeMinimalImplementationSuccessor,
   beforeSpecialistBehaviorSuccessor,
   checkRegistryContextCompatibility,
   checkSpecialistBehaviorSources,
@@ -68,7 +69,9 @@ test("current specialist guidance preserves exact preflight predecessors and rej
   assert.deepEqual(report.errors, []);
   assert.equal(report.pass, true);
   for (const path of paths) {
-    const current = readFileSync(new URL(`../../${path}`, import.meta.url));
+    // 4.0.0: exact minimal-implementation successor bytes (SKILL.md, classification.json) read as their 24c241d2
+    // predecessor first, as the checker projects them; any other live bytes are returned unchanged.
+    const current = beforeMinimalImplementationSuccessor(path, readFileSync(new URL(`../../${path}`, import.meta.url)));
     const predecessor = execFileSync("git", ["show", `${preBehaviorRevision}:${path}`], { cwd: root });
     const altered = Buffer.concat([current, Buffer.from("\n")]);
     // Only context and contract bytes belong to this historical projection.
