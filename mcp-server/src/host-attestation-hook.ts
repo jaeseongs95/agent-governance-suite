@@ -96,8 +96,11 @@ const CLAUDE_TRANSCRIPT_WINDOW_BYTES = 1024 * 1024;
  * absence would let the session model authorize the call. So a partial history never authorizes a model fallback:
  * every line of the size observed at open is read. The search for an issuer runs newest first and stops at the first
  * one, so a transcript that already holds it (headless) costs one window; absence costs one full pass.
+ * Within one observation that pass is not repeated (D-0074): the polls and the probe share it, and a later open reads
+ * only what was appended after the last complete line. The complete lines already read keep what they showed (the
+ * newest issuer, the oldest probe verdict); a file that was replaced, truncated or rewritten there is read again in full.
  */
-function openTranscript(file: string): { descriptor: number; size: number } | null {
+function openTranscript(file: string): { descriptor: number; size: number; identity: string } | null {
   let descriptor: number;
   try { descriptor = openSync(file, "r"); }
   catch (cause) {
@@ -111,7 +114,7 @@ function openTranscript(file: string): { descriptor: number; size: number } | nu
       if (stats.isDirectory()) readSync(descriptor, Buffer.alloc(1), 0, 1, 0);
       throw new HookObservationFailure("TRANSCRIPT_READ_FAILED");
     }
-    return { descriptor, size: stats.size };
+    return { descriptor, size: stats.size, identity: `${stats.dev}:${stats.ino}` };
   } catch (cause) {
     const failure = cause instanceof HookObservationFailure ? cause : new HookObservationFailure("TRANSCRIPT_READ_FAILED", cause);
     try { closeSync(descriptor); } catch (cleanup) { retainHookFailureSecondary(failure, cleanup); }
@@ -147,13 +150,16 @@ class LineAssembler {
   }
 }
 
-/** Lines of the transcript, newest first; the same segments as `content.split("\n").reverse()`. */
-function* linesNewestFirst(descriptor: number, size: number): Generator<string> {
-  const window = Buffer.alloc(Math.min(CLAUDE_TRANSCRIPT_WINDOW_BYTES, Math.max(size, 1)));
+/**
+ * Lines of the bytes [start, size), newest first, each with the offset it starts at; the same segments as
+ * `content.split("\n").reverse()`. `start` is 0 or just after a newline, so the oldest segment is a whole line.
+ */
+function* linesNewestFirst(descriptor: number, start: number, size: number): Generator<[line: string, offset: number]> {
+  const window = Buffer.alloc(Math.min(CLAUDE_TRANSCRIPT_WINDOW_BYTES, Math.max(size - start, 1)));
   const line = new LineAssembler();
   let position = size;
-  while (position > 0) {
-    const length = Math.min(window.length, position);
+  while (position > start) {
+    const length = Math.min(window.length, position - start);
     position -= length;
     readWindow(descriptor, window, length, position);
     let end = length;
@@ -161,43 +167,31 @@ function* linesNewestFirst(descriptor: number, size: number): Generator<string> 
       // A negative offset would count from the buffer end, so the loop stops at 0.
       const newline = window.lastIndexOf(0x0a, end - 1);
       if (newline < 0) break;
-      yield line.take(window.subarray(newline + 1, end), true);
+      yield [line.take(window.subarray(newline + 1, end), true), position + newline + 1];
       end = newline;
     }
     line.add(window.subarray(0, end), true);
   }
-  yield line.take();
+  yield [line.take(), start];
 }
 
-/** Lines of the transcript, oldest first; the same segments as `content.split("\n")`. */
-function* linesOldestFirst(descriptor: number, size: number): Generator<string> {
-  const window = Buffer.alloc(Math.min(CLAUDE_TRANSCRIPT_WINDOW_BYTES, Math.max(size, 1)));
-  const line = new LineAssembler();
-  let position = 0;
-  while (position < size) {
-    const length = Math.min(window.length, size - position);
-    readWindow(descriptor, window, length, position);
-    position += length;
-    const chunk = window.subarray(0, length);
-    let start = 0;
-    for (let newline = chunk.indexOf(0x0a, start); newline >= 0; newline = chunk.indexOf(0x0a, start)) {
-      yield line.take(chunk.subarray(start, newline));
-      start = newline + 1;
-    }
-    line.add(chunk.subarray(start), false);
-  }
-  yield line.take();
+function newlineAt(descriptor: number, position: number): boolean {
+  const byte = Buffer.alloc(1);
+  readWindow(descriptor, byte, 1, position);
+  return byte[0] === 0x0a;
 }
 
-/** Runs `scan` over one transcript file; null when the file does not exist (normal absence). */
-function scanTranscriptFile<T>(file: string, order: "newest-first" | "oldest-first", scan: (lines: Iterable<string>) => T): T | null {
+type OpenedTranscript = NonNullable<ReturnType<typeof openTranscript>>;
+
+/** Runs `scan` over one opened transcript file; null when the file does not exist (normal absence). */
+function scanTranscriptFile<T>(file: string, scan: (opened: OpenedTranscript) => T): T | null {
   const opened = openTranscript(file);
   if (!opened) return null;
   let failure: unknown;
   let failed = false;
   let result: T | null = null;
   try {
-    result = scan(order === "newest-first" ? linesNewestFirst(opened.descriptor, opened.size) : linesOldestFirst(opened.descriptor, opened.size));
+    result = scan(opened);
   } catch (cause) {
     failed = true;
     failure = cause instanceof HookObservationFailure ? cause : new HookObservationFailure("TRANSCRIPT_READ_FAILED", cause);
@@ -212,26 +206,67 @@ function scanTranscriptFile<T>(file: string, order: "newest-first" | "oldest-fir
   return result;
 }
 
-/** Where the issuing message is looked up: the host's transcript files, or injected text (tests). */
+/** Where the issuing message of one call is looked up: the host's transcript files, or injected text (tests). */
 interface TranscriptReader {
-  find(file: string, toolUseId: string, sessionId: string, agentId: string | null): TranscriptObservation | null;
-  probe(file: string, toolUseId: string): IssuingMessageProbe;
+  /** As findToolUseObservation over the whole current file. */
+  find(file: string): TranscriptObservation | null;
+  /** As probeIssuingMessage over the whole current file. */
+  probe(file: string): IssuingMessageProbe;
 }
 
-const fileTranscriptReader: TranscriptReader = {
-  find: (file, toolUseId, sessionId, agentId) =>
-    scanTranscriptFile(file, "newest-first", lines => findToolUseObservationInLines(lines, toolUseId, sessionId, agentId)),
-  probe: (file, toolUseId) =>
-    scanTranscriptFile(file, "oldest-first", lines => probeIssuingMessageInLines(lines, toolUseId)) ?? { state: "absent" },
-};
+/** What the complete lines before `end` showed: the newest issuer among them (undefined: none) and the oldest probe verdict. */
+interface ReadPrefix { identity: string; end: number; issuer: TranscriptObservation | null | undefined; verdict: IssuingMessageProbe | null }
 
-function textTranscriptReader(readText: (file: string) => string | null): TranscriptReader {
+/**
+ * Reads each transcript file once per observation: a later find or probe reads only the bytes after the complete lines
+ * already read and keeps what those lines showed. The last segment may still be written, so it is read again each time.
+ */
+function fileTranscriptReader(toolUseId: string, sessionId: string, agentId: string | null): TranscriptReader {
+  const prefixes = new Map<string, ReadPrefix>();
+  const scan = (file: string, want: "find" | "probe") => {
+    const result = scanTranscriptFile(file, ({ descriptor, size, identity }) => {
+      let prior = prefixes.get(file);
+      // Only lines the host appended to the same file extend what was read; anything else is read again in full.
+      if (prior && (prior.identity !== identity || size < prior.end || (prior.end > 0 && !newlineAt(descriptor, prior.end - 1)))) {
+        prior = undefined;
+      }
+      let newest: TranscriptObservation | null | undefined; // over the new bytes, the last segment included
+      let issuer: TranscriptObservation | null | undefined; // over the complete new lines
+      let verdict: IssuingMessageProbe | null = null; // the oldest verdict of the complete new lines
+      let last: { offset: number; verdict: IssuingMessageProbe | null } | null = null;
+      for (const [line, offset] of linesNewestFirst(descriptor, prior?.end ?? 0, size)) {
+        const lineIssuer = issuerInLine(line, toolUseId, sessionId, agentId);
+        if (newest === undefined && lineIssuer !== undefined) {
+          newest = lineIssuer;
+          // An accepted newest issuer decides the search; no older line can change it.
+          if (newest && want === "find") return { found: newest, verdict: null };
+        }
+        const lineVerdict = probeLine(line, toolUseId);
+        if (!last) { last = { offset, verdict: lineVerdict }; continue; }
+        if (issuer === undefined) issuer = lineIssuer;
+        if (lineVerdict) verdict = lineVerdict;
+      }
+      const read: ReadPrefix = { identity, end: last?.offset ?? prior?.end ?? 0,
+        issuer: issuer !== undefined ? issuer : prior?.issuer, verdict: prior?.verdict ?? verdict };
+      prefixes.set(file, read);
+      return { found: newest !== undefined ? newest : read.issuer ?? null, verdict: read.verdict ?? last?.verdict ?? null };
+    });
+    if (!result) prefixes.delete(file);
+    return result;
+  };
   return {
-    find: (file, toolUseId, sessionId, agentId) => {
+    find: file => scan(file, "find")?.found ?? null,
+    probe: file => scan(file, "probe")?.verdict ?? { state: "absent" },
+  };
+}
+
+function textTranscriptReader(readText: (file: string) => string | null, toolUseId: string, sessionId: string, agentId: string | null): TranscriptReader {
+  return {
+    find: (file) => {
       const transcript = readText(file);
       return transcript ? findToolUseObservation(transcript, toolUseId, sessionId, agentId) : null;
     },
-    probe: (file, toolUseId) => probeIssuingMessage(readText(file) ?? "", toolUseId),
+    probe: (file) => probeIssuingMessage(readText(file) ?? "", toolUseId),
   };
 }
 
@@ -276,25 +311,31 @@ export function findToolUseObservationInLines(
   agentId: string | null,
 ): TranscriptObservation | null {
   for (const line of newestFirst) {
-    if (!line || !mentionsToolUseId(line, toolUseId)) continue;
-    let entry: Record<string, unknown> | null;
-    try {
-      entry = record(JSON.parse(line));
-    } catch {
-      continue;
-    }
-    if (!entry || entry.type !== "assistant") continue;
-    const message = record(entry.message);
-    const content = Array.isArray(message?.content) ? message.content : [];
-    const issued = content.some((block) => record(block)?.type === "tool_use" && record(block)?.id === toolUseId);
-    if (!issued) continue;
-    if (entry.sessionId !== undefined && entry.sessionId !== sessionId) return null;
-    if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) return null;
-    const model = text(message?.model);
-    if (!model) return null;
-    return { model, effort: text(entry.effort) };
+    const issuer = issuerInLine(line, toolUseId, sessionId, agentId);
+    if (issuer !== undefined) return issuer;
   }
   return null;
+}
+
+/** undefined: the line did not issue toolUseId; null: it did, but this session's thread cannot use it. */
+function issuerInLine(line: string, toolUseId: string, sessionId: string, agentId: string | null): TranscriptObservation | null | undefined {
+  if (!line || !mentionsToolUseId(line, toolUseId)) return undefined;
+  let entry: Record<string, unknown> | null;
+  try {
+    entry = record(JSON.parse(line));
+  } catch {
+    return undefined;
+  }
+  if (!entry || entry.type !== "assistant") return undefined;
+  const message = record(entry.message);
+  const content = Array.isArray(message?.content) ? message.content : [];
+  const issued = content.some((block) => record(block)?.type === "tool_use" && record(block)?.id === toolUseId);
+  if (!issued) return undefined;
+  if (entry.sessionId !== undefined && entry.sessionId !== sessionId) return null;
+  if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) return null;
+  const model = text(message?.model);
+  if (!model) return null;
+  return { model, effort: text(entry.effort) };
 }
 
 function mentionsToolUseId(line: string, toolUseId: string): boolean {
@@ -436,43 +477,49 @@ export function probeIssuingMessage(transcript: string, toolUseId: string): Issu
 /** The same probe over lines given oldest first; the first non-absent line decides. */
 export function probeIssuingMessageInLines(oldestFirst: Iterable<string>, toolUseId: string): IssuingMessageProbe {
   for (const line of oldestFirst) {
-    if (!mentionsToolUseId(line, toolUseId)) {
-      if (hasIncompleteIssuer(line, toolUseId)) return { state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" };
-      continue;
-    }
-    let entry: Record<string, unknown> | null;
-    try { entry = record(JSON.parse(line)); }
-    catch { return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_JSON" }; }
-    if (!entry) return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
-    const message = record(entry.message);
-    if (entry.type !== "assistant") {
-      // A known non-issuer row may mention a call. An unrecognized issuer-shaped row cannot prove absence.
-      if (entry.type !== "user" && entry.type !== "system" && Array.isArray(message?.content)
-        && message.content.some((value) => record(value)?.id === toolUseId)) {
-        return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
-      }
-      continue;
-    }
-    if (!message || !Array.isArray(message.content)) {
-      return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
-    }
-    for (const value of message.content) {
-      const block = record(value);
-      if (!block) {
-        if (typeof value === "string" && value.includes(toolUseId))
-          return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
-        continue;
-      }
-      if (block.id === toolUseId) {
-        if (block.type === "tool_use") return { state: "present" };
-        if (block.type !== "text" && block.type !== "tool_result")
-          return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
-      }
-      if (block.type !== "tool_use") continue;
-      if (!text(block.id)) return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
-    }
+    const verdict = probeLine(line, toolUseId);
+    if (verdict) return verdict;
   }
   return { state: "absent" };
+}
+
+/** The probe verdict of one line; null when the line is no evidence either way. */
+function probeLine(line: string, toolUseId: string): IssuingMessageProbe | null {
+  if (!mentionsToolUseId(line, toolUseId)) {
+    return hasIncompleteIssuer(line, toolUseId) ? { state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" } : null;
+  }
+  let entry: Record<string, unknown> | null;
+  try { entry = record(JSON.parse(line)); }
+  catch { return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_JSON" }; }
+  if (!entry) return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+  const message = record(entry.message);
+  if (entry.type !== "assistant") {
+    // A known non-issuer row may mention a call. An unrecognized issuer-shaped row cannot prove absence.
+    if (entry.type !== "user" && entry.type !== "system" && Array.isArray(message?.content)
+      && message.content.some((value) => record(value)?.id === toolUseId)) {
+      return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+    }
+    return null;
+  }
+  if (!message || !Array.isArray(message.content)) {
+    return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+  }
+  for (const value of message.content) {
+    const block = record(value);
+    if (!block) {
+      if (typeof value === "string" && value.includes(toolUseId))
+        return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+      continue;
+    }
+    if (block.id === toolUseId) {
+      if (block.type === "tool_use") return { state: "present" };
+      if (block.type !== "text" && block.type !== "tool_result")
+        return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+    }
+    if (block.type !== "tool_use") continue;
+    if (!text(block.id)) return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+  }
+  return null;
 }
 
 /** The model a SessionStart or PostModelSwitch hook reports for the main thread, if any. */
@@ -540,7 +587,8 @@ export function observeClaudeExecution(input: HookInput, options: HostAttestatio
   const transcriptPath = text(input.transcript_path);
   if (!sessionId || !toolUseId || !transcriptPath) return { unavailable: "CLAUDE_CALL_FIELDS_MISSING" };
   const agentId = text(input.agent_id);
-  const reader = options.readText ? textTranscriptReader(options.readText) : fileTranscriptReader;
+  const reader = options.readText ? textTranscriptReader(options.readText, toolUseId, sessionId, agentId)
+    : fileTranscriptReader(toolUseId, sessionId, agentId);
   const sleep = options.sleep ?? sleepSync;
   const maxWaitMs = options.maxWaitMs ?? 300;
   // An explicit maxWaitMs bounds every wait; by default a call with no session model to fall back on waits longer.
@@ -553,7 +601,7 @@ export function observeClaudeExecution(input: HookInput, options: HostAttestatio
   const search = (untilMs: number): TranscriptObservation | null => {
     for (; ; waited += pollIntervalMs) {
       for (const candidate of candidates) {
-        const found = reader.find(candidate, toolUseId, sessionId, agentId);
+        const found = reader.find(candidate);
         if (found) return found;
       }
       if (waited >= untilMs || elapsedMs() >= untilMs) return null;
@@ -564,11 +612,11 @@ export function observeClaudeExecution(input: HookInput, options: HostAttestatio
   // An issuing message that was found but rejected (another session, a sidechain, no model) stays unobserved.
   const probeIssuer = (): TranscriptObservation | { unavailable: string } | null => {
     for (const candidate of candidates) {
-      const probe = reader.probe(candidate, toolUseId);
+      const probe = reader.probe(candidate);
       if (probe.state === "indeterminate") return { unavailable: probe.reason };
       if (probe.state === "present") {
         // The probe reopens the file, so it can see an issuer written after the search above read it.
-        return reader.find(candidate, toolUseId, sessionId, agentId) ?? { unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" };
+        return reader.find(candidate) ?? { unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" };
       }
     }
     return null;
