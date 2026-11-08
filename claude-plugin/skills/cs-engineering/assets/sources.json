@@ -105,7 +105,7 @@
     {
       "id": "AGS-DESIGN",
       "title": "AGS CS Engineering Design v0.1.0",
-      "url": "../references/design-basis.ko.md",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/main/docs/archive/cs-engineering-design.ko.md",
       "scope": "Project-specific synthesis, role boundaries and evidence model",
       "versionScope": "User-supplied design 2026-10-06",
       "access": "reference-only",

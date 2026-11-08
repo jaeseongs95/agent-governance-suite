@@ -195,9 +195,15 @@ describe("skill context optimization", () => {
     // registry.json is bound by its descriptor digest, source-lock.json and skill scripts by source-lock.
     const excluded = relative => /^skills\/(?:ponytail|minimal-implementation)\//u.test(relative)
       || ["skills/registry.json", "skills/source-lock.json"].includes(relative) || /^skills\/[^/]+\/scripts\/.+\.(?:mjs|py)$/u.test(relative);
-    const changed = execFileSync("git", ["diff", "--name-only", "--no-renames", successor.baselineRevision, "--", "skills"], { cwd: repository, encoding: "utf8" })
+    const changedWith = filter => execFileSync("git", ["diff", "--name-only", "--no-renames", `--diff-filter=${filter}`, successor.baselineRevision, "--", "skills"], { cwd: repository, encoding: "utf8" })
       .split(/\r?\n/u).filter(Boolean).filter(relative => !excluded(relative));
+    const changed = changedWith("M");
     expect(Object.keys(successor.hashes).toSorted()).toEqual(changed.toSorted());
+    // Nothing else changed but the one file-level retirement (the CS skill's design-draft copy, 「당장 빼.」), which the
+    // retirement check pins at the baseline; no context file was added outside the excluded skills.
+    expect(changedWith("ADRCTUXB")).toEqual(["skills/cs-engineering/references/design-basis.ko.md"]);
+    const retired = checkSkillContextOptimization().retiredSkills.find(retirement => retirement.skillIds.length === 0);
+    expect(retired).toMatchObject({ revision: successor.baselineRevision, hashes: { "skills/cs-engineering/references/design-basis.ko.md": "01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034" } });
     for (const [relative, [before, after]] of Object.entries(successor.hashes)) {
       const current = readFileSync(path.join(repository, relative));
       const predecessor = execFileSync("git", ["show", `${successor.baselineRevision}:${relative}`], { cwd: repository });

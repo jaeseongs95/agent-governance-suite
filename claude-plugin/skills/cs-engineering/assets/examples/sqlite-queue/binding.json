@@ -7,12 +7,12 @@
   "requestDigest": "sha256:7ca3af32e32cc611a405eb3c2eb2339c94ebacfa59b1a31a0524f9d68b4342c7",
   "constraintReportRef": {
     "path": "constraints.json",
-    "digest": "sha256:3c4b86b78c6b9c230fda615afa0d6e7a953e4a0c5a8f68e18ab1120822480a1e"
+    "digest": "sha256:2ee0444ea9ed5a3c4693700aaa0d5afd9182cf87f1f7bc6ee38d8acd5008ed7d"
   },
-  "constraintReportDigest": "sha256:7727c156f7c2c83261edb981a72071a38100b3fb9a9fb4e6e5c5195de7c28442",
+  "constraintReportDigest": "sha256:0c9a911cf89e595b388884ac83c6ef165de0cf130656ab6e3620c3a59dd5d5b1",
   "taskDigest": "sha256:5d6ae1a31c396c02f737ba8bc6afcb6eb545d88f332a32ad697ebf82bfb0d978",
   "knowledgePackVersion": "0.1.0",
-  "knowledgePackDigest": "sha256:d8351d9aabb433403830fcffc3a2f2438b6d428711c93b6ded9eff002468c3d1",
+  "knowledgePackDigest": "sha256:88b8b16bf4d1bcafca881ad49ead4d7a53bd9fa63f5fa680439c9d8c0627b92d",
   "policyId": "REFERENCE-LOCAL",
   "policyVersion": "1.0.0",
   "policyDigest": "sha256:fb5c9187f1e7af8e250508f3d1ae84fadc0420813baa3800ef3eb5ca68bc3b33",

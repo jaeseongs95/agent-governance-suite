@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "binding": {
     "path": "binding.json",
-    "digest": "sha256:7ccdbc9e9424ef07173d87c5f51141e1ef03cef4c4c99832a5e6f92c296d980e"
+    "digest": "sha256:7d61b5f37d7833d9d65053d5f020a0a969d5f93ac20fa308cafb258a5d5bb1ff"
   },
   "task": {
     "path": "task.json",
@@ -14,7 +14,7 @@
   },
   "review": {
     "path": "review.json",
-    "digest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3"
+    "digest": "sha256:41000ff18622043d471f6a5932283d50629c0808496b2bbc0d609fcfea0ab552"
   },
   "candidate": {
     "path": "candidate.json",

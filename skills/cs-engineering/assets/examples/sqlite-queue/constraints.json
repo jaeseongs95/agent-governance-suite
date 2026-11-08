@@ -4,7 +4,7 @@
   "requestDigest": "sha256:7ca3af32e32cc611a405eb3c2eb2339c94ebacfa59b1a31a0524f9d68b4342c7",
   "sourceSnapshotDigest": "sha256:d197632aa32cf4d9c1b064b7c15915113e41bc4f2288b0ece127af28a6bf951d",
   "knowledgePackVersion": "0.1.0",
-  "knowledgePackDigest": "sha256:d8351d9aabb433403830fcffc3a2f2438b6d428711c93b6ded9eff002468c3d1",
+  "knowledgePackDigest": "sha256:88b8b16bf4d1bcafca881ad49ead4d7a53bd9fa63f5fa680439c9d8c0627b92d",
   "draftUse": {
     "allowed": false,
     "basis": "사용한 두 규칙은 로컬 참조 검증을 마친 핵심 풀에 있다."

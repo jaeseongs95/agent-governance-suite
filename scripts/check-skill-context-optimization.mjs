@@ -486,7 +486,17 @@ const RETIRED_PONYTAIL = Object.freeze({
     "skills/ponytail/classification.json": "6f263e26ab1bb4b49ebe751395f5323fed4f8074a72089fc8aa28b6a17765f18",
   }),
 });
-const RETIREMENTS = Object.freeze([RETIRED_SKILLS, RETIRED_TOKEN_ANALYZER, RETIRED_PONYTAIL]);
+// AGS 4.0.0 (user 2026-11-08 「당장 빼.」): the CS skill's copy of its 2.7.7 design draft left the skill package, since
+// a model reading it pays for stale context. The same bytes stay in docs/archive/cs-engineering-design.ko.md; the
+// CS source list cites that copy. A file-level retirement: no skill directory, only this path.
+const RETIRED_CS_DESIGN_COPY = Object.freeze({
+  revision: "24c241d28e130912a0606090727b2b964c811757",
+  skillIds: Object.freeze([]),
+  hashes: Object.freeze({
+    "skills/cs-engineering/references/design-basis.ko.md": "01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034",
+  }),
+});
+const RETIREMENTS = Object.freeze([RETIRED_SKILLS, RETIRED_TOKEN_ANALYZER, RETIRED_PONYTAIL, RETIRED_CS_DESIGN_COPY]);
 const retiredPaths = retirement => [...Object.keys(retirement.hashes), ...(retirement.removedExecutables ?? [])];
 const retirementFor = relative => RETIREMENTS.find(retirement => retiredPaths(retirement).includes(relative));
 
@@ -601,7 +611,8 @@ function checkRetiredSkills() {
   const errors = [];
   const present = new Set(readdirSync(join(ROOT, "skills"), { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => entry.name));
   for (const retirement of RETIREMENTS) {
-    const scopes = retirement.skillIds.map(skillId => `skills/${skillId}`);
+    // A whole-skill retirement is scoped by its directories, a file-level one by its own paths.
+    const scopes = retirement.skillIds.length ? retirement.skillIds.map(skillId => `skills/${skillId}`) : retiredPaths(retirement);
     for (const skillId of retirement.skillIds) if (present.has(skillId)) errors.push(`retired skill directory present: skills/${skillId}`);
     for (const relative of retiredPaths(retirement)) {
       try { readFileBytes(join(ROOT, relative)); errors.push(`retired skill source present: ${relative}`); }
@@ -659,9 +670,14 @@ const MINIMAL_IMPLEMENTATION_SUCCESSOR = Object.freeze({
     "skills/coordinate-subagents/SKILL.md": Object.freeze(["f5acb926234feda269ec7f0c5faa444fe31cc5f257ba854c505cd37fa4efe881", "33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f"]),
     "skills/coordinate-subagents/classification.json": Object.freeze(["1353938a8500fd23852ac71d64adcde2a9cd1275c22958823bf3d5c1dccc94af", "fc15c399cb59d536d77da0cf587e4c097c1b205a4764a39f0000d047750603fc"]),
     "skills/cs-engineering/SKILL.md": Object.freeze(["624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51", "cc53dfaf8586667655f585ec040f462c5523010e98c517ecd4af30399285b354"]),
+    "skills/cs-engineering/assets/examples/sqlite-queue/binding.json": Object.freeze(["7ccdbc9e9424ef07173d87c5f51141e1ef03cef4c4c99832a5e6f92c296d980e", "7d61b5f37d7833d9d65053d5f020a0a969d5f93ac20fa308cafb258a5d5bb1ff"]),
+    "skills/cs-engineering/assets/examples/sqlite-queue/constraints.json": Object.freeze(["3c4b86b78c6b9c230fda615afa0d6e7a953e4a0c5a8f68e18ab1120822480a1e", "2ee0444ea9ed5a3c4693700aaa0d5afd9182cf87f1f7bc6ee38d8acd5008ed7d"]),
+    "skills/cs-engineering/assets/examples/sqlite-queue/review.json": Object.freeze(["51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3", "41000ff18622043d471f6a5932283d50629c0808496b2bbc0d609fcfea0ab552"]),
+    "skills/cs-engineering/assets/examples/sqlite-queue/stage-bundle.json": Object.freeze(["4ab4e1f532734ac9173965be0cb49247b044606ce8616a9e4d9a3d156653f5e5", "095941270613a96f77c893723a03039e449a8cfbdb52df6fd3bf8215c7b54119"]),
+    "skills/cs-engineering/assets/knowledge-lock.json": Object.freeze(["af72203315c251c981925ecf54e9d97bfbfdb57d00b362a9d80d020d8545ddc0", "c8a185d10f04800b35da0f10dd48df6c96df18e5bcf0a681c1bcee3fa2899f15"]),
+    "skills/cs-engineering/assets/sources.json": Object.freeze(["56e7eedee105dbc966909b1977ac1220a930e1d26dbbf762f9118d79e4f17da7", "c506ed7a60673e1b1230598acd166ca249065ec65b22767433a5c36cff2fc2e6"]),
     "skills/cs-engineering/classification.json": Object.freeze(["8eb3ed74d4d88977b9392a786f7ca23b3917ded3f584c377397b4a333a1003da", "e61cb60d4c1246bf01db78ebba6439ec00fe280ab266ee175316ae90c0a9a77d"]),
     "skills/cs-engineering/references/ags-2x-integration.md": Object.freeze(["e20adcfc11a2e0eb9a52ac917e14556a51f31585147d3e7e4859c3aa0f32612b", "79111055ef48e0a796f629aabda6dd808852502c8d253a40ddeafbe20c571253"]),
-    "skills/cs-engineering/references/design-basis.ko.md": Object.freeze(["01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034", "7b5ef9dc7fe8249368c99b6fa30965579bedeb34931e128e8763b8932f4c3daf"]),
     "skills/evaluation-validity-auditor/SKILL.md": Object.freeze(["de0f1e1f294fdf0ec84844375816918f23431dddf92f43c2a18bbdf5ab3ba53d", "9f1f333d95e030a52ce7481e4224e9a6f3a738563ae37f01c4d8a7b499b6d22d"]),
     "skills/evaluation-validity-auditor/classification.json": Object.freeze(["53aa8cb62e1caf1972224de5d8b1cdc80e4e4687f3f0fec467f7db59371aabf7", "f227a2ec1f3aa39904b1632842bf76c20ee82aff37b225d31747b2a64ffa6616"]),
     "skills/independent-audit-gate/SKILL.md": Object.freeze(["8ce58c59628bb7cff11f508e5bfebf7e2d2bf37b7fadea1890f41d7ed370c669", "8e319bab46f7917c9a3db56f9e1c7a1a5382bf6d3f60ea5930a79df43a8f15c5"]),

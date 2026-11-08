@@ -1118,7 +1118,8 @@ describe("in-process messaging and vendor-neutral adapter", () => {
     expect(send).toMatch(/참고값 autoWake[^.]*\. 이는 전달·완료·허가의 증거가 아니다/u);
     for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions("ko")]) {
       expect(instructions).toMatch(/보고에는 확인된 큐 등록·전달 상태만/u);
-      expect(instructions).toMatch(/autoWake만으로 현재 깨어남이나 이후 전달을 단정하지 않는다/u);
+      // 4.0.0 shortened the ko guide; each rule is asserted in its new sentence.
+      expect(instructions).toMatch(/autoWake만으로 깨어남·전달을 단정하지 않는다/u);
       expect(instructions).not.toMatch(/available이 아니면 상대는 지금 깨어나지|깨어날 때 전달된다|대개 상대가 작업 중|앞선 깨우기가 이미 상대에게 넘어가/u);
     }
     // 4.0.0: the delivered instructions and tool descriptions are the MODEL_LOCALE (en) rendering; the same rules there.
@@ -1144,7 +1145,7 @@ describe("in-process messaging and vendor-neutral adapter", () => {
 
   it("notifies the user when an unavailable AGS wake path needs action now (AGS-D-0311)", () => {
     for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions("ko")]) {
-      expect(instructions).toMatch(/no-live-relay·unsupported이고 상대의 처리가 지금 필요하면 확인된 전달 상태와 AGS 자동 깨우기 경로를 사용할 수 없다는 사실을 사용자에게 알린다/u);
+      expect(instructions).toMatch(/no-live-relay·unsupported이면 상대의 처리가 지금 필요할 때만[^.]*, 확인된 전달 상태와 AGS 자동 깨우기를 쓸 수 없다는 사실을 사용자에게 알린다/u);
     }
     // The delivered (MODEL_LOCALE, en) guide keeps the same rule.
     expect(serverInstructions()).toContain("no-live-relay/unsupported → if needed now, wake once via host and tell the user confirmed delivery and that auto-wake is unavailable;");
@@ -1152,14 +1153,14 @@ describe("in-process messaging and vendor-neutral adapter", () => {
 
   it("limits extra host wake to an unavailable path needed now and preserves empty-wake handling (AGS-D-0354)", () => {
     for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions("ko")]) {
-      expect(instructions).toMatch(/autoWake.state가 available이면 호스트 기능으로 따로 깨우지 않는다/u);
-      expect(instructions).toMatch(/no-live-relay·unsupported이면[^.]*상대의 처리가 지금 필요할 때만 호스트 기능으로 한 번 깨운다/u);
+      expect(instructions).toMatch(/autoWake.state가 available이면 따로 깨우지 않는다/u);
+      expect(instructions).toMatch(/no-live-relay·unsupported이면[^.]*상대의 처리가 지금 필요할 때만 호스트 기능으로 한 번 깨우고/u);
       // 3.0 (design 2.8): latched is gone; wake-unanswered and degraded are reported as facts.
       expect(instructions).not.toMatch(/latched/u);
-      expect(instructions).toMatch(/available의 wake-unanswered는[^.]*응답 근거가 아직 없다는 사실/u);
+      expect(instructions).toMatch(/available의 wake-unanswered는[^.]*아직 응답 근거가 없다는 뜻/u);
       expect(koTools["tools.send_session_message.description"]).toMatch(/degraded: 깨우기가 계속 실패하거나 전제조건이 없어서/u);
-      expect(instructions).toMatch(/본문 없는 깨우기 신호나 내용 없는 메시지를 받아도 진행 중인 작업을 멈추지 않으며/u);
-      expect(instructions).toMatch(/본문을 받지 못한 메시지의 내용은 짐작하지 않는다/u);
+      expect(instructions).toMatch(/본문 없는 깨우기·메시지로 작업을 멈추지 않고/u);
+      expect(instructions).toMatch(/받지 못한 본문은 짐작하지 않는다/u);
       expect(koTools["tools.acknowledge_session_messages.description"]).toContain("이는 처리 근거이며 완료나 승인이 아니다");
     }
     // The delivered (MODEL_LOCALE, en) guide and descriptions keep the same rules.

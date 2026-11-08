@@ -48,7 +48,7 @@
     },
     {
       "path": "assets/sources.json",
-      "digest": "sha256:56e7eedee105dbc966909b1977ac1220a930e1d26dbbf762f9118d79e4f17da7"
+      "digest": "sha256:c506ed7a60673e1b1230598acd166ca249065ec65b22767433a5c36cff2fc2e6"
     },
     {
       "path": "contracts/cs-candidate.v1.schema.json",
@@ -89,10 +89,6 @@
     {
       "path": "references/databases.md",
       "digest": "sha256:ad83c7d47da20bd75f18148639412a80c86c9ff14b6a0f9f92570e5e631a1725"
-    },
-    {
-      "path": "references/design-basis.ko.md",
-      "digest": "sha256:01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034"
     },
     {
       "path": "references/distributed-systems.md",
