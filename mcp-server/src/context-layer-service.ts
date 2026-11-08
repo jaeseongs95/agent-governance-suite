@@ -41,6 +41,9 @@ export { normalizeRoleName, ROLE_NAME_MAX_LENGTH };
 export const GLOBAL_CONTEXT_MAX_BYTES = 4000;
 export const ROLE_CONTEXT_MAX_BYTES = 2000;
 
+/** How old a session's activity stamp may get before a mid-turn step rewrites it (far below RETAIN_MS, far above a step). */
+const SEEN_REFRESH_MS = 3600_000;
+
 export interface GlobalContextView {
   body: string;
   /** The hash of the signed record that set it; a proposal names it as its base. */
@@ -366,8 +369,10 @@ export class ContextLayerService {
         } else if (!binding && changed && before?.role) {
           lines.push(msg("hooks.contextLayers.roleUnbound", { role: before.role }));
         }
-        // A write per step would serialize every hook of the session; the 30-day retention needs only turn and context starts.
-        if (full || turnStart) store.touchSession(host, sessionId, now);
+        // A write per step would serialize every hook of the session. A step refreshes only a stamp that has aged, so a
+        // session that continues without user turns (peer wakes, long runs) still counts as used for the 30-day retention.
+        const seen = full || turnStart ? null : store.sessionSeen(host, sessionId);
+        if (full || turnStart || seen === null || this.now().getTime() - Date.parse(seen) > SEEN_REFRESH_MS) store.touchSession(host, sessionId, now);
       } catch {
         lines.push(msg("hooks.contextLayers.unreadable", { layer: "role" }));
       }

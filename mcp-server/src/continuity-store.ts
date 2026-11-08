@@ -220,7 +220,8 @@ export class SqliteContinuityStore {
   /**
    * `trustCurrentSchema` is for a hook process, which opens this file on every event of every session: a schema change
    * commits its version in the same transaction, so a current version means a complete schema and the open needs neither
-   * the writer lock nor the whole-file quick_check. Context starts and the MCP server still run both.
+   * the writer lock nor the whole-file quick_check. Context starts and the MCP server still run both. Any schema change
+   * must therefore raise SCHEMA_VERSION: a table added at the current version would never be created for a hook.
    */
   constructor(input: string | SharedModuleContext, migrations: readonly ContinuityMemoryMigration[] = [], options: { trustCurrentSchema?: boolean } = {}) {
     this.shared = typeof input === "string" ? undefined : input;

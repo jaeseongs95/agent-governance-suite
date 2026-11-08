@@ -1114,7 +1114,8 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
    * Derived from root_json, which is never rewritten. No foreign key and no schema version bump:
    * a server without this table keeps opening and cleaning the same database, and rows it
    * leaves behind are recomputed or ignored. A refreshed identity replaces the stored one; how
-   * the root was bound to its parent is kept.
+   * the root was bound to its parent is kept. A table added after this one does need a version
+   * bump: a hook process trusts a file at the current version and would not create the table.
    */
   private saveRootIdentity(
     rootId: string,
