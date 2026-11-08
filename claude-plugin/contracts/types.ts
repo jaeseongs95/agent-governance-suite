@@ -550,7 +550,7 @@ export const POLICY_CAPABILITY = {
 
 /**
  * `message` is the root-locale (en) text, so stored bodies and digests do not depend on who asked.
- * `messageKey` and `params` let each reader render it in its own locale (docs/i18n-design.md 3, 6).
+ * `messageKey` and `params` let each reader render it in its own locale (docs/contributing/i18n.md 3, 6).
  */
 export interface ContractErrorBody {
   code: ErrorCode;
