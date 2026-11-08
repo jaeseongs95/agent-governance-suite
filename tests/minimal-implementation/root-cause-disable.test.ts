@@ -29,13 +29,16 @@ it("keeps causal correction in the existing defect-fix and verification rules wi
   expect(text).toContain("주어진 CS 불변조건과 검증 의무를 유지하며");
 });
 
-it("keeps explicit disable and user override above automatic selection and mandatory-first intake", async () => {
+it("keeps explicit disable and user override above automatic selection and the mandatory-first rule", async () => {
   const text = flat(await read("skills/minimal-implementation/SKILL.md"));
   const intake = await read("skills/orchestrator/references/intake.md");
   expect(text).toContain("명시적 비활성화나 사용자 재정의는 이 스킬 전체에 적용되며 자동 선택보다 우선한다.");
   expect(text).toContain("이후의 명시적 사용은 그 요청에만 적용한다.");
   expect(text).toContain("스킬이 없거나 꺼져 있으면 멈추거나 다시 켜 달라고 하지 말고 원 요구·수용 기준·필요한 시험을 지킨다.");
-  expect(intake).toContain("`minimal-implementation`이 가용·활성이고 사용자 지시와 충돌하지 않으면 먼저 호출한다.");
+  // 4.0.0 (token optimization): "call it first" moved from the intake into the skill's own description, which every
+  // host lists for selection; the override and missing-skill rules stay in the intake for every skill.
+  const description = /^description: (.*)$/mu.exec(await read("skills/minimal-implementation/SKILL.md"))?.[1] ?? "";
+  expect(description).toContain("invoke it first when available, active and not against user instructions");
   expect(intake).toContain("사용자 disable·override가 우선하며");
   expect(intake).toContain("없거나 꺼져 있으면 재활성화를 요구하거나 멈추지 말고");
   expect(intake).toContain("원 요구·수용 기준·시험을 지킨다");

@@ -630,36 +630,84 @@ function beforeMultiWorkflowGuidance(relative, bytes) {
  * Projects exact reviewed successors onto their predecessors until none applies. A guidance successor can follow the
  * purpose change (3.9.0 rewords model-effort-advisor and coordinate-subagents after it), so neither order is fixed.
  */
-// AGS 4.0.0 minimal-implementation successor (generated).
-// The user replaced ponytail with the AGS minimal-implementation skill (2026-11-08). These skill context files only
-// renamed the provider and widened it from code to every deliverable; historical checks read the exact 4.0.0 bytes as
-// their predecessor at baselineRevision, verified by digest. No execution authority, no model-behavior claim.
+// AGS 4.0.0 successor of every skill context file changed since baselineRevision (generated from git and the tree by
+// the 4.0.0 pin generator; each pin is [sha256 at baselineRevision, sha256 of the exact 4.0.0 bytes]). Two user decisions:
+// - 2026-11-08 「걍 ponytail 스킬을 빼고 AGS용으로 전면 재개편하자.」: ponytail is retired and the AGS
+//   minimal-implementation skill 1.0.0 takes its provider slot (the files that named ponytail now name it).
+// - 2026-11-08 「한글이 더 토큰소모량이 적으면 한글로 써도 된단소리야.」「intake 뿐만이겠냐?」: text the model reads
+//   uses the cheaper wording: the 25 SKILL.md descriptions are one English line, the shared intake
+//   (references/intake.md) is compressed, and classification.json spans are rebound to the new bytes.
+// Only these exact bytes project onto their predecessor at baselineRevision (verified by digest); one differing byte is
+// never projected. registry.json is bound by registryDescriptorSha256 instead, source-lock.json is executable provenance.
+// authorityEffect none: no execution authority; this is not a model-behavior evaluation.
 const MINIMAL_IMPLEMENTATION_SUCCESSOR = Object.freeze({
   revision: "minimal-implementation-2026-11-08",
   registryDescriptorSha256: "78f89f94b286addd90fce67ab88e517f1268cf20d182bf49a7478a56fba2ba24",
   baselineRevision: "24c241d28e130912a0606090727b2b964c811757",
   changeKind: "user-requested-purpose-change",
   authorityEffect: "none",
+  modelBehaviorValidated: false,
   hashes: Object.freeze({
-    "skills/code-review/SKILL.md": Object.freeze(["e452e63ee1047d5162b348f16fa86a8c2464d054469ba7e1144960ef018cf2a6", "35044d71897003c9c2ae21d6decd3bd7c37c87dfececb222aefbe2f4039760e6"]),
-    "skills/code-review/classification.json": Object.freeze(["7119963aff673aa5d95247ec90d77be9ebddf2ae64b9aba353e30a488a6b1510", "65cc17db489b556082e9ce775fc23dbdb9d6d5d9a1f4113f33e12ee692fde22f"]),
-    "skills/cs-engineering/SKILL.md": Object.freeze(["624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51", "214368b4e354e794169a16ae218a857a9bff3662910c54e97489a979a7ac4a75"]),
-    "skills/cs-engineering/classification.json": Object.freeze(["8eb3ed74d4d88977b9392a786f7ca23b3917ded3f584c377397b4a333a1003da", "583239f3c9926fda08ffc2202d76411fda350a914f23791e87348fc4d5cce7f3"]),
+    "skills/acceptance-evidence-validator/SKILL.md": Object.freeze(["a67f069130fa3e03b93287088b035f4c2e7c663083d60e2bc5ec865e3032acb2", "9811f52426e8cd62f7bab02e0d4e775eef07fce66aa480f234678e2bd1707647"]),
+    "skills/acceptance-evidence-validator/classification.json": Object.freeze(["4667c120a88582c292863a36d4406e68d54f3e4eb2286082ad00d4cc1e03cd1c", "67d45fddb45a3d116a24808e9d1d7b3ec4f51e6cc2e121fc97e1179b17f2e375"]),
+    "skills/blocker-diagnostician/SKILL.md": Object.freeze(["16ff661fbbbc380a3fdb711ebef884b44d5d06a891e7066c2e1e290c949d6862", "aced0a996617743f726d5c337144b0dcc7b4e05f21c6fa8257ec08f2ac623256"]),
+    "skills/blocker-diagnostician/classification.json": Object.freeze(["d406a448dc61ddfe51db6d715cee4c492e42a4204a77888bf0e3350a9c8ed762", "f1fa438f4bcc679598ef207371b989d5863fa7c79cb6ca04261d2b1ca2c0055f"]),
+    "skills/change-scope-guardian/SKILL.md": Object.freeze(["c40977808a57ee10e97c4945caa8f5f9363140e745f2dbac002ece68cba6d7ca", "cc9942a0075f497609f20738cb0ee44dacec9ed5708fab98de90112390f38a56"]),
+    "skills/change-scope-guardian/classification.json": Object.freeze(["e42a9918e6bc6990352b532e24f905726516aa77922c23a143845c74e1eb7542", "1ec81d58746875dd7206861b7cf2c47fdaa8661580d7f606868f2673fa2b4f59"]),
+    "skills/code-review/SKILL.md": Object.freeze(["e452e63ee1047d5162b348f16fa86a8c2464d054469ba7e1144960ef018cf2a6", "e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b"]),
+    "skills/code-review/classification.json": Object.freeze(["7119963aff673aa5d95247ec90d77be9ebddf2ae64b9aba353e30a488a6b1510", "d90558325d4821c991f5ae56c501b2c345adb22930c40a881dcf7ac705a98a3b"]),
+    "skills/coordinate-subagents/SKILL.md": Object.freeze(["f5acb926234feda269ec7f0c5faa444fe31cc5f257ba854c505cd37fa4efe881", "33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f"]),
+    "skills/coordinate-subagents/classification.json": Object.freeze(["1353938a8500fd23852ac71d64adcde2a9cd1275c22958823bf3d5c1dccc94af", "fc15c399cb59d536d77da0cf587e4c097c1b205a4764a39f0000d047750603fc"]),
+    "skills/cs-engineering/SKILL.md": Object.freeze(["624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51", "cc53dfaf8586667655f585ec040f462c5523010e98c517ecd4af30399285b354"]),
+    "skills/cs-engineering/classification.json": Object.freeze(["8eb3ed74d4d88977b9392a786f7ca23b3917ded3f584c377397b4a333a1003da", "e61cb60d4c1246bf01db78ebba6439ec00fe280ab266ee175316ae90c0a9a77d"]),
     "skills/cs-engineering/references/ags-2x-integration.md": Object.freeze(["e20adcfc11a2e0eb9a52ac917e14556a51f31585147d3e7e4859c3aa0f32612b", "79111055ef48e0a796f629aabda6dd808852502c8d253a40ddeafbe20c571253"]),
     "skills/cs-engineering/references/design-basis.ko.md": Object.freeze(["01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034", "7b5ef9dc7fe8249368c99b6fa30965579bedeb34931e128e8763b8932f4c3daf"]),
-    "skills/orchestrator/classification.json": Object.freeze(["36be943e9fa1d0acd8e1ccd2d98863fe4df6b7bc11cbe31481ef2c8d3114236e", "c174f0943bad06c9a84b30bb121150750b1c5bbbc53b41c4b52a70bf5862c29a"]),
+    "skills/evaluation-validity-auditor/SKILL.md": Object.freeze(["de0f1e1f294fdf0ec84844375816918f23431dddf92f43c2a18bbdf5ab3ba53d", "9f1f333d95e030a52ce7481e4224e9a6f3a738563ae37f01c4d8a7b499b6d22d"]),
+    "skills/evaluation-validity-auditor/classification.json": Object.freeze(["53aa8cb62e1caf1972224de5d8b1cdc80e4e4687f3f0fec467f7db59371aabf7", "f227a2ec1f3aa39904b1632842bf76c20ee82aff37b225d31747b2a64ffa6616"]),
+    "skills/independent-audit-gate/SKILL.md": Object.freeze(["8ce58c59628bb7cff11f508e5bfebf7e2d2bf37b7fadea1890f41d7ed370c669", "8e319bab46f7917c9a3db56f9e1c7a1a5382bf6d3f60ea5930a79df43a8f15c5"]),
+    "skills/independent-audit-gate/classification.json": Object.freeze(["95dc4179c5f20b705957f236b377c5356cce183906fbaeb37745695a658e8332", "9ffdc8f6a241bb71442b2b996f8c84c11d85079241e8d17061a0ec13cf32d29f"]),
+    "skills/independent-deliberation-panel/SKILL.md": Object.freeze(["9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9", "ce18f967eced69131623b4be36b3051f169bee50c609d33d35a9cc831f7c5abd"]),
+    "skills/independent-deliberation-panel/classification.json": Object.freeze(["0670008787912ad6e46c79ea8bc33e21726a14a23d0ee43069306bf11158bd03", "301d03f986b68b333d8c314a44c279e80f099c912611c5a1833cd43da67c4ec5"]),
+    "skills/instruction-scope-resolver/SKILL.md": Object.freeze(["9873f1f03764a68e4f8c123510287308e229c156bdf5ed9fe5eec5306d729b8b", "d88f23d4a48762f3feb3c229a0e23248aec6d29fe9c6cf3c0bbfd8a9b3932eef"]),
+    "skills/instruction-scope-resolver/classification.json": Object.freeze(["eeed71b8551ec9fda0ed5aec40afa54de2e63b2c58a6bc1a9fe27d26673655a5", "0477be108fbbf41867660d5e9eb0474dcdd8849a90ef6a640972dd838a71e905"]),
+    "skills/iteration-frame-auditor/SKILL.md": Object.freeze(["5557007286bec1081302f175b0047a4a2a8ce1aa2b66779ee93b43c698143f0c", "1ad93bd29855c00ff1b8a4ef8d79fce60cf4513a1c7eacf681daf9683157ab6d"]),
+    "skills/iteration-frame-auditor/classification.json": Object.freeze(["b8e50685024cbc3c9be4d37141ae377aa9aa383e1fcd511ddb59d029d04c7063", "91a5470d1cd8e22c3b995e217fd0372fe642ccc6b3007d5299894441ffb41c70"]),
+    "skills/korean-prose-editor/SKILL.md": Object.freeze(["79e2d73edeab4edfe39d5b3663a67990aeeee47fcd65fbee8dcf176457cd9a25", "ee07877c49b98b1feedcced70acc04c990e1597eea92f94efd4ba645de051c1f"]),
+    "skills/korean-prose-editor/classification.json": Object.freeze(["0ed8b69e72dc6b156de412743084e7600a84d466f9d113cdc4c792608d768701", "60a0a6aefa87435d82e6e22a7d325f1e0bf711e5726aeb056042909a663a0f61"]),
+    "skills/model-effort-advisor/SKILL.md": Object.freeze(["5d554bb4fdb11ca9a2c833ff0a3403f23aaf28d5a9c459005a5222fb21cdd0ce", "a387ac3bf8532ab0def8c8e09b1262bf2563f3b03c67a7c5554b9515f3515f6d"]),
+    "skills/model-effort-advisor/classification.json": Object.freeze(["0e9f097f63f79e27dde80b433eb469df1fbe1a6decbbba2ad39c973f3c52eb21", "973040535da33d582888f8611ded9dd85ba3ab2dbf0fb9ef011e2e67fe1fef27"]),
+    "skills/mutation-risk-preflight/SKILL.md": Object.freeze(["f029843b9eb899e3aa47f732db76476ba557e7f5d4604db6229fd260ca8acbc1", "b4ce554d7b9ac3ed053653fc6ed59b481c60a53c4f4f028de9c4e5e7550e0e66"]),
+    "skills/mutation-risk-preflight/classification.json": Object.freeze(["57535b32573ddc20846c419ce6c40700436e2e5b162b6ec5bcb97a29f1d6902a", "ca97d7d2d25e2d5c4fc3c130c3195293db1d9d676e3e192f63e3f2f741fba013"]),
+    "skills/orchestrator/SKILL.md": Object.freeze(["bffef87a7f7a2c88be3a5d778cb8dac01fcd25f11c2c55bf142da80a7031652f", "3a21e6f3fb439651d475e5b4e5ea2ec8c09109996089a9b228160a2dee94b54e"]),
+    "skills/orchestrator/classification.json": Object.freeze(["36be943e9fa1d0acd8e1ccd2d98863fe4df6b7bc11cbe31481ef2c8d3114236e", "3c36b6912957ff30b30177ea83d60a3ce77bf7caacbc6c5a5516fdc4c8d160bb"]),
     "skills/orchestrator/references/engineering-practices/catalog.json": Object.freeze(["9a38110ca195df2dc7d1a3a30b3c9c660cb261125f1968044ce2c5eb639735c7", "922248b85f4698e0301c02ff0c295161c31d6d2e50379f765a9822201fcae3e9"]),
     "skills/orchestrator/references/engineering-practices/dependency.md": Object.freeze(["88c6db7f0e7f2feb90484c8519eacdb51a313f96f38d7e3f62858e3df1d3ceaa", "d9f07c9f3a7e15591454d8e0024b209c4316e1faa0f7e0536d2540e597f42bdf"]),
     "skills/orchestrator/references/engineering-practices/implementation.md": Object.freeze(["e264504b6c866e06067adfc4d5ca2a677939d45df70ffe49e460e0ba85746476", "459558bd2f2cef973e9b8825439426a43083e437982df127789ddfd7840a3eae"]),
     "skills/orchestrator/references/engineering-practices/index.md": Object.freeze(["75d831fd83588e02f8604fa827ceace01b88cee04c0af5e820d46edd50ffe081", "2bd2518e42b33664ef530663982ee0eb1fbf4273dca0eb9b518df70db7f157b3"]),
     "skills/orchestrator/references/entry-details.md": Object.freeze(["423e73afae8256f9834d149967aba3c818ef896597b08a3dd7c7fd67ae41cc20", "8b71aed4e6c677ad30d80095496a1e5cf2a1c878e599be7e71c3a9f37f63ee8c"]),
-    "skills/orchestrator/references/intake.md": Object.freeze(["982fa06a2765cd990c1a1e347dcc4f4744c2a2b6bff927e6dd485a0fd864f4cc", "69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca"]),
+    "skills/orchestrator/references/intake.md": Object.freeze(["982fa06a2765cd990c1a1e347dcc4f4744c2a2b6bff927e6dd485a0fd864f4cc", "62b235d72ccee18c94a4fc2c4d40156079ac8b302f233fa0d4f8caa15fae9c64"]),
+    "skills/prompt-engineering/SKILL.md": Object.freeze(["f6f48836e02c7940798a39f458a92d54836d6ce270e6f41db1d509a17970e46e", "7c503e5ac1deb17145e3b919f28ce588eea41650885cfdd17e42f1616abb4e65"]),
+    "skills/prompt-engineering/classification.json": Object.freeze(["df16346b0c5ad95902636b88287e8f67d80bdff8da40aeb9ed3a422ac079a589", "f58c87aaaf8cc8cfe6f15fd7ab4a1b43e2500173caf34520141fe400f1f50c4c"]),
     "skills/prompt-engineering/references/ags-boundaries.md": Object.freeze(["5f6dc08235b68e904c8d9624d28741d2bc4b4a18eed0d8903d21da59b8023807", "c6039c247c4bfabb26b9508e75d19976aad031466b4a66734476e664992e2a35"]),
+    "skills/recovery-strategy-selector/SKILL.md": Object.freeze(["c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e", "9c1e3a3a6b898627add1bac83b42a7759bcdd61d766957e94871ef5c1a34d06c"]),
+    "skills/recovery-strategy-selector/classification.json": Object.freeze(["18879dd13ad1211d37bde3d4f8b24431e593947278cd0277f97d4c0c6500ada7", "1465e2a62a0dc035978716030018df22d276c682dffa026957e7229d4ae97fec"]),
+    "skills/session-board/SKILL.md": Object.freeze(["b1c3965810498674df78fe6f7c60290bd83aef03d7f07cc9e4313920524005a4", "2fcbf631b54b00a554b180e8a0e0bc0d627698c8525753cf3948f4e220d63216"]),
+    "skills/session-board/classification.json": Object.freeze(["b5ba10e642f740e0b40acab750c0909a88bfc6de2bfe5b24388863cd6334d63c", "58862b4efbddfd024fb5fa923d37569200c9198900f5916b4c9c0afb1292df4c"]),
+    "skills/software-security-auditor/SKILL.md": Object.freeze(["294e5f7314049536f8eab3f1799bc5879a1d95e740310ad6b163f047fe492081", "c74b2c9b79ab8bbcce8984a5412e97f0dc523b7cf7165ca8e83994a2eab7f149"]),
+    "skills/software-security-auditor/classification.json": Object.freeze(["ef252bf544e2f6917c10bb35456d173ea705de14b47c6d630b4ee2c2a92294de", "d841e324b40ceccd19c8625663350fac4bf3f1d520d44a56cf2b66d7e3cb0133"]),
+    "skills/solid-design/SKILL.md": Object.freeze(["402a4e5a5c44493b7dc4a33a21b6cd0f29e701ed9a060422975159caef609aac", "f9a4344d4cc6ddaf7c6ed2dbee841a6a90bade593c1d34bc1932b70b7d545469"]),
+    "skills/solid-design/classification.json": Object.freeze(["6c93f273ba7ed585f494d6043289e1bd6bac969390d788a50a69f021653f26f3", "ef74b5dda1f011ffbb9a83f1bbabedfce88b9ca6ef4ff4eae6026b147ed8d6c5"]),
     "skills/solid-design/references/ags-boundaries.md": Object.freeze(["e87e5a3c2d62daa18390edb22e62635cf38acce774b1b716bb3109d2aa03e2e4", "cdc8afaffae737e90379020ce2ae4de80f20dd0eb8df7e7ea720ffd30f893be8"]),
     "skills/solid-design/references/sources.md": Object.freeze(["f34e701577a0c8d7e936ad82ad82238223d8bc5b46a2486399d86d3ae8149dda", "fd6a1868d91078bebf3a557cc06b0698a7bb893d76de30f9d754053fabc2165b"]),
-    "skills/test-engineering/SKILL.md": Object.freeze(["2541f44e4683adec7ca7037e088943bc01da17e6f6cca844be22a992d64a076b", "c85f226a5b28c98891b6ed8a719a05e0c42463aa1a9fff83ce1c0b1f0aa2553a"]),
-    "skills/test-engineering/classification.json": Object.freeze(["1f0fd5742354b7d23d8656b34618786ff7502e08e4871595c08633df8c477d8c", "00ed6899f4219dc0afa54b992dc94d3a7097ba9d786bb3eac1086cb84b79dc3a"]),
+    "skills/task-contract/SKILL.md": Object.freeze(["92b529e3423386cce32d3b2eb6302c42b6aba344624604d413fc0e90f86ef61b", "3545dd0730b8d322af7efe42e547496717ffa26b7276af136877e4d24dcb4369"]),
+    "skills/task-contract/classification.json": Object.freeze(["cabfe58da82a63612b826fd9637ca20418b0d061b8c978218309733baeaa1aac", "c3aebf6642a5a41f733da70d3725a373f869c1af41f5205a0e1dab0d1dfa4adb"]),
+    "skills/test-engineering/SKILL.md": Object.freeze(["2541f44e4683adec7ca7037e088943bc01da17e6f6cca844be22a992d64a076b", "5502a40df4d50f297a7d4b904a618624f40244fefabab4b6b901fa3daeb90651"]),
+    "skills/test-engineering/classification.json": Object.freeze(["1f0fd5742354b7d23d8656b34618786ff7502e08e4871595c08633df8c477d8c", "2dcb163cb8ae6b0c5f42c16c89ab223db2e9ce890bd7754e32818d553c71c58e"]),
+    "skills/ui-ux-design/SKILL.md": Object.freeze(["aafdde5ca740ccefe043207de25a6853da7936b4feb576de61a9dd3476f14e6f", "84b8cb1ae0228caa985054cd45ecd00c2547100f73d197c42ae14983ccb68b25"]),
+    "skills/ui-ux-design/classification.json": Object.freeze(["81d7361a93e67ab4d6dcc4c23c4a8e7b0593d8244243a5dbbdc4f401bcd247f9", "2093d121bc422a8b0df1240bc609e84e91fbe3d0daded0db9e6082fe3675acf6"]),
     "skills/ui-ux-design/references/ags-boundaries.md": Object.freeze(["4f0dca70982e3a43760e05dcfc6e3f983800d06673c9beed0ac4af8d5044489d", "2e7438d670210a0d6ee115261d0cefa6d5495b4bb0cc7a090512fe921923675d"]),
+    "skills/workspace-convention-profiler/SKILL.md": Object.freeze(["776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db", "cc19f66a63f78350d9ac1bf34e44682b5564c3bf9d48dce47765ce04398dc4c1"]),
+    "skills/workspace-convention-profiler/classification.json": Object.freeze(["7725b4d90a72e37bd9b2fa00f97c8e9d9ba760faf99b096e2ff4fa58d94d8f61", "70c68b3048b682949cb5725b82bd59006a46d64def2df16473486df9e99b858b"]),
   }),
 });
 
@@ -685,6 +733,11 @@ export function checkMinimalImplementationSources() {
     else beforeMinimalImplementation(relative, bytes);
   }
   return { ...MINIMAL_IMPLEMENTATION_SUCCESSOR, pass: errors.length === 0, errors };
+}
+
+/** Test hook: exact 4.0.0 successor bytes read as their predecessor at baselineRevision; any other bytes are returned as they are. */
+export function beforeMinimalImplementationSuccessor(relative, bytes) {
+  return beforeMinimalImplementation(relative, bytes);
 }
 // End of the minimal-implementation successor.
 
@@ -1837,7 +1890,9 @@ export function checkRegistryContextCompatibility(registry) {
 export function checkSkillContextOptimization() {
   const purposeChange = checkPurposeChangeSources();
   const behaviorSources = checkSpecialistBehaviorSources();
-  const errors = [...purposeChange.errors, ...behaviorSources.errors, ...checkRetiredSkills()];
+  // Every 4.0.0 successor path must hold its exact pinned bytes, not only the paths a later check happens to read.
+  const minimalImplementation = checkMinimalImplementationSources();
+  const errors = [...purposeChange.errors, ...behaviorSources.errors, ...minimalImplementation.errors, ...checkRetiredSkills()];
   for (const currentPath of Object.keys(PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes)) {
     if (!matchesPreflightPlatformEventsChain(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight platform-events successor bytes differ: ${currentPath}`);
   }
@@ -2048,6 +2103,7 @@ export function checkSkillContextOptimization() {
     currentSpecialistBehavior: behaviorSources,
     retiredSkills: RETIREMENTS,
     currentPurposeChange: purposeChange,
+    currentMinimalImplementation: minimalImplementation,
     currentHostConsumptionSourceSuccessors: [HOST_CONSUMPTION_SOURCE_SUCCESSOR],
     currentPreflightPrivatePreparationSuccessors: [PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR],
     currentPreflightPlatformEventsSuccessors: [PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR],

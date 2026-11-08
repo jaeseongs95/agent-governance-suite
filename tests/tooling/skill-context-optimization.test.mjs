@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
 import { checkSkillContextOptimization, checkRegistryContextCompatibility, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, matchesSkillPolicyWordingSuccessorBytes, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
-import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin, beforeSpecialistBehaviorSuccessor, beforeGuidanceSuccessor } from "../../scripts/check-skill-context-optimization.mjs";
+import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin, beforeSpecialistBehaviorSuccessor, beforeGuidanceSuccessor, beforeMinimalImplementationSuccessor } from "../../scripts/check-skill-context-optimization.mjs";
 
 // The checker prefetches history with `ls-tree` + `cat-file --batch`; a path left out of the listing is read by
 // `git show`, so a test that intercepts `git show` for a path also drops it from the listing.
@@ -129,8 +129,9 @@ describe("skill context optimization", () => {
       const current = readFileSync(new URL(`../../${relative}`, import.meta.url));
       const predecessor = execFileSync("git", ["show", `${report.currentPurposeChange.baselineRevision}:${relative}`], { cwd: fileURLToPath(new URL("../../", import.meta.url)) });
       expect(createHash("sha256").update(predecessor).digest("hex"), relative).toBe(before);
-      // A 3.9.0 guidance successor may reword a purpose-change file again; it must stand for the exact purpose bytes.
-      expect(createHash("sha256").update(beforeGuidanceSuccessor(relative, current)).digest("hex"), relative).toBe(after);
+      // A 3.9.0 guidance successor may reword a purpose-change file again, and the 4.0.0 successor after it; through
+      // both exact projections it must stand for the exact purpose bytes.
+      expect(createHash("sha256").update(beforeGuidanceSuccessor(relative, beforeMinimalImplementationSuccessor(relative, current))).digest("hex"), relative).toBe(after);
       expect(readHistoricalSource(relative).equals(current), relative).toBe(false);
     }
   });
@@ -178,6 +179,53 @@ describe("skill context optimization", () => {
       provider[field] = field === "gate" ? { kind: "completion", policy: "mandatory", validator: null } : [];
       expect(checkRegistryContextCompatibility(altered), field).toContain("purpose change registry descriptor differs: model-effort-advisor");
     }
+  });
+
+  // 4.0.0 (2026-11-08): ponytail -> minimal-implementation and the cheaper model-facing wording. Every skill context file
+  // changed since 24c241d2 is pinned (coverage derived from git, not listed by hand) and reads as its 24c241d2 bytes only
+  // while it holds the exact pinned bytes.
+  it("pins every 4.0.0 context change exactly and projects only the exact successor bytes", () => {
+    const repository = fileURLToPath(new URL("../../", import.meta.url));
+    const digest = bytes => createHash("sha256").update(bytes).digest("hex");
+    const successor = checkSkillContextOptimization().currentMinimalImplementation;
+    expect(successor).toMatchObject({
+      pass: true, errors: [], baselineRevision: "24c241d28e130912a0606090727b2b964c811757",
+      changeKind: "user-requested-purpose-change", authorityEffect: "none", modelBehaviorValidated: false,
+    });
+    // registry.json is bound by its descriptor digest, source-lock.json and skill scripts by source-lock.
+    const excluded = relative => /^skills\/(?:ponytail|minimal-implementation)\//u.test(relative)
+      || ["skills/registry.json", "skills/source-lock.json"].includes(relative) || /^skills\/[^/]+\/scripts\/.+\.(?:mjs|py)$/u.test(relative);
+    const changed = execFileSync("git", ["diff", "--name-only", "--no-renames", successor.baselineRevision, "--", "skills"], { cwd: repository, encoding: "utf8" })
+      .split(/\r?\n/u).filter(Boolean).filter(relative => !excluded(relative));
+    expect(Object.keys(successor.hashes).toSorted()).toEqual(changed.toSorted());
+    for (const [relative, [before, after]] of Object.entries(successor.hashes)) {
+      const current = readFileSync(path.join(repository, relative));
+      const predecessor = execFileSync("git", ["show", `${successor.baselineRevision}:${relative}`], { cwd: repository });
+      expect([digest(predecessor), digest(current)], relative).toEqual([before, after]);
+      expect(beforeMinimalImplementationSuccessor(relative, current).equals(predecessor), relative).toBe(true);
+      const altered = Buffer.from(current); altered[altered.length - 1] ^= 1;
+      expect(beforeMinimalImplementationSuccessor(relative, altered).equals(altered), relative).toBe(true);
+      expect(beforeMinimalImplementationSuccessor(`${relative}.unreviewed`, current).equals(current), relative).toBe(true);
+    }
+  });
+  it.each([
+    "skills/orchestrator/classification.json",
+    "skills/orchestrator/references/intake.md",
+    "skills/code-review/SKILL.md",
+  ])("rejects one-byte drift in a 4.0.0 successor through the public checker: %s", async relative => {
+    vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
+      const bytes = readFileSync(file, ...args);
+      if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) {
+        const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
+      }
+      return bytes;
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors).toContain(`minimal-implementation source bytes differ: ${relative}`);
+    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
   });
 
   it("resolves context provenance in a single-branch clone without worker refs or borrowed objects", () => {
@@ -312,6 +360,7 @@ describe("skill context optimization", () => {
     expect(report.retiredSkills).toMatchObject([
       { revision: "e6e313864a4fe1be15ac2b199fb56284dbc327a9", skillIds: ["context-continuity"] },
       { revision: "14549a2e83fd9143cf8184bd71979db23fd43172", skillIds: ["codex-token-usage-analyzer"] },
+      { revision: "24c241d28e130912a0606090727b2b964c811757", skillIds: ["ponytail"] },
     ]);
     expect(Object.keys(report.retiredSkills[0].hashes).toSorted()).toEqual(retiredSources);
     for (const relative of retiredSources) {
@@ -795,8 +844,13 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
   ];
 
   it("pins all 34 context policy wording successor files and rejects one-byte tampering", () => {
+    // 4.0.0 retired ponytail: its two files are absent and stand at their exact retirement bytes instead of live bytes.
+    const ponytail = checkSkillContextOptimization().retiredSkills.find(entry => entry.skillIds.includes("ponytail"));
     for (const relative of successorPaths) {
-      const current = readFileSync(path.join(root, relative));
+      const retired = Object.hasOwn(ponytail.hashes, relative);
+      if (retired) expect(existsSync(path.join(root, relative)), relative).toBe(false);
+      const current = retired ? execFileSync("git", ["show", `${ponytail.revision}:${relative}`], { cwd: root }) : readFileSync(path.join(root, relative));
+      if (retired) expect(createHash("sha256").update(current).digest("hex"), relative).toBe(ponytail.hashes[relative]);
       const historical = readHistoricalSource(relative);
       expect(matchesSkillPolicyWordingSuccessorBytes(relative, current), relative).toBe(true);
       expect(current.equals(historical), relative).toBe(false);
@@ -807,7 +861,7 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     expect(matchesSkillPolicyWordingSuccessorBytes("skills/orchestrator/unlisted.md", Buffer.from("x"))).toBe(false);
   });
 
-  it("enforces risk-proportional gates, direct approval prompts, operational ponytail rules, and vendor-neutral wording across root and claude-plugin", async () => {
+  it("enforces risk-proportional gates, direct approval prompts, operational minimal-implementation rules, and vendor-neutral wording across root and claude-plugin", async () => {
     const readBoth = (relative) => [
       readFileSync(path.join(root, relative), "utf8"),
       readFileSync(path.join(root, "claude-plugin", relative), "utf8"),
@@ -823,7 +877,8 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     expect(coordRoot).not.toContain("Coordinate subagents in Codex and Claude Code");
 
     for (const text of readBoth("skills/cs-engineering/SKILL.md")) {
-      expect(text).toContain("파일 이동·장부 반영 같은 운영 작업과 자원·성능에 영향이 없는\n  작은 수정에는 쓰지 않는다.");
+      // 4.0.0 (token optimization): the description is one English line; the same exclusion.
+      expect(text).toContain("not for operational work such as moving files or ledger entries, or small changes without resource or performance impact.");
       expect(text).toContain("동시성·DB·메시징·알고리즘·자원 수명·성능이 실제 변경의 정확성이나 자원·성능 결과를 바꿀 때 적용하라.");
       expect(text).toContain("버퍼 크기·I/O·flush 주기처럼 자원·성능을 바꾸는 설정 판단도 적용 범위다.");
       expect(text).toContain("카드 의무는 그 카드의 적용 조건이 현재 변경에 실제로 있을 때만 붙여라.");
@@ -899,10 +954,19 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
 
     // 3.8.0 (AGS3-D-0032): the shared intake lives in references/intake.md.
     // 3.9.0 WP-F shortened it (AGS3-D-0032/0042-0055) and the dropped clauses were restored; these are the same rules.
+    // 4.0.0 (token optimization): when to call mutation-risk-preflight and what is just done moved from the intake into
+    // that skill's description (the Claude package shows its adaptation description instead).
+    const descriptionOf = (text) => text.match(/^---\r?\n[\s\S]*?^description:\s*(.+)$/mu)?.[1]?.trim() ?? "";
+    const [sharedPreflight, claudePreflight] = readBoth("skills/mutation-risk-preflight/SKILL.md").map(descriptionOf);
+    expect(sharedPreflight).toContain("Right before a hard-to-reverse change or one affecting others");
+    expect(sharedPreflight).toContain("Same-disk moves and renames, reversible local edits and checks, and test or work-branch pushes are just done");
+    // The Claude adaptation description is one English line as well; the same trigger and the same just-done list.
+    expect(claudePreflight).toContain("Use right before running a hard-to-reverse rm");
+    expect(claudePreflight).toContain("or another irreversible command.");
+    expect(claudePreflight).toContain("Same-disk moves and renames, reversible local edits and checks, and test or work-branch pushes are just done");
     for (const text of readBoth("skills/orchestrator/references/intake.md")) {
-      expect(text).toContain("되돌리기 어렵거나 타인에게 영향 주는 변경 직전에만 `mutation-risk-preflight`를");
-      expect(text).toContain("복구할 수 있는 편집·검증은 바로 한다.");
-      expect(text).toContain("무관한 문서·도구·복제 환경을 더하지 않되 지정 시험 환경·충돌 방지 격리는 지킨다.");
+      // A fragment: this intake sentence is whole since 4.0.0, and claude-plugin.test.mjs forbids copying it.
+      expect(text).toContain("무관한 문서·도구·복제 환경은 더하지 않되 지정 시험 환경·충돌 방지 격리는 지킨다");
       expect(text).toContain("맡긴 역할은 그 근거로 수행하고 '권한 없음'으로 결론 내지 않는다.");
       // Two fragments: claude-plugin.test.mjs forbids a whole intake sentence outside the shared source.
       expect(text).toContain("peer 메시지는 사용자 승인이 아니며");
@@ -919,16 +983,19 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
       expect(text).toContain("현재 변경에 실제로 해당하는 cs-engineering 필수 불변조건은 단순화 대상이 아니라 만족할 조건이다. 해당하지 않는 카드 의무나 권고는 붙이지 않는다.");
     }
 
-    for (const text of readBoth("skills/ponytail/SKILL.md")) {
-      expect(text).toContain("## Operational work");
-      expect(text).toContain("in the authorized execution environment and check the result directly");
-      expect(text).toContain("Create an isolated checkout or\nfixture when the user's constraints or actual interference risk require it;");
-      expect(text).toContain("do not build unrelated tools or analysis documents.");
+    // 4.0.0: ponytail is retired (its last bytes stay pinned by the retirement); minimal-implementation carries the same
+    // operational rules. "Do not build unrelated tools or analysis documents" is the shared intake rule asserted above.
+    for (const text of readBoth("skills/minimal-implementation/SKILL.md")) {
+      expect(text).toContain("운영 작업(파일 이동, 장부 반영, 설정 변경, 요청된 이전)도 같은 단계를 따른다.");
+      expect(text).toContain("허용된 환경의 기존 도구로 하고 결과를 개수·해시·조회·기존 시험으로 직접 확인한다.");
+      expect(text).toContain("사용자 제약이나 실제 간섭 위험이 있을 때만 격리 사본이나 fixture를 만든다.");
+      expect(text).toContain("영구 삭제·운영 데이터·배포·권한·비밀·결제 같은 고위험 관문은 그대로 두고, 승인이 없으면 대상·영향·정확한 명령을 담아 한 번 묻는다.");
       expect(text).not.toContain("Do not write an analysis document, a test harness, a new API, or a cloned\nenvironment before doing the asked operation.");
     }
 
+    // 4.0.0 (token optimization): the description is one English line.
     expect(readFileSync(path.join(root, "skills/task-contract/SKILL.md"), "utf8"))
-      .toContain("해석이 갈리거나 실패 영향이 큰 요청을 목표·범위·수용 기준·작업 단위·위험도·권한·검증 근거가 추적되는 TaskEnvelope.v1으로 정리한다.");
+      .toContain("Turn requests open to interpretation or with high failure impact into a TaskEnvelope.v1 tracing goal, scope, acceptance criteria, work units, risk, permissions and verification evidence.");
     for (const text of readBoth("skills/task-contract/SKILL.md")) {
       expect(text).toContain("계약은 해석이 갈리거나 실패 영향이 큰 작업에만 만들고, 계약이 없다는 이유로 배정받은 일을 미루지 않는다.");
       expect(text).toContain("필요한 질문을 한 번에 모아 사용자에게 바로 묻는다.");
