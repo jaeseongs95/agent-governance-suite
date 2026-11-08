@@ -892,9 +892,11 @@ export class WorkflowService {
       }
     }
     return this.attempt(() => {
+      // Required at the MCP tools only: an embedding caller has no agent choosing skills. Checked before the contract so
+      // that every malformed list answers SKILLS_REQUIRED with what to submit, as the minimal start does.
+      const rawSkills = asRecord(rawRequest).skills;
+      const skills = requireTrustedExecutionContext || rawSkills !== undefined ? declaredSkills(rawSkills, this.knownSkillIds()) : null;
       const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
-      // Required at the MCP tools only: an embedding caller has no agent choosing skills.
-      const skills = requireTrustedExecutionContext || request.skills !== undefined ? declaredSkills(request.skills, this.knownSkillIds()) : null;
       const plan = clone(request.plan);
       this.assertPlanIntegrity(plan);
       if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(plan, "guardedStart");

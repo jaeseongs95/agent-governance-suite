@@ -11,6 +11,8 @@ export const PROVIDER_RETENTION_PURPOSE = "provider-observation-retention" as co
 // 4.0.0 model-facing text optimization keeps the same purpose: both SKILL.md descriptions became one English line and
 // their description spans were rebound to its applicability and exclusion clauses (body spans unchanged), so the
 // coordinate-subagents and model-effort-advisor SKILL.md and classification.json hold these digests (r40 manifest).
+// 5.0.0 wording successor keeps the same purpose: coordinate-subagents SKILL.md description and its targets and description
+// spans now name an independently verifiable unit or a separate check (AGS3-D-0095, 0d16fec9).
 export const PROVIDER_RETENTION_SOURCE_CHANGES = Object.freeze([
   {path: "skills/codex-token-usage-analyzer/SKILL.md",
     previousDigest: "sha256:0de104afb13d2095c585ec64ca8a326dc8392f03749c70f0a21affab5e060e18", digest: null, bytes: 0},
@@ -18,10 +20,10 @@ export const PROVIDER_RETENTION_SOURCE_CHANGES = Object.freeze([
     previousDigest: "sha256:b9c2eca1a447e64000e57a8c25cd1faa279ad9487c6250b8fb44a15edba39082", digest: null, bytes: 0},
   {path: "skills/coordinate-subagents/SKILL.md",
     previousDigest: "sha256:9dfea8d94be467700ea4e8dac86a21040b57c1161ff46ddc0cf63cef97e305e7",
-    digest: "sha256:33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f", bytes: 2850},
+    digest: "sha256:58c7c79988f6943f2c20290aef44261d4b95ad81d701495419783514a711f31f", bytes: 2993},
   {path: "skills/coordinate-subagents/classification.json",
     previousDigest: "sha256:bd2fd05d3e93cd4f4b08af021a0fa77ef3787b57550e17f75fbbe3ecdd629957",
-    digest: "sha256:fc15c399cb59d536d77da0cf587e4c097c1b205a4764a39f0000d047750603fc", bytes: 4370},
+    digest: "sha256:67edf53c5dd3d6f2a2c9352affc0c10f51c685062831c6b2c7cfbaaaa7e25fbb", bytes: 4448},
   {path: "skills/coordinate-subagents/references/entry-details.md",
     previousDigest: "sha256:266ceb4fb5d7d3c553ef85485c93ac87c4df1bf0df5e2219fd99cc9a146bf882",
     digest: "sha256:301054a8d9a4a6e254315fbcc8eef1068cbed627afccc4d2f1dfc8e6bb799e46", bytes: 11026},
