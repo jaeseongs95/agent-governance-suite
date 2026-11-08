@@ -111,6 +111,15 @@ function changedBetween(from, to, path) {
 //   Only these five reviewed documentation deltas project onto the unchanged a2811393 context.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
+  // AGS3-D-0094: code-review also takes defect searches in existing code; selection reads only the description and targets.
+  Object.freeze({
+    revision: "41447eeeb05f56d85d7f0fdab12a3d455bd269db",
+    hashes: Object.freeze({
+      "skills/code-review/SKILL.md": ["e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b", "9e85c15900494e4b3c4d81d4f8ee7966b601bfc247efff7011540d7137e0b58e"],
+      "skills/code-review/classification.json": ["d90558325d4821c991f5ae56c501b2c345adb22930c40a881dcf7ac705a98a3b", "4a9ad106eedd62786739deb91870db53549ca5214ea84df1777dbf5501319f00"],
+      "skills/orchestrator/references/engineering-practices/code-review.md": ["43549ced37a9eb4545d67e66122391386da0bde763919a0fdc80f0abaab0e65c", "8064b8cdcffbc495f9f39faef4278a276e33b1f881d09ab33e4b44712f0dba88"],
+    }),
+  }),
   // D0006/D0029 classification source bindings and the D0007 shared declaration move.
   // These exact successors retain the preceding context oracle; the runtime declarations
   // are independently pinned below so a re-export cannot hide changes to its contract.
@@ -745,8 +754,9 @@ export function checkMinimalImplementationSources() {
     let bytes;
     try { bytes = readFileBytes(join(ROOT, relative)); }
     catch (error) { if (error?.code !== "ENOENT") throw error; errors.push(`minimal-implementation source missing: ${relative}`); continue; }
-    if (!matchesMinimalImplementationSuccessor(relative, bytes)) errors.push(`minimal-implementation source bytes differ: ${relative}`);
-    else beforeMinimalImplementation(relative, bytes);
+    const projected = beforeMultiWorkflowGuidance(relative, bytes);
+    if (!matchesMinimalImplementationSuccessor(relative, projected)) errors.push(`minimal-implementation source bytes differ: ${relative}`);
+    else beforeMinimalImplementation(relative, projected);
   }
   return { ...MINIMAL_IMPLEMENTATION_SUCCESSOR, pass: errors.length === 0, errors };
 }
@@ -974,7 +984,7 @@ export function checkSpecialistBehaviorSources() {
   // A successor of a file the baseline did not have (references/intake.md) never projects onto the baseline.
   const projectsToBaseline = relative => guidanceSuccessor(relative) !== undefined
     && git("ls-tree", "--name-only", SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, "--", relative).toString("utf8").trim() === relative
-    && readFileSync(join(root, relative)).equals(git("show", `${SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision}:${relative}`));
+    && beforeMultiWorkflowGuidance(relative, readFileSync(join(root, relative))).equals(git("show", `${SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision}:${relative}`));
   for (const relative of contextChanges) {
     if (!Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, relative) && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.additions, relative)
       && !isReviewedGuidanceAddition(relative) && !projectsToBaseline(relative)) {

@@ -178,7 +178,7 @@
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:7a4d7ea196e9c28ec84147544ec61ecd9181c1fdae8f0dd9547913120a05cb54",
+      "integratedChecksum": "sha256:8c8959dd67d50bee22620430c98805e64b103ad1a0c5006a031f06816b7f10fe",
       "checksumScope": "relative paths and normalized text bytes under skills/code-review"
     },
     {
