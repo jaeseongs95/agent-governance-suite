@@ -970,8 +970,9 @@ export class ContinuityService implements ContinuityGateway {
    * The session's situational context for one actor of it (AGS3-D-0065): the latest verified current body, once per state
    * token, to an actor that does not hold it yet. No session is created, rotated or bound, and a suppressed or empty
    * current gives nothing. The caller leaves out the session's own actor, which saves and restores this body itself.
+   * A body `fits` refuses is not marked held, so the actor's next step gets it.
    */
-  situationForActor(rawSessionId: string, actorId: string): HookText | null {
+  situationForActor(rawSessionId: string, actorId: string, fits: (text: HookText) => boolean = () => true): HookText | null {
     const task = this.store.getTask(this.correlateSession(rawSessionId));
     if (!task) return null;
     const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", current => {
@@ -980,8 +981,10 @@ export class ContinuityService implements ContinuityGateway {
       const held = this.situationHeldEvent(actorId, snapshot.stateToken);
       if (this.store.hasObservation(current.taskCorrelation, current.currentEpoch, held)) return null;
       this.verifyCurrentMemory(snapshot);
+      const text = [msg("hooks.contextLayers.parentSituation", { stateToken: snapshot.stateToken, body: JSON.stringify(snapshot.memory) })];
+      if (!fits(text)) return null;
       this.store.recordObservation(current.taskCorrelation, current.currentEpoch, held, null, true, this.now().toISOString());
-      return [msg("hooks.contextLayers.parentSituation", { stateToken: snapshot.stateToken, body: JSON.stringify(snapshot.memory) })];
+      return text;
     });
     return selected.kind === "available" ? selected.value : null;
   }

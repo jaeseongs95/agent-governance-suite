@@ -2,6 +2,8 @@ import { contractErrorBody, WorkflowContractError, type ApiResultV1, type ErrorC
 import type { VerifiedCaller } from "./caller-identity.js";
 import { failureContext, failureReason } from "./failure-diagnostics.js";
 import { msg, type MessageRef } from "./i18n.js";
+import "./builtin-hook-host-adapters.js";
+import { hostSessionIsSubagent } from "./host-input-adapter.js";
 import { BrokerRequestRejected, runSessionMessageOperation, sessionMessageRequest } from "./session-message-client.js";
 import type { CurrentPresence, SessionPresence } from "./session-message-store.js";
 import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
@@ -120,7 +122,8 @@ export class SessionMessageService {
 
   /** The session board's liveness view: one broker request whose reply the store keeps inside the response limit. */
   async listCurrentPresence(self: SessionBindingV1): Promise<{ sessions: CurrentPresence[]; truncated: number }> {
-    return sessionMessageRequest("list-current-presence", { self }, this.stateDirectory);
+    const listed = await sessionMessageRequest<{ sessions: CurrentPresence[]; truncated: number }>("list-current-presence", { self }, this.stateDirectory);
+    return { ...listed, sessions: listed.sessions.filter(session => !hostSessionIsSubagent(session.host, session.sessionId)) };
   }
 
   /**

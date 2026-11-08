@@ -11,7 +11,8 @@ import { SessionMessageService } from "../../mcp-server/src/session-message-serv
 import * as protocol from "../../mcp-server/src/session-message-protocol.js";
 import * as storeModule from "../../mcp-server/src/session-message-store.js";
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
-import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import { antigravityConversationRootDirectory, recordAntigravityConversationRoot } from "../../mcp-server/src/antigravity-conversation-roots.js";
+import { adaptHostInput, hostSessionIsSubagent, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { recordWakeHookObservation, wakeHookObservationReader } from "../../mcp-server/src/session-message-wake-port.js";
 
 // Explicit synthetic root adapter for core regression cases; not native capture or R7 evidence.
@@ -24,6 +25,7 @@ registerHookHostAdapter("portable", {
     },
   deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
   processPid: () => undefined,
+  isSubagentSession: (sessionId) => sessionId === "recorded-child",
 });
 
 const { SessionMessageStore, WAKE_TTL_MS } = storeModule;
@@ -131,6 +133,26 @@ it("serves board liveness from a 342-identity, 1302-row database through the in-
     expect(database.prepare("SELECT count(*) AS rows FROM session_presence").get()).toEqual({ rows: 42 });
   } finally { database.close(); }
 }, 60_000);
+
+it("leaves a session its host adapter knows to be a subagent out of the live list", async () => {
+  const state = serviceState();
+  const store = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
+  try {
+    for (const sessionId of ["live-0", "recorded-child"]) born(store, sessionId, sessionId, Date.now());
+    keepLive(store, ["live-0", "recorded-child"]);
+  } finally { store.close(); }
+  const result = await new SessionMessageService(state).listCurrentPresence({ host: "portable", sessionId: "live-0" });
+  expect(result.sessions.map((session) => session.sessionId)).toEqual(["live-0"]);
+});
+
+it("knows an agy conversation is a subagent only once its root is recorded", () => {
+  vi.stubEnv("AGENT_GOVERNANCE_DB_PATH", path.join(directory(), "workflows.sqlite3"));
+  expect(hostSessionIsSubagent("antigravity", "child-conversation")).toBe(false);
+  recordAntigravityConversationRoot(antigravityConversationRootDirectory(), "child-conversation", "root-conversation");
+  expect(hostSessionIsSubagent("antigravity", "child-conversation")).toBe(true);
+  expect(hostSessionIsSubagent("antigravity", "root-conversation")).toBe(false);
+  expect(hostSessionIsSubagent("codex", "child-conversation")).toBe(false);
+});
 
 it("keeps an ended or lapsed row until exactly the retention period after its lease end", () => {
   const store = open(":memory:");

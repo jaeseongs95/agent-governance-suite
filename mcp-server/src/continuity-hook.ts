@@ -343,6 +343,14 @@ function contextLayerText(input: NormalizedContinuityInput, host: string, enviro
   }
 }
 
+/**
+ * The longest hook context every supported host takes whole, in characters: a longer one is replaced by a preview on at
+ * least one host. A subagent's start stays within it by leaving its situational context to the subagent's first step.
+ * ceiling: only that boundary is budgeted; a session's own resume with every layer at its byte limit in ASCII and a
+ * running workflow card can still pass it (AGS3-T-0033).
+ */
+const HOOK_CONTEXT_MAX_CHARACTERS = 10_000;
+
 /** Appends hook text to an output that adds context (or has none yet); deny and turn-continuation outputs stay as they are. */
 function withAddedContext(output: Record<string, unknown>, eventName: string, text: string | null): Record<string, unknown> {
   if (!text) return output;
@@ -356,11 +364,13 @@ function withAddedContext(output: Record<string, unknown>, eventName: string, te
  * The session's situational context for an actor other than the session's own, at its start or a later step, once per
  * state token (AGS3-D-0065). Read best-effort: a failure is reported and takes only this text away.
  */
-function situationText(input: NormalizedContinuityInput, host: string, store: SqliteContinuityStore, locale: SupportedLocale): string | null {
+function situationText(input: NormalizedContinuityInput, host: string, store: SqliteContinuityStore, locale: SupportedLocale,
+  fits: (text: string) => boolean = () => true): string | null {
   try {
     const actor = boundaryActor(input, host);
     if (!actor || actor.own || !(isSubagentStart(input) || input.observation.step === true)) return null;
-    return renderHookText(new ContinuityService(store, null).situationForActor(actor.sessionId, actor.actorId), locale);
+    return renderHookText(new ContinuityService(store, null).situationForActor(actor.sessionId, actor.actorId,
+      text => fits(renderHookText(text, locale) ?? "")), locale);
   } catch (cause) {
     reportContinuityFailure("subagent-situation", cause);
     return null;
@@ -368,14 +378,15 @@ function situationText(input: NormalizedContinuityInput, host: string, store: Sq
 }
 
 /** The subagent start path opens the continuity store only for its situational context. */
-function subagentSituation(input: NormalizedContinuityInput, host: string, environment: NodeJS.ProcessEnv, locale: SupportedLocale): string | null {
+function subagentSituation(input: NormalizedContinuityInput, host: string, environment: NodeJS.ProcessEnv, locale: SupportedLocale,
+  fits: (text: string) => boolean): string | null {
   let store: SqliteContinuityStore | null = null;
   try {
     const workflowDatabasePath = resolveWorkflowDatabasePath(environment);
     const continuityDatabasePath = resolveContinuityDatabasePath(environment);
     assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
     store = new SqliteContinuityStore(continuityDatabasePath);
-    return situationText(input, host, store, locale);
+    return situationText(input, host, store, locale, fits);
   } catch (cause) {
     reportContinuityFailure("subagent-situation", cause);
     return null;
@@ -429,9 +440,13 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
       // storage failure takes only them away, never the cue.
       phase = "handle";
       const locale = MODEL_LOCALE;
-      const added = [contextLayerText(normalized, host, environment, locale), subagentSituation(normalized, host, environment, locale)]
-        .filter((text): text is string => Boolean(text)).join("\n\n");
-      result = JSON.stringify(withAddedContext(subagentStartOutput(normalized, locale), normalized.outputEventName, added || null));
+      const cue = subagentStartOutput(normalized, locale);
+      const layers = contextLayerText(normalized, host, environment, locale);
+      const cueText = (cue.hookSpecificOutput as { additionalContext?: unknown } | undefined)?.additionalContext;
+      const used = (typeof cueText === "string" ? cueText.length : 0) + (layers ? layers.length + 2 : 0);
+      const situation = subagentSituation(normalized, host, environment, locale, text => used + 2 + text.length <= HOOK_CONTEXT_MAX_CHARACTERS);
+      const added = [layers, situation].filter((text): text is string => Boolean(text)).join("\n\n");
+      result = JSON.stringify(withAddedContext(cue, normalized.outputEventName, added || null));
       return result;
     }
     phase = "storage";

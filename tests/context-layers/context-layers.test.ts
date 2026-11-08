@@ -459,14 +459,22 @@ describe("context layer injection at hook boundaries", () => {
     // Worst case: each body at its byte limit. Codex counts bytes and Claude Code characters, so both ends are measured:
     // Hangul (3 bytes each, the widest UTF-8 the bodies are likely to use) and ASCII (the most characters those bytes can be).
     const filled = (bytes: number) => `${unit.repeat(Math.floor(bytes / Buffer.byteLength(unit)))}${"a".repeat(bytes % Buffer.byteLength(unit))}`;
-    checkpoint(env, filled(1800));
+    const situation = "SITUATION-MARKER-5512";
+    checkpoint(env, `${situation}${filled(1800 - situation.length)}`);
     const layers = serviceAt(env.AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH!);
     saveGlobal(layers, filled(GLOBAL_CONTEXT_MAX_BYTES));
     bind(layers, "codex", session, "r".repeat(100));
     layers.saveRole("codex", session, null, filled(ROLE_CONTEXT_MAX_BYTES), "a");
     const sizes: Record<string, { bytes: number; characters: number }> = {};
     const measure = (name: string, text: string) => { sizes[name] = { bytes: Buffer.byteLength(text), characters: text.length }; };
-    measure("SubagentStart", hook(env, { hook_event_name: "SubagentStart", agent_id: "agent-1", agent_type: "worker", turn_id: "t" }));
+    const started = hook(env, { hook_event_name: "SubagentStart", agent_id: "agent-1", agent_type: "worker", turn_id: "t" });
+    measure("SubagentStart", started);
+    // What does not fit a subagent's start is its situational context, which its first step then gets, once.
+    const step = { hook_event_name: "PostToolUse", agent_id: "agent-1", tool_name: "mcp__agent_governance_suite__record_stage_result", tool_input: {} };
+    const firstStep = hook(env, { ...step, tool_use_id: "call-1" });
+    expect(started.includes(situation)).toBe(unit === "가");
+    expect(firstStep.includes(situation)).toBe(unit === "a");
+    expect(hook(env, { ...step, tool_use_id: "call-2" })).not.toContain(situation);
     measure("SessionStart:resume", hook(env, { hook_event_name: "SessionStart", source: "resume" }));
     hook(env, { hook_event_name: "PreCompact", trigger: "manual" });
     measure("SessionStart:compact", hook(env, { hook_event_name: "SessionStart", source: "compact" }));

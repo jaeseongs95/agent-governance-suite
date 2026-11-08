@@ -6,6 +6,8 @@ import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "n
 import path from "node:path";
 import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle, type ContinuityAction, type LineageRead, type ForkOriginRead } from "./host-input-adapter.js";
 import { antigravityConversationRootDirectory, readAntigravityConversationRoot } from "./antigravity-conversation-roots.js";
+import { failureReason } from "./failure-diagnostics.js";
+import { writeDiagnostic } from "./hook-error-diagnostics.js";
 import { claudeForkHostRead } from "./claude-fork-host.js";
 import { parseWakeMessages } from "./session-message-client.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
@@ -372,6 +374,18 @@ function inheritRecordedRoot(adapted: AdaptedHostInput): void {
   }
 }
 
+/**
+ * A conversation whose root is recorded is a subagent. ceiling: one that never called an AGS tool has no record and its
+ * hooks carry no child marker, so it still looks like a session. An unreadable record leaves the session listed.
+ */
+function antigravitySessionIsSubagent(sessionId: string): boolean {
+  try { return readAntigravityConversationRoot(antigravityConversationRootDirectory(), sessionId) !== null; }
+  catch (cause) {
+    writeDiagnostic("server", "antigravity-conversation-root-unreadable", { reason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" });
+    return false;
+  }
+}
+
 const digest = (value: string) => createHash("sha256").update(value, "utf8").digest("hex").slice(0, 32);
 /** Row key prefixes for one agy call: `caller` = conversation and tool, `call` = that plus the canonical arguments. */
 export function antigravityCallKey(conversationId: string, toolName: string, args: unknown): { caller: string; call: string } {
@@ -548,6 +562,7 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   }],
   ["antigravity", {
     adaptInput: adaptAntigravityHookInput, ownsTool: ownsGovernanceTool, observeExecution: observeAntigravityExecution,
+    isSubagentSession: antigravitySessionIsSubagent,
     // agy has no prompt-submit event: its runner reports a turn's first model call without the prompt text, so no
     // wake-only prompt is observed and the empty-wake guard cannot apply until agy passes the prompt.
     deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(antigravityQueueEnabled(environment, diagnose, defaultQueueWake) ? "antigravity-queue" : "gemini-deferred", false),
