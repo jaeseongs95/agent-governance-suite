@@ -547,7 +547,7 @@ export function sessionModelDirectory(databasePath: string = resolveWorkflowData
  * the Claude launcher calls this in its own process and must not block the host.
  */
 export function runHostAttestationHook(raw: string | (() => string), environment: NodeJS.ProcessEnv = process.env,
-  host = "claude-code"): void {
+  host: string | (() => string) = "claude-code"): void {
   let phase = "stdin";
   try {
     const text = typeof raw === "function" ? raw() : raw;
@@ -556,7 +556,8 @@ export function runHostAttestationHook(raw: string | (() => string), environment
     if (!input) throw new HookObservationFailure("INVALID_HOOK_INPUT");
     phase = "host-entry";
     // Only Claude Code reports a session model here; other hosts' fields are never read as one.
-    if (host !== "claude-code") return;
+    // The CLI resolves --host here, so an invalid selection is a host-entry diagnostic with exit 0, not a crash.
+    if ((typeof host === "function" ? host() : host) !== "claude-code") return;
     phase = "input";
     const update = sessionModelUpdate(input);
     phase = "storage";
@@ -571,5 +572,5 @@ export function runHostAttestationHook(raw: string | (() => string), environment
 }
 
 if (isHookEntry(import.meta.url, "host-attestation-hook")) {
-  runHostAttestationHook(() => readFileSync(0, "utf8"), process.env, resolveHookHost(process.argv.slice(2), "claude-code"));
+  runHostAttestationHook(() => readFileSync(0, "utf8"), process.env, () => resolveHookHost(process.argv.slice(2), "claude-code"));
 }
