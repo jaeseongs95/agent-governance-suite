@@ -20,6 +20,8 @@ const delivery = JSON.parse(readFileSync(path.join(root, "tests/skill-classifica
 const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"));
 const v390 = JSON.parse(v390Bytes.toString("utf8"));
 const v390Later = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
+// 4.0.0 (r39) rebinds the orchestrator descriptor and intake after r38; its rows are the chain end for those sources.
+const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], { cwd: root });
 /** r32 assertions read r32 bytes at the first later binding ancestor, never current successor bytes. */
@@ -56,7 +58,7 @@ it("NP04 appends exactly four current sources without rewriting frozen r31 or ch
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = nativeProcedureSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const later = [...v390.bindings, ...delivery.bindings, ...writtenCases.bindings, ...intakeLength.bindings, ...cli.bindings].find((row: {path: string}) => row.path === binding.path);
+    const later = [...v400.bindings, ...v390.bindings, ...delivery.bindings, ...writtenCases.bindings, ...intakeLength.bindings, ...cli.bindings].find((row: {path: string}) => row.path === binding.path);
     const latest = later?.digest ?? binding.digest;
     expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (later) expect(current.resolveDigest(binding.path, binding.digest)).toBe(latest);

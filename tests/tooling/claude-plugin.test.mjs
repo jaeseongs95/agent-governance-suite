@@ -203,7 +203,8 @@ describe("generated Claude plugin", () => {
         // Its r34 assertions read hash-bound historical sources at the r35 ancestor.
         // Exempt only that exact anchor Map, not the rest of this file or other tests.
         // 3.9.0: 0e8c40ff chained it to the v390 successor manifest; that change adds no intake sentence.
-        expect(createHash("sha256").update(text).digest("hex"), file).toBe("7ce019267c8848f8509582495ad8310b1310081481220be1d993b4725e211f8a");
+        // 4.0.0: 9b78c492 reads the chain end from CURRENT_SOURCE_MANIFEST and the r39 rows; that change adds no intake sentence.
+        expect(createHash("sha256").update(text).digest("hex"), file).toBe("34e3d62ab52cb23c11c7febb3da3c021e981eeed51721a15a17b959c2e3a52d1");
         const historicalAnchors = text.match(/ {2}const anchors = new Map\(\[\n[\s\S]*?\n {2}\]\);/u);
         expect(historicalAnchors, file).not.toBeNull();
         text = text.replace(historicalAnchors[0], "");
