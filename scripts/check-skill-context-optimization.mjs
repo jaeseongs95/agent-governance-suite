@@ -473,7 +473,20 @@ const RETIRED_TOKEN_ANALYZER = Object.freeze({
     "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs",
   ]),
 });
-const RETIREMENTS = Object.freeze([RETIRED_SKILLS, RETIRED_TOKEN_ANALYZER]);
+// AGS 4.0.0: the user replaced ponytail with the AGS minimal-implementation skill (2026-11-08). Older pins keep reading
+// ponytail's exact bytes at its last tracked revision.
+const RETIRED_PONYTAIL = Object.freeze({
+  revision: "24c241d28e130912a0606090727b2b964c811757",
+  skillIds: Object.freeze(["ponytail"]),
+  hashes: Object.freeze({
+    "skills/ponytail/LICENSE": "fb1bc6909ac3ef82d5c22106e32ef682b0cff66788fa915fb9b53b15c9d2f3ab",
+    "skills/ponytail/SKILL.md": "705c6f5aeff30330a5de661b4a28370a0e071e5fecd76cc6e8e88b074a96c250",
+    "skills/ponytail/VERSION": "f52b4f81a0c60cd988f8ccc9a0333e206b5f7e41dd0f5286c6ab5f7bf2d5335f",
+    "skills/ponytail/agents/openai.yaml": "99b2f27b7983ae2543010244c90280519152c061c7ab8f817e629d5eb63fb64b",
+    "skills/ponytail/classification.json": "6f263e26ab1bb4b49ebe751395f5323fed4f8074a72089fc8aa28b6a17765f18",
+  }),
+});
+const RETIREMENTS = Object.freeze([RETIRED_SKILLS, RETIRED_TOKEN_ANALYZER, RETIRED_PONYTAIL]);
 const retiredPaths = retirement => [...Object.keys(retirement.hashes), ...(retirement.removedExecutables ?? [])];
 const retirementFor = relative => RETIREMENTS.find(retirement => retiredPaths(retirement).includes(relative));
 
@@ -527,7 +540,7 @@ export function checkPurposeChangeSources() {
   for (const relative of [...Object.keys(PURPOSE_CHANGE_SUCCESSOR.hashes), ...Object.keys(PURPOSE_CHANGE_SUCCESSOR.additions)]) {
     let bytes;
     // A later reviewed guidance successor stands for the exact purpose-change bytes it replaced.
-    try { bytes = beforeMultiWorkflowGuidance(relative, readFileBytes(join(ROOT, relative))); }
+    try { bytes = beforeMultiWorkflowGuidance(relative, beforeMinimalImplementation(relative, readFileBytes(join(ROOT, relative)))); }
     catch (error) {
       if (error?.code !== "ENOENT") throw error;
       errors.push(`purpose change source missing: ${relative}`); continue;
@@ -567,7 +580,12 @@ function projectRetiredChanges(base, paths) {
   return paths.filter(relative => {
     if (Object.hasOwn(PURPOSE_CHANGE_SUCCESSOR.hashes, relative) || Object.hasOwn(PURPOSE_CHANGE_SUCCESSOR.additions, relative)) {
       try {
-        if (matchesPurposeChange(relative, beforeMultiWorkflowGuidance(relative, readFileBytes(join(ROOT, relative))))) return changedBetween(base, PURPOSE_CHANGE_SUCCESSOR.baselineRevision, relative);
+        if (matchesPurposeChange(relative, beforeMultiWorkflowGuidance(relative, beforeMinimalImplementation(relative, readFileBytes(join(ROOT, relative)))))) return changedBetween(base, PURPOSE_CHANGE_SUCCESSOR.baselineRevision, relative);
+      } catch (error) { if (error?.code !== "ENOENT") throw error; }
+    }
+    if (Object.hasOwn(MINIMAL_IMPLEMENTATION_SUCCESSOR.hashes, relative)) {
+      try {
+        if (matchesMinimalImplementationSuccessor(relative, readFileBytes(join(ROOT, relative)))) return changedBetween(base, MINIMAL_IMPLEMENTATION_SUCCESSOR.baselineRevision, relative);
       } catch (error) { if (error?.code !== "ENOENT") throw error; }
     }
     const retirement = retirementFor(relative);
@@ -612,9 +630,67 @@ function beforeMultiWorkflowGuidance(relative, bytes) {
  * Projects exact reviewed successors onto their predecessors until none applies. A guidance successor can follow the
  * purpose change (3.9.0 rewords model-effort-advisor and coordinate-subagents after it), so neither order is fixed.
  */
+// AGS 4.0.0 minimal-implementation successor (generated).
+// The user replaced ponytail with the AGS minimal-implementation skill (2026-11-08). These skill context files only
+// renamed the provider and widened it from code to every deliverable; historical checks read the exact 4.0.0 bytes as
+// their predecessor at baselineRevision, verified by digest. No execution authority, no model-behavior claim.
+const MINIMAL_IMPLEMENTATION_SUCCESSOR = Object.freeze({
+  revision: "minimal-implementation-2026-11-08",
+  registryDescriptorSha256: "78f89f94b286addd90fce67ab88e517f1268cf20d182bf49a7478a56fba2ba24",
+  baselineRevision: "24c241d28e130912a0606090727b2b964c811757",
+  changeKind: "user-requested-purpose-change",
+  authorityEffect: "none",
+  hashes: Object.freeze({
+    "skills/code-review/SKILL.md": Object.freeze(["e452e63ee1047d5162b348f16fa86a8c2464d054469ba7e1144960ef018cf2a6", "35044d71897003c9c2ae21d6decd3bd7c37c87dfececb222aefbe2f4039760e6"]),
+    "skills/code-review/classification.json": Object.freeze(["7119963aff673aa5d95247ec90d77be9ebddf2ae64b9aba353e30a488a6b1510", "65cc17db489b556082e9ce775fc23dbdb9d6d5d9a1f4113f33e12ee692fde22f"]),
+    "skills/cs-engineering/SKILL.md": Object.freeze(["624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51", "214368b4e354e794169a16ae218a857a9bff3662910c54e97489a979a7ac4a75"]),
+    "skills/cs-engineering/classification.json": Object.freeze(["8eb3ed74d4d88977b9392a786f7ca23b3917ded3f584c377397b4a333a1003da", "583239f3c9926fda08ffc2202d76411fda350a914f23791e87348fc4d5cce7f3"]),
+    "skills/cs-engineering/references/ags-2x-integration.md": Object.freeze(["e20adcfc11a2e0eb9a52ac917e14556a51f31585147d3e7e4859c3aa0f32612b", "79111055ef48e0a796f629aabda6dd808852502c8d253a40ddeafbe20c571253"]),
+    "skills/cs-engineering/references/design-basis.ko.md": Object.freeze(["01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034", "7b5ef9dc7fe8249368c99b6fa30965579bedeb34931e128e8763b8932f4c3daf"]),
+    "skills/orchestrator/classification.json": Object.freeze(["36be943e9fa1d0acd8e1ccd2d98863fe4df6b7bc11cbe31481ef2c8d3114236e", "c174f0943bad06c9a84b30bb121150750b1c5bbbc53b41c4b52a70bf5862c29a"]),
+    "skills/orchestrator/references/engineering-practices/catalog.json": Object.freeze(["9a38110ca195df2dc7d1a3a30b3c9c660cb261125f1968044ce2c5eb639735c7", "922248b85f4698e0301c02ff0c295161c31d6d2e50379f765a9822201fcae3e9"]),
+    "skills/orchestrator/references/engineering-practices/dependency.md": Object.freeze(["88c6db7f0e7f2feb90484c8519eacdb51a313f96f38d7e3f62858e3df1d3ceaa", "d9f07c9f3a7e15591454d8e0024b209c4316e1faa0f7e0536d2540e597f42bdf"]),
+    "skills/orchestrator/references/engineering-practices/implementation.md": Object.freeze(["e264504b6c866e06067adfc4d5ca2a677939d45df70ffe49e460e0ba85746476", "459558bd2f2cef973e9b8825439426a43083e437982df127789ddfd7840a3eae"]),
+    "skills/orchestrator/references/engineering-practices/index.md": Object.freeze(["75d831fd83588e02f8604fa827ceace01b88cee04c0af5e820d46edd50ffe081", "2bd2518e42b33664ef530663982ee0eb1fbf4273dca0eb9b518df70db7f157b3"]),
+    "skills/orchestrator/references/entry-details.md": Object.freeze(["423e73afae8256f9834d149967aba3c818ef896597b08a3dd7c7fd67ae41cc20", "8b71aed4e6c677ad30d80095496a1e5cf2a1c878e599be7e71c3a9f37f63ee8c"]),
+    "skills/orchestrator/references/intake.md": Object.freeze(["982fa06a2765cd990c1a1e347dcc4f4744c2a2b6bff927e6dd485a0fd864f4cc", "69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca"]),
+    "skills/prompt-engineering/references/ags-boundaries.md": Object.freeze(["5f6dc08235b68e904c8d9624d28741d2bc4b4a18eed0d8903d21da59b8023807", "c6039c247c4bfabb26b9508e75d19976aad031466b4a66734476e664992e2a35"]),
+    "skills/solid-design/references/ags-boundaries.md": Object.freeze(["e87e5a3c2d62daa18390edb22e62635cf38acce774b1b716bb3109d2aa03e2e4", "cdc8afaffae737e90379020ce2ae4de80f20dd0eb8df7e7ea720ffd30f893be8"]),
+    "skills/solid-design/references/sources.md": Object.freeze(["f34e701577a0c8d7e936ad82ad82238223d8bc5b46a2486399d86d3ae8149dda", "fd6a1868d91078bebf3a557cc06b0698a7bb893d76de30f9d754053fabc2165b"]),
+    "skills/test-engineering/SKILL.md": Object.freeze(["2541f44e4683adec7ca7037e088943bc01da17e6f6cca844be22a992d64a076b", "c85f226a5b28c98891b6ed8a719a05e0c42463aa1a9fff83ce1c0b1f0aa2553a"]),
+    "skills/test-engineering/classification.json": Object.freeze(["1f0fd5742354b7d23d8656b34618786ff7502e08e4871595c08633df8c477d8c", "00ed6899f4219dc0afa54b992dc94d3a7097ba9d786bb3eac1086cb84b79dc3a"]),
+    "skills/ui-ux-design/references/ags-boundaries.md": Object.freeze(["4f0dca70982e3a43760e05dcfc6e3f983800d06673c9beed0ac4af8d5044489d", "2e7438d670210a0d6ee115261d0cefa6d5495b4bb0cc7a090512fe921923675d"]),
+  }),
+});
+
+function matchesMinimalImplementationSuccessor(relative, bytes) {
+  return Object.hasOwn(MINIMAL_IMPLEMENTATION_SUCCESSOR.hashes, relative) && contextDigest(bytes) === MINIMAL_IMPLEMENTATION_SUCCESSOR.hashes[relative][1];
+}
+
+function beforeMinimalImplementation(relative, bytes) {
+  if (!matchesMinimalImplementationSuccessor(relative, bytes)) return bytes;
+  const predecessor = git("show", `${MINIMAL_IMPLEMENTATION_SUCCESSOR.baselineRevision}:${relative}`);
+  if (contextDigest(predecessor) !== MINIMAL_IMPLEMENTATION_SUCCESSOR.hashes[relative][0]) throw new Error(`minimal-implementation predecessor bytes differ: ${relative}`);
+  return predecessor;
+}
+
+/** Live bytes must be exactly the reviewed successor; each predecessor must still read from history. */
+export function checkMinimalImplementationSources() {
+  const errors = [];
+  for (const relative of Object.keys(MINIMAL_IMPLEMENTATION_SUCCESSOR.hashes)) {
+    let bytes;
+    try { bytes = readFileBytes(join(ROOT, relative)); }
+    catch (error) { if (error?.code !== "ENOENT") throw error; errors.push(`minimal-implementation source missing: ${relative}`); continue; }
+    if (!matchesMinimalImplementationSuccessor(relative, bytes)) errors.push(`minimal-implementation source bytes differ: ${relative}`);
+    else beforeMinimalImplementation(relative, bytes);
+  }
+  return { ...MINIMAL_IMPLEMENTATION_SUCCESSOR, pass: errors.length === 0, errors };
+}
+// End of the minimal-implementation successor.
+
 function beforeReviewedSuccessors(relative, bytes) {
   for (;;) {
-    const projected = beforeMultiWorkflowGuidance(relative, beforePurposeChange(relative, bytes));
+    const projected = beforeMultiWorkflowGuidance(relative, beforePurposeChange(relative, beforeMinimalImplementation(relative, bytes)));
     // A read may hand text instead of a Buffer (an injected fs); compare the bytes either way.
     if (Buffer.from(projected).equals(Buffer.from(bytes))) return projected;
     bytes = projected;
@@ -731,7 +807,7 @@ const SPECIALIST_BEHAVIOR_REFERENCE = "skills/independent-audit-gate/references/
 // These skills were added after the frozen 26-skill behavior snapshot. Their own
 // source lock and integration tests cover them; do not rewrite the historical pins
 // or exempt arbitrary future directories from this historical inventory check.
-const POST_SNAPSHOT_SPECIALISTS = Object.freeze(["ui-ux-design"]);
+const POST_SNAPSHOT_SPECIALISTS = Object.freeze(["ui-ux-design", "minimal-implementation"]);
 
 /** Read-only source-validation metadata, not a runtime skill selector or approval. */
 export function getSpecialistBehaviorSuccessor() {
@@ -1742,6 +1818,13 @@ export function checkRegistryContextCompatibility(registry) {
     expected.skills[expected.skills.findIndex(skill => skill.skillId === "model-effort-advisor")] = advisor[0];
   } else errors.push("purpose change registry descriptor differs: model-effort-advisor");
   if (registry.skills.some(skill => skill.skillId === "codex-token-usage-analyzer")) errors.push("retired skill registry descriptor present: codex-token-usage-analyzer");
+  // AGS 4.0.0: the approved minimal-implementation descriptor takes ponytail's place; ponytail itself must be gone.
+  const minimal = registry.skills.filter(skill => skill.skillId === "minimal-implementation");
+  const ponytailIndex = expected.skills.findIndex(skill => skill.skillId === "ponytail");
+  if (minimal.length === 1 && ponytailIndex >= 0 && contextDigest(Buffer.from(JSON.stringify(minimal[0]))) === MINIMAL_IMPLEMENTATION_SUCCESSOR.registryDescriptorSha256) {
+    expected.skills[ponytailIndex] = minimal[0];
+  } else errors.push("purpose change registry descriptor differs: minimal-implementation");
+  if (registry.skills.some(skill => skill.skillId === "ponytail")) errors.push("retired skill registry descriptor present: ponytail");
   if (!isDeepStrictEqual(registry, expected)) errors.push("registry differs from the 3.0 contract");
   try { assertRegistryAuthority(registry); }
   catch (error) {
@@ -1955,7 +2038,7 @@ export function checkSkillContextOptimization() {
     ...git("ls-files", "--others", "--exclude-standard", "--", "skills/ponytail").toString("utf8").trim().split(/\r?\n/u),
   ].filter(Boolean))].filter((file) => !Object.hasOwn(CLASSIFICATION_UPDATE.hashes, file) && !Object.hasOwn(PONYTAIL_POLICY_SUCCESSOR.hashes, file)
     && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, file) && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.additions, file));
-  ponytailChanged.splice(0, ponytailChanged.length, ...historicalChanges(ponytailChanged));
+  ponytailChanged.splice(0, ponytailChanged.length, ...historicalChanges(projectRetiredChanges(BASELINE, ponytailChanged)));
   if (ponytailChanged.length) errors.push(`excluded skill ponytail unexpected changes: ${ponytailChanged.join(", ")}`);
   if (candidateBytes >= baselineBytes) errors.push("combined initial SKILL.md bytes did not shrink");
 

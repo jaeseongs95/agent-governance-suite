@@ -2,19 +2,31 @@
   "normal": [
     {
       "id": "normal-01",
-      "expected": "a plan that needs minimal-implementation routes it to ponytail in the implementation phase, after the scope baseline and before the pre-mutation gate and scope verification"
+      "expected": "a plan that needs minimal-implementation routes it to the AGS minimal-implementation skill in the implementation phase, after the scope baseline and before the pre-mutation gate and scope verification"
+    },
+    {
+      "id": "normal-02",
+      "expected": "AGS3-D-0084: an actual failed run is recorded as failed with GATE_FAILED and missing evidence as blocked with MISSING_EVIDENCE"
     }
   ],
   "boundary": [
     {
       "id": "boundary-01",
-      "expected": "a plan without minimal-implementation does not add a ponytail stage"
+      "expected": "a plan without minimal-implementation does not add a minimal-implementation stage"
     }
   ],
   "failure": [
     {
       "id": "failure-01",
-      "expected": "packaging guard: the integrated package carries only the skill instructions, version file, license and Codex agent metadata, pinned to the fork commit; no always-on hooks are installed"
+      "expected": "packaging guard: the internal skill carries only its instructions, version file, license, Codex agent metadata and classification, with no upstream pin and no always-on hooks; ponytail is gone"
+    },
+    {
+      "id": "failure-02",
+      "expected": "AGS3-D-0084: a failed run cannot be recorded as passed"
+    },
+    {
+      "id": "failure-03",
+      "expected": "AGS3-D-0083: passes produced by mocks, fixed values, placeholders, silent fallbacks or swallowed errors do not count, and remaining substitutes are reported with their location"
     }
   ]
 }

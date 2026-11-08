@@ -25,6 +25,14 @@
     },
     {
       "path": "skills/minimal-implementation/SKILL.md",
+      "startLine": 18,
+      "endLine": 18,
+      "digest": "sha256:c024dde34ed07cacb0c32ce123c5e260aabb32d868e1d09c78d2887e0a542fba",
+      "startByte": 0,
+      "endByte": 92
+    },
+    {
+      "path": "skills/minimal-implementation/SKILL.md",
       "startLine": 22,
       "endLine": 30,
       "digest": "sha256:c024dde34ed07cacb0c32ce123c5e260aabb32d868e1d09c78d2887e0a542fba"
@@ -52,6 +60,14 @@
       "digest": "sha256:c024dde34ed07cacb0c32ce123c5e260aabb32d868e1d09c78d2887e0a542fba",
       "startByte": 61,
       "endByte": 159
+    },
+    {
+      "path": "skills/minimal-implementation/SKILL.md",
+      "startLine": 72,
+      "endLine": 72,
+      "digest": "sha256:c024dde34ed07cacb0c32ce123c5e260aabb32d868e1d09c78d2887e0a542fba",
+      "startByte": 135,
+      "endByte": 251
     }
   ]
 }
