@@ -30,7 +30,7 @@ import { AdminError } from "../../mcp-server/src/admin-webauthn.js";
 import { ensureBootstrapped, fakeAuthenticator, signAndCommit } from "../helpers/fake-authenticator.js";
 
 // Three contexts (AGS3-T-0023, user decisions 2026-11-07): global (every session, 4000 bytes since 4.0.0, changed only by a record
-// the user's passkey signs on the admin page), role (keyed by the registered role the user bound the session to, 1000
+// the user's passkey signs on the admin page), role (keyed by the registered role the user bound the session to, 2000
 // bytes, shared by that role's sessions) and situational (the session's own current memory, 2000 bytes, unchanged). The
 // role a session may use comes only from its signed binding (AGS3-T-0024), never from the board's self-written role.
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -96,20 +96,20 @@ function adminCode(action: () => unknown): string {
 }
 
 describe("context layer store and service", () => {
-  it("keeps the byte limits in UTF-8 bytes of the body: 4000 global, 1000 role, and the situational limit stays 2000", () => {
+  it("keeps the byte limits in UTF-8 bytes of the body: 4000 global, 2000 role, and the situational limit stays 2000", () => {
     const service = serviceAt(path.join(directory(), "layers.sqlite3"));
-    expect([GLOBAL_CONTEXT_MAX_BYTES, ROLE_CONTEXT_MAX_BYTES, CURRENT_MEMORY_MAX_BYTES]).toEqual([4000, 1000, 2000]);
+    expect([GLOBAL_CONTEXT_MAX_BYTES, ROLE_CONTEXT_MAX_BYTES, CURRENT_MEMORY_MAX_BYTES]).toEqual([4000, 2000, 2000]);
     // 1333 Hangul syllables are 3999 bytes; one ASCII byte reaches the limit exactly, one more passes it.
     const atLimit = `${"가".repeat(1333)}a`;
     expect(Buffer.byteLength(atLimit)).toBe(4000);
     expect(service.proposeGlobal(caller(), null, atLimit)).toMatchObject({ pending: true, adminUrl: ADMIN_URL });
     expect(code(() => service.proposeGlobal(caller(), null, `${atLimit}c`))).toMatchObject({ code: "INVALID_INPUT", reasonCode: "CONTEXT_LAYER_TOO_LARGE", details: { actualBytes: 4001, maxBytes: 4000 } });
     bind(service, "codex", "s1", "reviewer");
-    const role = `${"가".repeat(333)}a`;
-    expect(Buffer.byteLength(role)).toBe(1000);
-    expect(service.saveRole("codex", "s1", null, role, "a").bytes).toBe(1000);
+    const role = `${"가".repeat(666)}ab`;
+    expect(Buffer.byteLength(role)).toBe(2000);
+    expect(service.saveRole("codex", "s1", null, role, "a").bytes).toBe(2000);
     expect(code(() => service.saveRole("codex", "s1", service.load("codex", "s1").role!.stateToken, `${role}b`, "a")))
-      .toMatchObject({ code: "INVALID_INPUT", reasonCode: "CONTEXT_LAYER_TOO_LARGE", details: { maxBytes: 1000 } });
+      .toMatchObject({ code: "INVALID_INPUT", reasonCode: "CONTEXT_LAYER_TOO_LARGE", details: { maxBytes: 2000 } });
   });
 
   it("lets only the first of two role writers that read the same state token save, across two connections", () => {
@@ -450,19 +450,20 @@ describe("context layer injection at hook boundaries", () => {
   // hooks/src/output_spill.rs, utils/string/src/truncate.rs approx_token_count; tag rust-v0.166.0), read here from the
   // continuity hook's own entries in hooks/hooks.json. Claude Code keeps 10,000 characters of a hook's additionalContext
   // (claude-overlay/README.md, TLS session messages). agy publishes no limit; it is measured on the real host.
-  it("stays within each host's additionalContext limit with every layer at its limit", () => {
+  it.each([["Hangul", "가"], ["ASCII", "a"]])("stays within each host's additionalContext limit with every layer at its limit (%s bodies)", (_name, unit) => {
     const codexHooks = (JSON.parse(readFileSync(path.join(fileURLToPath(new URL("../../", import.meta.url)), "hooks/hooks.json"), "utf8")) as
       { hooks: Record<string, Array<{ hooks: Array<{ command: string; additionalContextLimit?: number }> }>> }).hooks;
     const codexLimit = (event: string) => codexHooks[event]!.flatMap(group => group.hooks).find(hook => hook.command.includes("continuity-hook.mjs"))!.additionalContextLimit!;
     const env = { ...environment(directory()), AGENT_GOVERNANCE_LOCALE: "ko" };
     hook(env, { hook_event_name: "SessionStart", source: "startup" });
-    // Worst case: each body at its byte limit, in the widest UTF-8 the bodies are likely to use (Hangul, 3 bytes).
-    const situation = "가".repeat(600);
-    checkpoint(env, situation);
+    // Worst case: each body at its byte limit. Codex counts bytes and Claude Code characters, so both ends are measured:
+    // Hangul (3 bytes each, the widest UTF-8 the bodies are likely to use) and ASCII (the most characters those bytes can be).
+    const filled = (bytes: number) => `${unit.repeat(Math.floor(bytes / Buffer.byteLength(unit)))}${"a".repeat(bytes % Buffer.byteLength(unit))}`;
+    checkpoint(env, filled(1800));
     const layers = serviceAt(env.AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH!);
-    saveGlobal(layers, `${"가".repeat(666)}ab`);
+    saveGlobal(layers, filled(GLOBAL_CONTEXT_MAX_BYTES));
     bind(layers, "codex", session, "r".repeat(100));
-    layers.saveRole("codex", session, null, `${"가".repeat(333)}a`, "a");
+    layers.saveRole("codex", session, null, filled(ROLE_CONTEXT_MAX_BYTES), "a");
     const sizes: Record<string, { bytes: number; characters: number }> = {};
     const measure = (name: string, text: string) => { sizes[name] = { bytes: Buffer.byteLength(text), characters: text.length }; };
     measure("SubagentStart", hook(env, { hook_event_name: "SubagentStart", agent_id: "agent-1", agent_type: "worker", turn_id: "t" }));

@@ -884,7 +884,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
   function viewRoles() {
     const d = S.data, roles = d.roles;
     const sec = h('section', { class: 'col', 'aria-labelledby': 'r-title' },
-      head('r-title', '역할', '여기서 만든 역할에만 세션을 결속할 수 있습니다. 역할마다 담당 컨텍스트(' + num(d.roleMaxBytes || 1000) + ' byte)가 하나 있고, 결속된 세션이 읽고 씁니다. 여기서도 패스키로 본문을 고칠 수 있습니다.'));
+      head('r-title', '역할', '여기서 만든 역할에만 세션을 결속할 수 있습니다. 역할마다 담당 컨텍스트(' + num(d.roleMaxBytes || 2000) + ' byte)가 하나 있고, 결속된 세션이 읽고 씁니다. 여기서도 패스키로 본문을 고칠 수 있습니다.'));
     sec.append(statusEl('roles-screen'));
     if (!S.dialog) { for (const k of ['role-del']) if (S.status[k] && S.status[k].kind !== 'busy') sec.append(statusEl(k)); }
     if (!roles.length) {
@@ -1014,7 +1014,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
       const info = h('p', { class: 'small muted' }, roleSize(r) + (c && c.updatedBy ? ' · ' + c.updatedBy : '') + (c && c.updatedAt ? ' · ' + fmtTime(c.updatedAt) + ' 저장' : ''));
       const closeBtn = h('button', { type: 'button', class: 'btn', id: 'dlg-close', onclick: () => dlg.close() }, '닫기');
       if (r.contextError) return [title, info, h('p', { class: 'err-t' }, '본문을 읽지 못했습니다: ' + r.contextError), h('div', { class: 'dlg-acts' }, closeBtn)];
-      const max = S.data.roleMaxBytes || 1000;
+      const max = S.data.roleMaxBytes || 2000;
       const moved = (c ? c.stateToken : null) !== startToken;
       const off = () => moved || utf8len(draft) > max || draft === (c ? c.body : '');
       const why = () => !hasKeys() ? '패스키가 없어 저장할 수 없습니다.' : moved ? '편집을 시작한 뒤 다른 세션이 본문을 바꿨습니다. 닫고 다시 열어 주세요.' : utf8len(draft) > max ? '본문이 ' + num(utf8len(draft) - max) + ' byte 초과입니다.' : '';
