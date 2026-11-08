@@ -1,5 +1,8 @@
 import { randomBytes } from "node:crypto";
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { createServer, get, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import type { AddressInfo } from "node:net";
+import path from "node:path";
 
 import { AdminError, type AdminErrorCode, ADMIN_RP_ID } from "./admin-webauthn.js";
 import { ADMIN_PAGE_HTML } from "./admin-page.generated.js";
@@ -8,6 +11,7 @@ import { type AdminPageState, type ContextLayerService, GLOBAL_CONTEXT_MAX_BYTES
 import type { AdminSettingsView } from "./admin-settings.js";
 import { failureCode } from "./failure-diagnostics.js";
 import { writeDiagnostic } from "./hook-error-diagnostics.js";
+import { readAdminPageRecord, resolveAdminPageRecordPath } from "./runtime-config.js";
 
 /**
  * The local admin page (AGS3-T-0024): node:http on 127.0.0.1, opened as http://localhost:<port> (a WebAuthn relying
@@ -221,23 +225,121 @@ export function createAdminRequestHandler(dependencies: AdminPageDependencies) {
   };
 }
 
-/**
- * Opens the page on 127.0.0.1:<port> (port 0 turns it off). Several MCP servers run on one computer; the first one
- * serves the page and the others skip with a diagnostic (they share the same state file, so any one of them serves
- * the same page).
- */
-export function startAdminPage(dependencies: AdminPageDependencies): Promise<Server | null> {
-  if (dependencies.port === 0) return Promise.resolve(null);
-  const server = createServer({ requestTimeout: 30_000, headersTimeout: 10_000, maxHeaderSize: 16 * 1024 }, createAdminRequestHandler(dependencies));
+export interface AdminPageStartOptions {
+  /** Where the shared state (the record of the address actually served) lives. */
+  environment?: NodeJS.ProcessEnv;
+  /** How often a server that left the page to another AGS server tries to take it over. */
+  retryMs?: number;
+  /** Stops the takeover attempts and closes a page this call opened. */
+  signal?: AbortSignal;
+}
+
+const SERVER_OPTIONS = { requestTimeout: 30_000, headersTimeout: 10_000, maxHeaderSize: 16 * 1024 };
+const TAKEOVER_RETRY_MS = 15_000;
+const PROBE_TIMEOUT_MS = 2_000;
+const PROBE_MAX_BYTES = 4 * 1024 * 1024;
+
+function listenOn(port: number): Promise<{ server: Server } | { code: string }> {
+  const server = createServer(SERVER_OPTIONS);
   return new Promise(resolve => {
-    server.once("error", error => {
-      const code = (error as NodeJS.ErrnoException).code ?? "LISTEN_FAILED";
-      writeDiagnostic("admin-page", code === "EADDRINUSE" ? "port-in-use" : "listen-failed", { port: dependencies.port, code });
-      resolve(null);
-    });
-    server.listen(dependencies.port, "127.0.0.1", () => {
+    server.once("error", error => resolve({ code: (error as NodeJS.ErrnoException).code ?? "LISTEN_FAILED" }));
+    server.listen(port, "127.0.0.1", () => {
       server.unref();
-      resolve(server);
+      resolve({ server });
     });
   });
+}
+
+/** Whether the program on the port answers as an AGS admin page; every AGS version serves the same shared state. */
+function servesAgsPage(port: number): Promise<boolean> {
+  return new Promise(resolve => {
+    const request = get({ host: "127.0.0.1", port, path: "/api/state", headers: { host: `localhost:${port}` }, timeout: PROBE_TIMEOUT_MS }, response => {
+      let text = "";
+      response.setEncoding("utf8");
+      response.on("data", (chunk: string) => {
+        text += chunk;
+        if (text.length > PROBE_MAX_BYTES) response.destroy();
+      });
+      response.on("end", () => {
+        try { resolve(response.statusCode === 200 && (JSON.parse(text) as { rpId?: unknown }).rpId === ADMIN_RP_ID); }
+        catch { resolve(false); }
+      });
+      response.on("error", () => resolve(false));
+      response.on("close", () => resolve(false));
+    });
+    request.on("timeout", () => request.destroy());
+    request.on("error", () => resolve(false));
+  });
+}
+
+/** Records the port this process serves the page on; the returned function removes the record while it is still ours. */
+function recordServing(environment: NodeJS.ProcessEnv, port: number): () => void {
+  const file = resolveAdminPageRecordPath(environment);
+  try {
+    mkdirSync(path.dirname(file), { recursive: true });
+    const temporary = `${file}.${process.pid}.tmp`;
+    writeFileSync(temporary, JSON.stringify({ port, pid: process.pid }));
+    renameSync(temporary, file);
+  } catch (cause) {
+    writeDiagnostic("admin-page", "record-write-failed", { port, code: failureCode(cause) ?? "RECORD_WRITE_FAILED" });
+  }
+  return () => {
+    const record = readAdminPageRecord(environment);
+    if (record?.pid === process.pid && record.port === port) {
+      try { rmSync(file, { force: true }); } catch { /* A record left behind names a process that is gone; readers skip it. */ }
+    }
+  };
+}
+
+/**
+ * Opens the page on 127.0.0.1 (port 0 turns it off) and records the port it serves on in the shared state, which the
+ * address given to the user follows (AGS3-D-0078). Several MCP servers run on one computer and serve the same shared
+ * state, so one page is enough:
+ * - the configured port is free: serve there;
+ * - another AGS page holds the port (or serves the recorded address): leave the page to it, and try to take the
+ *   configured port over every `retryMs` so the page survives that server's end;
+ * - a program other than AGS holds the port: serve on a port the system picks.
+ */
+export async function startAdminPage(dependencies: AdminPageDependencies, options: AdminPageStartOptions = {}): Promise<Server | null> {
+  if (dependencies.port === 0) return null;
+  const environment = options.environment ?? process.env;
+  const serve = (server: Server): Server => {
+    const port = (server.address() as AddressInfo).port;
+    server.on("request", createAdminRequestHandler({ ...dependencies, port }));
+    const clear = recordServing(environment, port);
+    server.once("close", clear);
+    process.once("exit", clear);
+    if (options.signal?.aborted) server.close();
+    else options.signal?.addEventListener("abort", () => server.close(), { once: true });
+    return server;
+  };
+  const attempt = async (): Promise<Server | "held" | null> => {
+    const configured = await listenOn(dependencies.port);
+    if ("server" in configured) return serve(configured.server);
+    if (configured.code !== "EADDRINUSE") {
+      writeDiagnostic("admin-page", "listen-failed", { port: dependencies.port, code: configured.code });
+      return null;
+    }
+    const recorded = readAdminPageRecord(environment);
+    if (await servesAgsPage(dependencies.port) || (recorded !== null && await servesAgsPage(recorded.port))) return "held";
+    const picked = await listenOn(0);
+    if (!("server" in picked)) {
+      writeDiagnostic("admin-page", "listen-failed", { port: 0, code: picked.code });
+      return null;
+    }
+    writeDiagnostic("admin-page", "port-held-by-other-program", { port: dependencies.port, served: (picked.server.address() as AddressInfo).port });
+    return serve(picked.server);
+  };
+  const first = await attempt();
+  if (first !== "held") return first;
+  writeDiagnostic("admin-page", "port-in-use", { port: dependencies.port, code: "EADDRINUSE" });
+  let busy = false;
+  const retry = setInterval(() => {
+    if (busy) return;
+    busy = true;
+    void attempt().then(result => { if (result !== "held") clearInterval(retry); }, () => clearInterval(retry)).finally(() => { busy = false; });
+  }, options.retryMs ?? TAKEOVER_RETRY_MS);
+  retry.unref();
+  options.signal?.addEventListener("abort", () => clearInterval(retry), { once: true });
+  return null;
 }

@@ -184,10 +184,15 @@ export class ContextLayerService {
     /** Opens the shared store; `create: false` returns null when the file does not exist yet. */
     private readonly openStore: (create: boolean) => ContextLayerStore | null,
     private readonly now: () => Date = () => new Date(),
-    readonly adminUrl: string | null = null,
+    /** The page address, or how to read it when the serving process records it (AGS3-D-0078); null: turned off. */
+    private readonly adminAddress: string | null | (() => string | null) = null,
     /** Encrypts the JEV keys the page registers; null refuses a key registration. */
     private readonly keyVault: JevKeyVault | null = null,
   ) {}
+
+  get adminUrl(): string | null {
+    return typeof this.adminAddress === "function" ? this.adminAddress() : this.adminAddress;
+  }
 
   /** The page address for message text; a turned-off page names the setting that turned it off. */
   private get pageText(): string {

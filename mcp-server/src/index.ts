@@ -5,7 +5,7 @@ import { FileSkillRegistry } from "./registry.js";
 import { ContinuityService, type ContinuityGateway, UnavailableContinuityService } from "./continuity-service.js";
 import { continuityUnavailableReason, SqliteContinuityStore } from "./continuity-store.js";
 import {
-  adminPageUrl,
+  resolveAdminPageUrl,
   assertDistinctDatabasePaths,
   resolveAdminPort,
   resolveContextLayerDatabasePath,
@@ -115,7 +115,7 @@ export async function startMcpServer(
   // Opened per call: every host's processes share this file, and a read never creates it. The JEV settings and keys the
   // user signed on the admin page are read through it on each use (verified every time).
   const contextLayers = new ContextLayerService(create => ContextLayerStore.open(resolveContextLayerDatabasePath(), create), undefined,
-    adminPort ? adminPageUrl(adminPort) : null, new JevKeyVault(resolveJevKeyVaultPath()));
+    () => adminPort ? resolveAdminPageUrl() : null, new JevKeyVault(resolveJevKeyVaultPath()));
   const signedJev = () => {
     try { return contextLayers.verifiedState()?.jev ?? null; } catch { return null; }
   };
@@ -150,7 +150,7 @@ export async function startMcpServer(
       getCredentialByEnvName, jevSignedLimitUsd: () => signedJev()?.limitUsd ?? null});
     // JEV is off until the user turns it on on the admin page; a config that enables it is said to be waiting, not ignored.
     if (classificationConfig && initialRuntime.config.jevEnabled && !signedJev()?.enabled) {
-      writeDiagnostic("skill-classification", "jev-off-until-signed", { adminUrl: adminPort ? adminPageUrl(adminPort) : null });
+      writeDiagnostic("skill-classification", "jev-off-until-signed", { adminUrl: adminPort ? resolveAdminPageUrl() : null });
     }
   } catch (error) {
     initializationFailure = new ClassificationInitializationError(error);

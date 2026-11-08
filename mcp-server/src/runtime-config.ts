@@ -1,6 +1,6 @@
 import type { HostExecutionAdapter } from "./host-attestation.js";
 import { defaultExecutionAdapters } from "./host-execution-adapters.js";
-import { realpathSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -195,6 +195,37 @@ export function resolveAdminPort(environment: NodeJS.ProcessEnv = process.env): 
 /** The page address agents give the user; always `localhost` (a WebAuthn relying party ID cannot be an IP address). */
 export function adminPageUrl(port: number): string {
   return `http://localhost:${port}/`;
+}
+
+/** Where the MCP server that serves the page records the port it actually listens on (AGS3-D-0078). */
+export function resolveAdminPageRecordPath(environment: NodeJS.ProcessEnv = process.env, homeDirectory: string = homedir()): string {
+  return path.join(sharedUserStateDirectory(environment, homeDirectory), "admin-page.json");
+}
+
+function processAlive(pid: number): boolean {
+  try { process.kill(pid, 0); return true; }
+  catch (error) { return (error as NodeJS.ErrnoException).code === "EPERM"; }
+}
+
+/** The recorded page port while the process that recorded it is alive; null when there is none or it cannot be read. */
+export function readAdminPageRecord(environment: NodeJS.ProcessEnv = process.env): { port: number; pid: number } | null {
+  try {
+    const record = JSON.parse(readFileSync(resolveAdminPageRecordPath(environment), "utf8")) as { port?: unknown; pid?: unknown };
+    const { port, pid } = record;
+    if (typeof port === "number" && Number.isInteger(port) && port > 0 && port <= 65535
+      && typeof pid === "number" && Number.isInteger(pid) && pid > 0 && processAlive(pid)) return { port, pid };
+  } catch { /* No record or an unreadable one. */ }
+  return null;
+}
+
+/**
+ * The page address to give the user: the port a live AGS process recorded it serves on, else the configured port;
+ * null when the page is turned off. Throws when AGENT_GOVERNANCE_ADMIN_PORT is invalid, like resolveAdminPort.
+ */
+export function resolveAdminPageUrl(environment: NodeJS.ProcessEnv = process.env): string | null {
+  const port = resolveAdminPort(environment);
+  if (port === 0) return null;
+  return adminPageUrl(readAdminPageRecord(environment)?.port ?? port);
 }
 
 function canonicalDatabasePath(databasePath: string, platform: NodeJS.Platform): string | null {
