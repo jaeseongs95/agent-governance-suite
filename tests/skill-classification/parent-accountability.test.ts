@@ -3,7 +3,7 @@ import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
 import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
-import {loadCurrentSourceBindings} from "./evaluation.js";
+import {loadCurrentSourceBindings, CURRENT_SOURCE_MANIFEST} from "./evaluation.js";
 
 const root = new URL("../../", import.meta.url);
 const rootDirectory = fileURLToPath(root);
@@ -29,9 +29,10 @@ it("binds parent accountability after frozen r27 without changing prior source-s
   const writtenCases = JSON.parse(read("tests/skill-classification/fixtures.intake-written-cases-source-successor.json").toString("utf8"));
   const delivery = JSON.parse(read("tests/skill-classification/fixtures.intake-delivery-source-successor.json").toString("utf8"));
   const v390 = JSON.parse(read("tests/skill-classification/fixtures.v390-intake-source-successor.json").toString("utf8"));
-  const v390Later = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
+  const v400 = JSON.parse(read("tests/skill-classification/fixtures.v400-intake-source-successor.json").toString("utf8"));
+  const v390Later = (file: string) => v400.bindings.find((row: {path: string}) => row.path === file) ?? v390.bindings.find((row: {path: string}) => row.path === file);
   const current = loadCurrentSourceBindings(rootDirectory);
-  expect(current.manifest).toMatchObject({revision: v390.revision});
+  expect(current.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(previous.bindings.map((binding: {path: string}) => binding.path));
   for (const binding of manifest.bindings) {
     expect(binding.previousDigest).toBe(previous.bindings.find((row: {path: string}) => row.path === binding.path).digest);

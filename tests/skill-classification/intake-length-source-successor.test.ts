@@ -6,7 +6,7 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
 import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
-import {loadCurrentSourceBindings} from "./evaluation.js";
+import {loadCurrentSourceBindings, CURRENT_SOURCE_MANIFEST} from "./evaluation.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const file = "tests/skill-classification/fixtures.intake-length-source-successor.json";
@@ -20,7 +20,9 @@ const delivery = JSON.parse(deliveryBytes.toString("utf8"));
 // The 3.9.0 successor (chain end) rebinds some of these sources; its own test checks them against the live inventory.
 const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"));
 const v390 = JSON.parse(v390Bytes.toString("utf8"));
-const v390Later = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
+// The latest successor row since 3.9.0 (4.0.0 rebinds the orchestrator descriptor and intake again).
+const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
+const v390Later = (file: string) => v400.bindings.find((row: {path: string}) => row.path === file) ?? v390.bindings.find((row: {path: string}) => row.path === file);
 /** r34 assertions read its exact sources at the later r35 ancestor. */
 function intakeLengthSource(file: string): Buffer {
   const binding = writtenCases.bindings.find((row: {path: string}) => row.path === file);
@@ -67,7 +69,7 @@ it("D32 IL02-04 appends exact r34 bindings after frozen r33 and reselects only t
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.test-engineering-cli-source-successor.json", bytes: frozen.length, digest: hash(frozen)});
   expect(manifest.bindings.map((row: {path: string}) => row.path)).toEqual(["skills/orchestrator/classification.json", "skills/orchestrator/references/intake.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: v390.revision}, digest: hash(v390Bytes)});
+  expect(current).toMatchObject({manifest: {revision: CURRENT_SOURCE_MANIFEST.revision}, digest: CURRENT_SOURCE_MANIFEST.digest});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = intakeLengthSource(binding.path);

@@ -14,7 +14,7 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
 import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
-import {loadCurrentSourceBindings} from "./evaluation.js";
+import {loadCurrentSourceBindings, CURRENT_SOURCE_MANIFEST} from "./evaluation.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const file = "tests/skill-classification/fixtures.intake-delivery-source-successor.json";
@@ -23,7 +23,9 @@ const manifest = JSON.parse(bytes.toString("utf8"));
 // The 3.9.0 successor rebinds all three r36 sources; r36 is checked at its base and the live inventory in its own test.
 const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"));
 const v390 = JSON.parse(v390Bytes.toString("utf8"));
-const v390Later = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
+// The latest successor row since 3.9.0 (4.0.0 rebinds the orchestrator descriptor and intake again).
+const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
+const v390Later = (file: string) => v400.bindings.find((row: {path: string}) => row.path === file) ?? v390.bindings.find((row: {path: string}) => row.path === file);
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], {cwd: root});
 /** r36 bytes: the v390 base for a source the 3.9.0 successor rebinds, otherwise the current file. */
@@ -59,7 +61,7 @@ it("D36 ID01-04 appends exact delivery sources after frozen r35 and rebinds only
   const descriptor = "skills/orchestrator/classification.json", intake = "skills/orchestrator/references/intake.md";
   expect(manifest.bindings.map((row: {path: string}) => row.path)).toEqual([descriptor, intake, "skills/orchestrator/references/entry-details.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: v390.revision}, digest: hash(v390Bytes)});
+  expect(current).toMatchObject({manifest: {revision: CURRENT_SOURCE_MANIFEST.revision}, digest: CURRENT_SOURCE_MANIFEST.digest});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = deliverySource(binding.path);

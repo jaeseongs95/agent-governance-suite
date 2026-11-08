@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "v400-intake-source-binding-r39",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "e8bfc9399d13191a5ff12ff28a1def1374d46bb6",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.v390-intake-source-successor.json",
+    "bytes": 10242,
+    "digest": "sha256:9a322f2aa89b6e61754a9c129171beb98fdc427e4e2ca8872c5ae1043165736f"
+  },
+  "sourceChangeRefs": [
+    {
+      "defectIds": [
+        "AGS3-D-0080",
+        "AGS3-D-0081"
+      ],
+      "sourceRevision": "e8bfc9399d13191a5ff12ff28a1def1374d46bb6",
+      "observation": "공통 접수 기준 행동 전 확인 1에 사용자가 밝힌 우선순위·제약 대조(이를 낮춘 안을 기본으로 내밀지 않음)와 붙인 자료를 소재가 아닌 세션 역할에 준 이유로 읽는 조건을 더했다. MCP instructions 예산을 지키려고 무거운 단계 조항의 예시 나열(스킬 목록이 같은 대상을 싣는다)과 항목 3의 낱말을 줄였다. 분류 span의 줄 경계는 그대로이고 줄 8-13·15-20 span의 endByte와 digest만 바뀌었다. 원 평가 fixture·예산·라벨은 바꾸지 않는다."
+    }
+  ],
+  "fixtureFileRewritten": false,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN",
+  "bindings": [
+    {
+      "path": "skills/orchestrator/classification.json",
+      "previousDigest": "sha256:1ecc972babc27508f73c0f449f51b031dcd4279196198966eb9800428e3b66ef",
+      "digest": "sha256:072ab94c96dd9921cb3e572bfe36f50feb4d8cf9ac3584a4bf5cccf43718bf7e",
+      "bytes": 4813
+    },
+    {
+      "path": "skills/orchestrator/references/intake.md",
+      "previousDigest": "sha256:7fca57e5d1538ecb0ccf9a2adc67a7494c35e9978eef0600b31e8751d40a319d",
+      "digest": "sha256:d8d71dada86b8a9a87a135371e7142cc8091f6c680f4615993864fd8b6fee758",
+      "bytes": 8251
+    }
+  ]
+}

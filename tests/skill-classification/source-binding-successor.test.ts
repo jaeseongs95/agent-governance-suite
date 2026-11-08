@@ -5,7 +5,7 @@ import {tmpdir} from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
-import {oracleDigest, loadCurrentSourceBindings} from "./evaluation.js";
+import {oracleDigest, loadCurrentSourceBindings, CURRENT_SOURCE_MANIFEST} from "./evaluation.js";
 import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
 import {PROVIDER_RETENTION_SOURCE_CHANGES} from "./live-bootstrap/provider-retention-sources.mjs";
 // Historical/current-tail regression cases (TEST operation e83da164420a8a51493029c529ab47352a8b08f9fe477981):
@@ -65,6 +65,8 @@ const d38References = JSON.parse(d38ReferencesBytes.toString("utf8"));
 // rebound descriptor's spans are checked against the current inventory in the 3.9.0 successor's own test.
 const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"));
 const v390 = JSON.parse(v390Bytes.toString("utf8"));
+// 4.0.0 rebinds the orchestrator descriptor and intake again (AGS3-D-0080/0081); the current chain end is its manifest.
+const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
 const v390Changed = new Map<string, boolean>();
 const v390Rebound = (skillId: string) => {
   const descriptor = `skills/${skillId}/classification.json`;
@@ -300,7 +302,7 @@ it("chains the exact orchestrator multi-workflow source after specialist behavio
     expect(actual.length).toBe(binding.bytes);
     expect(hash(actual)).toBe(binding.digest);
     expect(hash(specialistSource(binding.path))).toBe(binding.previousDigest);
-    const latest = latestDigest(binding.path, binding.digest, [premise, retire, role, purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [premise, retire, role, purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -360,7 +362,7 @@ it("chains the exact mutation-risk-preflight overwrite source after the multi-wo
     expect(actual.length).toBe(binding.bytes);
     expect(hash(actual)).toBe(binding.digest);
     expect(hash(specialistSource(binding.path))).toBe(binding.previousDigest);
-    const latest = latestDigest(binding.path, binding.digest, [neutral, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [neutral, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -417,7 +419,7 @@ it("chains the exact orchestrator intake premise source after the overwrite sour
     // The predecessor is the multi-workflow successor's exact bytes, read at this successor's base.
     expect(multi.bindings.find((row: LaterBinding) => row.path === binding.path).digest).toBe(binding.previousDigest);
     expect(hash(multiSource(binding.path))).toBe(binding.previousDigest);
-    const latest = latestDigest(binding.path, binding.digest, [retire, role, purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [retire, role, purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -488,7 +490,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
   expect(retire.labelChanges).toEqual([]);
   expect(retire.priceAndBudgetChanges).toEqual([]);
   expect(retire.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: v390.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
   const retiredPaths = ["skills/context-continuity/SKILL.md", "skills/context-continuity/classification.json", "skills/context-continuity/references/entry-details.md"];
   const tools = ["checkpoint_context", "inspect_context", "load_context", "suppress_context_restore", "purge_direct_context"];
   expect(retire.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json",
@@ -507,7 +509,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
     base(binding.path);
     // A later successor that rebinds the path moves the current digest on (the role successor rebinds SKILL.md).
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest))
-      .toBe(binding.digest === null ? null : latestDigest(binding.path, binding.digest, [role, purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]));
+      .toBe(binding.digest === null ? null : latestDigest(binding.path, binding.digest, [role, purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]));
     if (binding.digest === null) {
       expect(retiredPaths).toContain(binding.path);
       expect(binding.bytes).toBe(0);
@@ -515,7 +517,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
     } else {
       const actual = retireSource(binding.path);
       expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-      const latest = latestDigest(binding.path, binding.digest, [role, purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+      const latest = latestDigest(binding.path, binding.digest, [role, purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
       if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
       else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     }
@@ -590,7 +592,7 @@ it("chains the role and delegation intake source after the retirement source, ch
   expect(role.labelChanges).toEqual([]);
   expect(role.priceAndBudgetChanges).toEqual([]);
   expect(role.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: v390.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
   expect(role.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json",
     "skills/coordinate-subagents/classification.json", "skills/coordinate-subagents/references/entry-details.md"]);
   const base = (relativePath: string) => sourceAt(role.sourceBaseRevision, relativePath,
@@ -601,7 +603,7 @@ it("chains the role and delegation intake source after the retirement source, ch
     base(binding.path);
     const actual = roleSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [purpose, move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -674,7 +676,7 @@ it("chains the intake purpose-check source after the role source, rewording only
   expect(purpose.labelChanges).toEqual([]);
   expect(purpose.priceAndBudgetChanges).toEqual([]);
   expect(purpose.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: v390.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
   expect(purpose.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]);
   const base = (relativePath: string) => sourceAt(purpose.sourceBaseRevision, relativePath,
     purpose.bindings.find((binding: LaterBinding) => binding.path === relativePath).previousDigest);
@@ -684,7 +686,7 @@ it("chains the intake purpose-check source after the role source, rewording only
     base(binding.path);
     const actual = purposeSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [move, blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -749,7 +751,7 @@ it("chains the intake move after the purpose-check source, moving the intake blo
   expect(move.labelChanges).toEqual([]);
   expect(move.priceAndBudgetChanges).toEqual([]);
   expect(move.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: v390.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
   expect(move.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]);
   const base = (relativePath: string) => sourceAt(move.sourceBaseRevision, relativePath,
     move.bindings.find((binding: LaterBinding) => binding.path === relativePath).previousDigest);
@@ -758,7 +760,7 @@ it("chains the intake move after the purpose-check source, moving the intake blo
     base(binding.path);
     const actual = moveSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [blocked, verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -830,7 +832,7 @@ it("chains the intake blocked-step rule after the intake move, rewording only in
   expect(blocked.labelChanges).toEqual([]);
   expect(blocked.priceAndBudgetChanges).toEqual([]);
   expect(blocked.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: v390.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
   const intake = "skills/orchestrator/references/intake.md", descriptor = "skills/orchestrator/classification.json";
   expect(blocked.bindings.map((binding: LaterBinding) => binding.path)).toEqual([descriptor, intake]);
   const base = (relativePath: string) => sourceAt(blocked.sourceBaseRevision, relativePath,
@@ -846,7 +848,7 @@ it("chains the intake blocked-step rule after the intake move, rewording only in
     base(binding.path);
     const actual = blockedSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [verify, parent, integrated, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -901,7 +903,7 @@ it("chains the intake verify-and-ask rules after the blocked-step rule, rewordin
   expect(verify.labelChanges).toEqual([]);
   expect(verify.priceAndBudgetChanges).toEqual([]);
   expect(verify.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: v390.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
   const intake = "skills/orchestrator/references/intake.md", descriptor = "skills/orchestrator/classification.json";
   expect(verify.bindings.map((binding: LaterBinding) => binding.path)).toEqual([descriptor, intake]);
   const base = (relativePath: string) => sourceAt(verify.sourceBaseRevision, relativePath,
@@ -913,7 +915,7 @@ it("chains the intake verify-and-ask rules after the blocked-step rule, rewordin
     base(binding.path);
     const actual = verifySource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [parent, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [parent, domain, contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
   }
@@ -964,7 +966,7 @@ it("chains the field-neutral wording source after the intake blocked-step rule, 
   expect(neutral.labelChanges).toEqual([]);
   expect(neutral.priceAndBudgetChanges).toEqual([]);
   expect(neutral.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: v390.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
   const skillIds = ["acceptance-evidence-validator", "blocker-diagnostician", "coordinate-subagents", "independent-audit-gate",
     "iteration-frame-auditor", "mutation-risk-preflight", "prompt-engineering", "session-board", "task-contract"];
   expect(neutral.bindings.map((binding: LaterBinding) => binding.path))
@@ -977,7 +979,7 @@ it("chains the field-neutral wording source after the intake blocked-step rule, 
     base(binding.path);
     const actual = contractDocsSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -1055,7 +1057,7 @@ it("appends the exact specialist behavior successor without changing frozen fixt
     expect(actual.length).toBe(binding.bytes);
     expect(hash(actual)).toBe(binding.digest);
     const later = reboundAfterSpecialist.get(binding.path);
-    const latest = latestDigest(binding.path, later ? later.digest : binding.digest, [v390]);
+    const latest = latestDigest(binding.path, later ? later.digest : binding.digest, [v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -1235,7 +1237,7 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: v390.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const historical = mainSource(source.path);
@@ -1446,10 +1448,10 @@ it("serializes both frozen r27 branches after parent accountability without rewr
     sourceAt(integrated.sourceBaseRevision, binding.path, binding.previousDigest);
     const actual = contractDocsSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latestDigest(binding.path, binding.digest, [contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]));
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latestDigest(binding.path, binding.digest, [contractDocs, nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]));
   }
-  expect(currentSourceBinding.manifest).toMatchObject({revision: v390.revision});
-  expect(currentSourceBinding.digest).toBe(hash(v390Bytes));
+  expect(currentSourceBinding.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
+  expect(currentSourceBinding.digest).toBe(CURRENT_SOURCE_MANIFEST.digest);
 });
 
 it("binds field-neutral intake and authority wording after frozen r29 (AGS3-D-0038/0044)", async () => {
@@ -1464,7 +1466,7 @@ it("binds field-neutral intake and authority wording after frozen r29 (AGS3-D-00
     sourceAt(domain.sourceBaseRevision, binding.path, binding.previousDigest);
     const actual = contractDocsSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -1494,8 +1496,8 @@ it("binds field-neutral intake and authority wording after frozen r29 (AGS3-D-00
     }
   }
   expect(domain.spanPreservation.changedSpans).toEqual(["orchestrator:applicability[5]", "orchestrator:applicability[6]"]);
-  expect(currentSourceBinding.manifest).toMatchObject({revision: v390.revision});
-  expect(currentSourceBinding.digest).toBe(hash(v390Bytes));
+  expect(currentSourceBinding.manifest).toMatchObject({revision: CURRENT_SOURCE_MANIFEST.revision});
+  expect(currentSourceBinding.digest).toBe(CURRENT_SOURCE_MANIFEST.digest);
 });
 
 it("PR-03 binds only the three approved AGS38 contract-documentation sources after frozen r30", async () => {
@@ -1513,7 +1515,7 @@ it("PR-03 binds only the three approved AGS38 contract-documentation sources aft
     sourceAt(contractDocs.sourceBaseRevision, binding.path, binding.previousDigest);
     const actual = beforeV390Source(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    const latest = latestDigest(binding.path, binding.digest, [nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390]);
+    const latest = latestDigest(binding.path, binding.digest, [nativeProcedure, testEngineeringCli, intakeLength, writtenCases, delivery, d38References, v390, v400]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
     for (const unbound of [latest!, "sha256:" + "0".repeat(64)]) {

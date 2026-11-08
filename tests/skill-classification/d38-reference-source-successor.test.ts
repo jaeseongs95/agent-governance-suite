@@ -16,7 +16,7 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
 import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
-import {loadCurrentSourceBindings} from "./evaluation.js";
+import {loadCurrentSourceBindings, CURRENT_SOURCE_MANIFEST} from "./evaluation.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const file = "tests/skill-classification/fixtures.d38-reference-source-successor.json";
@@ -27,6 +27,7 @@ const previous = (file: string) => execFileSync("git", ["show", `${manifest.sour
 const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"));
 const v390 = JSON.parse(v390Bytes.toString("utf8"));
 const laterBinding = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
+const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
 function boundSource(file: string): Buffer {
   const later = laterBinding(file);
   if (!later) return readFileSync(path.join(root, file));
@@ -62,15 +63,16 @@ it("D38 DR01-04 appends five exact r37 bindings and preserves all audit span ide
     "skills/task-contract/references/entry-details.md", entry,
     "skills/independent-audit-gate/references/audit-protocol.md", "skills/independent-audit-gate/references/orchestrator-integration.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: v390.revision}, digest: hash(v390Bytes)});
+  expect(current).toMatchObject({manifest: {revision: CURRENT_SOURCE_MANIFEST.revision}, digest: CURRENT_SOURCE_MANIFEST.digest});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = boundSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
     const later = laterBinding(binding.path);
     expect(later ? later.previousDigest : binding.digest).toBe(binding.digest);
-    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(later ? later.digest : binding.digest);
-    if (later) expect(current.resolveDigest(binding.path, binding.digest)).toBe(later.digest);
+    const latest = v400.bindings.find((row: {path: string}) => row.path === binding.path)?.digest ?? later?.digest ?? binding.digest;
+    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
+    if (later) expect(current.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => current.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     expect(() => current.resolveDigest(binding.path, `sha256:${"0".repeat(64)}`)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }

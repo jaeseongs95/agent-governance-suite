@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
-import { loadCurrentSourceBindings } from "./evaluation.js";
+import { loadCurrentSourceBindings, CURRENT_SOURCE_MANIFEST } from "./evaluation.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const file = "tests/skill-classification/fixtures.native-procedure-source-successor.json";
@@ -51,7 +51,7 @@ it("NP04 appends exactly four current sources without rewriting frozen r31 or ch
     "skills/test-engineering/classification.json", "skills/test-engineering/SKILL.md",
   ]);
   const current = loadCurrentSourceBindings(root);
-  expect(current.manifest).toMatchObject({ revision: v390.revision });
+  expect(current.manifest).toMatchObject({ revision: CURRENT_SOURCE_MANIFEST.revision });
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = nativeProcedureSource(binding.path);

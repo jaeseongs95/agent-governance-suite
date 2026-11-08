@@ -16,7 +16,7 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
 import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
-import {loadCurrentSourceBindings, V390_INTAKE_MANIFEST_DIGEST} from "./evaluation.js";
+import {CURRENT_SOURCE_MANIFEST, loadCurrentSourceBindings, V390_INTAKE_MANIFEST_DIGEST} from "./evaluation.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const file = "tests/skill-classification/fixtures.v390-intake-source-successor.json";
@@ -46,16 +46,22 @@ it("V1-V2 binds every 3.9.0 source after frozen r37 and ends the chain at the cu
   expect(hash(frozen)).toBe("sha256:6cbc88426ec49553e19642a10dfa64e490a440fb1fa42b0881bd724abbe64eae");
   for (const ref of manifest.sourceChangeRefs) execFileSync("git", ["merge-base", "--is-ancestor", ref.sourceRevision, "HEAD"], {cwd: root});
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: manifest.revision}, digest: hash(bytes)});
+  // 4.0.0 (r39) follows r38 and rebinds the orchestrator descriptor and intake; r38 is frozen and no longer the chain end.
+  expect(current).toMatchObject({manifest: {revision: CURRENT_SOURCE_MANIFEST.revision}, digest: CURRENT_SOURCE_MANIFEST.digest});
+  const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
+  expect(v400.frozenPredecessor).toEqual({path: file, bytes: bytes.length, digest: hash(bytes)});
   const paths = (manifest.bindings as Binding[]).map(row => row.path);
   expect(new Set(paths).size).toBe(paths.length);
   expect(paths).toHaveLength(21);
   for (const binding of manifest.bindings as Binding[]) {
     expect(hash(atBase(binding.path))).toBe(binding.previousDigest);
+    const later = (v400.bindings as Binding[]).find(row => row.path === binding.path);
+    if (later) expect(later.previousDigest).toBe(binding.digest);
+    const latest = later ?? binding;
     const actual = readFileSync(path.join(root, binding.path));
-    expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
-    for (const unbound of [binding.digest, `sha256:${"0".repeat(64)}`]) {
+    expect([actual.length, hash(actual)]).toEqual([latest.bytes, latest.digest]);
+    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest.digest);
+    for (const unbound of [latest.digest, `sha256:${"0".repeat(64)}`]) {
       expect(() => current.resolveDigest(binding.path, unbound)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     }
   }

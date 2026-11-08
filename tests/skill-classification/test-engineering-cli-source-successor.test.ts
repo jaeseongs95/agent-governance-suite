@@ -6,7 +6,7 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
 import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
-import {loadCurrentSourceBindings} from "./evaluation.js";
+import {loadCurrentSourceBindings, CURRENT_SOURCE_MANIFEST} from "./evaluation.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const file = "tests/skill-classification/fixtures.test-engineering-cli-source-successor.json";
@@ -30,9 +30,7 @@ it("D36 appends two exact CLI-comment source bindings after frozen r32 and prese
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.native-procedure-source-successor.json", bytes: frozen.length, digest: hash(frozen)});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(["skills/test-engineering/classification.json", "skills/test-engineering/SKILL.md"]);
   const current = loadCurrentSourceBindings(root);
-  const intakeBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.v390-intake-source-successor.json"));
-  const intake = JSON.parse(intakeBytes.toString("utf8"));
-  expect(current).toMatchObject({manifest: {revision: intake.revision}, digest: hash(intakeBytes)});
+  expect(current).toMatchObject({manifest: {revision: CURRENT_SOURCE_MANIFEST.revision}, digest: CURRENT_SOURCE_MANIFEST.digest});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = readFileSync(path.join(root, binding.path));
