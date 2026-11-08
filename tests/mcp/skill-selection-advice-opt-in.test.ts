@@ -165,8 +165,9 @@ describe("direct Choice opt-in necessity contract", () => {
     }
     const changed = structuredClone(f.profile); changed.qualification.profileConfigurationDigest = "sha256:" + "0".repeat(64);
     expect(validateProviderProfile(changed, f.request, Date.now())).toBe("QUALIFICATION_CONFIGURATION_MISMATCH");
+    // 4.0.0: a JEV Choice profile is not gated on qualification; the profile AGS composes records NOT_RUN honestly.
     const notRun = structuredClone(f.profile); notRun.qualification.status = "NOT_RUN";
-    expect(validateProviderProfile(notRun, f.request, Date.now())).toBe("PROFILE_UNQUALIFIED");
+    expect(validateProviderProfile(notRun, f.request, Date.now())).toBeNull();
   });
   it("keeps default v6/long-context factories and rejects aliasing the new ref into vendor or mismatched routes", () => {
     expect(resolveClassificationWireAdapter(JEV_NOUL_SHARED_RULES_V6_ADAPTER_REVISION, {providerKind: "jev", adapterRevision: JEV_NOUL_SHARED_RULES_V6_ADAPTER_REVISION})).toBe(jevNoulSharedRulesV6WireAdapter);

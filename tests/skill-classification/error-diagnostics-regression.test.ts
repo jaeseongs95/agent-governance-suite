@@ -47,7 +47,8 @@ function fixture() {
 }
 
 const skipCases = [
-  ["profile", "PROFILE_UNAVAILABLE"], ["provider", "PROVIDER_UNAVAILABLE"], ["qualification", "PROFILE_UNQUALIFIED"], ["input", "INPUT_TOO_LONG"],
+  // 4.0.0: JEV's qualification status no longer excludes it (advice layer); a configuration digest that does not match still does.
+  ["profile", "PROFILE_UNAVAILABLE"], ["provider", "PROVIDER_UNAVAILABLE"], ["configuration", "QUALIFICATION_CONFIGURATION_MISMATCH"], ["input", "INPUT_TOO_LONG"],
 ] as const;
 describe("D0067 호출 전 제외 진단", () => {
   it.each(skipCases)("SKIP %s: 성공·실패·재검증에도 원인을 보존하고 호출을 늘리지 않는다", async (kind, code) => {
@@ -55,7 +56,7 @@ describe("D0067 호출 전 제외 진단", () => {
       const f = fixture(), jev = f.input.registry.profiles[0]!;
       if (kind === "profile") f.input.registry.profiles.shift();
       if (kind === "provider") delete f.providers.jev;
-      if (kind === "qualification") jev.qualification.status = "FAIL";
+      if (kind === "configuration") jev.qualification.profileConfigurationDigest = `sha256:${"0".repeat(64)}`;
       if (kind === "input") {jev.maximumInputBytes = 1; jev.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(jev);}
       if (outcome === "failure") vi.mocked(f.vendor.classify).mockRejectedValue(new ClassificationProviderError("AUTH_UNAVAILABLE", "not-started"));
       if (outcome === "vendor-preflight") f.input.registry.profiles.find(p => p.providerKind === "vendor")!.qualification.status = "FAIL";

@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { ADMIN_PAGE_HTML } from "../../mcp-server/src/admin-page.generated.js";
 import { type AdminChange, SETTING_CHANGE_REASONS } from "../../mcp-server/src/admin-log.js";
-import { adminSettingsView, applyAdminJev, editExemptPaths, jevBudgetLimit, type JevInstallationView } from "../../mcp-server/src/admin-settings.js";
+import { adminSettingsView, applyAdminJev, editExemptPaths, type JevInstallationView } from "../../mcp-server/src/admin-settings.js";
 import { AdminError } from "../../mcp-server/src/admin-webauthn.js";
 import { ContextLayerService } from "../../mcp-server/src/context-layer-service.js";
 import { ContextLayerStore } from "../../mcp-server/src/context-layer-store.js";
@@ -168,18 +168,31 @@ describe("edit gate exceptions: signed, environment first", () => {
 });
 
 describe("JEV switch, preset and budget", () => {
-  const runtime = (jevEnabled: boolean) => ({ config: { jevEnabled, mode: "select" } });
+  const installedJev = { profileId: "installed-jev", providerKind: "jev" } as ProviderProfile;
+  const installedVendor = { profileId: "installed-vendor", providerKind: "vendor" } as ProviderProfile;
+  const runtime = (jevEnabled: boolean) => ({ config: { jevEnabled, mode: "select" },
+    registry: { schemaVersion: "1.0.0" as const, profileRevision: "r", profiles: [installedJev, installedVendor] } });
+  const builtin = { profileId: "builtin-jev", providerKind: "jev" } as ProviderProfile;
+  const profileFor = () => builtin;
 
-  it("is off by default and turns on only by a signed switch inside what the installation allows", () => {
+  it("is off by default and turns on only by the signed switch; the installation's jevEnabled and JEV profiles are not read (4.0.0)", () => {
     const { service, owner } = setup();
     const signed = () => service.verifiedState()?.jev ?? null;
-    expect(applyAdminJev(runtime(true), signed()).config.jevEnabled).toBe(false);
-    signAndCommit(service, owner, { op: "jev.set", enabled: true, limitUsd: 2, presets: { "skill-classification": true } });
-    expect(applyAdminJev(runtime(true), signed()).config.jevEnabled).toBe(true);
-    // The installation's config can still turn it off: the narrower of the two applies.
-    expect(applyAdminJev(runtime(false), signed()).config.jevEnabled).toBe(false);
+    expect(applyAdminJev(runtime(true), signed(), profileFor).config.jevEnabled).toBe(false);
+    signAndCommit(service, owner, { op: "jev.set", enabled: true, limitUsd: 2, presets: { "skill-classification": true },
+      model: { providerId: "typesafe", modelId: "jev-1.14.0" }, transmissionAllowed: true, fallbackVendorId: null });
+    expect(applyAdminJev(runtime(true), signed(), profileFor).config.jevEnabled).toBe(true);
+    // An installation that turns JEV off no longer bounds the signed switch.
+    const applied = applyAdminJev(runtime(false), signed(), profileFor);
+    expect(applied.config.jevEnabled).toBe(true);
+    // The installation's JEV profile is dropped; the signed model's profile is the JEV profile; vendors stay.
+    expect(applied.registry.profiles.map(profile => profile.profileId)).toEqual(["builtin-jev", "installed-vendor"]);
+    expect(applied.jev).toEqual({ transmissionAllowed: true, fallbackVendorId: null });
     signAndCommit(service, owner, { op: "jev.set", enabled: true, limitUsd: 2, presets: { "skill-classification": false } });
-    expect(applyAdminJev(runtime(true), signed()).config.jevEnabled).toBe(false);
+    const off = applyAdminJev(runtime(true), signed(), profileFor);
+    expect(off.config.jevEnabled).toBe(false);
+    expect(off.registry.profiles.map(profile => profile.profileId)).toEqual(["installed-vendor"]);
+    expect(off.jev).toEqual({ transmissionAllowed: false, fallbackVendorId: null });
   });
 
   it("keeps the last valid switch when the newer record's signer was rewritten in the file", () => {
@@ -205,7 +218,6 @@ describe("JEV switch, preset and budget", () => {
     // The person sets the budget; a value above the former 5 USD cap is signed and used as is.
     signAndCommit(service, owner, { op: "jev.set", enabled: true, limitUsd: 50, presets: {} });
     expect(service.adminState().signedSettings.jev?.limitUsd).toBe(50);
-    expect(jevBudgetLimit(null, 50)).toBe(50);
     const profile = { profileId: "p", providerKind: "jev", vendorId: "v" } as ProviderProfile;
     const budget = new InMemoryClassificationBudget({ jev: { limitUsd: null, spentUsd: null }, vendors: {}, jevSignedLimitUsd: () => 50 });
     expect(budget.reserve(profile, "big", 20)).toBe(true);
@@ -234,26 +246,28 @@ describe("JEV switch, preset and budget", () => {
     expect(bounded.reserve(profile, "b2", 0.4)).toBe(true);
     // An installation limit with an unknown spent amount still refuses, as before the page.
     expect(new InMemoryClassificationBudget({ jev: { limitUsd: 3, spentUsd: null }, vendors: {}, jevSignedLimitUsd: () => 3 }).reserve(profile, "u", 0.1)).toBe(false);
-    expect(jevBudgetLimit(null, null)).toBeNull();
-    expect(jevBudgetLimit(4, 9)).toBe(4);
   });
 
   it("shows the page the switch, the presets, the budget and this process's tally without any key value", () => {
     const { service, owner, environment } = setup();
     signAndCommit(service, owner, { op: "jev.set", enabled: true, limitUsd: 3, presets: {} });
     registerKey(service, owner, "JEV_FIXTURE_KEY", "sk-fixture-value-1");
-    const installation: JevInstallationView = { configured: true, allows: true, mode: "select", profileCount: 1, limitUsd: 4,
-      credentials: [{ name: "JEV_FIXTURE_KEY", vendorIds: ["vendor-a"] }, { name: "JEV_ENV_KEY", vendorIds: ["vendor-b"] }], error: null };
-    const view = adminSettingsView({ environment: { ...environment, JEV_ENV_KEY: "from-env" }, signed: service.adminState().signedSettings,
-      locale: { value: "ko", source: "root" }, localeOptions: ["ko", "en"], installation, usage: { spentUsd: 0.25, reservedUsd: 0.1 } });
-    expect(view.jev).toMatchObject({ enabled: true, switchOn: true, presets: [{ presetId: "skill-classification", enabled: true }],
-      budget: { installationLimitUsd: 4, signedLimitUsd: 3, limitUsd: 3 }, usage: { spentUsd: 0.25, reservedUsd: 0.1 } });
-    expect(view.jev.keys).toMatchObject([{ name: "JEV_ENV_KEY", fingerprint: null, environment: true }, { name: "JEV_FIXTURE_KEY", stored: true,
-      fingerprint: jevKeyFingerprint("sk-fixture-value-1"), environment: false }]);
+    const installation: JevInstallationView = { configured: true, vendorIds: ["vendor-a", "vendor-b"],
+      credentials: [{ name: "JEV_FIXTURE_KEY", vendorIds: ["vendor-a"] }, { name: "JEV_ENV_KEY", vendorIds: ["vendor-b"] }],
+      ignoredJev: { routes: 1, profiles: 0 }, error: null };
+    const providers = [{ providerId: "typesafe", label: "TypeSafe", endpoint: "https://api.typesafe.ai/v1/systemone", credentialName: "JEV_API_KEY", perCallUsd: 0.01,
+      catalog: { status: "bundled", updatedAt: null, refreshHours: 24, models: ["jev-1.14.0"] }, transmitted: { request: ["model"], task: ["originalPrompt"], perSkill: ["skillId"] } }];
+    const view = adminSettingsView({ environment: { ...environment, JEV_ENV_KEY: "from-env", JEV_API_KEY: "jev-from-env" }, signed: service.adminState().signedSettings,
+      locale: { value: "ko", source: "root" }, localeOptions: ["ko", "en"], installation, usage: { spentUsd: 0.25, reservedUsd: 0.1 }, providers, profileFor: () => null });
+    // Switched on but not ready: no model, no consent, no JEV key (an environment variable of that name does not count).
+    expect(view.jev).toMatchObject({ switchOn: true, ready: false, missing: ["MODEL_NOT_SELECTED", "TRANSMISSION_NOT_ALLOWED", "KEY_MISSING"],
+      presets: [{ presetId: "skill-classification", enabled: true }], budget: { signedLimitUsd: 3, perCallUsd: 0.01 }, usage: { spentUsd: 0.25, reservedUsd: 0.1 },
+      fallback: { vendorId: null, options: ["vendor-a", "vendor-b"] }, installation: { configured: true, ignoredJev: { routes: 1, profiles: 0 } } });
+    expect(view.jev.keys).toMatchObject([{ name: "JEV_API_KEY", jev: true, fingerprint: null, environment: true },
+      { name: "JEV_ENV_KEY", jev: false, fingerprint: null, environment: true },
+      { name: "JEV_FIXTURE_KEY", jev: false, stored: true, fingerprint: jevKeyFingerprint("sk-fixture-value-1"), environment: false }]);
     expect(JSON.stringify(view)).not.toContain("sk-fixture-value-1");
     expect(JSON.stringify(view)).not.toContain("from-env");
-    expect(adminSettingsView({ environment, signed: service.adminState().signedSettings, locale: { value: "ko", source: "root" }, localeOptions: ["ko"],
-      installation: { ...installation, allows: false }, usage: null }).jev).toMatchObject({ enabled: false, lockedBy: "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG" });
   });
 });
 

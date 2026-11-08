@@ -391,6 +391,13 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/orchestrator/references/skill-classification.md": ["7bb370144a5aeb3f67b7920e4d0d9ac415020ca6bc69a4816f6d39aece07ad8a", "e0ed92eeab8977f4bb8189ff517ad4e4b44e020c38f4aae1c177cc87c2971439"],
     }),
   }),
+  // 4.0.0: the MCP server manages JEV from the admin page's signed settings; no qualification gate, opt-in fallback.
+  Object.freeze({
+    revision: "8104ce977f06a17bb1e938117c09460bf4070f19",
+    hashes: Object.freeze({
+      "skills/orchestrator/references/skill-classification.md": ["e0ed92eeab8977f4bb8189ff517ad4e4b44e020c38f4aae1c177cc87c2971439", "2316ceffe343e2e65a67f3976dfee81f9279ed33167454b2473e7ef23aca37e4"],
+    }),
+  }),
 ]);
 // 3.9.0 (AGS3-D-0007, AGS3-D-0018): core owns these former skill files. A removal is allowed only while the skill
 // path is absent and core holds the file, so a copy left in the skill or a lost core file is still reported.

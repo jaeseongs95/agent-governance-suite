@@ -7,7 +7,7 @@ import type { ExecutionContextV1 } from "../../../contracts/types.js";
 import { loadHostObservedInventory, type ObservedHostInventory } from "./host-discovery-adapter.js";
 import { createInstalledHostSkillObserver } from "./installed-host-observer.js";
 import { createClassificationRequest, digestClassificationValue } from "./request.js";
-import { SkillClassificationService, MAX_CLASSIFICATION_TIMEOUT_MS } from "./service.js";
+import { SkillClassificationService, MAX_CLASSIFICATION_TIMEOUT_MS, type ClassificationJevSettings } from "./service.js";
 import { decisionSchema, validateDecision, validateIndependentDecision } from "./validation.js";
 import type { ClassificationConfig, ClassificationResult, ClassificationSnapshot, ProviderProfileRegistry, SkillSelectionDecisionV1, SkillClassificationRequestV1 } from "./types.js";
 
@@ -24,7 +24,7 @@ export const classificationInputSchema = z.strictObject({
 const independentSource = "independent-agent-after-helper-failure";
 export const selectionInputSchema = z.strictObject({schemaVersion: z.literal("1.0.0"), operationId: z.string().min(1), decision: decisionSchema,
   selectionSource: z.literal(independentSource).optional()});
-export interface ClassificationRuntimeSnapshot {config: ClassificationConfig; registry: ProviderProfileRegistry; allowRemotePrivateContent: boolean; approvedPublicRequestDigests?: string[]; providerRuntimeRef?: string | null; nativeAdapterDefinitionsRef?: string | null; externalSkillRoots?: string[]; hostDiscoveryRef?: string | null}
+export interface ClassificationRuntimeSnapshot {config: ClassificationConfig; registry: ProviderProfileRegistry; allowRemotePrivateContent: boolean; jev?: ClassificationJevSettings; approvedPublicRequestDigests?: string[]; providerRuntimeRef?: string | null; nativeAdapterDefinitionsRef?: string | null; externalSkillRoots?: string[]; hostDiscoveryRef?: string | null}
 export interface CurrentClassificationTask {taskRevision: string | null; requestDigest: string; cancelled: boolean; sourceRef: string}
 interface OperationIdentity {intakeDigest: string; runtimeDigest: string; runtimeObservation: string | null; hostDiscoveryDigest: string | null; task: CurrentClassificationTask | null}
 interface StoredOperation extends OperationIdentity {result: ClassificationResult; explicit: string[]; required: string[]; decision: SkillSelectionDecisionV1 | null; actorId: string | null; sourcesCurrent: () => boolean; hostExpiresAt: string | null; selectionSource: string | null; independentSelection: Record<string, unknown> | null}
@@ -57,6 +57,8 @@ function sourceFence(root: string, request: SkillClassificationRequestV1, observ
   } catch {return () => false;}
 }
 export interface SkillClassificationGateway {
+  /** Whether advice can be asked for now (a usable JEV or a configured vendor route); guidance says "configured" only then. Absent: not ready. */
+  adviceReady?(): boolean;
   inventory(): Promise<unknown>;
   classify(input: unknown, observation?: ExecutionContextV1 | null): Promise<unknown>;
   accept(input: unknown, observation: ExecutionContextV1 | null): Promise<unknown>;
@@ -77,8 +79,13 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     observeHostSkills?: () => Promise<unknown>;
     maximumOperations?: number;
     now?: () => Date;
+    /** The composition's readiness (index.ts); without it nothing claims advice is configured. */
+    adviceReady?: () => boolean;
   }) {
     this.observeInstalledHostSkills = createInstalledHostSkillObserver(options.root, options.now);
+  }
+  adviceReady(): boolean {
+    try { return this.options.adviceReady?.() === true; } catch { return false; }
   }
   private loadInventory(runtime: Pick<ClassificationRuntimeSnapshot, "externalSkillRoots" | "hostDiscoveryRef">): Promise<ObservedHostInventory> {
     return loadHostObservedInventory({root: this.options.root, ...(this.options.now ? {now: this.options.now} : {}),
@@ -110,7 +117,9 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     // Approval binds every transmitted context and inventory byte, not just the prompt.
     const publicApproved = input.publicSynthetic && runtime.approvedPublicRequestDigests?.includes(request.requestDigest) === true;
     const remoteContentAllowed = publicApproved || runtime.allowRemotePrivateContent;
-    if (!remoteContentAllowed && runtime.config.externalClassificationAllowed && !this.options.service.hasNativeRoute({request,
+    // The signed JEV consent covers the JEV attempt; the installation's content approval still governs vendor routes.
+    if (!remoteContentAllowed && runtime.config.externalClassificationAllowed && !(runtime.config.jevEnabled && runtime.jev?.transmissionAllowed)
+      && !this.options.service.hasNativeRoute({request,
       config: runtime.config, registry: runtime.registry, currentVendorId: input.vendorContext.vendorId})) {
       return {status: "NEEDS_INPUT", errors: ["REMOTE_CONTENT_NOT_APPROVED"], response: null, agentSelectedSkillIds: null};
     }
@@ -131,7 +140,7 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     const snapshot: ClassificationSnapshot = {taskRevision: request.confirmedContext.taskRevision, requestDigest: request.requestDigest, inventoryDigest: request.inventoryDigest, configRevision: runtime.config.configRevision, profileRevision: runtime.registry.profileRevision, cancelled: task?.cancelled ?? false};
     const sourcesCurrent = sourceFence(this.options.root, request, hostSourceRefs);
     const invoke = () => this.options.service.classify({request, config: runtime.config, registry: runtime.registry, currentVendorId: input.vendorContext.vendorId,
-      remoteContentAllowed,
+      remoteContentAllowed, ...(runtime.jev ? {jev: runtime.jev} : {}),
       getCurrentSnapshot: () => {
         const current = this.options.observeTask?.(request, observation) ?? null;
         const sourcesUnchanged = sourcesCurrent();
@@ -156,7 +165,10 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
       result = await flight.result;
     }
     const completed = this.operations.get(input.operationId);
-    return {result, classificationResponseRef: digestClassificationValue(result.response), agentSelectedSkillIds: completed?.decision?.agentSelectedSkillIds ?? null,
+    // Advice is advice: say whether its profile was qualified (a JEV profile never is: NOT_RUN).
+    const advised = result.response.error === null && ["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status)
+      ? runtime.registry.profiles.find(profile => profile.profileId === result.attempts.at(-1)?.profileId) : undefined;
+    return {result, adviceQualification: advised?.qualification.status ?? null, classificationResponseRef: digestClassificationValue(result.response), agentSelectedSkillIds: completed?.decision?.agentSelectedSkillIds ?? null,
       selectionStatus: completed?.decision?.selectionStatus ?? "PROPOSED", adviceApplied: completed?.decision?.adviceApplied ?? false, selectionSource: completed?.selectionSource ?? null, independentSelection: completed?.independentSelection ?? null, discovery};
   }
   async accept(raw: unknown, observation: ExecutionContextV1 | null) {

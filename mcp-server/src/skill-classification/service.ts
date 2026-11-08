@@ -93,9 +93,17 @@ export interface ClassificationServiceInput {
   currentVendorId: string;
   /** Gateway-owned content permission; caller requests cannot grant remote transmission. */
   remoteContentAllowed?: boolean;
+  /**
+   * JEV as the user signed it on the admin page (4.0.0). `transmissionAllowed` is the consent to send the request to the
+   * JEV provider; for the JEV attempt it replaces the installation's external-transmission settings. With JEV on, a
+   * vendor attempt follows a failed JEV attempt only for the signed fallback vendor (null: none). Absent: the earlier
+   * behavior (installation settings, the current vendor).
+   */
+  jev?: ClassificationJevSettings;
   getCurrentSnapshot?: () => ClassificationSnapshot;
   signal?: AbortSignal;
 }
+export interface ClassificationJevSettings {transmissionAllowed: boolean; fallbackVendorId: string | null}
 interface Operation {identity: string; result: Promise<ClassificationResult>}
 const providerFailureCodes = new Set(["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "CREDENTIAL_MALFORMED", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE", "CANCELLED", "INPUT_TOO_LONG", "INVALID_PROVIDER_REQUEST", "TRANSPORT_UNAVAILABLE", "AUTH_UNAVAILABLE", "RATE_LIMITED", "SERVER_UNAVAILABLE", "API_UNAVAILABLE", "INVALID_PROVIDER_RESPONSE", "PROVIDER_UNAVAILABLE", "STALE_CLASSIFICATION", "REMOTE_CONTENT_NOT_APPROVED", "EXTERNAL_CLASSIFICATION_BLOCKED", "BUDGET_UNAVAILABLE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_SPAWN_UNAVAILABLE", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_PROCESS_UNAVAILABLE", "NATIVE_TIMEOUT", "NATIVE_PROFILE_UNSUPPORTED", "NATIVE_PROFILE_ENCODING_UNAVAILABLE", "NATIVE_CLEANUP_UNAVAILABLE", "PROVIDER_RESPONSE_TOO_LARGE", "INVALID_PROFILE", "QUALIFICATION_CONFIGURATION_MISMATCH", "PROFILE_UNQUALIFIED", "QUALIFICATION_MISMATCH", "QUALIFICATION_EXPIRED", "UNSUPPORTED_OPTIONS", "COST_UNKNOWN"]);
 // Only known helper execution/response faults after this service's dispatch fence qualify.
@@ -164,12 +172,13 @@ export class SkillClassificationService {
   }
   classify(input: ClassificationServiceInput): Promise<ClassificationResult> {
     // Freeze caller-owned profile/config snapshots; an in-flight mutation cannot change the transmitted model.
-    const frozen: ClassificationServiceInput = {...input, request: structuredClone(input.request), config: structuredClone(input.config), registry: structuredClone(input.registry)};
+    const frozen: ClassificationServiceInput = {...input, request: structuredClone(input.request), config: structuredClone(input.config), registry: structuredClone(input.registry),
+      ...(input.jev ? {jev: {...input.jev}} : {})};
     const snapshot = this.snapshot(frozen);
     try { validateClassificationRequest(frozen.request); }
     catch { return Promise.resolve(this.failure(frozen, snapshot, "INVALID_CLASSIFICATION_REQUEST", [], "INVALID")); }
     let identity: string;
-    try { identity = digestClassificationValue([frozen.request.requestId, frozen.request.requestDigest, snapshot, frozen.currentVendorId, frozen.config, frozen.registry, frozen.remoteContentAllowed ?? true]); }
+    try { identity = digestClassificationValue([frozen.request.requestId, frozen.request.requestDigest, snapshot, frozen.currentVendorId, frozen.config, frozen.registry, frozen.remoteContentAllowed ?? true, frozen.jev ?? null]); }
     catch {
       const code = !isProviderProfileRegistry(frozen.registry) ? "INVALID_PROFILE_REGISTRY"
         : !Number.isSafeInteger(frozen.config.timeoutMs) || (frozen.config.timeoutMs < 1 || frozen.config.timeoutMs > MAX_CLASSIFICATION_TIMEOUT_MS) ? "INVALID_TIMEOUT" : "INVALID_CLASSIFICATION_CONFIG";
@@ -220,9 +229,14 @@ export class SkillClassificationService {
     if (input.config.mode !== "shadow" && input.config.mode !== "select") return this.failure(input, snapshot, "UNSUPPORTED_MODE");
     if (!Number.isSafeInteger(input.config.timeoutMs) || (input.config.timeoutMs < 1 || input.config.timeoutMs > MAX_CLASSIFICATION_TIMEOUT_MS)) return this.failure(input, snapshot, "INVALID_TIMEOUT");
     if (!isProviderProfileRegistry(input.registry)) return this.failure(input, snapshot, "INVALID_PROFILE_REGISTRY");
-    for (const kind of input.config.jevEnabled ? ["jev", "vendor"] as const : ["vendor"] as const) {
+    // With JEV on and signed settings present, the vendor attempt after JEV is the signed fallback, or none.
+    const signedJev = input.config.jevEnabled ? input.jev : undefined;
+    const noFallback = signedJev?.fallbackVendorId === null;
+    const kinds = !input.config.jevEnabled ? ["vendor"] as const : noFallback ? ["jev"] as const : ["jev", "vendor"] as const;
+    const vendorId = signedJev?.fallbackVendorId ?? input.currentVendorId;
+    for (const kind of kinds) {
       if (input.signal?.aborted || (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot()))) return this.failure(input, snapshot, "STALE_CLASSIFICATION", attempts, "UNAVAILABLE", skipped);
-      const profile = selectFixedProfile(input.registry, kind, input.currentVendorId);
+      const profile = selectFixedProfile(input.registry, kind, vendorId);
       const provider = this.options.providers[kind];
       if (!profile || !provider) {
         const code = !profile ? "PROFILE_UNAVAILABLE" : "PROVIDER_UNAVAILABLE";
@@ -240,8 +254,9 @@ export class SkillClassificationService {
         return this.failure(input, snapshot, "INPUT_TOO_LONG", attempts, "UNAVAILABLE", skipped);
       }
       const bindingCurrent = this.providerFence(provider, profile);
+      const jevConsent = kind === "jev" ? signedJev?.transmissionAllowed : undefined;
       const evaluated = await dispatchAdvisoryAttempt({provider, profile, budget: this.options.budget, timeoutMs: input.config.timeoutMs,
-        externalClassificationAllowed: input.config.externalClassificationAllowed, remoteContentAllowed: input.remoteContentAllowed, signal: input.signal, bindingCurrent},
+        externalClassificationAllowed: jevConsent ?? input.config.externalClassificationAllowed, remoteContentAllowed: jevConsent ?? input.remoteContentAllowed, signal: input.signal, bindingCurrent},
       this.classificationTask(input, snapshot, profile));
       attempts.push(evaluated.attempt);
       const result: ClassificationResult = {request: input.request, config: input.config, profileRevision: input.registry.profileRevision, snapshot, attempts, skipped, response: evaluated.evaluation.response};
@@ -251,8 +266,10 @@ export class SkillClassificationService {
       if (["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status) && result.response.error === null) return result;
       helperFailure = evaluated.helperFailure;
       helperBinding = helperFailure ? bindingCurrent : undefined;
-      if (kind === "vendor") return this.bindHelperFailure(result, helperFailure);
+      // No fallback was chosen: the JEV attempt's own failure is the answer (the agent then chooses by itself).
+      if (kind === "vendor" || noFallback) return this.bindHelperFailure(result, helperFailure);
     }
+    if (noFallback) return this.failure(input, snapshot, skipped.at(-1)?.reasonCode ?? "PROVIDER_UNAVAILABLE", attempts, "UNAVAILABLE", skipped);
     return this.failure(input, snapshot, "PROVIDER_UNAVAILABLE", attempts, "UNAVAILABLE", skipped);
   }
   /** The skill classification task: request, failure responses, qualification, staleness and response checks. */

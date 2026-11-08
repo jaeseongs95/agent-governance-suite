@@ -41,7 +41,8 @@ async function call(tool: string, outcome: ApiResultV1<unknown>, options: { clas
     abortWorkflow: () => outcome,
     getWorkflowStatus: () => apiOk(receipt),
   } as unknown as WorkflowService;
-  const classification = options.classification ? {} as SkillClassificationGateway : null;
+  // A gateway that says advice can be asked now (D-0075: the notice follows readiness, not the gateway's presence).
+  const classification = options.classification ? { adviceReady: () => true } as unknown as SkillClassificationGateway : null;
   const server = createMcpServer(service, updateService(), undefined, undefined, undefined, new ContractValidator(), "default",
     null, null, {} as SessionMessageService, null, classification, metaIngress(), options.locale ?? "ko");
   const client = new Client({ name: "workflow-skill-reselection", version: "1.0.0" });

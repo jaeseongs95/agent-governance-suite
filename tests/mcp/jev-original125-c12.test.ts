@@ -32,7 +32,7 @@ function qualified(request: SkillClassificationRequestV1): ProviderProfile {
 }
 
 describe("ORIGINAL125 C-12 합성 관련 역할 추가", () => {
-  it("동일 task에서 새 descriptor를 다시 읽고 과거 자격의 전송을 차단하며 기존 후보를 보존한다", async () => {
+  it("동일 task에서 새 descriptor를 다시 읽어 보내며 기존 후보를 보존한다", async () => {
     const fixture = JSON.parse(await readFile(new URL("./fixtures/jev-current-workload-p04.r01.json", import.meta.url), "utf8")) as {baseFiles: Record<string, string>};
     const root = await mkdtemp(path.join(tmpdir(), "jev-c12-"));
     const put = async (relative: string, text: string) => {
@@ -83,10 +83,8 @@ describe("ORIGINAL125 C-12 합성 관련 역할 추가", () => {
       expect(after.promptDigest).toBe(before.promptDigest);
       expect(after.requestDigest).not.toBe(before.requestDigest);
       expect(after.inventoryDigest).not.toBe(before.inventoryDigest);
-      await expect(provider.classify(after, oldProfile, new AbortController().signal)).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
-      expect(fetcher).not.toHaveBeenCalled();
-
-      const second = await provider.classify(after, qualified(after), new AbortController().signal);
+      // 4.0.0: JEV 조언은 qualification에 묶이지 않는다(조언 계층). 같은 프로필로 새 descriptor를 다시 읽어 보낸다.
+      const second = await provider.classify(after, oldProfile, new AbortController().signal);
       expect(fetcher).toHaveBeenCalledTimes(1);
       const secondWire = JSON.parse(String(fetcher.mock.calls[0]![1]!.body));
       expect(secondWire.state).toEqual(firstWire.state);

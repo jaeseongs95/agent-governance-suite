@@ -47,6 +47,7 @@ function fixture(inventory = oneSkill) {
     configRevision: "fixture:c1", timeoutMs: 1000}, registry: {schemaVersion: "1.0.0" as const, profileRevision: "fixture:p1", profiles: [profile]}, currentVendorId: "fixture"};
   return {request, profile, state, validate, adapter, route, credential, fetcher, provider, budget, service, input};
 }
+const QUALIFICATION_VARIANTS = ["not-run", "fail", "expiry", "inventory", "prompt"];
 function requalify(profile: ProviderProfile) {profile.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(profile);}
 
 describe("trusted bound adapter protocol validation", () => {
@@ -73,6 +74,8 @@ describe("trusted bound adapter protocol validation", () => {
   });
   it.each(["digest", "not-run", "fail", "expiry", "inventory", "prompt", "options", "cost"])("never lets an accepting adapter bypass common %s validation", variant => {
     const f = fixture(); f.adapter.validateConfiguration = () => null;
+    // 4.0.0: qualification binds vendor profiles only; a JEV profile is not gated on it (see the next test).
+    if (QUALIFICATION_VARIANTS.includes(variant)) {f.profile.providerKind = "vendor"; requalify(f.profile);}
     const codes: Record<string, string> = {digest: "QUALIFICATION_CONFIGURATION_MISMATCH", "not-run": "PROFILE_UNQUALIFIED", fail: "PROFILE_UNQUALIFIED", expiry: "QUALIFICATION_EXPIRED",
       inventory: "QUALIFICATION_MISMATCH", prompt: "QUALIFICATION_MISMATCH", options: "UNSUPPORTED_OPTIONS", cost: "COST_UNKNOWN"};
     if (variant === "digest") f.profile.qualification.profileConfigurationDigest = "sha256:" + "0".repeat(64);
@@ -84,6 +87,15 @@ describe("trusted bound adapter protocol validation", () => {
     if (variant === "options") {f.profile.supportedOptions.structuredOutput = false; requalify(f.profile);}
     if (variant === "cost") {f.profile.maximumCostUsd = null; requalify(f.profile);}
     expect(f.service.validateProfile(f.profile, f.request)).toBe(codes[variant]); expect(f.fetcher).not.toHaveBeenCalled();
+  });
+  it.each(QUALIFICATION_VARIANTS)("does not gate a JEV profile on its %s qualification (advice layer, 4.0.0)", variant => {
+    const f = fixture(); f.adapter.validateConfiguration = () => null;
+    if (variant === "not-run") f.profile.qualification.status = "NOT_RUN";
+    if (variant === "fail") f.profile.qualification.status = "FAIL";
+    if (variant === "expiry") f.profile.qualification.validUntil = "2000-01-01T00:00:00Z";
+    if (variant === "inventory") f.profile.qualification.inventoryDigest = "other";
+    if (variant === "prompt") f.profile.qualification.promptRevision = "other";
+    expect(f.service.validateProfile(f.profile, f.request)).toBeNull();
   });
   it("fails closed when a trusted validator throws", async () => {
     const f = fixture(); f.adapter.validateConfiguration = () => {throw new Error("private-sentinel");};

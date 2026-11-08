@@ -59,17 +59,18 @@ describe("qualification freshness across availability and cached operations", ()
     expect(result.attempts[0]).toMatchObject({dispatchState: "not-started", reservedCostUsd: 0});
   });
 
-  it.each([0, 1])("QUAL-FALLBACK JEV expiration at deadline+%i uses only still-qualified fixed vendor", async offset => {
+  // 4.0.0: JEV is an advice layer without a qualification gate; its profile's validUntil does not stop it.
+  it.each([0, 1])("QUAL-FALLBACK JEV past its validUntil at deadline+%i is still asked and the vendor is not", async offset => {
     const f = fixture(true), gate = availabilityGate(f.jev);
     f.input.registry.profiles[1]!.qualification.validUntil = new Date(DEADLINE + 10_000).toISOString();
     const pending = f.service.classify(f.input); await gate.entered;
     f.setClock(DEADLINE + offset); gate.release();
     const result = await pending;
-    expect(f.jev.classify).not.toHaveBeenCalled(); expect(f.vendor.classify).toHaveBeenCalledTimes(1);
-    expect(f.reserve).toHaveBeenCalledTimes(1); expect(f.reserve.mock.calls[0]![0].providerKind).toBe("vendor");
+    expect(f.jev.classify).toHaveBeenCalledTimes(1); expect(f.vendor.classify).not.toHaveBeenCalled();
+    expect(f.reserve).toHaveBeenCalledTimes(1); expect(f.reserve.mock.calls[0]![0].providerKind).toBe("jev");
     expect(result.response.status).toBe("SUCCESS");
-    expect(result.attempts.map(row => [row.providerKind, row.errorCode, row.reservedCostUsd])).toEqual([["jev", "QUALIFICATION_EXPIRED", 0], ["vendor", null, 0.4]]);
-    expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0);
+    expect(result.attempts.map(row => [row.providerKind, row.errorCode, row.reservedCostUsd])).toEqual([["jev", null, 0.4]]);
+    expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0.1);
   });
 
   it.each([0, 1])("QUAL-FALLBACK-WAIT fixed vendor expires at deadline+%i during its own availability", async offset => {
@@ -99,7 +100,17 @@ describe("qualification freshness across availability and cached operations", ()
     expect(f.budget.snapshot().reservations).toEqual([]); expect(f.budget.snapshot().limits[kind === "jev" ? "jev" : "vendor:current-vendor"]?.spentUsd).toBe(0.1);
   });
 
-  it.each([{kind: "vendor", enabled: false, offset: 0}, {kind: "vendor", enabled: false, offset: 1}, {kind: "jev", enabled: true, offset: 0}, {kind: "jev", enabled: true, offset: 1}] as const)("QUAL-CACHE $kind completed success at deadline+$offset is withheld without resend", async ({kind, enabled, offset}) => {
+  it.each([0, 1])("QUAL-CACHE jev completed success at deadline+%i stays published without resend (advice layer, 4.0.0)", async offset => {
+    const f = fixture(true);
+    const first = await f.service.classify(f.input); expect(first.response.status).toBe("SUCCESS");
+    const accounting = JSON.stringify(f.budget.snapshot()); f.setClock(DEADLINE + offset);
+    const cached = await f.service.classify(f.input);
+    expect(cached.response.status).toBe("SUCCESS");
+    expect(f.jev.availability).toHaveBeenCalledTimes(1); expect(f.jev.classify).toHaveBeenCalledTimes(1); expect(f.reserve).toHaveBeenCalledTimes(1);
+    expect(f.vendor.classify).not.toHaveBeenCalled(); expect(JSON.stringify(f.budget.snapshot())).toBe(accounting);
+  });
+
+  it.each([{kind: "vendor", enabled: false, offset: 0}, {kind: "vendor", enabled: false, offset: 1}] as const)("QUAL-CACHE $kind completed success at deadline+$offset is withheld without resend", async ({kind, enabled, offset}) => {
     const f = fixture(enabled);
     const first = await f.service.classify(f.input); expect(first.response.status).toBe("SUCCESS");
     const accounting = JSON.stringify(f.budget.snapshot()); f.setClock(DEADLINE + offset);
@@ -107,7 +118,7 @@ describe("qualification freshness across availability and cached operations", ()
     expect(cached.response.status, "expired cached qualification must not publish SUCCESS").not.toBe("SUCCESS");
     expect(cached.response.error?.code).toBe("QUALIFICATION_EXPIRED");
     expect(f[kind].availability).toHaveBeenCalledTimes(1); expect(f[kind].classify).toHaveBeenCalledTimes(1); expect(f.reserve).toHaveBeenCalledTimes(1);
-    expect(f[kind === "jev" ? "vendor" : "jev"].classify).not.toHaveBeenCalled();
+    expect(f.jev.classify).not.toHaveBeenCalled();
     expect(JSON.stringify(f.budget.snapshot())).toBe(accounting); expect(first.response.status).toBe("SUCCESS");
   });
 
