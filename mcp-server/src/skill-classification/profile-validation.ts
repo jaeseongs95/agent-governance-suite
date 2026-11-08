@@ -2,7 +2,8 @@ import {readFile} from "node:fs/promises";
 import {digestClassificationValue} from "./digest.js";
 import type {ProviderConfiguration, ProviderProfile, ProviderProfileRegistry, SkillClassificationRequestV1} from "./types.js";
 
-// Registry data is supplied by the approved environment; there are no qualified defaults.
+// Registry data is supplied by the approved environment; there are no qualified defaults. Its JEV profiles are not used
+// (4.0.0): JEV's profile comes from the provider AGS ships and the model signed on the admin page (jev-provider.ts).
 export async function loadProviderProfileRegistry(path: string): Promise<ProviderProfileRegistry> {
   const bytes = await readFile(path);
   if (bytes.length > 1024 * 1024) throw new Error("PROVIDER_PROFILE_REGISTRY_TOO_LARGE");
@@ -64,15 +65,22 @@ export function selectFixedProfile(registry: ProviderProfileRegistry, kind: "jev
   return matches.length === 1 ? matches[0]! : null;
 }
 
-/** Common qualification is unconditional; only the trusted caller supplies protocol validation. */
+/**
+ * A vendor profile needs its qualification (PASS, bound to this inventory, not expired). A JEV profile does not (4.0.0):
+ * JEV is an advice layer the user turns on with a model chosen on the admin page, not a gate, so nothing is required to
+ * have passed before it is asked; its profile records that honestly (NOT_RUN). Only the trusted caller supplies protocol
+ * validation.
+ */
 export function validateBoundProviderProfile(profile: ProviderProfile, request: SkillClassificationRequestV1, nowMs: number,
   validateConfiguration: (profile: ProviderConfiguration) => string | null): string | null {
   if (!isProviderProfileRegistry({schemaVersion: "1.0.0", profileRevision: "validation", profiles: [profile]})) return "INVALID_PROFILE";
   const q = profile.qualification;
   if (q.profileConfigurationDigest !== digestProviderProfileConfiguration(profile)) return "QUALIFICATION_CONFIGURATION_MISMATCH";
-  if (q.status !== "PASS") return "PROFILE_UNQUALIFIED";
-  if (q.inventoryDigest !== request.inventoryDigest || q.taxonomyRevision !== request.taxonomyRevision || q.modelRevision !== profile.modelRevision || q.promptRevision !== profile.promptRevision) return "QUALIFICATION_MISMATCH";
-  if (!Number.isFinite(Date.parse(q.validUntil)) || Date.parse(q.validUntil) <= nowMs) return "QUALIFICATION_EXPIRED";
+  if (profile.providerKind !== "jev") {
+    if (q.status !== "PASS") return "PROFILE_UNQUALIFIED";
+    if (q.inventoryDigest !== request.inventoryDigest || q.taxonomyRevision !== request.taxonomyRevision || q.modelRevision !== profile.modelRevision || q.promptRevision !== profile.promptRevision) return "QUALIFICATION_MISMATCH";
+    if (!Number.isFinite(Date.parse(q.validUntil)) || Date.parse(q.validUntil) <= nowMs) return "QUALIFICATION_EXPIRED";
+  }
   if (!profile.supportedOptions.structuredOutput || !profile.supportedOptions.reasoningEfforts.includes(profile.reasoningEffort)) return "UNSUPPORTED_OPTIONS";
   if (profile.maximumCostUsd === null) return "COST_UNKNOWN";
   try { return validateConfiguration(profile) === null ? null : "UNSUPPORTED_OPTIONS"; }

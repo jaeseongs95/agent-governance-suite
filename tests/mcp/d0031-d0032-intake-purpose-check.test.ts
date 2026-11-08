@@ -148,7 +148,9 @@ describe("shared intake: merged without dropping a rule (AGS3-D-0032)", () => {
       ["classification", "AGENT가 조언을 채택·교정·기각하고 **최종 선택**한다"],
       ["classification", "점수나 분류 결과를 정답·실행 승인으로 취급하지 않는다"],
       ["classification", "도구 노출·입력 스키마 가용성만으로 지원·인증·실행 관측을 추정하지 않는다"],
-      ["classification", "OFF·키/API 불가·잘못된 응답·timeout이면 같은 사용 벤더의 중앙 고정 model/effort profile로 분류한다"],
+      // 4.0.0 (user decision): the vendor fallback after a JEV failure became the signed opt-in fallback evaluator.
+      ["classification", "JEV OFF면 사용 벤더의 중앙 고정 model/effort profile로 분류한다"],
+      ["classification", "페이지에서 고른 대체 평가자가 있을 때만 그 벤더로 한 번 더 분류하고, 없으면 조언 없이 AGENT가 직접 고른다"],
     ] as const) expect(sources[source], `${source}: ${fragment}`).toContain(fragment);
   });
 

@@ -65,8 +65,14 @@ export type AdminChange =
   | { op: "role.rename"; roleId: string; name: string }
   | { op: "role.delete"; roleId: string }
   | { op: "binding.set"; host: string; sessionId: string; roleId: string | null }
-  /** JEV on or off, its budget (null: the provider runtime's) and each preset's switch, signed together. */
-  | { op: "jev.set"; enabled: boolean; limitUsd: number | null; presets: Record<string, boolean> }
+  /**
+   * JEV on or off, its budget (null: none, no JEV call), each preset's switch, the model (a provider AGS ships and one of
+   * its pinned model names; null: none chosen), the consent to send requests to that provider, and the vendor asked when
+   * JEV cannot advise (null: none), signed together. A record signed before 4.0.0 has only the first three and folds with
+   * no model, no consent and no fallback.
+   */
+  | { op: "jev.set"; enabled: boolean; limitUsd: number | null; presets: Record<string, boolean>;
+    model?: { providerId: string; modelId: string } | null; transmissionAllowed?: boolean; fallbackVendorId?: string | null }
   /** A JEV key: the signed record holds its fingerprint; the encrypted value is stored beside it (jev-key-vault.ts). */
   | { op: "jevKey.set"; name: string; fingerprint: string }
   | { op: "jevKey.delete"; name: string }
@@ -137,6 +143,9 @@ export interface AdminJevState extends AdminSettingRevision {
   enabled: boolean;
   limitUsd: number | null;
   presets: Record<string, boolean>;
+  model: { providerId: string; modelId: string } | null;
+  transmissionAllowed: boolean;
+  fallbackVendorId: string | null;
 }
 
 export interface AdminJevKeyState extends AdminSettingRevision {
@@ -217,6 +226,17 @@ function presetSwitches(value: unknown): boolean {
   return entries.length <= 20 && entries.every(([id, on]) => /^[a-z0-9-]{1,60}$/u.test(id) && typeof on === "boolean");
 }
 
+/** A model choice's shape; whether AGS knows that provider and model is decided where it is used (jev-provider.ts). */
+function jevModel(value: unknown): boolean {
+  if (value === null) return true;
+  const model = value as Record<string, unknown> | null;
+  return !!model && typeof model === "object" && !Array.isArray(model) && Object.keys(model).sort().join(",") === "modelId,providerId"
+    && typeof model.providerId === "string" && /^[a-z0-9-]{1,60}$/u.test(model.providerId)
+    && typeof model.modelId === "string" && /^[A-Za-z0-9._:-]{1,100}$/u.test(model.modelId);
+}
+
+const VENDOR_ID = /^[A-Za-z0-9._-]{1,100}$/u;
+
 /** Absolute (on this computer's platform), trimmed, one line, unique; the edit gate reads them as given. */
 function exemptPaths(value: unknown): boolean {
   if (!Array.isArray(value) || value.length > EDIT_EXEMPT_MAX_PATHS || new Set(value).size !== value.length) return false;
@@ -240,7 +260,10 @@ export function checkChangeShape(change: unknown): AdminChange {
       case "binding.set": return keys === "host,op,roleId,sessionId" && text(value.host, 200) && text(value.sessionId, 500)
         && (value.roleId === null || (typeof value.roleId === "string" && ID.test(value.roleId)));
       case "ack": return keys === "op,target" && typeof value.target === "string" && isAdminTarget(value.target);
-      case "jev.set": return keys === "enabled,limitUsd,op,presets" && typeof value.enabled === "boolean" && budget(value.limitUsd) && presetSwitches(value.presets);
+      case "jev.set": return (keys === "enabled,limitUsd,op,presets" || (keys === "enabled,fallbackVendorId,limitUsd,model,op,presets,transmissionAllowed"
+        && jevModel(value.model) && typeof value.transmissionAllowed === "boolean"
+        && (value.fallbackVendorId === null || (typeof value.fallbackVendorId === "string" && VENDOR_ID.test(value.fallbackVendorId)))))
+        && typeof value.enabled === "boolean" && budget(value.limitUsd) && presetSwitches(value.presets);
       case "jevKey.set": return keys === "fingerprint,name,op" && typeof value.name === "string" && JEV_KEY_NAME.test(value.name)
         && typeof value.fingerprint === "string" && FINGERPRINT.test(value.fingerprint);
       case "jevKey.delete": return keys === "name,op" && typeof value.name === "string" && JEV_KEY_NAME.test(value.name);
@@ -388,7 +411,9 @@ function apply(state: AdminState, change: AdminChange, record: AdminLogRecord, i
       else state.bindings.set(bindingKey(change.host, change.sessionId), { host: change.host, sessionId: change.sessionId, roleId: change.roleId, boundAt: intent.issuedAt, seq: record.seq });
       return;
     case "jev.set":
-      state.jev = { enabled: change.enabled, limitUsd: change.limitUsd, presets: { ...change.presets }, seq: record.seq, issuedAt: intent.issuedAt };
+      state.jev = { enabled: change.enabled, limitUsd: change.limitUsd, presets: { ...change.presets },
+        model: change.model ? { ...change.model } : null, transmissionAllowed: change.transmissionAllowed ?? false,
+        fallbackVendorId: change.fallbackVendorId ?? null, seq: record.seq, issuedAt: intent.issuedAt };
       return;
     case "jevKey.set":
       state.jevKeys.set(change.name, { name: change.name, fingerprint: change.fingerprint, seq: record.seq, issuedAt: intent.issuedAt });

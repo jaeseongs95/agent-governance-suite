@@ -28,6 +28,11 @@ export interface ClassificationProviderRuntimeOptions {
   nativeAdapters?: NativeClassificationAdapterRegistry;
   /** The JEV budget signed on the admin page; the budget applies the narrower of it and the configured limit. */
   jevSignedLimitUsd?: () => number | null;
+  /**
+   * Leave JEV out of this runtime: its JEV routes are skipped (never resolved) and its JEV budget is ignored. The MCP
+   * server composes JEV from the provider AGS ships and the admin page's signed settings (4.0.0); the file supplies vendors only.
+   */
+  ignoreJev?: boolean;
 }
 
 /** The trusted installation supplies routes and balances. Requests cannot invent endpoints or keys. */
@@ -36,6 +41,7 @@ export function createClassificationProviderRuntime(raw: unknown, options: Class
   if (new Set(config.routes.map(route => route.routeRef)).size !== config.routes.length) throw new Error("DUPLICATE_CLASSIFICATION_ROUTE");
   const routes: ApprovedClassificationRoute[] = [];
   for (const route of config.routes) {
+    if (options.ignoreJev && route.providerKind === "jev") continue;
     if (route.kind === "remote") {
       const {credentialEnvName, wireAdapterRef, ...common} = route;
       const adapter = resolveClassificationWireAdapter(wireAdapterRef, route, options.wireAdapters);
@@ -53,7 +59,8 @@ export function createClassificationProviderRuntime(raw: unknown, options: Class
   return {providers: {
     jev: new ApprovedRouteClassificationProvider(routes.filter(route => route.providerKind === "jev"), options.fetcher),
     vendor: new ApprovedRouteClassificationProvider(routes.filter(route => route.providerKind === "vendor"), options.fetcher),
-  }, budget: new InMemoryClassificationBudget({...config.budget, ...(options.jevSignedLimitUsd ? {jevSignedLimitUsd: options.jevSignedLimitUsd} : {})})};
+  }, budget: new InMemoryClassificationBudget({...config.budget, ...(options.ignoreJev ? {jev: {limitUsd: null, spentUsd: null}} : {}),
+    ...(options.jevSignedLimitUsd ? {jevSignedLimitUsd: options.jevSignedLimitUsd} : {})})};
 }
 
 export async function loadClassificationProviderRuntime(file: string, options: ClassificationProviderRuntimeOptions = {}) {

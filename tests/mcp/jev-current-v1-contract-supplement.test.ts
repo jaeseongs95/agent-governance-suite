@@ -111,11 +111,15 @@ describe("J30 current v1 contract supplement", () => {
       }
       expect(fixture.variants.map(item => item.name)).toEqual(["base", "add-irrelevant", "remove-required", "rename-id"]);
       const original = requests[0]!, profile = qualified(original);
+      // 4.0.0: qualification binds vendor profiles to an inventory; a JEV profile is advice and is not bound to one.
+      const vendor: ProviderProfile = {...profile, providerKind: "vendor", qualification: {...profile.qualification}};
+      vendor.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(vendor);
       expect(validateProviderProfile(profile, original, NOW)).toBeNull();
       expect(new Set(requests.map(req => req.inventoryDigest)).size).toBe(4);
       for (const req of requests.slice(1)) {
         expect(req.inventoryDigest).not.toBe(original.inventoryDigest);
-        expect(validateProviderProfile(profile, req, NOW)).toBe("QUALIFICATION_MISMATCH");
+        expect(validateProviderProfile(vendor, req, NOW)).toBe("QUALIFICATION_MISMATCH");
+        expect(validateProviderProfile(profile, req, NOW)).toBeNull();
       }
     } finally {
       for (const root of roots) await rm(root, {recursive: true, force: true, maxRetries: 5});

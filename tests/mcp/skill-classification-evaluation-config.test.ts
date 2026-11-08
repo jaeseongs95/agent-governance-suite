@@ -44,14 +44,21 @@ describe("nonexpiring preparation remains separate from production qualification
       expect(schema(value)).toBe(false); expect(isProviderEvaluationConfiguration(value)).toBe(false);
     }
   });
-  it("retains production NOT_RUN rejection, valid PASS and real qualification expiry", () => {
-    const profile: ProviderProfile = {...configuration, qualification: {status: "NOT_RUN", ...inventory, modelRevision: configuration.modelRevision,
-      promptRevision: configuration.promptRevision, validUntil: "2026-10-10T01:00:00.000Z", profileConfigurationDigest: digestProviderProfileConfiguration(configuration)}};
+  it("retains production NOT_RUN rejection, valid PASS and real qualification expiry for a vendor profile", () => {
+    const vendor: ProviderConfiguration = {...configuration, providerKind: "vendor", judgmentPolicy: null};
+    const profile: ProviderProfile = {...vendor, qualification: {status: "NOT_RUN", ...inventory, modelRevision: configuration.modelRevision,
+      promptRevision: configuration.promptRevision, validUntil: "2026-10-10T01:00:00.000Z", profileConfigurationDigest: digestProviderProfileConfiguration(vendor)}};
     const request = {...inventory} as SkillClassificationRequestV1;
     const before = Date.parse("2026-10-10T00:00:00.000Z"), after = Date.parse("2026-10-10T02:00:00.000Z");
     expect(validateProviderProfile(profile, request, before)).toBe("PROFILE_UNQUALIFIED");
     profile.qualification.status = "PASS";
     expect(validateProviderProfile(profile, request, before)).toBeNull();
     expect(validateProviderProfile(profile, request, after)).toBe("QUALIFICATION_EXPIRED");
+  });
+  it("does not gate a JEV profile on NOT_RUN or expiry (advice layer, 4.0.0)", () => {
+    const profile: ProviderProfile = {...configuration, qualification: {status: "NOT_RUN", ...inventory, modelRevision: configuration.modelRevision,
+      promptRevision: configuration.promptRevision, validUntil: "2026-10-10T01:00:00.000Z", profileConfigurationDigest: digestProviderProfileConfiguration(configuration)}};
+    const request = {...inventory} as SkillClassificationRequestV1;
+    expect(validateProviderProfile(profile, request, Date.parse("2026-10-10T02:00:00.000Z"))).toBeNull();
   });
 });

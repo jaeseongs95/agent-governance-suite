@@ -459,7 +459,7 @@ describe("admin page HTTP boundary", () => {
     const port = (server.address() as { port: number }).port;
     const settings = (admin: { signedSettings: Parameters<typeof adminSettingsView>[0]["signed"] }): AdminSettingsView => adminSettingsView({ environment: {},
       signed: admin.signedSettings, locale: { value: "ko", source: "settings" }, localeOptions: ["en", "ko"], usage: null,
-      installation: { configured: false, allows: true, mode: null, profileCount: 0, limitUsd: null, credentials: [], error: null } });
+      installation: { configured: false, vendorIds: [], credentials: [], ignoredJev: { routes: 0, profiles: 0 }, error: null }, providers: [], profileFor: () => null });
     server.on("request", createAdminRequestHandler({ service, port, settings: async admin => settings(admin),
       listSessions: async () => { if (options.failSessions) throw Object.assign(new Error("x"), { code: "PRESENCE_DOWN" }); return options.sessions ?? []; } }));
     cleanups.push(() => new Promise<void>(resolve => server.close(() => resolve())));

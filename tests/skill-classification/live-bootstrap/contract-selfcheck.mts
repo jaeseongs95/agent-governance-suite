@@ -286,7 +286,8 @@ try {
     assert.equal(allowed.stopReason, null); assert.equal(allowedCalls, 1); assert.equal(allowed.qualificationStatus, "NOT_RUN"); assert.equal(allowed.productionProfileWritten, false);
     assert.equal(getEventListeners(successSignal!, "abort").length, 0);
   } finally {safetyAdapter.encode = savedEncode;}
-  // Ordinary production provider remains blocked for NOT_RUN; PASS is only an ephemeral unit fixture.
+  // 4.0.0: JEV is an advice layer without a qualification gate, so the ordinary provider dispatches a NOT_RUN JEV profile;
+  // a vendor profile stays gated on NOT_RUN. PASS is only an ephemeral unit fixture.
   const productionValue = await safetyReady("production-pair"); const productionInput = await prepare(productionValue);
   const ordinaryProfile = structuredClone(productionValue.profile!) as any, ordinaryRequest = productionInput.requests[0].request;
   let ordinaryCalls = 0;
@@ -296,15 +297,15 @@ try {
     modelIds: [ordinaryProfile.modelId], reasoningEfforts: [null], structuredOutput: true, endpoint: safetyEnv.AGS_BOOTSTRAP_ENDPOINT,
     getCredential: async () => safetyEnv.AGS_BOOTSTRAP_JEV_KEY, adapter: safetyAdapter,
   }], async (_url: any, init: any) => {ordinaryCalls++; return safetyResponse(init);});
-  await assert.rejects(() => ordinary.classify(ordinaryRequest, ordinaryProfile, new AbortController().signal), (error: any) => error.code === "STALE_CLASSIFICATION" && error.dispatchState === "not-started");
-  assert.equal(ordinaryCalls, 0); assert.equal(productionInput.api.profiles.validateProviderProfile(ordinaryProfile, ordinaryRequest, Date.now()), "PROFILE_UNQUALIFIED");
-  const qualifiedUnit = structuredClone(ordinaryProfile); qualifiedUnit.qualification.status = "PASS"; qualifiedUnit.qualificationRevision = "ephemeral-unit-only-not-live";
-  qualifiedUnit.qualification.profileConfigurationDigest = productionInput.api.profiles.digestProviderProfileConfiguration(qualifiedUnit);
-  assert.equal(productionInput.api.profiles.validateProviderProfile(qualifiedUnit, ordinaryRequest, Date.now()), null);
-  const ordinaryResult = await ordinary.classify(ordinaryRequest, qualifiedUnit, new AbortController().signal);
+  assert.equal(ordinaryProfile.providerKind, "jev"); assert.equal(ordinaryProfile.qualification.status, "NOT_RUN");
+  assert.equal(productionInput.api.profiles.validateProviderProfile(ordinaryProfile, ordinaryRequest, Date.now()), null);
+  const ordinaryResult = await ordinary.classify(ordinaryRequest, ordinaryProfile, new AbortController().signal);
   assert.equal(ordinaryCalls, 1); assert.equal(ordinaryResult.dispatchState, "started");
+  const vendorUnit = structuredClone(ordinaryProfile); vendorUnit.providerKind = "vendor";
+  vendorUnit.qualification.profileConfigurationDigest = productionInput.api.profiles.digestProviderProfileConfiguration(vendorUnit);
+  assert.equal(productionInput.api.profiles.validateProviderProfile(vendorUnit, ordinaryRequest, Date.now()), "PROFILE_UNQUALIFIED");
   assert.equal(productionValue.profile!.qualification && (productionValue.profile!.qualification as any).status, "NOT_RUN");
-  passed.push("R19 immutable evaluation admission, expiry/HTTPS/stream/codec fences, listener cleanup and unchanged production qualification gate (unit mocks only)");
+  passed.push("R19 immutable evaluation admission, expiry/HTTPS/stream/codec fences, listener cleanup, JEV dispatch without a qualification gate and the unchanged vendor gate (unit mocks only)");
 
   console.log(JSON.stringify({status: "OFFLINE_CONTRACT_PASS", proofKind: "offline-mock", actualApiCalls: 0, actualCredentialLookups: 0,
     mockTransportCalls: calls + timeoutCalls, mockObservationFaultCalls: observationFaultCalls,

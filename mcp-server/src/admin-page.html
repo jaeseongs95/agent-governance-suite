@@ -1250,18 +1250,22 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
   // 편집 모델: 서버 값(base)과 내 편집(cur)을 나눠 두고, 편집하지 않은 동안에만 서버 값으로 다시 맞춘다.
   const jevOf = (d) => (d.settings && d.settings.jev) || null;
   const usd = (n) => (n == null ? '—' : Number(n).toFixed(2) + ' USD');
+  // 모델 값은 '공급자/모델'(예: typesafe/jev-1.14.0), 고르지 않으면 ''.
+  const modelKey = (m) => (m ? m.providerId + '/' + m.modelId : '');
   function jevBase(j) {
     const presets = {}; for (const p of j.presets || []) presets[p.presetId] = !!p.enabled;
-    return { enabled: !!j.switchOn, limit: j.budget && j.budget.signedLimitUsd != null ? String(j.budget.signedLimitUsd) : '', presets };
+    return { enabled: !!j.switchOn, limit: j.budget && j.budget.signedLimitUsd != null ? String(j.budget.signedLimitUsd) : '', presets,
+      model: modelKey(j.model), transmission: !!j.transmissionAllowed, fallback: (j.fallback && j.fallback.vendorId) || '' };
   }
-  const jevSame = (a, b) => a.enabled === b.enabled && a.limit.trim() === b.limit.trim() && Object.keys(a.presets).every((k) => a.presets[k] === b.presets[k]);
+  const JEV_FIELDS = ['enabled', 'model', 'transmission', 'fallback'];
+  const jevSame = (a, b) => JEV_FIELDS.every((k) => a[k] === b[k]) && a.limit.trim() === b.limit.trim() && Object.keys(a.presets).every((k) => a.presets[k] === b.presets[k]);
   const isJevDirty = () => !!(S.j.base && S.j.cur && !jevSame(S.j.base, S.j.cur));
   function jevChangeCount() {
     if (!isJevDirty()) return 0;
     const a = S.j.base, b = S.j.cur;
-    return (a.enabled !== b.enabled ? 1 : 0) + (a.limit.trim() !== b.limit.trim() ? 1 : 0) + Object.keys(a.presets).filter((k) => a.presets[k] !== b.presets[k]).length;
+    return JEV_FIELDS.filter((k) => a[k] !== b[k]).length + (a.limit.trim() !== b.limit.trim() ? 1 : 0) + Object.keys(a.presets).filter((k) => a.presets[k] !== b.presets[k]).length;
   }
-  /** 예산 칸: 비우면 null(설치 설정의 한도만), 아니면 0 이상의 숫자. 상한은 사람이 정한다. */
+  /** 예산 칸: 비우면 null(JEV를 부르지 않음), 아니면 0 이상의 숫자. 상한은 사람이 정한다. */
   function jevLimitCheck(raw) {
     const t = String(raw).trim();
     if (!t) return { value: null, err: null };
@@ -1286,32 +1290,45 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
   function lockLine(lockedBy, text, id) {
     return h('span', { class: 'small muted', id }, lockedBy ? ['환경 변수 ', h('code', null, lockedBy), '로 고정됨 · ', text] : text);
   }
+  /** 저장된 설정으로 JEV를 부를 수 없는 이유(서버가 계산한 missing). */
+  const jevKeyName = () => { const j = S.data && jevOf(S.data); return (j && j.providers && j.providers[0] && j.providers[0].credentialName) || 'JEV_API_KEY'; };
+  function jevMissingText(code, j) {
+    const key = jevKeyName();
+    return ({ SWITCH_OFF: 'JEV 사용이 꺼져 있음', MODEL_NOT_SELECTED: '모델을 고르지 않음', MODEL_UNSUPPORTED: '저장한 모델을 이 AGS가 쓸 수 없음',
+      TRANSMISSION_NOT_ALLOWED: 'JEV에 정보 전송을 허용하지 않음', KEY_MISSING: 'key(' + key + ')를 이 페이지에 등록하지 않음',
+      BUDGET_MISSING: '예산 한도가 없음', BUDGET_BELOW_ONE_CALL: '예산이 한 번 호출의 예약액(' + usd4(j.budget.perCallUsd) + ')보다 작음',
+      BUDGET_EXHAUSTED: '이 서버 프로세스에서 예산을 다 씀' })[code] || code;
+  }
   function jevStatusText(j) {
-    if (j.enabled) {
+    if (j.ready) {
       const on = (j.presets || []).filter((p) => p.enabled).map((p) => (PRESET[p.presetId] ? PRESET[p.presetId].name : p.presetId));
-      return on.length ? '켜짐 · ' + on.join(', ') + '에 쓰입니다' : '켜짐 · 켜진 프리셋이 없어 쓰는 곳이 없습니다';
+      return on.length ? '켜짐 · ' + on.join(', ') + '에 조언을 줍니다' : '켜짐 · 켜진 프리셋이 없어 쓰는 곳이 없습니다';
     }
-    if (!j.installationAllows) return '꺼짐 · 설치 설정 파일이 JEV를 끕니다';
+    if (j.switchOn) return '켜짐으로 저장됨 · 아직 쓰이지 않습니다. 빠진 것: ' + j.missing.filter((m) => m !== 'SWITCH_OFF').map((m) => jevMissingText(m, j)).join(', ');
     if (!j.signed) return '꺼짐(기본값) · 이 페이지에서 켜야 동작합니다';
     return '꺼짐 · 이 페이지에서 껐습니다';
   }
+  const usd4 = (n) => (n == null ? '—' : Number(n).toFixed(4) + ' USD');
   async function saveJev() {
     const j = jevOf(S.data); if (!j || S.busy) return;
     const lim = jevLimitCheck(S.j.cur.limit);
     if (lim.err || !isJevDirty()) return;
-    await runSigned({ slot: 'jev', change: { op: 'jev.set', enabled: S.j.cur.enabled, limitUsd: lim.value, presets: { ...S.j.cur.presets } }, onStale: () => loadState(),
+    const cur = S.j.cur, slash = cur.model.indexOf('/');
+    const model = slash > 0 ? { providerId: cur.model.slice(0, slash), modelId: cur.model.slice(slash + 1) } : null;
+    await runSigned({ slot: 'jev', change: { op: 'jev.set', enabled: cur.enabled, limitUsd: lim.value, presets: { ...cur.presets }, model,
+      transmissionAllowed: cur.transmission, fallbackVendorId: cur.fallback || null }, onStale: () => loadState(),
       onDone: (rec, loaded) => { if (loaded) { S.j.cur = null; syncSettings(S.data); } S.status.jev = { kind: 'ok', text: 'JEV 설정을 저장했습니다 · 기록 #' + rec.seq + ' · ' + fmtHM(rec.createdAt) }; } });
   }
   function viewJev() {
     const j = jevOf(S.data);
-    const sec = h('section', { class: 'col', 'aria-labelledby': 'j-title' }, head('j-title', 'JEV', '조언 계층입니다. 꺼도 AGS의 판단·관문은 그대로 동작합니다. 기본값은 꺼짐입니다.'));
+    const sec = h('section', { class: 'col', 'aria-labelledby': 'j-title' }, head('j-title', 'JEV', '에이전트의 선택을 돕는 조언 계층입니다. 조언과 점수는 정답이나 확률이 아니며 검증되지 않은 참고이고, 최종 선택은 에이전트가 직접 합니다. 꺼도 AGS의 판단·관문은 그대로 동작합니다. 기본값은 꺼짐입니다.'));
     if (!j || !S.j.cur) { sec.append(h('p', { class: 'empty' }, '서버가 JEV 설정 값을 주지 않았습니다.')); return sec; }
-    const cur = S.j.cur, locked = !j.installationAllows;
+    const cur = S.j.cur;
     const lim = jevLimitCheck(cur.limit);
-    const sw = h('input', { type: 'checkbox', role: 'switch', id: 'jev-on', checked: cur.enabled, disabled: locked, 'aria-describedby': 'jev-state' });
+    const sw = h('input', { type: 'checkbox', role: 'switch', id: 'jev-on', checked: cur.enabled, 'aria-describedby': 'jev-state' });
     sw.addEventListener('change', () => { cur.enabled = sw.checked; delete S.status.jev; render(); });
     const budget = h('input', { id: 'jev-budget', type: 'text', inputmode: 'decimal', class: 'txt-in' + (lim.err ? ' invalid' : ''), autocomplete: 'off', value: cur.limit,
-      placeholder: j.budget.installationLimitUsd != null ? '설치 설정 ' + usd(j.budget.installationLimitUsd) : '예: 2.50', 'aria-invalid': lim.err ? 'true' : 'false', 'aria-describedby': 'jev-budget-hint', style: 'width:160px' });
+      placeholder: '예: 2.50', 'aria-invalid': lim.err ? 'true' : 'false', 'aria-describedby': 'jev-budget-hint', style: 'width:160px' });
     // 입력 중에는 본문을 다시 그리지 않는다. 안내·저장 막대만 고친다.
     budget.addEventListener('input', () => {
       cur.limit = budget.value; delete S.status.jev;
@@ -1323,17 +1340,18 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     const u = j.usage;
     sec.append(h('div', { class: 'box' },
       h('label', { class: 'row center', for: 'jev-on' }, sw, h('b', null, 'JEV 사용'), h('span', { class: 'muted' }, cur.enabled ? '(켜짐)' : '(꺼짐)')),
-      h('span', { id: 'jev-state', class: 'small ' + (j.enabled ? '' : 'muted') }, '지금: ' + jevStatusText(j) + (isJevDirty() ? ' · 저장 전 변경이 있습니다' : '')),
-      locked ? lockLine(null, h('span', null, '설치 설정 파일(', h('code', null, 'AGENT_GOVERNANCE_CLASSIFICATION_CONFIG'), ')이 jevEnabled=false라 페이지에서 켤 수 없습니다.'), 'jev-lock') : null,
-      j.error ? h('p', { class: 'err-t' }, '설치 설정을 읽지 못했습니다: ' + j.error) : null,
+      h('span', { id: 'jev-state', class: 'small ' + (j.ready ? '' : 'muted') }, '지금(저장된 설정 기준): ' + jevStatusText(j) + (isJevDirty() ? ' · 저장 전 변경이 있습니다' : '')),
+      j.installation.error ? h('p', { class: 'err-t' }, '설치 설정을 읽지 못했습니다: ' + j.installation.error) : null,
+      jevIgnoredNote(j),
+      jevModelField(j, cur),
+      jevTransmissionField(j, cur),
       h('div', { class: 'row' },
         h('div', { class: 'field', style: 'flex:0 1 240px' }, h('label', { for: 'jev-budget', class: 'small' }, h('b', null, '예산 한도 (USD)')), budget,
           h('span', { id: 'jev-budget-hint', class: 'hint' + (lim.err ? ' err' : '') }, lim.err || BUDGET_HINT(j))),
-        h('div', { class: 'field', style: 'flex:0 1 260px' }, h('span', { class: 'small' }, h('b', null, '적용 중인 한도')),
-          h('span', null, j.budget.limitUsd == null ? '없음 · JEV 호출을 하지 않습니다' : usd(j.budget.limitUsd))),
         h('div', { class: 'field', style: 'flex:0 1 260px' }, h('span', { class: 'small' }, h('b', null, '사용액 (보기만)')),
           h('span', null, !u ? '집계 없음' : (u.spentUsd == null ? '집계 없음' : usd(u.spentUsd)) + (u.reservedUsd ? ' · 예약 ' + usd(u.reservedUsd) : '')),
-          h('span', { class: 'small muted' }, '이 페이지를 연 MCP 서버가 시작한 뒤의 집계입니다.')))));
+          h('span', { class: 'small muted' }, '이 페이지를 연 MCP 서버가 시작한 뒤의 집계입니다.'))),
+      jevFallbackField(j, cur)));
     const tbody = h('tbody');
     for (const p of j.presets) {
       const cb = h('input', { type: 'checkbox', role: 'switch', id: 'preset-' + idSafe(p.presetId), checked: !!cur.presets[p.presetId] });
@@ -1348,21 +1366,74 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     sec.append(viewJevKeys(j));
     return sec;
   }
-  const BUDGET_HINT = () => '비우면 설치 설정의 한도만 씁니다(둘 다 없으면 JEV를 호출하지 않습니다). 둘 다 있으면 작은 쪽';
+  const BUDGET_HINT = (j) => '비우면 JEV를 호출하지 않습니다. 호출마다 최대 ' + usd4(j.budget.perCallUsd) + '를 미리 잡아 두며, 이는 청구액이 아니라 상한입니다.';
   const PRESET = { 'skill-classification': { name: '스킬 분류', use: '작업에 맞는 스킬 조언' } };
+  /** 설치 설정 파일의 JEV 항목은 4.0.0부터 쓰지 않는다. 남아 있으면 알린다. */
+  function jevIgnoredNote(j) {
+    const ig = j.installation.ignoredJev;
+    if (!ig || (!ig.routes && !ig.profiles)) return null;
+    return h('p', { class: 'small muted', id: 'jev-ignored' }, '설치 설정 파일에 JEV 항목(경로 ' + ig.routes + '개 · 프로필 ' + ig.profiles + '개)이 있지만 쓰지 않습니다. JEV는 이 페이지의 설정만 씁니다.');
+  }
+  const CATALOG = { bundled: 'AGS에 들어 있는 목록입니다(아직 갱신하지 않음)', current: '갱신한 목록입니다', unavailable: '목록을 갱신하지 못해 이전 목록을 보여 줍니다', 'no-key': 'key를 등록하면 목록을 갱신합니다' };
+  function jevModelField(j, cur) {
+    const opts = [h('option', { value: '' }, '고르지 않음')];
+    const seen = new Set(['']);
+    for (const p of j.providers || []) for (const m of p.catalog.models) {
+      const v = p.providerId + '/' + m; if (seen.has(v)) continue; seen.add(v);
+      opts.push(h('option', { value: v }, p.label + ' · ' + m));
+    }
+    // 저장한 모델이 목록에서 빠져도 그대로 보이고 바뀌지 않는다.
+    for (const v of [S.j.base.model, cur.model]) if (v && !seen.has(v)) { seen.add(v); opts.push(h('option', { value: v }, v.replace('/', ' · ') + ' (목록에 없음)')); }
+    const sel = h('select', { id: 'jev-model', class: 'txt-in', 'aria-describedby': 'jev-model-hint', style: 'width:auto;max-width:100%' }, opts);
+    sel.value = cur.model;
+    sel.addEventListener('change', () => { cur.model = sel.value; delete S.status.jev; render(); });
+    const notes = (j.providers || []).map((p) => p.label + ': ' + (CATALOG[p.catalog.status] || p.catalog.status) + (p.catalog.updatedAt ? ' · ' + fmtTime(p.catalog.updatedAt) : ''));
+    return h('div', { class: 'field' }, h('label', { for: 'jev-model', class: 'small' }, h('b', null, '모델')), sel,
+      h('span', { id: 'jev-model-hint', class: 'hint' }, '고른 모델로 조언을 받습니다. 모델 목록은 24시간마다 갱신하며, 저장한 모델은 자동으로 바뀌지 않습니다.' + (notes.length ? ' ' + notes.join(' · ') : '')));
+  }
+  const SENT_TASK = { originalPrompt: '사용자 요청 원문', confirmedContext: '확인된 작업 맥락(목표·행동·대상·제약·금지·배경)', taxonomyRevision: '분류 기준의 판',
+    classificationCriteriaRef: '분류 기준 참조', classificationRules: '분류 규칙' };
+  const SENT_SKILL = { skillId: 'ID', version: '판', description: '설명', enabled: '사용 여부', installed: '설치 여부', hostSupported: '호스트 지원 여부', capabilities: '능력',
+    actions: '행동', targets: '대상', constraints: '제약', applicability: '적용 조건', exclusions: '제외 조건', dependencies: '의존', phases: '단계', model: '모델' };
+  function jevTransmissionField(j, cur) {
+    const cb = h('input', { type: 'checkbox', id: 'jev-send', checked: cur.transmission, 'aria-describedby': 'jev-send-hint' });
+    cb.addEventListener('change', () => { cur.transmission = cb.checked; delete S.status.jev; render(); });
+    const p = (j.providers || []).find((x) => cur.model.startsWith(x.providerId + '/')) || (j.providers || [])[0];
+    const list = (keys, names) => h('ul', { class: 'small' }, keys.map((k) => h('li', null, (names[k] || k) + ' ', h('code', null, k))));
+    return h('div', { class: 'col' },
+      h('label', { class: 'row center', for: 'jev-send' }, cb, h('b', null, 'JEV에 정보 전송 허용')),
+      h('span', { id: 'jev-send-hint', class: 'hint' }, '허용하지 않으면 JEV를 부르지 않습니다. 설치 설정의 외부 전송 허용과 따로 정합니다.'),
+      p ? h('details', { open: !!S.j.sentOpen, ontoggle: (e) => { S.j.sentOpen = e.currentTarget.open; } }, h('summary', null, '전송 정보 자세히 보기'),
+        h('p', { class: 'small' }, '스킬 분류 조언을 받을 때 ', h('code', null, p.endpoint), '로 보내는 항목입니다.'),
+        h('p', { class: 'small' }, h('b', null, '작업마다')), list(p.transmitted.task.concat(p.transmitted.request), { ...SENT_TASK, ...SENT_SKILL }),
+        h('p', { class: 'small' }, h('b', null, '설치된 스킬마다')), list(p.transmitted.perSkill, SENT_SKILL),
+        h('p', { class: 'small muted' }, 'key는 요청 본문에 넣지 않고 인증 머리글(Authorization)로만 보냅니다. 스킬 원본 파일의 경로·내용은 보내지 않습니다.')) : null);
+  }
+  function jevFallbackField(j, cur) {
+    const opts = [h('option', { value: '' }, '사용 안 함')].concat((j.fallback.options || []).map((v) => h('option', { value: v }, v)));
+    if (cur.fallback && !(j.fallback.options || []).includes(cur.fallback)) opts.push(h('option', { value: cur.fallback }, cur.fallback + ' (설치 설정에 없음)'));
+    const sel = h('select', { id: 'jev-fallback', class: 'txt-in', 'aria-describedby': 'jev-fallback-hint', style: 'width:auto;max-width:100%' }, opts);
+    sel.value = cur.fallback;
+    sel.addEventListener('change', () => { cur.fallback = sel.value; delete S.status.jev; render(); });
+    return h('details', { open: !!(cur.fallback || S.j.fallbackOpen), ontoggle: (e) => { S.j.fallbackOpen = e.currentTarget.open; } }, h('summary', null, 'JEV 평가 불가 시 대체 평가자' + (cur.fallback ? ' · ' + cur.fallback : ' · 사용 안 함')),
+      h('div', { class: 'field' }, h('label', { for: 'jev-fallback', class: 'small' }, h('b', null, '대체 평가자')), sel,
+        h('span', { id: 'jev-fallback-hint', class: 'hint' }, 'JEV가 조언하지 못할 때 한 번 더 물어볼 이 PC의 벤더 경로입니다. 이 화면은 평가자의 연결 상태를 확인하지 않습니다. 둘 다 조언하지 못하면 에이전트가 직접 스킬을 고릅니다.')));
+  }
   function keyState(k) {
-    if (k.environment) return k.fingerprint ? '환경 변수가 우선 · 등록한 key는 쓰지 않음' : '환경 변수 사용 중';
-    if (!k.fingerprint) return '없음';
+    // JEV key는 이 페이지에 등록한 값만 쓴다. 벤더 경로의 key는 같은 이름의 환경 변수가 우선한다.
+    const vendor = k.vendorIds.length > 0;
+    if (k.environment && vendor) return k.fingerprint ? '벤더 경로는 환경 변수가 우선' + (k.jev ? ' · JEV는 등록한 key 사용' : ' · 등록한 key는 쓰지 않음') : '벤더 경로는 환경 변수 사용 중' + (k.jev ? ' · JEV용 key 없음' : '');
+    if (!k.fingerprint) return k.environment && k.jev ? '없음 · JEV는 환경 변수를 쓰지 않습니다' : '없음';
     return k.stored ? '등록됨' : '저장값 없음 · 다시 등록하세요';
   }
   const shortFp = (fp) => (fp ? fp.slice(0, 11) + '…' + fp.slice(-4) : '—');
   function viewJevKeys(j) {
     const tbody = h('tbody');
-    if (!j.keys.length) tbody.append(h('tr', null, h('td', { colspan: '5', class: 'muted' }, '설치 설정에 key를 쓰는 경로가 없고 등록한 key도 없습니다.')));
+    if (!j.keys.length) tbody.append(h('tr', null, h('td', { colspan: '5', class: 'muted' }, '등록한 key가 없습니다.')));
     for (const k of j.keys) {
       const sid = idSafe(k.name);
       tbody.append(h('tr', null,
-        h('td', null, h('code', null, k.name), k.vendorIds.length ? h('div', { class: 'small muted' }, k.vendorIds.join(', ')) : null),
+        h('td', null, h('code', null, k.name), (k.jev || k.vendorIds.length) ? h('div', { class: 'small muted' }, (k.jev ? ['JEV'] : []).concat(k.vendorIds).join(', ')) : null),
         h('td', null, keyState(k)),
         h('td', null, k.fingerprint ? h('code', { title: k.fingerprint }, shortFp(k.fingerprint)) : '—'),
         h('td', { class: 'nowrap' }, k.setAt ? fmtTime(k.setAt) : '—'),
@@ -1376,7 +1447,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
       h('div', { class: 'tbl-wrap' }, h('table', null, h('caption', null, 'key · 저장한 값은 다시 볼 수 없고 지문으로만 구분합니다'),
         h('thead', null, h('tr', null, ['이름 · 공급자', '상태', '지문', '등록', '동작'].map((t) => h('th', { scope: 'col' }, t)))), tbody)),
       h('div', null, h('button', { type: 'button', class: 'btn dashed', id: 'jk-new', disabled: !!S.busy || !hasKeys(), onclick: (e) => openKeyDialog('', false, e.currentTarget) }, '다른 이름으로 key 등록')),
-      h('p', { class: 'small muted' }, '같은 이름의 환경 변수가 있으면 그 값이 우선합니다. 저장한 값은 이 PC의 상태 폴더에 암호화해 두며, 같은 OS 사용자로 도는 프로그램은 풀 수 있습니다.'));
+      h('p', { class: 'small muted' }, 'JEV는 이 페이지에 등록한 key만 쓰고 환경 변수는 읽지 않습니다. 설치 설정의 벤더 경로는 같은 이름의 환경 변수가 있으면 그 값이 우선합니다. 저장한 값은 이 PC의 상태 폴더에 암호화해 두며, 같은 OS 사용자로 도는 프로그램은 풀 수 있습니다.'));
   }
   async function fingerprintOf(value) {
     const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(value)));
@@ -1409,7 +1480,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
       } });
       return [h('h2', { id: 'dlg-title' }, name0 ? 'key 「' + name0 + '」 ' + (replacing ? '교체' : '등록') : 'key 등록'),
         h('p', { class: 'small muted' }, '저장하면 값은 다시 볼 수 없고 지문으로만 구분합니다. 서명 기록에는 지문만 남고, 값은 암호화해 따로 저장합니다.'),
-        nameIn ? h('label', { for: 'jk-name' }, h('b', null, '이름 (설치 설정의 credentialEnvName)')) : null, nameIn,
+        nameIn ? h('label', { for: 'jk-name' }, h('b', null, '이름 (JEV는 ' + jevKeyName() + ', 벤더 경로는 설치 설정의 credentialEnvName)')) : null, nameIn,
         h('label', { for: 'jk-value' }, h('b', null, 'key 값')), valIn,
         statusEl('jev-key'),
         h('div', { class: 'dlg-acts' }, whyEl,
@@ -1420,7 +1491,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     delete S.status['jev-key-del'];
     openDialog({ opener, cls: 'narrow', focus: 'jkd-cancel', fallbackFocus: 'j-title', build: (dlg) => [
       h('h2', { id: 'dlg-title' }, 'key 「' + k.name + '」를 삭제할까요?'),
-      h('p', null, '지문 ', h('code', null, shortFp(k.fingerprint)), ' · ' + fmtTime(k.setAt) + ' 등록. 삭제하면 이 이름을 쓰는 JEV 경로는 환경 변수가 없을 때 key 없이 호출하지 못합니다.'),
+      h('p', null, '지문 ', h('code', null, shortFp(k.fingerprint)), ' · ' + fmtTime(k.setAt) + ' 등록. 삭제하면 ' + (k.jev ? 'JEV를 부르지 않습니다(환경 변수는 JEV에 쓰지 않습니다).' : '이 이름을 쓰는 벤더 경로는 같은 이름의 환경 변수가 없을 때 key 없이 호출하지 못합니다.')),
       statusEl('jev-key-del'),
       h('div', { class: 'dlg-acts' }, h('button', { type: 'button', class: 'btn', id: 'jkd-cancel', onclick: () => dlg.close() }, '취소'),
         signBtn({ id: 'jkd-go', slot: 'jev-key-del', cls: 'btn danger', label: '패스키로 삭제', onclick: () => runSigned({

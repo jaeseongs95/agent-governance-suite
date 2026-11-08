@@ -226,14 +226,28 @@ describe("approved classification wire adapters", () => {
     await expect(pending).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
     expect(f.fetcher).not.toHaveBeenCalled();
   });
-  it("PRE qualification expiring during credential await prevents transport", async () => {
+  it("PRE qualification expiring during credential await prevents vendor transport", async () => {
+    vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-09T00:00:00Z"));
+    // 4.0.0: qualification binds vendor profiles only, so the same fixture runs as a vendor route here.
+    const f = fixture(), profile: ProviderProfile = {...f.profile, providerKind: "vendor", qualification: {...f.profile.qualification, validUntil: "2026-10-09T00:00:01Z"}};
+    profile.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(profile);
+    const provider = new ApprovedRouteClassificationProvider([bindClassificationRouteTransport({routeRef: "approved-existing", approvalRef: "fixture-approval", approved: true, kind: "remote",
+      providerKind: "vendor", vendorId: "typesafe", adapterRevision: "a1", modelIds: ["fixed-jev"], reasoningEfforts: [null], structuredOutput: true,
+      endpoint: "https://approved.example.invalid/fixture", getCredential: f.key, adapter: jevNoulWireAdapter})], f.fetcher);
+    let release!: (key: string) => void; f.key.mockImplementation(() => new Promise(resolve => {release = resolve;}));
+    const pending = provider.classify(f.request, profile, new AbortController().signal);
+    vi.setSystemTime(new Date("2026-10-09T00:00:01Z")); release("SECRET_SENTINEL");
+    await expect(pending).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
+    expect(f.fetcher).not.toHaveBeenCalled();
+  });
+  it("PRE JEV qualification expiring during credential await does not stop transport (advice layer, 4.0.0)", async () => {
     vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-09T00:00:00Z"));
     const f = fixture(); f.profile.qualification.validUntil = "2026-10-09T00:00:01Z";
     let release!: (key: string) => void; f.key.mockImplementation(() => new Promise(resolve => {release = resolve;}));
     const pending = f.provider.classify(f.request, f.profile, new AbortController().signal);
     vi.setSystemTime(new Date("2026-10-09T00:00:01Z")); release("SECRET_SENTINEL");
-    await expect(pending).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
-    expect(f.fetcher).not.toHaveBeenCalled();
+    await expect(pending).resolves.toMatchObject({dispatchState: "started"});
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
   });
   it("PRE synchronous encode mutation is fenced immediately before fetch", async () => {
     const f = fixture();

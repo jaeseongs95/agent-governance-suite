@@ -1216,7 +1216,7 @@ export function createMcpServer(
       const lines = workflowChangeNotice(result.data, runId => {
         const status = service.getWorkflowStatus(runId);
         return status.ok ? status.data : null;
-      }, classification !== null);
+      }, classification?.adviceReady?.() === true);
       response.content.push({ type: "text", text: lines.map(line => render(line, locale)).join("\n") });
     }
     const notice = updateStatus ? updates.takeNotice(updateStatus) : null;

@@ -131,12 +131,13 @@ async function harness(options: {withJev?: boolean; vendorRoute?: "native" | "re
 
 describe("JEV 원인과 권한의 실제 MCP 응답", () => {
   it.each([
-    ["profile", "PROFILE_UNAVAILABLE"], ["provider", "PROVIDER_UNAVAILABLE"], ["qualification", "PROFILE_UNQUALIFIED"], ["input", "INPUT_TOO_LONG"],
+    // 4.0.0: JEV의 qualification 상태는 제외 원인이 아니다(조언 계층). 설정 digest 불일치는 여전히 제외 원인이다.
+    ["profile", "PROFILE_UNAVAILABLE"], ["provider", "PROVIDER_UNAVAILABLE"], ["configuration", "QUALIFICATION_CONFIGURATION_MISMATCH"], ["input", "INPUT_TOO_LONG"],
   ] as const)("API67 %s: 대체 성공 응답에도 호출 전 제외 원인이 남는다", async (kind, code) => {
     const h = await harness({withJev: true, allowPrivate: true});
     if (kind === "profile") h.runtime.registry.profiles.shift();
     if (kind === "provider") delete h.providers.jev;
-    if (kind === "qualification") h.jevProfile.qualification.status = "FAIL";
+    if (kind === "configuration") h.jevProfile.qualification.profileConfigurationDigest = `sha256:${"0".repeat(64)}`;
     if (kind === "input") {h.jevProfile.maximumInputBytes = 1; h.jevProfile.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(h.jevProfile);}
     const reply = await h.call<Advice>("classify_skills", input());
     expect(reply.error).toBeNull();

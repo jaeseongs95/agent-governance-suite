@@ -48,7 +48,8 @@ import { failureContext } from "./failure-diagnostics.js";
 import { writeDiagnostic, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import { type AdminSessionView, startAdminPage } from "./admin-page-server.js";
 import { type AdminPageState } from "./context-layer-service.js";
-import { adminSettingsView, applyAdminJev, type AdminSettingsView, type JevInstallationView } from "./admin-settings.js";
+import { adminSettingsView, type AdminSettingsView, type JevInstallationView, type JevProfileFor, type JevProviderView } from "./admin-settings.js";
+import { composeJev } from "./skill-classification/jev-composition.js";
 import { JevKeyVault } from "./jev-key-vault.js";
 import { InMemoryClassificationBudget as ClassificationBudget } from "./skill-classification/service.js";
 import { mergeSessionBoard } from "./server.js";
@@ -119,14 +120,18 @@ export async function startMcpServer(
   const signedJev = () => {
     try { return contextLayers.verifiedState()?.jev ?? null; } catch { return null; }
   };
-  // An environment variable named by the route wins; otherwise the key registered on the page (never logged).
-  const getCredentialByEnvName = async (name: string): Promise<string | null> => {
-    if (process.env[name]) return process.env[name]!;
+  // A key registered on the page (never logged).
+  const pageKey = (name: string): string | null => {
     try { return contextLayers.jevKey(name); } catch (error) {
       writeDiagnostic("skill-classification", "jev-key-unreadable", { code: (error as { code?: unknown }).code ?? "UNREADABLE" });
       return null;
     }
   };
+  // The installation's vendor routes: an environment variable named by the route wins, else the page key (unchanged).
+  const getCredentialByEnvName = async (name: string): Promise<string | null> => process.env[name] ? process.env[name]! : pageKey(name);
+  // JEV (4.0.0): the provider AGS ships and the page's signed settings only; its key is the one registered on the page.
+  const jev = composeJev({ signed: signedJev, pageKey });
+  const jevSignedLimitUsd = jev.signedLimitUsd;
   const classificationRoot = path.dirname(path.dirname(registryPath));
   const classificationConfig = process.env.AGENT_GOVERNANCE_CLASSIFICATION_CONFIG;
   let initializationFailure: ClassificationInitializationError | null = null;
@@ -134,8 +139,9 @@ export async function startMcpServer(
   let providerBytesDigest: string | null = null;
   let nativeDefinitionsRef: string | null | undefined;
   let nativeDefinitionDigest: string | null = null;
+  let vendorAdviceConfigured = false;
   let providerRuntime: ConstructorParameters<typeof SkillClassificationService>[0] =
-    {providers: {}, budget: new InMemoryClassificationBudget({jev: {limitUsd: null, spentUsd: null}, vendors: {}})};
+    {providers: {jev: jev.provider}, budget: new InMemoryClassificationBudget({jev: {limitUsd: null, spentUsd: null}, vendors: {}, jevSignedLimitUsd})};
   try {
     const initialRuntime = await readClassificationRuntime(classificationConfig, classificationRoot);
     providerRuntimeRef = initialRuntime.providerRuntimeRef;
@@ -146,11 +152,18 @@ export async function startMcpServer(
     nativeDefinitionDigest = nativeDefinitionBytes ? digestClassificationValue(nativeDefinitionBytes.toString("utf8")) : null;
     const nativeDefinitions: NativeClassificationAdapterDefinition[] = nativeDefinitionBytes ? JSON.parse(nativeDefinitionBytes.toString("utf8")) as NativeClassificationAdapterDefinition[] : [];
     const nativeAdapters = createNativeClassificationAdapters(bindNativeClassificationDefinitions(nativeDefinitions, installedNativeBehaviors));
-    if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, {nativeAdapters, wireAdapters: installedWireAdapters,
-      getCredentialByEnvName, jevSignedLimitUsd: () => signedJev()?.limitUsd ?? null});
-    // JEV is off until the user turns it on on the admin page; a config that enables it is said to be waiting, not ignored.
-    if (classificationConfig && initialRuntime.config.jevEnabled && !signedJev()?.enabled) {
-      writeDiagnostic("skill-classification", "jev-off-until-signed", { adminUrl: adminPort ? resolveAdminPageUrl() : null });
+    if (providerRuntimeRef) {
+      const installed = await loadClassificationProviderRuntime(providerRuntimeRef, {nativeAdapters, wireAdapters: installedWireAdapters,
+        getCredentialByEnvName, jevSignedLimitUsd, ignoreJev: true});
+      providerRuntime = {providers: {jev: jev.provider, ...(installed.providers.vendor ? {vendor: installed.providers.vendor} : {})}, budget: installed.budget};
+    }
+    vendorAdviceConfigured = initialRuntime.registry.profiles.some(profile => profile.providerKind === "vendor");
+    // The installation's JEV settings are no longer read; say so once instead of ignoring them silently.
+    const ignored = await ignoredJevSettings(initialRuntime);
+    const jevEnabledInFile = Boolean(classificationConfig) && initialRuntime.config.jevEnabled;
+    if (ignored.routes || ignored.profiles || jevEnabledInFile) {
+      writeDiagnostic("skill-classification", "jev-installation-settings-ignored", { ...ignored, jevEnabled: jevEnabledInFile,
+        adminUrl: adminPort ? resolveAdminPageUrl() : null });
     }
   } catch (error) {
     initializationFailure = new ClassificationInitializationError(error);
@@ -186,10 +199,11 @@ export async function startMcpServer(
       const runtime = await readClassificationRuntime(classificationConfig, classificationRoot);
       if (runtime.providerRuntimeRef !== providerRuntimeRef || (providerRuntimeRef && digestClassificationValue((await readFile(providerRuntimeRef)).toString("utf8")) !== providerBytesDigest)) throw new Error("APPROVED_PROVIDER_RUNTIME_CHANGED");
       if (runtime.nativeAdapterDefinitionsRef !== nativeDefinitionsRef || (nativeDefinitionsRef && digestClassificationValue((await readFile(nativeDefinitionsRef)).toString("utf8")) !== nativeDefinitionDigest)) throw new Error("APPROVED_NATIVE_ADAPTERS_CHANGED");
-      // The switch, the preset and the budget the user signed apply on each read (default off).
-      return applyAdminJev(runtime, signedJev());
+      // The switch, the preset, the model, the consent and the fallback the user signed apply on each read (default off).
+      return jev.apply(runtime);
     },
     service: new SkillClassificationService(providerRuntime),
+    adviceReady: () => !initializationFailure && (jev.ready(jevUsage(providerRuntime.budget)) || vendorAdviceConfigured),
   });
   const classificationBudget = providerRuntime.budget;
   const sessionMessages = new SessionMessageService();
@@ -200,9 +214,27 @@ export async function startMcpServer(
     service: contextLayers,
     port: adminPort,
     listSessions: () => adminSessions(sessionMessages, resolveSessionBoardDatabasePath()),
-    settings: admin => adminSettings(admin, classificationConfig, classificationRoot,
-      classificationBudget instanceof ClassificationBudget ? classificationBudget : null),
+    settings: async admin => adminSettings(admin, classificationConfig, classificationRoot, jevUsage(classificationBudget),
+      await jev.views(), jev.profileFor),
   });
+}
+
+/** The JEV spending this process has tallied (spent since it started, plus reservations); null when it keeps none. */
+function jevUsage(budget: unknown): { spentUsd: number | null; reservedUsd: number } | null {
+  if (!(budget instanceof ClassificationBudget)) return null;
+  const snapshot = budget.snapshot();
+  return { spentUsd: snapshot.limits.jev?.spentUsd ?? null,
+    reservedUsd: snapshot.reservations.filter(item => item.bucket === "jev").reduce((sum, item) => sum + item.maximumUsd, 0) };
+}
+
+/** JEV routes and profiles an installation still carries; AGS no longer reads them (4.0.0). */
+async function ignoredJevSettings(runtime: { providerRuntimeRef?: string | null; registry: { profiles: Array<{ providerKind: string }> } }) {
+  let routes = 0;
+  if (runtime.providerRuntimeRef) {
+    const parsed = JSON.parse(await readFile(runtime.providerRuntimeRef, "utf8")) as { routes?: Array<{ providerKind?: unknown }> };
+    routes = (parsed.routes ?? []).filter(route => route.providerKind === "jev").length;
+  }
+  return { routes, profiles: runtime.registry.profiles.filter(profile => profile.providerKind === "jev").length };
 }
 
 /** The page lists sessions by their presence (no session of its own); ended ones come from the presence it still keeps. */
@@ -223,34 +255,33 @@ async function adminSessions(sessionMessages: SessionMessageService, boardPath: 
   }));
 }
 
-/** What the page shows about the settings: the signed values with the environment and installation that bound them. */
+/** What the page shows about the settings: the signed values, the JEV providers AGS ships and the installation's vendors. */
 async function adminSettings(admin: AdminPageState, classificationConfig: string | undefined, classificationRoot: string,
-  budget: ClassificationBudget | null): Promise<AdminSettingsView> {
+  usage: { spentUsd: number | null; reservedUsd: number } | null, providers: JevProviderView[], profileFor: JevProfileFor): Promise<AdminSettingsView> {
   const locale = resolveHostLocale({ environment: process.env });
-  const installation: JevInstallationView = { configured: Boolean(classificationConfig), allows: true, mode: null, profileCount: 0, limitUsd: null,
-    credentials: [], error: null };
+  const installation: JevInstallationView = { configured: Boolean(classificationConfig), vendorIds: [], credentials: [],
+    ignoredJev: { routes: 0, profiles: 0 }, error: null };
   if (classificationConfig) {
     try {
       const runtime = await readClassificationRuntime(classificationConfig, classificationRoot);
-      Object.assign(installation, { allows: runtime.config.jevEnabled, mode: runtime.config.mode, profileCount: runtime.registry.profiles.length });
+      installation.vendorIds = [...new Set(runtime.registry.profiles.filter(profile => profile.providerKind === "vendor").map(profile => profile.vendorId))].sort();
+      installation.ignoredJev = await ignoredJevSettings(runtime);
       if (runtime.providerRuntimeRef) {
         const routes = classificationProviderRuntimeSchema.parse(JSON.parse(await readFile(runtime.providerRuntimeRef, "utf8")));
         const credentials = new Map<string, Set<string>>();
         for (const route of routes.routes) {
-          if (route.kind === "remote") credentials.set(route.credentialEnvName, (credentials.get(route.credentialEnvName) ?? new Set()).add(route.vendorId));
+          if (route.kind === "remote" && route.providerKind === "vendor") {
+            credentials.set(route.credentialEnvName, (credentials.get(route.credentialEnvName) ?? new Set()).add(route.vendorId));
+          }
         }
         installation.credentials = [...credentials].map(([name, vendors]) => ({ name, vendorIds: [...vendors].sort() }));
-        installation.limitUsd = routes.budget.jev.limitUsd;
       }
     } catch (error) {
       installation.error = failureContext(error).type === "syntax-error" ? "CONFIG_INVALID" : "CONFIG_UNREADABLE";
     }
   }
-  const snapshot = budget?.snapshot();
-  const usage = snapshot ? { spentUsd: snapshot.limits.jev?.spentUsd ?? null,
-    reservedUsd: snapshot.reservations.filter(item => item.bucket === "jev").reduce((sum, item) => sum + item.maximumUsd, 0) } : null;
   return adminSettingsView({ environment: process.env, signed: admin.signedSettings, locale: { value: locale.locale, source: locale.source },
-    localeOptions: SUPPORTED_LOCALES, installation, usage });
+    localeOptions: SUPPORTED_LOCALES, installation, usage, providers, profileFor });
 }
 
 /** `server.mjs admin-reset`: archives the signed admin log after every passkey was lost (no HTTP or MCP path). */
