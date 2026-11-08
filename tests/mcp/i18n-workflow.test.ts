@@ -36,7 +36,7 @@ const ref = (body: { messageKey?: string; params?: Readonly<Record<string, unkno
 
 describe("workflow error messages", () => {
   it("returns a service error with its key and params and the unchanged English text", () => {
-    const result = service().startMinimalWorkflow({ goal: " ", stages: ["minimal-implementation"], acceptanceCriteria: ["done"], workspace }, null, continuity);
+    const result = service().startMinimalWorkflow({ goal: " ", stages: ["minimal-implementation"], skills: [{ skillId: "minimal-implementation", reason: "test" }], acceptanceCriteria: ["done"], workspace }, null, continuity);
     expect(result.error).toEqual({
       code: "INVALID_INPUT", message: "goal must be a non-empty string.",
       messageKey: "workflow.service.goalNonEmptyString", params: {}, details: { field: "goal" },
@@ -45,7 +45,7 @@ describe("workflow error messages", () => {
   });
 
   it("renders a select-built sentence the same as the old template in English and as one sentence in Korean", () => {
-    const result = service().startMinimalWorkflow({ goal: "g", stages: [], acceptanceCriteria: ["done"], workspace }, null, continuity);
+    const result = service().startMinimalWorkflow({ goal: "g", stages: [], skills: [{ skillId: "minimal-implementation", reason: "test" }], acceptanceCriteria: ["done"], workspace }, null, continuity);
     expect(result.error).toMatchObject({
       message: "stages must be a non-empty array of distinct non-empty strings.",
       messageKey: "workflow.service.distinctStringArray", params: { field: "stages", size: "nonEmpty" },
@@ -54,7 +54,7 @@ describe("workflow error messages", () => {
   });
 
   it("keeps a sub-step's key when the minimal start rethrows it (execution subject select)", () => {
-    const result = service().startMinimalWorkflow({ goal: "g", stages: ["minimal-implementation"], acceptanceCriteria: ["done"], workspace, writeTargets: ["synthetic"] }, null, continuity);
+    const result = service().startMinimalWorkflow({ goal: "g", stages: ["minimal-implementation"], skills: [{ skillId: "minimal-implementation", reason: "test" }], acceptanceCriteria: ["done"], workspace, writeTargets: ["synthetic"] }, null, continuity);
     expect(result.error).toMatchObject({
       code: "BINDING_REQUIRED", message: "bootstrap orchestration requires trusted host execution attestation.",
       messageKey: "workflow.service.requiresTrustedAttestation", params: { subject: "bootstrapOrchestration", stageId: "" },

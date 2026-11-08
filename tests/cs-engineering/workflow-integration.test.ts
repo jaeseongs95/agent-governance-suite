@@ -182,7 +182,7 @@ test("actual MCP tools validate a selected CS stage with synthetic server observ
       operationalSettings:{maxAttemptsPerEpoch:3,maxEpochs:2,leaseTtlSeconds:300}};
     const opened=await call("open_convergence_root",{schemaVersion:"1.0.0",parentRootId:null,taskEnvelope:f.task,frame,userApprovalRefs:[]});expect(opened.ok).toBe(true);
     const claimed=await call("claim_workflow_attempt",{schemaVersion:"1.0.0",rootId:opened.data.rootId,expectedRevision:opened.data.revision,taskEnvelope:f.task,frame,plan:planned.data,outputTargets:["candidate/queue.py"],priorFailure:null});expect(claimed.ok).toBe(true);
-    const started=await call("start_guarded_workflow",{schemaVersion:"1.0.0",leaseId:claimed.data.leaseId,expectedRootRevision:claimed.data.rootRevision,plan:planned.data});expect(started.ok).toBe(true);
+    const started=await call("start_guarded_workflow",{schemaVersion:"1.0.0",leaseId:claimed.data.leaseId,expectedRootRevision:claimed.data.rootRevision,plan:planned.data,skills:[{skillId:"minimal-implementation",reason:"test"}]});expect(started.ok).toBe(true);
     const stage=result(f,started.data);const args=JSON.parse(JSON.stringify(stage));delete args.executionContext;
     const recorded=await call("record_stage_result",args);expect(recorded.ok,JSON.stringify(recorded.error)).toBe(true);
     expect(recorded.data.stageResults[0].executionContext.actorId).toBe("cs-synthetic-actor");

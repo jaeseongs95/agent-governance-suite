@@ -164,7 +164,7 @@ describe("trusted MCP server boundary", () => {
       })).data!;
       const receipt = result<WorkflowReceiptV1>(await callTool({
         name: "start_guarded_workflow",
-        arguments: { schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan },
+        arguments: { schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan, skills: [{ skillId: "minimal-implementation", reason: "test" }] },
       })).data!;
       const stage = receipt.plan.stages[0]!;
       const stageResult: StageResultV1 = {
@@ -234,7 +234,7 @@ describe("trusted MCP server boundary", () => {
       })).data!;
       const abortReceipt = result<WorkflowReceiptV1>(await callTool({
         name: "start_guarded_workflow",
-        arguments: { schemaVersion: "1.0.0", leaseId: abortLease.leaseId, expectedRootRevision: abortLease.rootRevision, plan: abortPlan },
+        arguments: { schemaVersion: "1.0.0", leaseId: abortLease.leaseId, expectedRootRevision: abortLease.rootRevision, plan: abortPlan, skills: [{ skillId: "minimal-implementation", reason: "test" }] },
       })).data!;
       const aborted = result<WorkflowReceiptV1>(await callTool({
         name: "abort_workflow",

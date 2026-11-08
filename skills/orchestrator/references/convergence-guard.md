@@ -18,7 +18,7 @@ MCP가 반환한 `rootId`는 요약, 재개, 서브에이전트 handoff와 fresh
 
 1. 현재 task와 frame에서 `plan_workflow`를 호출한다.
 2. `claim_workflow_attempt`에 root revision, task, frame, signed plan, 실행자, 출력 대상과 이전 실패 근거를 전달한다.
-3. 발급된 lease와 같은 plan을 즉시 `start_guarded_workflow`에 전달한다.
+3. 발급된 lease와 같은 plan을 이 시도에서 쓸 `skills`와 함께 즉시 `start_guarded_workflow`에 전달한다.
 4. run 결과는 기존 stage 기록과 finalize/abort 경로로 닫는다.
 
 첫 시도의 `priorFailure`는 `null`이다. 그 뒤에는 가장 최근 `AttemptOutcome.v1.failureFingerprint`, 검증 가능한 원인 가설, 변경 요약, 가설을 가르는 관측과 새 evidence reference를 사용한다. target 변화도 새 evidence도 없으면 전체 실행을 시작하지 않고 `blocker-diagnostician`으로 전환한다.

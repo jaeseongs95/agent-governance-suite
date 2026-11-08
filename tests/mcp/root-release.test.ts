@@ -79,7 +79,7 @@ async function harness() {
     return JSON.parse(text!) as ApiResultV1<T>;
   };
   const start = (writeTargets: string[], sessionId: string, extra: Record<string, unknown> = {}) => call<MinimalWorkflowStartV1>("start_workflow", {
-    goal: `Change ${writeTargets.join(", ")}.`, stages: ["minimal-implementation"], acceptanceCriteria: ["The change works."],
+    goal: `Change ${writeTargets.join(", ")}.`, stages: ["minimal-implementation"], skills: [{ skillId: "minimal-implementation", reason: "test" }], acceptanceCriteria: ["The change works."],
     workspace: productDir, writeTargets, ...extra }, sessionId);
   const root = (rootId: string): ConvergenceRootV1 => store.getConvergenceSnapshot(rootId)!.root;
   const release = (rootId: string, sessionId: string, extra: Record<string, unknown> = {}) => call<Record<string, unknown>>("release_convergence_root", {

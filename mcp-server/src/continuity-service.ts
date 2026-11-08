@@ -118,6 +118,7 @@ export function minimalWorkflowStartExample(locale: SupportedLocale): string {
   return `start_workflow ${JSON.stringify({
     goal: render(msg("hooks.editGate.goalPlaceholder", {}), locale),
     stages: ["minimal-implementation"],
+    skills: [{ skillId: "minimal-implementation", reason: render(msg("hooks.editGate.skillReasonPlaceholder", {}), locale) }],
     acceptanceCriteria: [render(msg("hooks.editGate.criterionPlaceholder", {}), locale)],
     writeTargets: [render(msg("hooks.editGate.writeTargetPlaceholder", {}), locale)],
   })}`;

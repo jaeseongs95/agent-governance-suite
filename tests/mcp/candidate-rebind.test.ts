@@ -153,6 +153,7 @@ async function claimAndStart(h: Harness, root: { rootId: string; revision: numbe
   });
   return h.ok<WorkflowReceiptV1>("start_guarded_workflow", {
     schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan,
+    skills: [{ skillId: "minimal-implementation", reason: "test" }],
   });
 }
 
@@ -263,7 +264,7 @@ describe("rebinding a workflow to a changed final candidate", () => {
   it("replaces a root that start_workflow opened in one call", async () => {
     const h = await harness();
     const started = await h.ok<MinimalWorkflowStartV1>("start_workflow", {
-      goal: "Review the final candidate.", stages: ["minimal-implementation"], acceptanceCriteria: ["The final candidate passes."],
+      goal: "Review the final candidate.", stages: ["minimal-implementation"], skills: [{ skillId: "minimal-implementation", reason: "test" }], acceptanceCriteria: ["The final candidate passes."],
       workspace, writeTargets: ["fixture.md"],
     });
     const run = await h.ok<WorkflowReceiptV1>("get_workflow_status", { runId: started.runId });

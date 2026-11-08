@@ -29,8 +29,8 @@ const stores = new Set<SqliteContinuityStore>();
 const NO_ENV: NodeJS.ProcessEnv = {};
 const EN_ENV: NodeJS.ProcessEnv = { AGENT_GOVERNANCE_LOCALE: "en" };
 // The start example every refusal names, byte for byte, in each shipped locale.
-const KO_EXAMPLE = 'start_workflow {"goal":"<목표>","stages":["minimal-implementation"],"acceptanceCriteria":["<수용 기준>"],"writeTargets":["<바꿀 경로>"]}';
-const EN_EXAMPLE = 'start_workflow {"goal":"<goal>","stages":["minimal-implementation"],"acceptanceCriteria":["<acceptance criterion>"],"writeTargets":["<path to change>"]}';
+const KO_EXAMPLE = 'start_workflow {"goal":"<목표>","stages":["minimal-implementation"],"skills":[{"skillId":"minimal-implementation","reason":"<이 스킬을 쓰는 이유>"}],"acceptanceCriteria":["<수용 기준>"],"writeTargets":["<바꿀 경로>"]}';
+const EN_EXAMPLE = 'start_workflow {"goal":"<goal>","stages":["minimal-implementation"],"skills":[{"skillId":"minimal-implementation","reason":"<why this skill applies>"}],"acceptanceCriteria":["<acceptance criterion>"],"writeTargets":["<path to change>"]}';
 
 afterEach(() => {
   vi.restoreAllMocks();

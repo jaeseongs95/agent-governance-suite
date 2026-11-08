@@ -1623,7 +1623,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     if (!d) { if (!u.error) sec.append(h('p', { class: 'muted', role: 'status' }, '불러오는 중…')); return sec; }
     const total = d.rows.reduce((n, x) => n + x.calls, 0);
     if (!d.hosts.length) {
-      sec.append(h('p', { class: 'empty' }, '아직 기록된 호출이 없습니다. AGS 4.1.0을 설치한 뒤의 호출부터 기록합니다.'));
+      sec.append(h('p', { class: 'empty' }, '아직 기록된 호출이 없습니다. AGS 5.0.0을 설치한 뒤의 호출부터 기록합니다.'));
     } else {
       const used = new Set(d.rows.map((x) => x.skillId)).size;
       sec.append(h('p', { role: 'status' }, '총 ' + total + '회 · 호출된 스킬 ' + used + '개 / 전체 ' + d.skills.length + '개'), viewUsageTable(d));

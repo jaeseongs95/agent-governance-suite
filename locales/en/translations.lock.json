@@ -20,6 +20,7 @@
   "hooks.editGate.gatedRoot": "59843743a043465dabbf1c0e57681a287acf8f4d14bb2a402da722e9e257b013",
   "hooks.editGate.goalPlaceholder": "2f51ae8c9b9eddb39ffdf24370f535b788c39fb70eab8a029a892447b7744cd2",
   "hooks.editGate.outsideScope": "35c50b4db479bace0b0f795d65b086ff10986aaa3a6ee68f0e97bb969e07cbb0",
+  "hooks.editGate.skillReasonPlaceholder": "b70ee41860de067683035208d8d78b3af6a58fe4ea27df8569e318f76f24c53b",
   "hooks.editGate.unknownPath": "6980ff741df84e2f9c098ef3d00e43a853378d2b75e8700550cc822b5738e01f",
   "hooks.editGate.writeTargetPlaceholder": "84400df7dc9d7c2b3e917c4548434ed71a5437340ca6b46a80357a34396dc3aa",
   "hooks.environmentFailure.check": "6e95812a6bfe24f1a56db3e654e9c88d4b0cebf7e3f4ef11b9170115d8db8df2",

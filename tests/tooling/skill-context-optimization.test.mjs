@@ -131,7 +131,7 @@ describe("skill context optimization", () => {
       expect(createHash("sha256").update(predecessor).digest("hex"), relative).toBe(before);
       // A 3.9.0 guidance successor may reword a purpose-change file again, and the 4.0.0 successor after it; through
       // both exact projections it must stand for the exact purpose bytes.
-      expect(createHash("sha256").update(beforeGuidanceSuccessor(relative, beforeMinimalImplementationSuccessor(relative, current))).digest("hex"), relative).toBe(after);
+      expect(createHash("sha256").update(beforeGuidanceSuccessor(relative, beforeMinimalImplementationSuccessor(relative, beforeGuidanceSuccessor(relative, current)))).digest("hex"), relative).toBe(after);
       expect(readHistoricalSource(relative).equals(current), relative).toBe(false);
     }
   });
@@ -195,7 +195,9 @@ describe("skill context optimization", () => {
     // registry.json is bound by its descriptor digest, source-lock.json and skill scripts by source-lock.
     const excluded = relative => /^skills\/(?:ponytail|minimal-implementation)\//u.test(relative)
       || ["skills/registry.json", "skills/source-lock.json"].includes(relative) || /^skills\/[^/]+\/scripts\/.+\.(?:mjs|py)$/u.test(relative);
-    const changedWith = filter => execFileSync("git", ["diff", "--name-only", "--no-renames", `--diff-filter=${filter}`, successor.baselineRevision, "--", "skills"], { cwd: repository, encoding: "utf8" })
+    // Coverage of the 4.0.0 pins ends at 4.0.0's commit; a later change goes through a reviewed guidance successor.
+    const release400 = "ab92b16bd8f8e49a937175043b2234e7efbc1c38";
+    const changedWith = filter => execFileSync("git", ["diff", "--name-only", "--no-renames", `--diff-filter=${filter}`, successor.baselineRevision, release400, "--", "skills"], { cwd: repository, encoding: "utf8" })
       .split(/\r?\n/u).filter(Boolean).filter(relative => !excluded(relative));
     const changed = changedWith("M");
     expect(Object.keys(successor.hashes).toSorted()).toEqual(changed.toSorted());
@@ -205,7 +207,7 @@ describe("skill context optimization", () => {
     const retired = checkSkillContextOptimization().retiredSkills.find(retirement => retirement.skillIds.length === 0);
     expect(retired).toMatchObject({ revision: successor.baselineRevision, hashes: { "skills/cs-engineering/references/design-basis.ko.md": "01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034" } });
     for (const [relative, [before, after]] of Object.entries(successor.hashes)) {
-      const current = readFileSync(path.join(repository, relative));
+      const current = beforeGuidanceSuccessor(relative, readFileSync(path.join(repository, relative)));
       const predecessor = execFileSync("git", ["show", `${successor.baselineRevision}:${relative}`], { cwd: repository });
       expect([digest(predecessor), digest(current)], relative).toEqual([before, after]);
       expect(beforeMinimalImplementationSuccessor(relative, current).equals(predecessor), relative).toBe(true);
@@ -882,7 +884,8 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     }
 
     const coordRoot = readFileSync(path.join(root, "skills/coordinate-subagents/SKILL.md"), "utf8");
-    expect(coordRoot).toContain("Coordinate subagents on the current host by delegating only when the user requests it");
+    expect(coordRoot).toContain("Decide whether to hand work to subagents when a task has a unit that can be completed and verified on its own");
+    expect(coordRoot).not.toContain("delegating only when the user requests it");
     expect(coordRoot).not.toContain("Coordinate subagents in Codex and Claude Code");
 
     for (const text of readBoth("skills/cs-engineering/SKILL.md")) {

@@ -306,6 +306,7 @@ describe("host execution observation through the MCP boundary", () => {
     })).data!;
     const receipt = (await call<WorkflowReceiptV1>("start_guarded_workflow", {
       schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan,
+      skills: [{ skillId: "minimal-implementation", reason: "test" }],
     })).data!;
     const stage = receipt.plan.stages[0]!;
     const stageResult: StageResultV1 = {

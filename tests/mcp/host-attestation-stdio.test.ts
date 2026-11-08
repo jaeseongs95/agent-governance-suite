@@ -155,7 +155,7 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       outputTargets: ["fixture.md"], priorFailure: null });
     expect(claimed.error).toBeNull();
     const lease = claimed.data!;
-    const started = await call<WorkflowReceiptV1>("start_guarded_workflow", { schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan });
+    const started = await call<WorkflowReceiptV1>("start_guarded_workflow", { schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan, skills: [{ skillId: "minimal-implementation", reason: "test" }] });
     expect(started.error).toBeNull();
     const receipt = started.data!;
     const stage = receipt.plan.stages[0]!;

@@ -111,6 +111,17 @@ function changedBetween(from, to, path) {
 //   Only these five reviewed documentation deltas project onto the unchanged a2811393 context.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
+  // AGS3-D-0095: coordinate-subagents is selected on an independent work unit or a separate check, so its net-benefit
+  // check is reached. 5.0.0: a run start names its skills (mcp-execution).
+  Object.freeze({
+    revision: "e67caf843ae94b752def7d0cf4a1f8fb66c2b208",
+    hashes: Object.freeze({
+      "skills/coordinate-subagents/SKILL.md": ["33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f", "58c7c79988f6943f2c20290aef44261d4b95ad81d701495419783514a711f31f"],
+      "skills/coordinate-subagents/classification.json": ["fc15c399cb59d536d77da0cf587e4c097c1b205a4764a39f0000d047750603fc", "67edf53c5dd3d6f2a2c9352affc0c10f51c685062831c6b2c7cfbaaaa7e25fbb"],
+      "skills/orchestrator/references/mcp-execution.md": ["1f515f4c853ad49495f72b179db699ead1ce34bd849c22a646a90180aa93f9f3", "3225695a3bb560a9279c3abb5376ae93d26e38d7f930cc5e706b4a45e39cee5e"],
+      "skills/orchestrator/references/convergence-guard.md": ["3081f282b5c458c807ef7a36251b42e0cfc16dfe6a8b6a64ce1c801e7f7d3b8c", "f3f698e2e3051dfbf3b8ed8b2075be6ad595a1a9bfb8a30b6c26aea0c02decd2"],
+    }),
+  }),
   // AGS3-D-0094: code-review also takes defect searches in existing code; selection reads only the description and targets.
   Object.freeze({
     revision: "41447eeeb05f56d85d7f0fdab12a3d455bd269db",
@@ -558,8 +569,9 @@ export function checkPurposeChangeSources() {
   const errors = [];
   for (const relative of [...Object.keys(PURPOSE_CHANGE_SUCCESSOR.hashes), ...Object.keys(PURPOSE_CHANGE_SUCCESSOR.additions)]) {
     let bytes;
-    // A later reviewed guidance successor stands for the exact purpose-change bytes it replaced.
-    try { bytes = beforeMultiWorkflowGuidance(relative, beforeMinimalImplementation(relative, readFileBytes(join(ROOT, relative)))); }
+    // A later reviewed guidance successor stands for the exact purpose-change bytes it replaced; one can also follow
+    // the minimal-implementation successor (AGS3-D-0095), so guidance is projected on both sides of it.
+    try { bytes = beforeMultiWorkflowGuidance(relative, beforeMinimalImplementation(relative, beforeMultiWorkflowGuidance(relative, readFileBytes(join(ROOT, relative))))); }
     catch (error) {
       if (error?.code !== "ENOENT") throw error;
       errors.push(`purpose change source missing: ${relative}`); continue;
@@ -599,7 +611,7 @@ function projectRetiredChanges(base, paths) {
   return paths.filter(relative => {
     if (Object.hasOwn(PURPOSE_CHANGE_SUCCESSOR.hashes, relative) || Object.hasOwn(PURPOSE_CHANGE_SUCCESSOR.additions, relative)) {
       try {
-        if (matchesPurposeChange(relative, beforeMultiWorkflowGuidance(relative, beforeMinimalImplementation(relative, readFileBytes(join(ROOT, relative)))))) return changedBetween(base, PURPOSE_CHANGE_SUCCESSOR.baselineRevision, relative);
+        if (matchesPurposeChange(relative, beforeMultiWorkflowGuidance(relative, beforeMinimalImplementation(relative, beforeMultiWorkflowGuidance(relative, readFileBytes(join(ROOT, relative))))))) return changedBetween(base, PURPOSE_CHANGE_SUCCESSOR.baselineRevision, relative);
       } catch (error) { if (error?.code !== "ENOENT") throw error; }
     }
     if (Object.hasOwn(MINIMAL_IMPLEMENTATION_SUCCESSOR.hashes, relative)) {

@@ -99,7 +99,7 @@ function running(workflow: WorkflowService, taskId: string, capabilities?: strin
     schemaVersion: "1.0.0", rootId: root.rootId, expectedRevision: root.revision, taskEnvelope: envelope, frame: frame(taskId),
     plan, outputTargets: ["fixture.md"], priorFailure: null,
   }, true).data!;
-  return workflow.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan }, true).data!;
+  return workflow.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan, skills: [{ skillId: "minimal-implementation", reason: "test" }] }, true).data!;
 }
 
 function stageResult(receipt: WorkflowReceiptV1, output: Record<string, unknown> | null, outputFile?: { locator: string; digest: string }): StageResultV1 {

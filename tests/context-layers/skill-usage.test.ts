@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
-import { recordSkillCall, resolveSkillUsageDatabasePath, SKILL_USAGE_RETAIN_DAYS, skillUsageSummary } from "../../mcp-server/src/skill-usage-store.js";
+import { recordSkillCall, resolveSkillUsageDatabasePath, SKILL_USAGE_RETAIN_DAYS, skillsCalledInSession, skillUsageSummary } from "../../mcp-server/src/skill-usage-store.js";
 import { skillFilesNamed, skillFilesReadByCommand } from "../../mcp-server/src/skill-file-read.js";
 
 // The admin page's skill statistics (4.1.0): each host loads a skill its own way, so its adapter recognizes the call; the
@@ -141,6 +141,14 @@ describe("the statistics store", () => {
     recordSkillCall(usageFile, call(daysAgo(0)));
     const database = new DatabaseSync(usageFile);
     try { expect((database.prepare("SELECT COUNT(*) AS n FROM skill_calls").get() as { n: number }).n).toBe(1); } finally { database.close(); }
+  });
+
+  it("names the skills one session called, and creates nothing before the first call", () => {
+    expect(skillsCalledInSession(usageFile, "s")).toEqual([]);
+    expect(existsSync(usageFile)).toBe(false);
+    recordSkillCall(usageFile, call(daysAgo(0), "a"));
+    recordSkillCall(usageFile, { ...call(daysAgo(0), "b"), sessionId: "other" });
+    expect(skillsCalledInSession(usageFile, "s")).toEqual(["a"]);
   });
 
   it("a file of its own: the shared context file does not gain a table", () => {

@@ -549,7 +549,7 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
       expect(secondEpoch.error).toBeNull();
       expect(secondEpoch.data).toMatchObject({ epoch: 2, stateToken: expect.any(String) });
       const startInput = retry(fixture, trusted.service, trusted.plan);
-      const started = await invoke<WorkflowReceiptV1>("start_guarded_workflow", { ...startInput, responseMode: "full" });
+      const started = await invoke<WorkflowReceiptV1>("start_guarded_workflow", { ...startInput, skills: [{ skillId: "minimal-implementation", reason: "test" }], responseMode: "full" });
       expect(started.error).toBeNull();
       expect(started.data?.state).toBe("running");
       const correlation = fixture.initialContinuity.correlateSession(session);

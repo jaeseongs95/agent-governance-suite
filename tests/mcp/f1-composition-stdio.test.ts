@@ -108,7 +108,7 @@ serverTest("uses one explicit trusted producer for two opaque IDs through public
       const root = await f.call<ConvergenceRootV1>("open_convergence_root", { schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: request, frame, userApprovalRefs: [] }, model); expect(root.error).toBeNull();
       const lease = await f.call<AttemptLeaseV1>("claim_workflow_attempt", { schemaVersion: "1.0.0", rootId: root.data!.rootId, expectedRevision: root.data!.revision,
         taskEnvelope: request, frame, plan, outputTargets: ["fixture.md"], priorFailure: null }, model); expect(lease.error).toBeNull();
-      const started = await f.call<WorkflowReceiptV1>("start_guarded_workflow", { schemaVersion: "1.0.0", leaseId: lease.data!.leaseId, expectedRootRevision: lease.data!.rootRevision, plan }, model); expect(started.error).toBeNull();
+      const started = await f.call<WorkflowReceiptV1>("start_guarded_workflow", { schemaVersion: "1.0.0", leaseId: lease.data!.leaseId, expectedRootRevision: lease.data!.rootRevision, plan, skills: [{ skillId: "minimal-implementation", reason: "test" }] }, model); expect(started.error).toBeNull();
       const receipt = started.data!, stage = receipt.plan.stages[0]!;
       const recorded = await f.call<WorkflowReceiptV1>("record_stage_result", { schemaVersion: "1.0.0", runId: receipt.runId, stageId: stage.stageId, expectedRevision: receipt.revision, state: "passed", responseMode: "full",
         output: { schemaVersion: "1.0.0", kind: "output", output: { completed: true }, artifacts: request.artifactContracts[0]!.produced.map(item => ({ ...item, locator: `fixture:${item.artifactId}`, digest: "d".repeat(64), verified: true })), error: null },

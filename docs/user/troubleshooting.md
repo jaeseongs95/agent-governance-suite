@@ -6,7 +6,7 @@
 | MCP 서버가 시작되지 않는다 | 호스트가 실행하는 Node.js가 24.0.0 이상인지와 그 호스트의 MCP 시작 진단을 확인합니다. |
 | Codex에서 안내·현황판·메시지가 동작하지 않는다 | `/hooks`에서 AGS hook을 검토하고 신뢰했는지 확인합니다. hook 정의가 바뀐 판으로 업데이트하면 다시 신뢰해야 합니다. |
 | Antigravity 설치가 실패한다 | 앱을 닫고 릴리스에 첨부한 설치본을 설치합니다. 저장소 전체를 설치하지 않습니다. |
-| 파일 편집이 workflow를 요구하며 거부된다 | 거부 문구의 예대로 `start_workflow`에 목표·단계·수용 기준·`writeTargets`를 줍니다. 진행 중인 workflow와 다른 작업이면 겹치지 않는 범위로 하나 더 시작합니다. [편집 관문](usage.md#workflow와-편집-관문) |
+| 파일 편집이 workflow를 요구하며 거부된다 | 거부 문구의 예대로 `start_workflow`에 목표·단계·`skills`·수용 기준·`writeTargets`를 줍니다. 진행 중인 workflow와 다른 작업이면 겹치지 않는 범위로 하나 더 시작합니다. [편집 관문](usage.md#workflow와-편집-관문) |
 | `ROOT_CONFLICT`로 시작할 수 없다 | 오류 `details`에 있는 기존 root·상태·다음 행동을 확인합니다. 자기 root는 `release_convergence_root`로 해제할 수 있습니다. 다른 세션의 root는 소유자가 온라인이 아니고 사용자 결정이 있을 때만 해제합니다. |
 | `BINDING_REQUIRED` 같은 실행 관측 오류가 난다 | [실행 관측과 호스트 연결](../contributing/execution-attestation.md)의 호스트별 원인을 확인합니다. 모델 선택 조언과 실행 관측은 별개입니다. |
 | model-effort-advisor가 지원 정보 부족으로 호출을 보류한다 | 현재 호스트의 모델·추론 지원 근거를 확인합니다. catalog나 요청값으로 실제 적용을 추측하지 않습니다. |

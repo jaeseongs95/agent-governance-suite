@@ -97,7 +97,7 @@ async function harness() {
 }
 
 // The workflow covers the folder the edits go to, so they are inside its write scope.
-const minimal = { goal: "Change three files.", stages: ["minimal-implementation"], acceptanceCriteria: ["The change works."], workspace: productDir, writeTargets: ["."] };
+const minimal = { goal: "Change three files.", stages: ["minimal-implementation"], skills: [{ skillId: "minimal-implementation", reason: "test" }], acceptanceCriteria: ["The change works."], workspace: productDir, writeTargets: ["."] };
 /** The label is display text in the request's locale; the key and the count are the contract. */
 const expectLateAdoption = (lateAdoption: MinimalWorkflowStartV1["lateAdoption"] | undefined, priorFileCount: number) => {
   expect(lateAdoption).toMatchObject({ messageKey: "workflowRecord.lateAdoption.label", params: {}, priorFileCount });
@@ -145,7 +145,7 @@ describe("start_workflow minimal start", () => {
 
   it("defaults the workspace to the session's reported working directory, never the server's", async () => {
     const { call, counts, reportCwd, rootWorkspaces } = await harness();
-    const unnamed = { goal: minimal.goal, stages: minimal.stages, acceptanceCriteria: minimal.acceptanceCriteria, writeTargets: ["."] };
+    const unnamed = { goal: minimal.goal, stages: minimal.stages, skills: minimal.skills, acceptanceCriteria: minimal.acceptanceCriteria, writeTargets: ["."] };
     const refused = await call<MinimalWorkflowStartV1>(unnamed);
     expect(refused.error).toMatchObject({ code: "INVALID_INPUT", details: { field: "workspace" } });
     expect(counts()).toEqual({ convergence_roots: 0, convergence_leases: 0, workflow_runs: 0, execution_observation_claims: 0 });
@@ -158,7 +158,7 @@ describe("start_workflow minimal start", () => {
 
   it("reports an unreadable session board apart from an unreported directory", async () => {
     const { call, boardPath } = await harness();
-    const unnamed = { goal: minimal.goal, stages: minimal.stages, acceptanceCriteria: minimal.acceptanceCriteria, writeTargets: ["."] };
+    const unnamed = { goal: minimal.goal, stages: minimal.stages, skills: minimal.skills, acceptanceCriteria: minimal.acceptanceCriteria, writeTargets: ["."] };
     const foreign = new DatabaseSync(boardPath);
     foreign.exec("CREATE TABLE workflow_runs (run_id TEXT PRIMARY KEY)");
     foreign.close();
@@ -243,6 +243,14 @@ describe("start_workflow with several workflows in one session", () => {
     for (const name of ["alpha/1.ts", "alpha/2.ts", "beta/1.ts", "beta/2.ts"]) expect(writeFile(name)).toEqual({});
   });
 
+  it("requires skills", async () => {
+    const { call, counts } = await harness();
+    const withoutSkills: Record<string, unknown> = { ...minimal };
+    delete withoutSkills.skills;
+    expect((await call(withoutSkills)).error).toMatchObject({ code: "INVALID_INPUT", details: { field: "skills", reason: "SKILLS_REQUIRED" } });
+    expect(counts().convergence_roots).toBe(0);
+  });
+
   it("requires writeTargets", async () => {
     const { call, counts } = await harness();
     const withoutTargets: Record<string, unknown> = { ...minimal };
@@ -291,10 +299,15 @@ describe("start_workflow with several workflows in one session", () => {
     expect((await call(continued)).error).toMatchObject({ code: "INVALID_INPUT", details: { reason: "PRIOR_FAILURE_REQUIRED" } });
     expect((await call({ ...continued, goal: "Something else.", priorFailure })).error)
       .toMatchObject({ code: "INVALID_INPUT", details: { reason: "ROOT_TASK_MISMATCH", field: "goal" } });
-    const resumed = await call<MinimalWorkflowStartV1>({ ...continued, priorFailure });
+    // Each attempt states its own skills: a changed situation changes them explicitly, without a new root.
+    const changedSkills = [{ skillId: "blocker-diagnostician", reason: "the first attempt failed" }];
+    expect((await call({ ...continued, priorFailure, skills: [] })).error).toMatchObject({ code: "INVALID_INPUT", details: { field: "skills", reason: "SKILLS_REQUIRED" } });
+    const resumed = await call<MinimalWorkflowStartV1>({ ...continued, priorFailure, skills: changedSkills });
     expect(resumed.error).toBeNull();
     expect(resumed.data).toMatchObject({ rootId: first.data!.rootId, state: "running" });
     expect(resumed.data!.runId).not.toBe(first.data!.runId);
+    expect(service.getWorkflowStatus(first.data!.runId).data!.skillDeclaration!.skills).toEqual(minimal.skills);
+    expect(service.getWorkflowStatus(resumed.data!.runId).data!.skillDeclaration!.skills).toEqual(changedSkills);
     // A root that is no longer open is not continued.
     expect(service.abortWorkflow(resumed.data!.runId, resumed.data!.revision).error).toBeNull();
     const current = store.getConvergenceSnapshot(first.data!.rootId)!.root;

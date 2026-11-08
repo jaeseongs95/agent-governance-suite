@@ -147,7 +147,7 @@ describe("recorded artifact digests", () => {
       schemaVersion: "1.0.0", rootId: root.rootId, expectedRevision: root.revision, taskEnvelope, frame,
       plan, outputTargets: ["fixture.md"], priorFailure: null,
     }, true).data!;
-    const receipt = workflow.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan }, true).data!;
+    const receipt = workflow.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan, skills: [{ skillId: "minimal-implementation", reason: "test" }] }, true).data!;
     const stage = receipt.plan.stages[0]!;
     expect(stage.requiredArtifacts).toEqual(["workspace-baseline"]);
     const record = (artifacts: unknown[], outputFile?: { locator: string; digest: string }) => workflow.recordStageResult({

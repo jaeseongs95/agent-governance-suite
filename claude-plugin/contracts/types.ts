@@ -966,6 +966,32 @@ export interface GuardedWorkflowStartRequestV1 {
   leaseId: string;
   expectedRootRevision: number;
   plan: WorkflowPlanV1;
+  /** Required at the MCP tools; each attempt states its own, so a changed situation changes the skills explicitly. */
+  skills?: DeclaredSkillV1[];
+  /** The advice (classify_skills operationId) the skills were decided after, if any. */
+  classificationOperationId?: string;
+}
+
+export interface DeclaredSkillV1 {
+  skillId: string;
+  reason: string;
+}
+
+/** Server-computed from the advice the caller named. `available: false`: named, but no usable advice is held for it. */
+export interface SkillAdviceComparisonV1 {
+  operationId: string;
+  available: boolean;
+  adviser?: string | null;
+  adopted?: string[];
+  added?: string[];
+  notAdopted?: string[];
+}
+
+export interface WorkflowSkillDeclarationV1 {
+  skills: DeclaredSkillV1[];
+  advice: SkillAdviceComparisonV1 | null;
+  /** Set at finalize: declared skills with no call seen for this session; null when the record could not be read. Never blocks. */
+  callsNotObserved?: string[] | null;
 }
 
 export interface AttemptOutcomeV1 {
@@ -1188,6 +1214,8 @@ export interface WorkflowReceiptV1 {
   error: ContractErrorBody | null;
   /** Server-computed: properties a passed stage relies on that AGS did not observe. */
   unverifiedClaims: UnverifiedClaimV1[];
+  /** The skills this attempt was started with. Absent on a run started before they were required. */
+  skillDeclaration?: WorkflowSkillDeclarationV1;
 }
 
 export interface WorkflowStatusSummaryV1 {
@@ -1205,6 +1233,8 @@ export interface WorkflowStatusSummaryV1 {
   unverifiedClaimCount: number;
   errorCode: ErrorCode | null;
   receiptDigest: Sha256Digest;
+  /** Declared skills with no call seen at finalize; null when that record could not be read; absent when there are none. */
+  declaredSkillsNotObserved?: string[] | null;
 }
 
 export class WorkflowContractError extends Error {

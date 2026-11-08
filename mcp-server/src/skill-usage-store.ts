@@ -74,6 +74,18 @@ export function recordSkillCall(file: string, call: SkillCall): void {
   }
 }
 
+/** The skills this session was seen calling, at any time: a skill read before the workflow started still counts. */
+export function skillsCalledInSession(file: string, sessionId: string): string[] {
+  if (!existsSync(file)) return [];
+  const database = open(file);
+  try {
+    const rows = database.prepare("SELECT DISTINCT skill_id FROM skill_calls WHERE session_id = ?").all(sessionId) as unknown as Array<{ skill_id: string }>;
+    return rows.map(row => row.skill_id);
+  } finally {
+    database.close();
+  }
+}
+
 /** Calls of the last `days` days. Nothing was recorded yet (no file): an empty summary, and no file is created. */
 export function skillUsageSummary(file: string, days: number, now: Date = new Date()): SkillUsageSummary {
   if (!existsSync(file)) return { rows: [], hosts: [] };

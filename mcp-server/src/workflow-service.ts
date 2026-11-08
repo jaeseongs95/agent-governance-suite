@@ -21,7 +21,9 @@ import {
   type AuditPhaseV1,
   type ExecutionContextV1,
   type ExecutionRequirementV1,
+  type DeclaredSkillV1,
   type GuardedWorkflowStartRequestV1,
+  type WorkflowSkillDeclarationV1,
   MODEL_CLASS,
   REASONING_EFFORT,
   RISK_LEVEL,
@@ -191,7 +193,11 @@ export interface MinimalStartContinuity {
    * server's own directory is not used: a host may start the MCP server in the plugin folder.
    */
   sessionWorkspace?(): SessionWorkspaceObservation;
+  /** The advice a classification gave; workflow code does not know who advised. Absent or null: no usable advice. */
+  adviceFor?: SkillAdviceLookup;
 }
+
+export type SkillAdviceLookup = (operationId: string) => { adviser: string | null; recommendedSkillIds: string[] } | null;
 
 /** The session's reported working directory, or why the record holding it could not be read. */
 export interface SessionWorkspaceObservation {
@@ -289,9 +295,11 @@ interface MinimalStartRequest {
   /** Continue this session's own open root with a new attempt instead of opening a root. */
   rootId: string | null;
   priorFailure: MinimalPriorFailure | null;
+  skills: DeclaredSkillV1[];
+  classificationOperationId: string | null;
 }
 
-const MINIMAL_START_KEYS = new Set(["goal", "stages", "acceptanceCriteria", "workspace", "writeTargets", "rootId", "priorFailure"]);
+const MINIMAL_START_KEYS = new Set(["goal", "stages", "skills", "classificationOperationId", "acceptanceCriteria", "workspace", "writeTargets", "rootId", "priorFailure"]);
 const PRIOR_FAILURE_KEYS = ["hypothesis", "changeSummary", "discriminator", "evidenceRefs"];
 
 function nonEmptyStrings(value: unknown, field: string, minimum: number): string[] {
@@ -302,7 +310,43 @@ function nonEmptyStrings(value: unknown, field: string, minimum: number): string
   return [...value] as string[];
 }
 
-function minimalStartRequest(raw: unknown): MinimalStartRequest {
+/** A skill's own name: a host may prefix it with its package (agent-governance-suite:code-review); the statistics and advice do not. */
+const bareSkillId = (skillId: string) => skillId.split(":").at(-1)!.trim();
+
+/**
+ * The skills a start names: one or more, each with its reason. The AGENT chooses them; the server neither picks nor adds
+ * one. A skill outside AGS may be named beside them, but at least one must be a skill AGS knows, so that a placeholder
+ * such as "none" does not stand for a choice.
+ */
+function declaredSkills(value: unknown, knownSkillIds: ReadonlySet<string>): DeclaredSkillV1[] {
+  const valid = Array.isArray(value) && value.length >= 1 && value.length <= 32 && value.every(item => {
+    const skill = asRecord(item);
+    return Object.keys(skill).sort().join() === "reason,skillId"
+      && typeof skill.skillId === "string" && bareSkillId(skill.skillId) !== "" && skill.skillId.length <= 200
+      && typeof skill.reason === "string" && skill.reason.trim() !== "" && skill.reason.length <= 2000;
+  });
+  const skills = valid ? (value as DeclaredSkillV1[]).map(({ skillId, reason }) => ({ skillId: skillId.trim(), reason: reason.trim() })) : [];
+  const names = skills.map(skill => bareSkillId(skill.skillId));
+  if (!valid || new Set(names).size !== names.length || !names.some(name => knownSkillIds.has(name))) {
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.skillsRequired", {}), { field: "skills", reason: "SKILLS_REQUIRED" });
+  }
+  return skills;
+}
+
+/** The record of a start's skills. Advice is compared, never required: none, or none usable, leaves the start as it is. */
+function skillDeclaration(skills: DeclaredSkillV1[], operationId: string | null, adviceFor?: SkillAdviceLookup): WorkflowSkillDeclarationV1 {
+  if (operationId === null) return { skills, advice: null };
+  const advice = adviceFor?.(operationId) ?? null;
+  if (!advice) return { skills, advice: { operationId, available: false } };
+  const declared = new Set(skills.map(skill => bareSkillId(skill.skillId)));
+  const recommended = new Set(advice.recommendedSkillIds);
+  return { skills, advice: { operationId, available: true, adviser: advice.adviser,
+    adopted: [...recommended].filter(skillId => declared.has(skillId)),
+    added: [...declared].filter(skillId => !recommended.has(skillId)),
+    notAdopted: [...recommended].filter(skillId => !declared.has(skillId)) } };
+}
+
+function minimalStartRequest(raw: unknown, knownSkillIds: ReadonlySet<string>): MinimalStartRequest {
   const input = asRecord(raw);
   const unknownKey = Object.keys(input).find(key => !MINIMAL_START_KEYS.has(key));
   if (raw === null || typeof raw !== "object" || Array.isArray(raw) || unknownKey) {
@@ -317,6 +361,9 @@ function minimalStartRequest(raw: unknown): MinimalStartRequest {
   if (input.rootId !== undefined && (typeof input.rootId !== "string" || !input.rootId.trim())) {
     throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.startWorkflowAcceptsGoalStages", {}), { field: "rootId" });
   }
+  if (input.classificationOperationId !== undefined && (typeof input.classificationOperationId !== "string" || !input.classificationOperationId.trim() || input.classificationOperationId.length > 256)) {
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.classificationOperationIdShape", {}), { field: "classificationOperationId" });
+  }
   const prior = asRecord(input.priorFailure);
   if (input.priorFailure !== undefined && (input.rootId === undefined || Object.keys(prior).sort().join() !== [...PRIOR_FAILURE_KEYS].sort().join()
     || PRIOR_FAILURE_KEYS.slice(0, 3).some(key => typeof prior[key] !== "string" || !(prior[key] as string).trim()))) {
@@ -325,6 +372,8 @@ function minimalStartRequest(raw: unknown): MinimalStartRequest {
   return {
     goal: input.goal.trim(),
     stages: nonEmptyStrings(input.stages, "stages", 1),
+    skills: declaredSkills(input.skills, knownSkillIds),
+    classificationOperationId: typeof input.classificationOperationId === "string" ? input.classificationOperationId : null,
     acceptanceCriteria: nonEmptyStrings(input.acceptanceCriteria, "acceptanceCriteria", 1),
     workspace: typeof input.workspace === "string" ? input.workspace : null,
     // Required: a default of the whole workspace made every start cover every other start's paths (ROOT_CONFLICT).
@@ -821,11 +870,11 @@ export class WorkflowService {
   }
 
   startGuardedWorkflow(rawRequest: unknown, requireTrustedExecutionContext = false,
-    beforeCommit?: (rootId: string) => void): ApiResultV1<WorkflowReceiptV1> {
+    beforeCommit?: (rootId: string) => void, adviceFor?: SkillAdviceLookup): ApiResultV1<WorkflowReceiptV1> {
     if (beforeCommit) {
       try {
         return this.store.withWorkflowTransaction(() => {
-          const result = this.startGuardedWorkflow(rawRequest, requireTrustedExecutionContext);
+          const result = this.startGuardedWorkflow(rawRequest, requireTrustedExecutionContext, undefined, adviceFor);
           if (result.ok && result.data) {
             const binding = this.store.getGuardedRunBinding(result.data.runId);
             if (!binding) throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.startedWorkflowGuardedRootBinding", {}));
@@ -844,6 +893,8 @@ export class WorkflowService {
     }
     return this.attempt(() => {
       const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
+      // Required at the MCP tools only: an embedding caller has no agent choosing skills.
+      const skills = requireTrustedExecutionContext || request.skills !== undefined ? declaredSkills(request.skills, this.knownSkillIds()) : null;
       const plan = clone(request.plan);
       this.assertPlanIntegrity(plan);
       if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(plan, "guardedStart");
@@ -864,7 +915,7 @@ export class WorkflowService {
         throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.attemptLeaseBoundDifferentWorkflow", {}), { leaseId: request.leaseId });
       }
 
-      const receipt = this.newRunningReceipt(plan);
+      const receipt = this.newRunningReceipt(plan, skills ? skillDeclaration(skills, request.classificationOperationId ?? null, adviceFor) : undefined);
       const started = this.store.insertGuardedRun(receipt, request.leaseId, request.expectedRootRevision, new Date().toISOString());
       if (!started) {
         throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.attemptLeaseCouldConsumedAtomically", {}), { leaseId: request.leaseId });
@@ -881,7 +932,7 @@ export class WorkflowService {
    */
   startMinimalWorkflow(rawRequest: unknown, caller: ObservedCallerV1 | null, continuity: MinimalStartContinuity): ApiResultV1<MinimalWorkflowStartV1> {
     return this.attempt(() => {
-      const request = minimalStartRequest(rawRequest);
+      const request = minimalStartRequest(rawRequest, this.knownSkillIds());
       if (request.rootId !== null && !continuity.ownsRoot(request.rootId)) {
         throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.startWorkflowRootNotOwned", { rootId: request.rootId }),
           { field: "rootId", reason: "ROOT_NOT_OWNED", rootId: request.rootId });
@@ -930,8 +981,9 @@ export class WorkflowService {
           outputTargets: continued?.outputTargets ?? request.writeTargets, priorFailure: continued?.priorFailure ?? null,
         }, true, caller));
         const receipt = unwrapResult(this.startGuardedWorkflow({
-          schemaVersion: CONTRACT_VERSION, leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan,
-        }, true, continuity.beforeCommit));
+          schemaVersion: CONTRACT_VERSION, leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan, skills: request.skills,
+          ...(request.classificationOperationId === null ? {} : { classificationOperationId: request.classificationOperationId }),
+        }, true, continuity.beforeCommit, continuity.adviceFor));
         return {
           schemaVersion: CONTRACT_VERSION,
           taskId: task.taskId,
@@ -1469,7 +1521,8 @@ export class WorkflowService {
     return this.attempt(() => clone(this.requireRun(runId)));
   }
 
-  finalizeWorkflow(runId: string, expectedRevision: number): ApiResultV1<WorkflowReceiptV1> {
+  /** `observedSkillCalls`: the skills the caller's session was seen calling; null when that record could not be read. */
+  finalizeWorkflow(runId: string, expectedRevision: number, observedSkillCalls?: () => ReadonlySet<string> | null): ApiResultV1<WorkflowReceiptV1> {
     return this.change(runId, expectedRevision, (receipt) => {
       if (receipt.state !== "running") {
         throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.runningWorkflowFinalized", {}), {
@@ -1518,6 +1571,12 @@ export class WorkflowService {
         });
       }
 
+      // Shown, never a gate: a host does not show every call to its hooks (a direct slash call, a skill outside AGS).
+      if (receipt.skillDeclaration && observedSkillCalls) {
+        const observed = observedSkillCalls();
+        receipt.skillDeclaration.callsNotObserved = observed === null ? null
+          : receipt.skillDeclaration.skills.map(skill => skill.skillId).filter(skillId => !observed.has(bareSkillId(skillId)));
+      }
       receipt.state = "passed";
       receipt.plan.state = "passed";
       receipt.plan.currentStageId = null;
@@ -2461,7 +2520,11 @@ export class WorkflowService {
     return snapshot;
   }
 
-  private newRunningReceipt(plan: WorkflowPlanV1): WorkflowReceiptV1 {
+  private knownSkillIds(): ReadonlySet<string> {
+    return new Set(this.registry.read().map(skill => skill.skillId));
+  }
+
+  private newRunningReceipt(plan: WorkflowPlanV1, skillDeclaration?: WorkflowSkillDeclarationV1): WorkflowReceiptV1 {
     const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
     plan.state = "running";
     this.setRunningStagePointers(plan);
@@ -2476,6 +2539,7 @@ export class WorkflowService {
       unresolved: [],
       error: null,
       unverifiedClaims: [],
+      ...(skillDeclaration ? { skillDeclaration } : {}),
     };
     this.assertReceipt(receipt);
     return receipt;

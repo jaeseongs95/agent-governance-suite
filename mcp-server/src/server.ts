@@ -47,6 +47,7 @@ import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from 
 import { ContractValidator } from "./schema-validator.js";
 import { z } from "zod";
 import { classificationInputSchema, selectionInputSchema, type SkillClassificationGateway } from "./skill-classification/gateway.js";
+import { resolveSkillUsageDatabasePath, skillsCalledInSession } from "./skill-usage-store.js";
 import { SessionMessageService } from "./session-message-service.js";
 import { type TrustService } from "./trust-service.js";
 
@@ -182,10 +183,14 @@ function buildInputSchemas(contracts: ContractDocuments, locale: SupportedLocale
     taskEnvelope: ["frame"],
     frame: ["taskEnvelope"],
   };
+  const guardedProperties = (contracts.guardedWorkflowStartRequest as unknown as { properties: { skills: object; classificationOperationId: object } }).properties;
+  const skillsInput = { ...guardedProperties.skills, description: toolText("tools.start_workflow.input.skills", locale) };
+  const classificationOperationIdInput = { ...guardedProperties.classificationOperationId, description: toolText("tools.start_workflow.input.classificationOperationId", locale) };
   const guardedWorkflowStart = toolSchema(contracts.guardedWorkflowStartRequest, {
-    add: { responseMode: responseModeProperty },
+    add: { responseMode: responseModeProperty, skills: skillsInput, classificationOperationId: classificationOperationIdInput },
     optional: ["plan"],
   });
+  guardedWorkflowStart.required = [...(guardedWorkflowStart.required ?? []), "skills"];
   const resolveConvergenceGate = toolSchema(contracts.resolveConvergenceGateRequest, {
     add: { responseMode: responseModeProperty },
   });
@@ -204,11 +209,13 @@ function buildInputSchemas(contracts: ContractDocuments, locale: SupportedLocale
   const minimalWorkflowStart: Record<string, unknown> = {
     type: "object",
     additionalProperties: false,
-    required: ["goal", "stages", "acceptanceCriteria", "writeTargets"],
+    required: ["goal", "stages", "skills", "acceptanceCriteria", "writeTargets"],
     properties: {
       goal: { type: "string", minLength: 1, maxLength: 2000 },
       stages: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
         description: toolText("tools.start_workflow.input.stages", locale) },
+      skills: skillsInput,
+      classificationOperationId: classificationOperationIdInput,
       acceptanceCriteria: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 } },
       workspace: { type: "string", minLength: 1, description: toolText("tools.start_workflow.input.workspace", locale) },
       writeTargets: { ...strings, description: toolText("tools.start_workflow.input.writeTargets", locale) },
@@ -974,6 +981,7 @@ export function createMcpServer(
     };
     let updateStatus: PluginUpdateStatusV1 | null = null;
     let result: ApiResultV1<unknown>;
+    const adviceFor = (operationId: string) => classification?.advice?.(operationId) ?? null;
 
     if (["get_skill_inventory", "classify_skills", "record_skill_selection"].includes(request.params.name)) {
       if (!classification) result = apiError("MCP_UNAVAILABLE", msg("server.classification.notConfigured", {}));
@@ -1088,7 +1096,7 @@ export function createMcpServer(
           break;
         case "start_guarded_workflow":
           result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true,
-            rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId, workflowOwner(caller))), workflowStatusSummary);
+            rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId, workflowOwner(caller)), adviceFor), workflowStatusSummary);
           break;
         case "get_convergence_status":
           result = withMode("detail", () => service.getConvergenceStatus(String(args.rootId ?? "")), convergenceStatusSummary);
@@ -1105,6 +1113,7 @@ export function createMcpServer(
               ownsRoot: rootId => continuity.ownsRoot(caller.sessionId, rootId),
               ownerPresence: rootAccess.ownerPresence,
               sessionWorkspace: () => observedSessionWorkspace(sessionBoardPath, caller),
+              adviceFor,
               locale,
             });
             // An AGS infrastructure failure must not leave the session's edits refused (design ags30-phase-check 7.6).
@@ -1129,7 +1138,10 @@ export function createMcpServer(
           result = withMode("detail", () => service.getWorkflowStatus(String(args.runId ?? "")), workflowStatusSummary);
           break;
         case "finalize_workflow":
-          result = withMode("responseMode", () => service.finalizeWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)), workflowStatusSummary);
+          result = withMode("responseMode", () => service.finalizeWorkflow(String(args.runId ?? ""), integer(args.expectedRevision), () => {
+            try { return new Set(skillsCalledInSession(resolveSkillUsageDatabasePath(), caller.sessionId)); }
+            catch (cause) { writeDiagnostic("server", "skill-usage-unreadable", { reason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" }); return null; }
+          }), workflowStatusSummary);
           break;
         case "abort_workflow":
           result = withMode("responseMode", () => service.abortWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)), workflowStatusSummary);

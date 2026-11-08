@@ -4,8 +4,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { executeAntigravityHookEvent } from "../../antigravity-connector/hooks/antigravity-hook-runner.mjs";
 import { resolveSkillUsageDatabasePath, skillUsageSummary } from "../../mcp-server/src/skill-usage-store.js";
+
+type AgyEvent = (raw: Record<string, unknown>, event: string, hook?: string, options?: Record<string, unknown>) => Promise<unknown>;
+const { executeAntigravityHookEvent } = await import(new URL("../../antigravity-connector/hooks/antigravity-hook-runner.mjs", import.meta.url).href) as { executeAntigravityHookEvent: AgyEvent };
 
 // agy's runner answers a tool's end before any other stage runs, so the adapter cases in skill-usage.test.ts cannot show
 // that a real read reaches the statistics. These drive the runner with agy's own hook input and the built bundle.

@@ -57,6 +57,7 @@ export interface MessageParams {
   "hooks.checkpointCue.status": { "state": string; };
   "hooks.environmentFailure.check": Record<string, never>;
   "hooks.editGate.criterionPlaceholder": Record<string, never>;
+  "hooks.editGate.skillReasonPlaceholder": Record<string, never>;
   "hooks.editGate.denied": { "limit": number; "paths": NestedMessage | number | string; "earlier": number; "example": NestedMessage | number | string; };
   "hooks.editGate.gatedRoot": { "path": NestedMessage | number | string; "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; };
   "hooks.editGate.goalPlaceholder": Record<string, never>;
@@ -268,6 +269,8 @@ export interface MessageParams {
   "workflow.service.stageWithoutExecutionRequirementStrict": { "stageId": NestedMessage | number | string; };
   "workflow.service.stagesReceiptPolicyRecordTheir": Record<string, never>;
   "workflow.service.stagesRecordedPlanOrder": Record<string, never>;
+  "workflow.service.skillsRequired": Record<string, never>;
+  "workflow.service.classificationOperationIdShape": Record<string, never>;
   "workflow.service.startWorkflowAcceptsGoalStages": Record<string, never>;
   "workflow.service.startWorkflowFixArtifactTargets": Record<string, never>;
   "workflow.service.startWorkflowPriorFailure": { "required": string; };
@@ -548,6 +551,8 @@ export interface MessageParams {
   "tools.recall_session_message.description": Record<string, never>;
   "tools.plan_workflow.inlineInput": Record<string, never>;
   "tools.start_workflow.input.stages": Record<string, never>;
+  "tools.start_workflow.input.skills": Record<string, never>;
+  "tools.start_workflow.input.classificationOperationId": Record<string, never>;
   "tools.start_workflow.input.workspace": Record<string, never>;
   "tools.start_workflow.input.writeTargets": Record<string, never>;
   "tools.start_workflow.input.rootId": Record<string, never>;

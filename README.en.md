@@ -31,7 +31,7 @@ Guidance being present does not mean the agent followed it or that the result wa
 You need Node.js **24.0.0 or later** and the host's plugin feature. Install AGS in every host that should collaborate. You do not need to clone this repository or run `pnpm install` to use the plugin.
 
 <!-- release-version:start -->
-The current public release is `v4.1.0`, and the examples below install it. From 4.0.0, JEV is configured only on the admin page (see the upgrade notes in the [4.0.0 release notes](docs/release-notes/release-notes-v4.1.0.md), Korean). 3.x is not compatible with 2.x. Changes for each version are in [GitHub Releases](https://github.com/jaeseongs95/agent-governance-suite/releases) and `docs/release-notes/release-notes-v<version>.md` (Korean).
+The current public release is `v5.0.0`, and the examples below install it. From 4.0.0, JEV is configured only on the admin page (see the upgrade notes in the [4.0.0 release notes](docs/release-notes/release-notes-v4.0.0.md), Korean). 3.x is not compatible with 2.x. Changes for each version are in [GitHub Releases](https://github.com/jaeseongs95/agent-governance-suite/releases) and `docs/release-notes/release-notes-v<version>.md` (Korean).
 <!-- release-version:end -->
 
 If AGS is already installed, follow [Updates and migration](docs/user/update.md).
@@ -61,7 +61,7 @@ Run in a terminal:
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v4.1.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v5.0.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -74,8 +74,8 @@ Start a new Codex session, then review and trust the AGS hooks in `/hooks`. Unti
 
 <!-- release-agy:start -->
 ```bash
-curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v4.1.0/agent-governance-suite-antigravity-v4.1.0.zip
-unzip agent-governance-suite-antigravity-v4.1.0.zip
+curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v5.0.0/agent-governance-suite-antigravity-v5.0.0.zip
+unzip agent-governance-suite-antigravity-v5.0.0.zip
 agy plugin install ./agent-governance-suite
 agy plugin list
 ```

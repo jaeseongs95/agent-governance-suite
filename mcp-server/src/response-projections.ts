@@ -26,6 +26,7 @@ export function convergenceRootHandle(root: ConvergenceRootV1): ConvergenceRootH
 }
 
 export function workflowStatusSummary(receipt: WorkflowReceiptV1): WorkflowStatusSummaryV1 {
+  const notObserved = receipt.skillDeclaration?.callsNotObserved;
   return {
     schemaVersion: CONTRACT_VERSION,
     runId: receipt.runId,
@@ -41,6 +42,7 @@ export function workflowStatusSummary(receipt: WorkflowReceiptV1): WorkflowStatu
     unverifiedClaimCount: receipt.unverifiedClaims.length,
     errorCode: receipt.error?.code ?? null,
     receiptDigest: convergenceDigest(receipt),
+    ...(notObserved === null || notObserved?.length ? { declaredSkillsNotObserved: notObserved } : {}),
   };
 }
 

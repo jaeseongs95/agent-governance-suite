@@ -59,6 +59,8 @@ function sourceFence(root: string, request: SkillClassificationRequestV1, observ
 export interface SkillClassificationGateway {
   /** Whether advice can be asked for now (a usable JEV or a configured vendor route); guidance says "configured" only then. Absent: not ready. */
   adviceReady?(): boolean;
+  /** The advice a finished classification gave, for comparing with what the AGENT chose. Null: none usable is held. */
+  advice?(operationId: string): {adviser: string | null; recommendedSkillIds: string[]} | null;
   inventory(): Promise<unknown>;
   classify(input: unknown, observation?: ExecutionContextV1 | null): Promise<unknown>;
   accept(input: unknown, observation: ExecutionContextV1 | null): Promise<unknown>;
@@ -86,6 +88,11 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
   }
   adviceReady(): boolean {
     try { return this.options.adviceReady?.() === true; } catch { return false; }
+  }
+  advice(operationId: string): {adviser: string | null; recommendedSkillIds: string[]} | null {
+    const result = this.operations.get(operationId)?.result;
+    if (!result || result.response.error !== null || !["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status)) return null;
+    return {adviser: result.attempts.at(-1)?.profileId ?? null, recommendedSkillIds: result.response.judgments.filter(row => row.judgment === "needed").map(row => row.skillId)};
   }
   private loadInventory(runtime: Pick<ClassificationRuntimeSnapshot, "externalSkillRoots" | "hostDiscoveryRef">): Promise<ObservedHostInventory> {
     return loadHostObservedInventory({root: this.options.root, ...(this.options.now ? {now: this.options.now} : {}),

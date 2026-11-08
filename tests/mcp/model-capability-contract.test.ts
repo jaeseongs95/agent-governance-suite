@@ -150,6 +150,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       expect(claimed.ok, JSON.stringify({ ordinal, result: claimed })).toBe(true);
       const started = service.startGuardedWorkflow({
         schemaVersion: "1.0.0", leaseId: claimed.data!.leaseId, expectedRootRevision: claimed.data!.rootRevision, plan,
+        skills: [{ skillId: "minimal-implementation", reason: "test" }],
       }, true);
       expect(started.ok, JSON.stringify({ ordinal, result: started })).toBe(true);
       const receipt = started.data!;
@@ -637,6 +638,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const lease = claimed.data!;
     const started = service.startGuardedWorkflow({
       schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan,
+      skills: [{ skillId: "minimal-implementation", reason: "test" }],
     }, true);
     expect(started.ok).toBe(true);
     const receipt = started.data!;
