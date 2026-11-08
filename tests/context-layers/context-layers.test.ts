@@ -371,6 +371,21 @@ describe("context layer injection at hook boundaries", () => {
     expect(hook(env, { hook_event_name: "UserPromptSubmit", prompt: "go on" })).toContain("[AGS global context was cleared]");
   });
 
+  it("gives the bound role's name before its role context has a body, again when the binding changes, and announces an unbinding (AGS3-D-0072)", () => {
+    const env = environment(directory());
+    const layers = serviceAt(env.AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH!);
+    bind(layers, "codex", session, "reviewer");
+    const start = hook(env, { hook_event_name: "SessionStart", source: "startup" });
+    expect(start).toContain("[AGS assigned role role=reviewer]");
+    expect(start).not.toContain("[AGS role context");
+    expect(hook(env, { hook_event_name: "UserPromptSubmit", prompt: "go on" })).not.toContain("[AGS assigned role");
+    bind(layers, "codex", session, "builder");
+    expect(hook(env, { hook_event_name: "UserPromptSubmit", prompt: "go on" })).toContain("[AGS assigned role role=builder · changed during this session]");
+    bind(layers, "codex", session, null);
+    expect(hook(env, { hook_event_name: "UserPromptSubmit", prompt: "go on" })).toContain("[AGS role binding removed · previous role=builder]");
+    expect(hook(env, { hook_event_name: "UserPromptSubmit", prompt: "go on" })).not.toContain("role binding removed");
+  });
+
   it("gives a subagent at its start the skill cue, the shared layers of its session's role and its session's situational context", () => {
     const env = environment(directory());
     hook(env, { hook_event_name: "SessionStart", source: "startup" });

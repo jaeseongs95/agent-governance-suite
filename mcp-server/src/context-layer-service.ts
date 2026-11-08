@@ -233,6 +233,22 @@ export class ContextLayerService {
     return { roleId: role.roleId, role: role.name, boundAt: binding.boundAt };
   }
 
+  /**
+   * The signed role of each listed session, keyed by `${host}\u0000${sessionId}` (AGS3-D-0073). Null when the signed
+   * record cannot be read or verified, so a caller never presents an unverified role as the user's assignment.
+   */
+  signedRoles(sessions: ReadonlyArray<{ host: string; sessionId: string }>): Map<string, string> | null {
+    return this.with(false, store => {
+      const state = this.fold(store);
+      const roles = new Map<string, string>();
+      for (const { host, sessionId } of sessions) {
+        const binding = this.bindingFor(store, state, host, sessionId);
+        if (binding) roles.set(`${host}\u0000${sessionId}`, binding.role);
+      }
+      return roles;
+    }, null);
+  }
+
   load(host: string, sessionId: string): SharedContextViewV1 {
     return this.with(false, store => {
       const state = this.fold(store);
@@ -334,9 +350,13 @@ export class ContextLayerService {
         const role = binding ? roleView(store.readRole(binding.roleId)) : null;
         roleName = binding?.role ?? null;
         roleToken = role?.stateToken ?? null;
-        if (binding && role && (full || before?.role !== binding.role || before?.roleToken !== role.stateToken)) {
-          if (role.body) lines.push(msg("hooks.contextLayers.role", { role: binding.role, stateToken: role.stateToken, changed: changed ? "yes" : "no", body: role.body }));
-          else if (changed) lines.push(msg("hooks.contextLayers.cleared", { layer: "role", role: binding.role }));
+        // The binding is the user's assignment and is given even while its role has no body yet (AGS3-D-0072).
+        if (binding && (full || before?.role !== binding.role || before?.roleToken !== roleToken)) {
+          if (role?.body) lines.push(msg("hooks.contextLayers.role", { role: binding.role, stateToken: role.stateToken, changed: changed ? "yes" : "no", body: role.body }));
+          else if (changed && before?.role === binding.role && before?.roleToken) lines.push(msg("hooks.contextLayers.cleared", { layer: "role", role: binding.role }));
+          else lines.push(msg("hooks.contextLayers.roleBound", { role: binding.role, changed: changed ? "yes" : "no" }));
+        } else if (!binding && changed && before?.role) {
+          lines.push(msg("hooks.contextLayers.roleUnbound", { role: before.role }));
         }
         store.touchSession(host, sessionId, now);
       } catch {

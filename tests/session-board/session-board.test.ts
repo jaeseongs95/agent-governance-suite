@@ -28,6 +28,7 @@ import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
+import type { ContextLayerService } from "../../mcp-server/src/context-layer-service.js";
 import { handleSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "../../mcp-server/src/session-message-protocol.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
@@ -291,7 +292,7 @@ describe("U7/U8 MCP board tools", () => {
     const response = await client.callTool({ name: tool, arguments: args, _meta: callerMeta(identity, agentKey) });
     return JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: unknown; error: { code: string; details: Record<string, unknown> | null } | null };
   };
-  async function connect(databasePath: string | null, store: SessionMessageStore | null) {
+  async function connect(databasePath: string | null, store: SessionMessageStore | null, contextLayers: ContextLayerService | null = null) {
     const validator = new ContractValidator();
     const updates = new InMemoryPluginUpdateStore();
     updates.putPluginUpdateState({
@@ -306,7 +307,7 @@ describe("U7/U8 MCP board tools", () => {
       return store.listCurrentPresence(T, identity);
     };
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, messages, undefined, undefined, metaIngress());
+    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, messages, undefined, undefined, metaIngress(), undefined, contextLayers);
     const client = new Client({ name: "session-board", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
@@ -343,9 +344,43 @@ describe("U7/U8 MCP board tools", () => {
       host: "claude-code", sessionId: "worker", current: false, presence: "online",
       startedAt: new Date(T - 2000).toISOString(), lastSeenAt: new Date(T - 2000).toISOString(),
       cwd: path.join(repo, "src"), repo: { root: repo, repoId: realpathSync(path.join(repo, ".git")), branch: "main" },
-      summary: "릴리스 준비", summaryAt: at(28), role: "릴리스 담당", summaryStale: true, lastPromptAt: at(29),
+      summary: "릴리스 준비", summaryAt: at(28), role: "릴리스 담당", roleSource: "self", summaryStale: true, lastPromptAt: at(29),
       wake: { state: "unsupported", reason: "no-idle-wake" },
     });
+  });
+
+  it("shows the role the user signed for a session over the one it wrote itself, and says which it is (AGS3-D-0073)", async () => {
+    const store = presenceStore();
+    born(store, "caller", T - 1000);
+    born(store, "worker", T - 2000);
+    born(store, "writer", T - 3000);
+    const databasePath = boardPath();
+    const board = open(databasePath);
+    setSummary(board, { host: "claude-code", sessionId: "worker", now: at(28) }, "릴리스 준비", "릴리스 담당");
+    setSummary(board, { host: "claude-code", sessionId: "writer", now: at(28) }, "문서 정리", "문서 담당");
+    board.close();
+    // The signed bindings as ContextLayerService.signedRoles returns them (that method is tested with real records in
+    // tests/context-layers): the caller and the worker are bound, the writer is not.
+    const asked: string[][] = [];
+    const signed = { signedRoles: (sessions: Array<{ host: string; sessionId: string }>) => {
+      asked.push(sessions.map(item => item.sessionId));
+      return new Map([["claude-code\u0000caller", "AGS 리드"], ["claude-code\u0000worker", "검수 담당"]]);
+    } } as unknown as ContextLayerService;
+    const { client, validator } = await connect(databasePath, store, signed);
+    const listed = await call(client, "list_session_status", { schemaVersion: "1.0.0" });
+    expect(validator.sessionBoardList(listed.data)).toBeTruthy();
+    const rows = (listed.data as { sessions: Array<Record<string, unknown>> }).sessions;
+    expect(rows.map(row => [row.sessionId, row.role, row.roleSource])).toEqual([
+      ["caller", "AGS 리드", "signed"], ["worker", "검수 담당", "signed"], ["writer", "문서 담당", "self"],
+    ]);
+    expect(asked).toEqual([["caller", "worker", "writer"]]);
+
+    // An unreadable signed record never hides the list: the self-written roles show, labelled as such.
+    const broken = { signedRoles: () => { throw new Error("ADMIN_RECORD_ALTERED"); } } as unknown as ContextLayerService;
+    const fallback = await call((await connect(databasePath, store, broken)).client, "list_session_status", { schemaVersion: "1.0.0" });
+    expect((fallback.data as { sessions: Array<Record<string, unknown>> }).sessions.map(row => [row.sessionId, row.role, row.roleSource])).toEqual([
+      ["caller", null, null], ["worker", "릴리스 담당", "self"], ["writer", "문서 담당", "self"],
+    ]);
   });
 
   it("reports missing liveness instead of guessing, and lists without summaries when only the board file is unreadable", async () => {

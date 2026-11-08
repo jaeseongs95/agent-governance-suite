@@ -484,6 +484,8 @@ export function mergeSessionBoard(
   databasePath: string,
   present: ReadonlyArray<Awaited<ReturnType<SessionMessageService["listCurrentPresence"]>>["sessions"][number]>,
   self: { host: string; sessionId: string } | null,
+  /** The user's signed bindings (ContextLayerService.signedRoles); null when unavailable, so only self-written roles show. */
+  signedRoles: ReadonlyMap<string, string> | null = null,
 ): { sessions: SessionBoardEntryV2[]; board: SessionBoardListV2["board"] } {
   const entries = new Map<string, BoardEntry | null>();
   const key = (item: { host: string; sessionId: string }) => `${item.host}\u0000${item.sessionId}`;
@@ -509,6 +511,9 @@ export function mergeSessionBoard(
   const sessions: SessionBoardEntryV2[] = present.map((item) => {
     const entry = entries.get(key(item)) ?? null;
     const cwd = entry?.cwd ?? item.workspaceId;
+    // The user's signed binding wins over what the session wrote itself (AGS3-D-0073).
+    const signedRole = signedRoles?.get(key(item)) ?? null;
+    const role = signedRole ?? entry?.role ?? null;
     return {
       host: item.host,
       sessionId: item.sessionId,
@@ -520,7 +525,8 @@ export function mergeSessionBoard(
       repo: locateRepository(cwd),
       summary: entry?.summary ?? null,
       summaryAt: entry?.summaryAt ?? null,
-      role: entry?.role ?? null,
+      role,
+      roleSource: signedRole !== null ? "signed" : role !== null ? "self" : null,
       summaryStale: entry?.summaryStale ?? null,
       lastPromptAt: entry?.lastPromptAt ?? null,
       wake: item.autoWake ? { state: item.autoWake.state, reason: item.autoWake.reason } : null,
@@ -536,6 +542,7 @@ async function sessionBoardResult(
   validator: ContractValidator,
   sessionMessages: SessionMessageService,
   caller: VerifiedCaller,
+  contextLayers: ContextLayerService | null = null,
 ): Promise<ApiResultV1<unknown>> {
   let summary: string | null = null;
   // Omitted keeps the role already written; the schema admits only a role the board can store.
@@ -582,7 +589,14 @@ async function sessionBoardResult(
     return apiError("MCP_UNAVAILABLE", msg("server.sessionBoard.livenessUnavailable", {}),
       { step: "presence", cause: failureContext(error) });
   }
-  const { sessions, board: boardStatus } = mergeSessionBoard(databasePath, presence.sessions, self);
+  let signedRoles: Map<string, string> | null = null;
+  try {
+    signedRoles = contextLayers?.signedRoles(presence.sessions) ?? null;
+  } catch (error) {
+    // An unreadable signed record leaves the self-written roles, labelled as such; the list itself still answers.
+    writeDiagnostic("session-board", "signed-roles-unreadable", { cause: failureContext(error) });
+  }
+  const { sessions, board: boardStatus } = mergeSessionBoard(databasePath, presence.sessions, self, signedRoles);
   const result: SessionBoardListV2 = { sessions, truncated: presence.truncated, board: boardStatus };
   return apiOk(result);
 }
@@ -1145,7 +1159,7 @@ export function createMcpServer(
           break;
         case "update_session_status":
         case "list_session_status":
-          result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages, caller);
+          result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages, caller, contextLayers);
           break;
         case "prepare_session_message":
           try {

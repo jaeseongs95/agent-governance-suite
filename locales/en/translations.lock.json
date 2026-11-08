@@ -9,6 +9,8 @@
   "hooks.contextLayers.global": "421ffbfd70342bd09a6820cd13be4492978809cfbde89c3f2ead40c961ac46c1",
   "hooks.contextLayers.parentSituation": "4c1d682883bac3f0f8e1e3abd97a8773e8f14371e873d97a0bd5d7c92f063089",
   "hooks.contextLayers.role": "f30974b022382625bda822f3a765cac62d757b6e43ad9c706546b128d43abe9d",
+  "hooks.contextLayers.roleBound": "0bc1ed861df73360c48b1adc9ca3cc70e005d0234cfb2f8b39b25536324ca007",
+  "hooks.contextLayers.roleUnbound": "bbe59e0585e23675e3542653f7eb115975566cf57faa0cbe12ef7c0eebf4c620",
   "hooks.contextLayers.unreadable": "f8d078c3602cba61229d25288fe612596d998c3c3cfa6ec0001f6b6ccde3f363",
   "hooks.contextLayers.verifyFailed": "d01e950a6a60aa9cbcc34ab7d9e04b76b52489437d52a2cc332e626d10360a78",
   "hooks.editGate.criterionPlaceholder": "808164d140111d8fb7d6002a20a7c0d471b98eaedf13dfe491d497cb15e8349c",
