@@ -29,7 +29,8 @@ const approvedHistory = checkSkillContextOptimization();
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
 const liveBeforeApprovedChanges = relative => {
   const retirement = approvedHistory.retiredSkills.find(entry => Object.hasOwn(entry.hashes, relative));
-  if (!retirement) return beforeMinimalImplementationSuccessor(relative, current(relative));
+  // A guidance successor after 4.0.0 (AGS3-D-0094 on code-review) reads as its 4.0.0 predecessor first, as the checker does.
+  if (!retirement) return beforeMinimalImplementationSuccessor(relative, beforeGuidanceSuccessor(relative, current(relative)));
   expect(existsSync(path.join(root, relative)), relative).toBe(false);
   const before = execFileSync("git", ["show", `${retirement.revision}:${relative}`], { cwd: root });
   expect(hash(before), relative).toBe(retirement.hashes[relative]);

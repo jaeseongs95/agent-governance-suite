@@ -32,7 +32,12 @@ const file = "tests/skill-classification/fixtures.v400-minimal-implementation-so
 const bytes = readFileSync(path.join(root, file)), manifest = JSON.parse(bytes.toString("utf8"));
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const atBase = (relative: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${relative}`], {cwd: root, maxBuffer: 4 * 1024 * 1024});
-const liveOrNull = (relative: string) => existsSync(path.join(root, relative)) ? readFileSync(path.join(root, relative)) : null;
+const v410 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v410-code-review-source-successor.json"), "utf8"));
+const rebound = (relative: string) => (v410.bindings as Binding[]).find(row => row.path === relative);
+/** r41 moves code-review on (AGS3-D-0094); this file keeps judging r40 against the bytes r41 started from. */
+const r40Source = (relative: string) => rebound(relative)
+  ? execFileSync("git", ["show", `${v410.sourceBaseRevision}:${relative}`], {cwd: root, maxBuffer: 4 * 1024 * 1024}) : readFileSync(path.join(root, relative));
+const liveOrNull = (relative: string) => existsSync(path.join(root, relative)) ? r40Source(relative) : null;
 type Binding = {path: string; previousDigest: string; digest: string | null; bytes: number};
 type Span = {path: string; startLine: number; endLine: number; startByte?: number; endByte?: number; digest: string};
 function selected(source: Buffer, span: Span): Buffer {
@@ -60,7 +65,6 @@ const d0083 = "모의·고정값·자리 채움·조용한 대체 경로·삼킨
 it("MI1-MI2 binds every changed 4.0.0 evaluation source after frozen r39 and ends the chain at the current bytes", () => {
   expect(hash(bytes)).toBe(V400_MINIMAL_IMPLEMENTATION_MANIFEST_DIGEST);
   expect(bytes.includes(Buffer.from("\r\n"))).toBe(false);
-  expect(CURRENT_SOURCE_MANIFEST).toEqual({revision: manifest.revision, digest: hash(bytes)});
   expect(manifest).toMatchObject({schemaVersion: "1.0.0", revision: "v400-minimal-implementation-source-binding-r40",
     role: "source-binding-only-not-evaluation-or-install-authority", sourceBaseRevision: "24c241d28e130912a0606090727b2b964c811757",
     fixtureFileRewritten: false, labelChanges: [], priceAndBudgetChanges: [], modelBehavior: "NOT_RUN"});
@@ -80,8 +84,8 @@ it("MI1-MI2 binds every changed 4.0.0 evaluation source after frozen r39 and end
     userDecision: {date: "2026-11-08", quote: "intake 뿐만이겠냐?", choice: "겹침 제거 + 턴·도구 큐까지"}});
 
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: manifest.revision}, digest: hash(bytes)});
-  expect(current.files.map(source => path.relative(root, source).split(path.sep).join("/")).at(-1)).toBe(file);
+  expect(current).toMatchObject({manifest: {revision: CURRENT_SOURCE_MANIFEST.revision}, digest: CURRENT_SOURCE_MANIFEST.digest});
+  expect(current.files.map(source => path.relative(root, source).split(path.sep).join("/")).at(-2)).toBe(file);
   // The chain end before r40, folded from every earlier successor the loader reads. The frozen fixture and the frozen
   // sidecars (fixtures.source-successor.json; field-neutral-wording, the integrated successor's sidecar) are not in its chain.
   const unavailable = JSON.parse(readFileSync(current.files[0]!, "utf8"));
@@ -90,7 +94,7 @@ it("MI1-MI2 binds every changed 4.0.0 evaluation source after frozen r39 and end
     return sidecar ? [sidecar.path] : [];
   });
   expect(sidecars).toEqual(["tests/skill-classification/fixtures.source-successor.json", "tests/skill-classification/fixtures.field-neutral-wording-source-successor.json"]);
-  const notChain = new Set([unavailable.frozenFixture.path, ...sidecars, file].map(relative => path.resolve(root, relative)));
+  const notChain = new Set([unavailable.frozenFixture.path, ...sidecars, file, "tests/skill-classification/fixtures.v410-code-review-source-successor.json"].map(relative => path.resolve(root, relative)));
   const beforeR40 = new Map<string, string | null>();
   for (const source of current.files.filter(item => !notChain.has(path.resolve(item)))) {
     for (const row of JSON.parse(readFileSync(source, "utf8")).bindings as Binding[]) {
@@ -111,10 +115,10 @@ it("MI1-MI2 binds every changed 4.0.0 evaluation source after frozen r39 and end
       expect(actual).not.toBeNull();
       expect([actual!.length, hash(actual!)]).toEqual([binding.bytes, binding.digest]);
       expect(actual!.includes(Buffer.from("\r\n"))).toBe(false);
-      expect(() => current.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+      if (!rebound(binding.path)) expect(() => current.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     }
     expect(binding.digest).not.toBe(binding.previousDigest);
-    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(rebound(binding.path)?.digest ?? binding.digest);
     expect(() => current.resolveDigest(binding.path, `sha256:${"0".repeat(64)}`)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
   // Completeness: outside the approved purpose changes, a chain-bound or corpus source differs from the chain end
@@ -144,7 +148,7 @@ function descriptionLines(text: string): [number, number] {
 
 it("MI3 changes only the reviewed text and points every rebound span at the same rule in the live inventory", async () => {
   const before = (relative: string) => atBase(relative).toString("utf8");
-  const live = (relative: string) => readFileSync(path.join(root, relative), "utf8");
+  const live = (relative: string) => r40Source(relative).toString("utf8");
   const handOff = new Set(["code-review", "cs-engineering", "test-engineering"]);
   const skillIds = ["orchestrator", "code-review", "cs-engineering", "test-engineering", ...optimizedSkills, "coordinate-subagents", "model-effort-advisor"];
   // Each SKILL.md changes only its description, now one quoted English line, and for the three specialists the hand-off name.
@@ -217,10 +221,10 @@ it("MI3 changes only the reviewed text and points every rebound span at the same
       expect(after[group]).toHaveLength(prior[group].length);
       for (const [index, span] of (after[group] as Span[]).entries()) {
         const old = prior[group][index] as Span, at = `${skillId}:${group}[${index}]`;
-        expect(span.digest).toBe(hash(readFileSync(path.join(root, span.path))));
-        const actual = selected(readFileSync(path.join(root, span.path)), span), previous = selected(atBase(old.path), old);
+        expect(span.digest).toBe(hash(r40Source(span.path)));
+        const actual = selected(r40Source(span.path), span), previous = selected(atBase(old.path), old);
         const text = actual.toString("utf8");
-        expect(skill[group]).toContain(text.trim());
+        if (!rebound(span.path)) expect(skill[group]).toContain(text.trim());
         expect(text).not.toContain("ponytail");
         if (old.path === intake) {
           const [file, startLine, endLine, head, tail] = intakeSpans.get(`${group}[${index}]`)!;

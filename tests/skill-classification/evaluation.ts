@@ -219,10 +219,12 @@ export function oracleDigest(value: { oracleRevision: string; sourceSpecDigest: 
 export const V390_INTAKE_MANIFEST_DIGEST = "sha256:9a322f2aa89b6e61754a9c129171beb98fdc427e4e2ca8872c5ae1043165736f";
 /** Digest of the frozen 4.0.0 intake source-binding manifest, fixtures.v400-intake-source-successor.json. */
 export const V400_INTAKE_MANIFEST_DIGEST = "sha256:02ffdfefc1bca2a0e6116086025f0e40cf051e6d7652acf0b3acf251586c803b";
-/** Digest of the current (last) source-binding manifest, fixtures.v400-minimal-implementation-source-successor.json. */
+/** Digest of the frozen 4.0.0 source-binding manifest, fixtures.v400-minimal-implementation-source-successor.json. */
 export const V400_MINIMAL_IMPLEMENTATION_MANIFEST_DIGEST = "sha256:4de33dbcc7da9927e1704c0c1cac206393df8d78cdda5d351b60fd58318c360e";
+/** Digest of the current (last) source-binding manifest, fixtures.v410-code-review-source-successor.json. */
+export const V410_CODE_REVIEW_MANIFEST_DIGEST = "sha256:2cdb50b39fa6067c8f97da026d5c3ff825c95ef0211b1ae20dfca662cbcef90c";
 /** The chain end every successor test checks; the next successor changes only this. */
-export const CURRENT_SOURCE_MANIFEST = Object.freeze({revision: "v400-minimal-implementation-source-binding-r40", digest: V400_MINIMAL_IMPLEMENTATION_MANIFEST_DIGEST});
+export const CURRENT_SOURCE_MANIFEST = Object.freeze({revision: "v410-code-review-source-binding-r41", digest: V410_CODE_REVIEW_MANIFEST_DIGEST});
 
 /** 동결 fixture는 덮지 않는다. 검토된 후속 manifest만 현재 원문 결속을 바꾼다. */
 export function loadCurrentSourceBindings(repo: string) {
@@ -472,17 +474,25 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, v400Minimal.frozenPredecessor.path) !== v400IntakePath || v400IntakeBytes.length !== v400Minimal.frozenPredecessor.bytes || hashBytes(v400IntakeBytes) !== v400Minimal.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings, ...intakeLength.bindings, ...writtenCases.bindings, ...delivery.bindings, ...d38References.bindings, ...v390Intake.bindings, ...v400Intake.bindings, ...v400Minimal.bindings];
+  // 4.1.0: code-review also takes defect searches in existing code (AGS3-D-0094).
+  const v410CodeReviewPath = resolve(repo, "tests/skill-classification/fixtures.v410-code-review-source-successor.json");
+  const v410CodeReviewBytes = readFileSync(v410CodeReviewPath);
+  if (hashBytes(v410CodeReviewBytes) !== V410_CODE_REVIEW_MANIFEST_DIGEST) throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const v410CodeReview = JSON.parse(v410CodeReviewBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, v410CodeReview.frozenPredecessor.path) !== v400MinimalPath || v400MinimalBytes.length !== v410CodeReview.frozenPredecessor.bytes || hashBytes(v400MinimalBytes) !== v410CodeReview.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings,...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings, ...intakeLength.bindings, ...writtenCases.bindings, ...delivery.bindings, ...d38References.bindings, ...v390Intake.bindings, ...v400Intake.bindings, ...v400Minimal.bindings, ...v410CodeReview.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: v400Minimal.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath, intakeLengthPath, writtenCasesPath, deliveryPath, d38ReferencesPath, v390IntakePath, v400IntakePath, v400MinimalPath);
+  const currentManifest = {...manifest, revision: v410CodeReview.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath, intakeLengthPath, writtenCasesPath, deliveryPath, d38ReferencesPath, v390IntakePath, v400IntakePath, v400MinimalPath, v410CodeReviewPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(v400MinimalBytes),
+    manifest: currentManifest, files, digest: hashBytes(v410CodeReviewBytes),
     /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
     resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);

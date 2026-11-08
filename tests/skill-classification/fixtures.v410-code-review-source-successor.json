@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "v410-code-review-source-binding-r41",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "41447eeeb05f56d85d7f0fdab12a3d455bd269db",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.v400-minimal-implementation-source-successor.json",
+    "bytes": 18324,
+    "digest": "sha256:4de33dbcc7da9927e1704c0c1cac206393df8d78cdda5d351b60fd58318c360e"
+  },
+  "sourceChangeRefs": [
+    {
+      "defectIds": [
+        "AGS3-D-0094"
+      ],
+      "sourceRevision": "eaee30c20b3018a3b68c7fee21a299b02bc01d8e",
+      "userDecision": {
+        "date": "2026-11-08",
+        "quote": "GEMINI 행동 결함이야. 결함장부에 등록하고 이것도 4.1.0에 결함 수정판 넣어줘."
+      },
+      "observation": "code-review의 설명과 적용 대상이 고정 변경분(diff, patch, PR)으로만 적혀 있어, 변경분이 없는 결함 조사 요청에 맞지 않는 것으로 읽혔다. 고정한 시점의 기존 코드에서 결함을 찾는 검토(지정 파일·전수조사)를 대상에 넣었다. 원 평가 fixture·예산·라벨은 바꾸지 않는다."
+    }
+  ],
+  "fixtureFileRewritten": false,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN",
+  "bindings": [
+    {
+      "path": "skills/code-review/classification.json",
+      "previousDigest": "sha256:d90558325d4821c991f5ae56c501b2c345adb22930c40a881dcf7ac705a98a3b",
+      "digest": "sha256:4a9ad106eedd62786739deb91870db53549ca5214ea84df1777dbf5501319f00",
+      "bytes": 1965
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "previousDigest": "sha256:e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b",
+      "digest": "sha256:9e85c15900494e4b3c4d81d4f8ee7966b601bfc247efff7011540d7137e0b58e",
+      "bytes": 4242
+    }
+  ]
+}
