@@ -182,7 +182,9 @@ it("MI3 changes only the reviewed text and points every rebound span at the same
   expect(description("mutation-risk-preflight")).toContain("Judge heaviness by scale, reversibility, real data, shared resources and public-state impact");
   expect(description("change-scope-guardian")).toContain("Call only when work overlaps other work or before a default-branch merge or publication.");
   expect(live(contract).split("\n")[2]).toMatch(/^이 절의 분류 호출은 기존 승인된 설치 설정과 호스트 호출 경로에서 지원이 확인된 경우에 적용한다\. /u);
-  expect(live(intake)).toContain("모의·고정값·자리 채움·조용한 대체 경로·삼킨 오류가 낸 통과는 근거가 아니며 남은 대체물은 위치와 함께 미검증으로 적는다.");
+  // The whole D-0083 sentence, held as its two clauses: a common intake sentence lives only in intake.md (claude-plugin test).
+  expect(live(intake)).toContain(["모의·고정값·자리 채움·조용한 대체 경로·삼킨 오류가 낸 통과는 근거가 아니며",
+    "남은 대체물은 위치와 함께 미검증으로 적는다."].join(" "));
   expect(live(intake)).not.toContain("ponytail");
   // Intake spans (24c241d2 index) -> the reviewed sentence they select now: [path, lines, first words, last words].
   const intakeSpans = new Map<string, [string, number, number, string, string]>([
