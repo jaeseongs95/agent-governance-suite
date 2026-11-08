@@ -16,9 +16,8 @@ import { childCaller, rootCaller } from "../helpers/caller.js";
 // call. The main agent is asked to match skills again at every user message ([AGS turn check]); a subagent has no user
 // message, so it got the skill targets once at its start and never again, and the parent's saved state (situational
 // context) never reached an agy subagent, whose hooks learn their root only after its first AGS call.
-// Fix under test: every actor gets the same short step check at the step boundary between model calls of a turn
-// (the adapter names it: Claude Code and Codex PostToolUse, agy PostInvocation), and an actor other than the session's
-// own gets the session's situational context at the first step after it changed.
+// Fix under test (D-0065, kept): an actor other than the session's own gets the session's situational context at the
+// first step after it changed (the adapter names the step: Claude Code and Codex PostToolUse, agy PostInvocation).
 const repository = fileURLToPath(new URL("../../", import.meta.url));
 const STEP_KO = "[AGS 단계 확인]";
 const STEP_EN = "[AGS step check]";
@@ -80,48 +79,33 @@ const codexStep = (agent?: string, call = "call-1") => ({ hook_event_name: "Post
   tool_input: { command: "ls" }, tool_response: "", tool_use_id: call, ...(agent ? { agent_id: agent, agent_type: "worker" } : {}) });
 const agyStep = (conversation: string) => ({ hook_event_name: "PostInvocation", session_id: conversation });
 
-describe("AGS3-D-0065 the step check reaches every actor at the step boundary", () => {
+// AGS3-D-0077 (2026-11-08): the step check was added after every tool call of every actor, so the same line piled up in
+// the context and the transcript (agy shows it as a persistent system message). The skill check belongs where the work
+// changes: the user's message ([AGS turn check]), an actor's start, and a workflow change (the server's
+// server.workflowChange.skills in the AGS tool response). An ordinary step adds no check.
+describe("AGS3-D-0077 an ordinary step adds no skill check", () => {
   it.each([
     ["claude-code", claudeStep(), claudeStep("agent-d0065")],
     ["codex", codexStep(), codexStep("agent-d0065")],
-  ] as const)("%s: the session's own actor and a subagent get the same step check after an ordinary tool", (host, own, child) => {
-    const ownStep = hook(host, own);
-    const childStep = hook(host, child);
-    for (const step of [ownStep, childStep]) {
-      expect(step.event).toBe("PostToolUse");
-      expect(occurrences(step.text, STEP_KO)).toBe(1);
-      // Short: the targets list stays in the start cue and is not repeated at each step.
-      expect(step.text).not.toContain("- ponytail:");
-      expect(step.text).not.toContain("[AGS 서브에이전트 시작 확인]");
+  ] as const)("%s: neither the session's own actor nor a subagent gets the step check after an ordinary tool", (host, own, child) => {
+    for (const step of [hook(host, own), hook(host, child), hook(host, child, { ...environment, AGENT_GOVERNANCE_LOCALE: "en" })]) {
+      expect(step.text).not.toContain(STEP_KO);
+      expect(step.text).not.toContain(STEP_EN);
     }
-    expect(childStep.text).toBe(ownStep.text);
-    // The same boundary repeats on the next tool: it is not a one-time start cue.
-    expect(occurrences(hook(host, host === "codex" ? codexStep("agent-d0065", "call-2") : claudeStep("agent-d0065", "call-2")).text, STEP_KO)).toBe(1);
-    expect(occurrences(hook(host, child, { ...environment, AGENT_GOVERNANCE_LOCALE: "en" }).text, STEP_EN)).toBe(1);
   });
 
-  it("antigravity: the step after each model call gives the root conversation and a subagent the same step check", () => {
-    const own = hook("antigravity", agyStep(S));
-    expect(own.event).toBe("PostInvocation");
-    expect(occurrences(own.text, STEP_KO)).toBe(1);
-    // Before its first AGS call a subagent's hooks name only its own conversation; it still gets the check.
-    expect(occurrences(hook("antigravity", agyStep("agy-child-d0065")).text, STEP_KO)).toBe(1);
+  it("antigravity: the step after a model call gives neither the root conversation nor a subagent the step check", () => {
+    expect(hook("antigravity", agyStep(S)).text).not.toContain(STEP_KO);
+    expect(hook("antigravity", agyStep("agy-child-d0065")).text).not.toContain(STEP_KO);
     agyFirstAgsCall("agy-child-d0065");
-    const child = hook("antigravity", agyStep("agy-child-d0065"));
-    expect(occurrences(child.text, STEP_KO)).toBe(1);
-    expect(occurrences(hook("antigravity", agyStep("agy-child-d0065")).text, STEP_KO)).toBe(1);
+    expect(hook("antigravity", agyStep("agy-child-d0065")).text).not.toContain(STEP_KO);
   });
 
-  it("does not add a second skill check where the boundary already carries the turn check (AGS progress tool)", () => {
+  it("keeps the turn check an AGS progress tool already carries", () => {
     checkpoint("PROGRESS-D0065");
     const progress = hook("codex", { ...codexStep(), tool_name: "mcp__agent_governance_suite__record_stage_result", tool_input: {} });
     expect(occurrences(progress.text, "[AGS 턴 확인]")).toBe(1);
     expect(progress.text).not.toContain(STEP_KO);
-  });
-
-  it("does not pass a tool's file edit or session start as a step", () => {
-    expect(hook("claude-code", { hook_event_name: "PreToolUse", session_id: S, tool_name: "Read", tool_input: {}, tool_use_id: "c" }).text).not.toContain(STEP_KO);
-    expect(hook("antigravity", { hook_event_name: "PostToolUse", session_id: S, tool_name: "Read", tool_input: {} }).text).not.toContain(STEP_KO);
   });
 });
 
@@ -176,11 +160,8 @@ describe("AGS3-D-0065 hook registration", () => {
     }
   });
 
-  it("measures the context one step adds", () => {
-    const ko = hook("codex", codexStep()).text;
-    const en = hook("codex", codexStep(), { ...environment, AGENT_GOVERNANCE_LOCALE: "en" }).text;
-    console.log(`D0065_STEP_BYTES ${JSON.stringify({ ko: Buffer.byteLength(ko), en: Buffer.byteLength(en) })}`);
-    expect(Buffer.byteLength(ko)).toBeLessThanOrEqual(300);
-    expect(Buffer.byteLength(en)).toBeLessThanOrEqual(300);
+  it("adds nothing at an ordinary step when no context changed", () => {
+    expect(hook("codex", codexStep()).text).toBe("");
+    expect(hook("codex", codexStep(), { ...environment, AGENT_GOVERNANCE_LOCALE: "en" }).text).toBe("");
   });
 });

@@ -70,7 +70,6 @@ export interface MessageParams {
   "hooks.phaseCheck.unavailable": { "codes": NestedMessage | number | string; };
   "hooks.phaseCheck.waiting": Record<string, never>;
   "hooks.skillTrigger.invocation": Record<string, never>;
-  "hooks.stepCheck.skills": Record<string, never>;
   "hooks.subagentCue.scope": Record<string, never>;
   "hooks.subagentCue.skills": { "targets": NestedMessage | number | string; };
   "hooks.contextLayers.global": { "stateToken": NestedMessage | number | string; "changed": string; "body": NestedMessage | number | string; };

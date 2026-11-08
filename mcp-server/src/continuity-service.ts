@@ -158,14 +158,6 @@ export function subagentStartCue(): HookText {
   ];
 }
 
-/**
- * Every actor's check at a step boundary inside its work (AGS3-D-0065): one line, since it lands on every step of every
- * host. The skill targets themselves stay in the context-start text and are not repeated here.
- */
-export function stepCheck(): HookText {
-  return [msg("hooks.stepCheck.skills", {})];
-}
-
 export interface WorkflowContinuityCardV1 {
   schemaVersion: "1.0.0";
   source: "workflow";

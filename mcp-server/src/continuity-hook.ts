@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { types } from "node:util";
 
-import { ContinuityService, minimalWorkflowStartExample, renderHookText, stepCheck, subagentStartCue, workflowFailureCode } from "./continuity-service.js";
+import { ContinuityService, minimalWorkflowStartExample, renderHookText, subagentStartCue, workflowFailureCode } from "./continuity-service.js";
 import { editExemptPaths } from "./admin-settings.js";
 import { ContextLayerService } from "./context-layer-service.js";
 import { ContextLayerStore } from "./context-layer-store.js";
@@ -384,17 +384,6 @@ function subagentSituation(input: NormalizedContinuityInput, host: string, envir
   }
 }
 
-/**
- * Every actor's step check at the step boundary the adapter marks (AGS3-D-0065): a subagent has no user message, so this
- * is where it matches skills again during its work, as the session's own actor does. A boundary whose output already
- * carries the turn check (the cue after an AGS progress tool) gets no second one.
- */
-function stepCheckText(input: NormalizedContinuityInput, host: string, handled: Record<string, unknown>, locale: SupportedLocale): string | null {
-  if (input.observation.step !== true || !boundaryActor(input, host)) return null;
-  const specific = handled.hookSpecificOutput as { additionalContext?: unknown } | undefined;
-  return specific?.additionalContext ? null : renderHookText(stepCheck(), locale);
-}
-
 /** Bounded diagnostics only: stable reason codes and error metadata, never session IDs, inputs, SQL or paths. */
 function reportContinuityFailure(phase: ContinuityHookPhase, cause: unknown): void {
   try {
@@ -472,8 +461,8 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
     const locale = resolveHostLocale({ environment }).locale;
     const handled = handleNormalizedContinuityHook(normalized, new ContinuityService(continuity, null, workflow, undefined, workflowFailure), host, environment,
       locale);
-    const added = [contextLayerText(normalized, host, environment, locale), situationText(normalized, host, continuity, locale),
-      stepCheckText(normalized, host, handled, locale)].filter((text): text is string => Boolean(text)).join("\n\n");
+    const added = [contextLayerText(normalized, host, environment, locale), situationText(normalized, host, continuity, locale)]
+      .filter((text): text is string => Boolean(text)).join("\n\n");
     const output = withAddedContext(handled, normalized.outputEventName, added || null);
     result = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
