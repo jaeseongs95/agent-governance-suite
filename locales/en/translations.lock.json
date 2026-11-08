@@ -22,6 +22,7 @@
   "hooks.editGate.outsideScope": "35c50b4db479bace0b0f795d65b086ff10986aaa3a6ee68f0e97bb969e07cbb0",
   "hooks.editGate.unknownPath": "6980ff741df84e2f9c098ef3d00e43a853378d2b75e8700550cc822b5738e01f",
   "hooks.editGate.writeTargetPlaceholder": "84400df7dc9d7c2b3e917c4548434ed71a5437340ca6b46a80357a34396dc3aa",
+  "hooks.environmentFailure.check": "6e95812a6bfe24f1a56db3e654e9c88d4b0cebf7e3f4ef11b9170115d8db8df2",
   "hooks.phaseCheck.continue": "5a36cca6e77df318a2ed1887192332dda8cf53c2e6924435b11479eecdf34e82",
   "hooks.phaseCheck.goal": "680f020f05fc087994ab8e357c8279bfa3e656747b696e1bf6edab2bca587964",
   "hooks.phaseCheck.pending": "e4b0736aa7204674f7bb6509e89eadd0863f29c1d10227e9bacc01f722c36e7d",

@@ -845,7 +845,9 @@ export function createMcpServer(
         name: "checkpoint_role_context",
         description: description("tools.checkpoint_role_context.description"),
         inputSchema: CONTEXT_LAYER_INPUT_SCHEMAS.checkpoint_role_context,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
+        // A host approval policy reads this hint: Codex on-request stopped every role save for a prompt (AGS3-D-0088 cues
+        // these saves). Like checkpoint_context it replaces a body under a state token; a stale token is refused.
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "suppress_context_restore",

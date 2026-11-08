@@ -1,4 +1,5 @@
 import { isHookEntry } from "./hook-entry.js";
+import { environmentFailureKey } from "./environment-failure.js";
 import { actorAccess, isObservedSubagent, type InputObservation } from "./input-observation.js";
 import { WorkflowContractError } from "../../contracts/types.js";
 import "./builtin-hook-host-adapters.js";
@@ -213,6 +214,13 @@ function isEditBoundary(observation: InputObservation): boolean {
   return observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && observation.editTargets !== undefined;
 }
 
+/** The step after a tool whose result shows the run's environment lacked something; every actor runs tools. */
+function environmentFailureOutput(input: NormalizedContinuityInput, service: ContinuityService, locale: SupportedLocale): Record<string, unknown> {
+  const { observation, outputEventName } = input;
+  const failureKey = observation.toolResult ? environmentFailureKey(observation.toolResult) : null;
+  return failureKey ? sessionOutput(outputEventName, renderHookText(service.environmentFailureCueForSession(observation.sessionId, failureKey), locale)) : {};
+}
+
 function handleNormalizedContinuityHook(input: NormalizedContinuityInput, service: ContinuityService, host: string,
   environment: NodeJS.ProcessEnv, locale: SupportedLocale): Record<string, unknown> {
   const { observation, action, outputEventName, readLineage, readForkOrigin, readForkHostParent } = input;
@@ -229,7 +237,8 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
     const actor = hostActorId(host, sessionId, observation.agentKey ?? "unidentified-child");
     if (isEditBoundary(observation)) return gateEdit(observation, service, host, environment, locale, actor);
     return isTurnEnd(input) ? stopOutput(host, outputEventName,
-      renderHookText(service.phaseCheckForSession(sessionId, observation.stopHookActive === true, actor), locale)) : {};
+      renderHookText(service.phaseCheckForSession(sessionId, observation.stopHookActive === true, actor), locale))
+      : environmentFailureOutput(input, service, locale);
   }
   if (!actorAccess(observation.actor).allowed) return {};
   switch (action?.kind) {
@@ -256,7 +265,7 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
     return sessionOutput(outputEventName, renderHookText([...(restored ?? []), ...(cue ?? [])], locale));
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "after") {
-    if (!localToolName(host, observation.toolName ?? "", PROGRESS_TOOLS)) return {};
+    if (!localToolName(host, observation.toolName ?? "", PROGRESS_TOOLS)) return environmentFailureOutput(input, service, locale);
     return sessionOutput(outputEventName, renderHookText(
       service.checkpointCueAfterProgressForSession(sessionId, observation.callId ?? null), locale));
   }
@@ -273,6 +282,7 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
     // AGS tools pin and bind on the server from the verified caller; the hook only did the host-process read above.
     return {};
   }
+  if (observation.kind === "turn-step") return environmentFailureOutput(input, service, locale);
   // A turn the host already continued through its Stop hook is checked without a second continuation.
   if (isTurnEnd(input)) {
     return stopOutput(host, outputEventName, renderHookText(service.phaseCheckForSession(sessionId, observation.stopHookActive === true), locale));

@@ -923,6 +923,16 @@ export class ContinuityService implements ContinuityGateway {
     return this.checkpointCue(this.ensureSession(rawSessionId), missingOnly);
   }
 
+  /** A run failed for lack of a program, path or permission: once per distinct failure in this epoch (AGS3-D-0049). */
+  environmentFailureCueForSession(rawSessionId: string, failureKey: string): HookText | null {
+    const task = this.ensureSession(rawSessionId);
+    const hash = this.hashOpaque("turn", failureKey);
+    const event = `environment-failure:${hash}`;
+    if (this.store.hasObservation(task.taskCorrelation, task.currentEpoch, event)) return null;
+    this.store.recordObservation(task.taskCorrelation, task.currentEpoch, event, hash, true, this.now().toISOString());
+    return [msg("hooks.environmentFailure.check", {})];
+  }
+
   /** Called only after a host-qualified AGS progress tool; the call ID deduplicates repeated hook delivery. */
   checkpointCueAfterProgressForSession(rawSessionId: string, callId: string | null): HookText | null {
     const task = this.ensureSession(rawSessionId);

@@ -19,6 +19,7 @@ import type { CallerExecution } from "./caller-identity.js";
 import { observeClaudeExecution, readSessionModel, sessionModelDirectory } from "./host-attestation-hook.js";
 import { resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { shellEditTargets } from "./shell-edit-targets.js";
+import { HOOK_TOOL_RESULT_MAX_CHARACTERS } from "./environment-failure.js";
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -59,6 +60,12 @@ function setEditTargets(adapted: AdaptedHostInput, input: Record<string, unknown
   if (!read) return;
   observation.editTargets = editTargetPaths(input, read.paths);
   if (read.unknown && observation.editTargets.length > 0) observation.editTargetsIncomplete = true;
+}
+
+/** What the tool returned, as one text: its tail, where an error ends up. */
+function toolResultTail(value: unknown): string | undefined {
+  const raw = typeof value === "string" ? value : value === undefined || value === null ? "" : JSON.stringify(value);
+  return raw ? raw.slice(-HOOK_TOOL_RESULT_MAX_CHARACTERS) : undefined;
 }
 
 /** Keeps vendor event names and actor fields at the host adapter boundary. */
@@ -104,6 +111,7 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
   const callId = text(input.tool_use_id).trim();
   const collaborationId = text(input.collaboration_id);
   const role = text(input.role);
+  const toolResult = boundaryPhase === "after" ? toolResultTail(input.tool_response) : undefined;
   return {
     lifecycle,
     outputEventName: event,
@@ -116,6 +124,7 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
       ...(callId ? { callId } : {}),
       ...(boundaryPhase === undefined ? {} : { boundaryPhase }),
       ...(kind === "tool-boundary" ? { toolName: text(input.tool_name), toolInput: record(input.tool_input) } : {}),
+      ...(toolResult === undefined ? {} : { toolResult }),
       ...(kind === "user-input" ? { wakeCandidates: wake.nonces, wakeOnly: wake.wakeOnly } : {}),
       ...(workspaceId ? { workspaceId } : {}),
       ...(collaborationId ? { collaborationId } : {}),
@@ -222,6 +231,8 @@ function readCodexForkOrigin(transcriptPath: string, sessionId: string): ForkOri
 }
 
 const CLAUDE_EDIT_TOOLS = new Set(["Edit", "Write", "MultiEdit", "NotebookEdit"]);
+// What these return is a file's or a page's text, not the outcome of a run.
+const CLAUDE_CONTENT_TOOLS = new Set(["Read", "Grep", "Glob", "NotebookRead", "WebFetch", "WebSearch"]);
 
 /** Claude's supported native hook schema omits agent_id for root calls.
  * Absence supports inference only; an explicit empty or malformed ID never does. */
@@ -238,6 +249,7 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
   if (!knownEvent) return adapted;
   // Claude Code PostToolUse additionalContext reaches the next model call, a subagent's included: its step boundary.
   if (adapted.outputEventName === "PostToolUse") adapted.observation.step = true;
+  if (CLAUDE_CONTENT_TOOLS.has(adapted.observation.toolName ?? "")) delete adapted.observation.toolResult;
   if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CLAUDE_NATIVE_SESSION_ID_INVALID";
   else if (Object.hasOwn(input, "agent_type") && (typeof input.agent_type !== "string" || !input.agent_type.trim())) {
     actor.reasonCode = "CLAUDE_NATIVE_AGENT_TYPE_INVALID";
@@ -323,6 +335,39 @@ function adaptGeminiHookInput(input: Record<string, unknown>, host: string): Ada
 
 const ANTIGRAVITY_EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
 
+/**
+ * The output of the tools the last model call ran. agy's hook inputs carry none (agy 1.5.3 capture: PostToolUse has an
+ * empty `error` even for a failed command, PostInvocation has no tool fields); its JSONL transcript has it, in the
+ * `content` of the lines after the last line with `tool_calls`. Only the tail of the path the host passed is read. The
+ * check this feeds is advisory, so an unreadable or changed transcript gives no result rather than a failed hook.
+ */
+function readAntigravityToolResult(transcriptPath: string): string | undefined {
+  if (!transcriptPath) return undefined;
+  let descriptor: number | null = null;
+  try {
+    descriptor = openSync(transcriptPath, constants.O_RDONLY | constants.O_NONBLOCK);
+    const stats = fstatSync(descriptor);
+    if (!stats.isFile()) return undefined;
+    const length = Math.min(stats.size, HOOK_TOOL_RESULT_MAX_CHARACTERS);
+    const buffer = Buffer.alloc(length);
+    const bytes = readSync(descriptor, buffer, 0, length, stats.size - length);
+    const lines = buffer.subarray(0, bytes).toString("utf8").split("\n");
+    const results: string[] = [];
+    for (const line of lines.reverse()) {
+      let entry: Record<string, unknown>;
+      // A line cut by the window, or still being written, is not read.
+      try { entry = record(JSON.parse(line)); } catch { continue; }
+      if (Array.isArray(entry.tool_calls)) return results.length > 0 ? results.reverse().join("\n") : undefined;
+      if (typeof entry.content === "string") results.push(entry.content);
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  } finally {
+    if (descriptor !== null) try { closeSync(descriptor); } catch { /* the read already finished or failed above */ }
+  }
+}
+
 /** ceiling: Antigravity PreToolUse carries no tool call ID (agy hooks.md), so each hook run
  * draws a random one to keep the root proof one-use. Bind the native ID once Antigravity sends one. */
 function adaptAntigravityHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
@@ -341,7 +386,11 @@ function adaptAntigravityHookInput(input: Record<string, unknown>, host: string)
   });
   const { observation } = adapted;
   // agy delivers a hook's injected step from PostInvocation, after each model call, not from PostToolUse (AGS3-D-0068).
-  if (observation.kind === "turn-step") observation.step = true;
+  if (observation.kind === "turn-step") {
+    observation.step = true;
+    const toolResult = readAntigravityToolResult(text(input.transcript_path));
+    if (toolResult !== undefined) observation.toolResult = toolResult;
+  }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && !observation.callId) {
     // agy gives the hook no call ID. The key holds what the host writes on both sides (conversation, tool, arguments)
     // so the server finds this row for its tools/call; the random suffix keeps each call's observation distinct.

@@ -23,6 +23,9 @@ export interface InputObservation {
   boundaryPhase?: "before" | "after";
   toolName?: string;
   toolInput?: Record<string, unknown>;
+  /** After a tool: the tail of what it returned, as its adapter reads it. Absent for a tool whose result is a file's
+   * text rather than this run's outcome. */
+  toolResult?: string;
   /** File-edit tool boundary only: the absolute paths the host tool will change, as its adapter reads them from the
    * tool input. An empty list is an edit tool whose target the adapter could not read. Absent: not a file edit. */
   editTargets?: string[];

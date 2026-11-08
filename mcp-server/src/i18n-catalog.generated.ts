@@ -55,6 +55,7 @@ export interface MessageParams {
   "hooks.checkpointCue.save": Record<string, never>;
   "hooks.checkpointCue.skills": Record<string, never>;
   "hooks.checkpointCue.status": { "state": string; };
+  "hooks.environmentFailure.check": Record<string, never>;
   "hooks.editGate.criterionPlaceholder": Record<string, never>;
   "hooks.editGate.denied": { "limit": number; "paths": NestedMessage | number | string; "earlier": number; "example": NestedMessage | number | string; };
   "hooks.editGate.gatedRoot": { "path": NestedMessage | number | string; "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; };

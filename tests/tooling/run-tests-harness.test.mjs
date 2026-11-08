@@ -217,10 +217,9 @@ it("H10 controlled descendant traversal and ownership recheck honor cleanup dead
 it("H11 actual Python directory primitive stays lazy and closes partial, matched, and faulted iterators", () => {
   const python = findPython();
   const script = `
-import importlib.util, inspect, json, os, pathlib, sys, tempfile
+import importlib.util, json, os, pathlib, sys, tempfile
 spec=importlib.util.spec_from_file_location('subreaper',sys.argv[1])
 m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-primitive=inspect.getsource(pathlib.Path.iterdir)
 native_scan=os.scandir; native_listdir=os.listdir; native_clock=m.time.monotonic
 native_ports={name:getattr(m.os,name,None) for name in ['getpid','pidfd_open','close']}
 native_send=getattr(m.signal,'pidfd_send_signal',None)
@@ -287,7 +286,7 @@ with tempfile.TemporaryDirectory(prefix='native-scan-') as root:
                 else:setattr(m.os,name,value)
             if native_send is None:delattr(m.signal,'pidfd_send_signal')
             else:m.signal.pidfd_send_signal=native_send
-print(json.dumps({'kernelExecution':False,'python':sys.version.split()[0],'PathIterdirSource':primitive,'traces':traces}))
+print(json.dumps({'kernelExecution':False,'python':sys.version.split()[0],'traces':traces}))
 `;
   const result = spawnSync(python.command, [...python.prefix, "-c", script, path.join(root, "scripts/test-subreaper.py")],
     { encoding: "utf8", timeout: 10_000, env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" } });
