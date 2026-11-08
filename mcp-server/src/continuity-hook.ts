@@ -420,6 +420,15 @@ function subagentSituation(input: NormalizedContinuityInput, host: string, envir
   }
 }
 
+/**
+ * Records only the skill calls of one hook input, for a host whose tool-end event has no other use for this hook: the
+ * full hook would report a step cue the host's runner cannot deliver at that event.
+ */
+export function recordHookSkillCalls(raw: string, environment: NodeJS.ProcessEnv, host: string): void {
+  try { recordObservedSkillCalls(normalizedContinuityInput(adaptHostInput(JSON.parse(raw) as HookInput, host)).observation, environment); }
+  catch (cause) { reportContinuityFailure("skill-usage", cause); }
+}
+
 /** Bounded diagnostics only: stable reason codes and error metadata, never session IDs, inputs, SQL or paths. */
 function reportContinuityFailure(phase: ContinuityHookPhase, cause: unknown): void {
   try {

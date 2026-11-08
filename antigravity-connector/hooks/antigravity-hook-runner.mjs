@@ -1570,6 +1570,14 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
   }
 
   if (event === "PostToolUse") {
+    // agy opens a skill by reading its SKILL.md. Only such a call loads the bundle, so other tools add no hook cost.
+    if (JSON.stringify(toolBoundary?.toolInput ?? {}).includes("SKILL.md")) {
+      await runRecordHook("skill-usage", async () => {
+        const record = typeof options?.skillCallRecorder === "function" ? options.skillCallRecorder
+          : (await import("../../mcp-server/dist/continuity-hook.mjs")).recordHookSkillCalls;
+        await record(JSON.stringify(canonicalInput), process.env, "antigravity");
+      }, options);
+    }
     return {};
   }
 
