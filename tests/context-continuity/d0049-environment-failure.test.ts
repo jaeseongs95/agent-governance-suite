@@ -63,6 +63,15 @@ describe("AGS3-D-0049 a run that failed for a missing program, path or permissio
     expect(hookText(host, after("mcp__remote__observe", { ok: true, stderr: "FileNotFoundError: x" }, "call-2"))).toContain(CUE);
   });
 
+  it("claude-code: a call that failed reaches the check through its own event, whose text is in error", () => {
+    const failed = { hook_event_name: "PostToolUseFailure", session_id: S, tool_name: "Bash", tool_input: { command: "gitx" }, tool_use_id: "call-1",
+      error: "Exit code 127\n/bin/bash: line 1: gitx: command not found", is_interrupt: false };
+    const output = runContinuityHook(JSON.stringify({ cwd: tmpdir(), ...failed }), environment, "claude-code", true);
+    const parsed = JSON.parse(output) as { hookSpecificOutput: { hookEventName: string; additionalContext: string } };
+    expect(parsed.hookSpecificOutput.hookEventName).toBe("PostToolUseFailure");
+    expect(parsed.hookSpecificOutput.additionalContext).toContain(CUE);
+  });
+
   it("a subagent's failed run gets the check too", () => {
     expect(hookText("claude-code", after("Bash", "bash: gitx: command not found", "call-1", { agent_id: "a1", agent_type: "worker" }))).toContain(CUE);
   });

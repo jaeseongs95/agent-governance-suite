@@ -66,7 +66,7 @@ function setEditTargets(adapted: AdaptedHostInput, input: Record<string, unknown
 /** A finished tool call that loaded AGS skills. Each host loads a skill its own way, so `read` is that host's rule. */
 function setSkillCalls(adapted: AdaptedHostInput, input: Record<string, unknown>, read: (toolName: string, toolInput: Record<string, unknown>) => InputObservation["skillCalls"]): void {
   const { observation } = adapted;
-  if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "after") return;
+  if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "after" || adapted.outputEventName === "PostToolUseFailure") return;
   const result = record(input.tool_response);
   const exit = result.exit_code ?? result.exitCode;
   if (typeof exit === "number" && exit !== 0) return;
@@ -103,7 +103,8 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
   else if (event === "PreToolUse") {
     kind = "tool-boundary";
     boundaryPhase = "before";
-  } else if (event === "PostToolUse") {
+  } else if (event === "PostToolUse" || event === "PostToolUseFailure") {
+    // A failed call ends with its own event, whose text is `error`, not `tool_response` (Claude Code 2.1.316).
     kind = "tool-boundary";
     boundaryPhase = "after";
   } else if (event === "Stop") kind = "turn-end";
@@ -125,7 +126,7 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
   const callId = text(input.tool_use_id).trim();
   const collaborationId = text(input.collaboration_id);
   const role = text(input.role);
-  const toolResult = boundaryPhase === "after" ? toolResultTail(input.tool_response) : undefined;
+  const toolResult = boundaryPhase === "after" ? toolResultTail(event === "PostToolUseFailure" ? input.error : input.tool_response) : undefined;
   return {
     lifecycle,
     outputEventName: event,
@@ -264,8 +265,8 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
   });
   const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown" || adapted.continuityAction !== undefined;
   if (!knownEvent) return adapted;
-  // Claude Code PostToolUse additionalContext reaches the next model call, a subagent's included: its step boundary.
-  if (adapted.outputEventName === "PostToolUse") adapted.observation.step = true;
+  // Claude Code PostToolUse and PostToolUseFailure additionalContext reach the next model call, a subagent's included: its step boundary.
+  if (adapted.outputEventName === "PostToolUse" || adapted.outputEventName === "PostToolUseFailure") adapted.observation.step = true;
   if (CLAUDE_CONTENT_TOOLS.has(adapted.observation.toolName ?? "")) delete adapted.observation.toolResult;
   // Claude Code loads a skill through its Skill tool; a plugin skill's name carries the plugin as a prefix.
   setSkillCalls(adapted, input, (tool, toolInput) => {
