@@ -135,11 +135,21 @@ export class ContextLayerStore {
     const database = new DatabaseSync(databasePath);
     try {
       database.exec("PRAGMA busy_timeout = 5000;");
+      const readLayout = () => ({
+        version: (database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version,
+        present: (database.prepare("SELECT name FROM sqlite_schema WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all() as Array<{ name: string }>)
+          .map(row => row.name),
+      });
+      const current = () => { const { version, present } = readLayout(); return version === CONTEXT_LAYER_SCHEMA_VERSION && present.join(",") === TABLES.join(","); };
+      // A current file needs no writer lock, which every hook process of every session would otherwise queue for.
+      if (current()) {
+        if (databasePath !== ":memory:") database.exec("PRAGMA journal_mode = WAL;");
+        this.database = database;
+        return;
+      }
       database.exec("BEGIN IMMEDIATE;");
       try {
-        const version = (database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
-        const present = (database.prepare("SELECT name FROM sqlite_schema WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all() as Array<{ name: string }>)
-          .map(row => row.name);
+        const { version, present } = readLayout();
         if (version === 0 && present.length === 0) {
           database.exec(`
             CREATE TABLE admin_log (${LOG_COLUMNS}) STRICT;

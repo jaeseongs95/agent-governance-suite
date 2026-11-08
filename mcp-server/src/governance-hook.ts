@@ -90,7 +90,7 @@ export async function runGovernanceHook(
     const observe = hookExecutionObserver(host);
     const execution = !HOST_ATTESTATION_TOOLS.has(tool) ? { unavailable: "EXECUTION_NOT_REQUIRED" }
       : observe ? observe(input, environment) : { unavailable: "HOOK_EXECUTION_OBSERVER_UNAVAILABLE" };
-    store = new SqliteWorkflowStore(databasePath);
+    store = new SqliteWorkflowStore(databasePath, { trustCurrentSchema: true });
     const transcriptPath = typeof input.transcript_path === "string" && input.transcript_path ? input.transcript_path : null;
     store.recordCallAdmission({ host, callId, tool, sessionId, agentId: agentId as string | null, execution, transcriptPath });
   } catch (cause) { failure = cause; failed = true; }

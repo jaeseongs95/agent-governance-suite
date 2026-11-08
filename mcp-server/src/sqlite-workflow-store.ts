@@ -119,7 +119,8 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   private closed = false;
   private transactionDepth = 0;
 
-  constructor(input: string | SharedModuleContext) {
+  /** `trustCurrentSchema`: a hook process opens this file per event; the MCP server and context starts run the schema statements. */
+  constructor(input: string | SharedModuleContext, options: { trustCurrentSchema?: boolean } = {}) {
     this.shared = typeof input === "string" ? undefined : input;
     this.databasePath = typeof input === "string" ? input : input.databasePath;
     const databasePath = this.databasePath;
@@ -142,7 +143,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       this.database.exec("PRAGMA busy_timeout = 5000;");
       this.database.exec("PRAGMA synchronous = FULL;");
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
-      this.initializeSchema();
+      if (options.trustCurrentSchema !== true || this.getSchemaVersion() !== SCHEMA_VERSION) this.initializeSchema();
       if (databasePath !== ":memory:" && process.platform !== "win32") {
         chmodSync(path.resolve(databasePath), 0o600);
       }

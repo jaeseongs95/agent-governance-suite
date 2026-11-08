@@ -517,11 +517,12 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       || (explicitHostPid !== undefined && explicitHostPid !== hostPid)) { relayNotStarted("RELAY_HOST_START_MISMATCH"); return; }
     const transport = profile.transport;
     const expectedInstance = "host-process-v1:" + createHash("sha256").update(JSON.stringify([host, sessionId, hostPid, hostProcess.startToken])).digest("hex");
+    const relayCodeForGrant = installedRelayCode();
     try {
       const result = await request<{ spawn: boolean; relayId: string | null; instanceId: string; reason?: unknown }>("ensure-relay", {
         target, transport, parentPid: hostPid, parentStartToken: hostProcess.startToken,
         ...(expectedPresenceInstanceId !== undefined ? { expectedPresenceInstanceId } : {}),
-        ...(installedRelayCode() ? { codeDigest: installedRelayCode() } : {}),
+        ...(relayCodeForGrant ? { codeDigest: relayCodeForGrant } : {}),
         wakeVisibility: profile.capabilities.idleWake, canWakeSilently: profile.capabilities.idleWake === "silent",
         supportedInjection: profile.capabilities.supportedInjection, idleWake: profile.capabilities.idleWake,
         ...(observation.collaborationId ? { collaborationId: observation.collaborationId } : {}),
@@ -705,7 +706,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     progress.step = undefined;
   };
   const limits = { target, maxMessages: HOST_CLAIM_MAX_MESSAGES, maxBodyChars: HOST_CLAIM_MAX_BODY_CHARS };
-  const relayCode = installedRelayCode();
+  // The relay bundle is read and hashed only for a claim that has no instance to name.
+  const relayCode = claimInstanceId ? null : installedRelayCode();
   const hookTarget = { target, ...(claimInstanceId ? { instanceId: claimInstanceId } : { ...(relayCode ? { codeDigest: relayCode } : {}) }) };
   const fencedLimits = { ...limits, ...hookTarget };
   let messages: SessionMessage[] = [];

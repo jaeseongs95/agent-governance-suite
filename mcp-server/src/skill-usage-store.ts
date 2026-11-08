@@ -50,6 +50,7 @@ function open(file: string): DatabaseSync {
   try {
     database.exec(`PRAGMA busy_timeout = ${BUSY_TIMEOUT_MS};`);
     database.exec("PRAGMA journal_mode = WAL;");
+    if ((database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version === 1) return database;
     database.exec(`CREATE TABLE IF NOT EXISTS skill_calls (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, host TEXT NOT NULL, session_id TEXT NOT NULL,
         skill_id TEXT NOT NULL, subagent INTEGER NOT NULL CHECK (subagent IN (0, 1)), basis TEXT NOT NULL, call_id TEXT) STRICT;
       CREATE INDEX IF NOT EXISTS skill_calls_at ON skill_calls (at);

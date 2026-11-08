@@ -366,7 +366,8 @@ export class ContextLayerService {
         } else if (!binding && changed && before?.role) {
           lines.push(msg("hooks.contextLayers.roleUnbound", { role: before.role }));
         }
-        store.touchSession(host, sessionId, now);
+        // A write per step would serialize every hook of the session; the 30-day retention needs only turn and context starts.
+        if (full || turnStart) store.touchSession(host, sessionId, now);
       } catch {
         lines.push(msg("hooks.contextLayers.unreadable", { layer: "role" }));
       }

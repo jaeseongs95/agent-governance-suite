@@ -217,7 +217,12 @@ export class SqliteContinuityStore {
   private transactionDepth = 0;
   private savepointSequence = 0;
 
-  constructor(input: string | SharedModuleContext, migrations: readonly ContinuityMemoryMigration[] = []) {
+  /**
+   * `trustCurrentSchema` is for a hook process, which opens this file on every event of every session: a schema change
+   * commits its version in the same transaction, so a current version means a complete schema and the open needs neither
+   * the writer lock nor the whole-file quick_check. Context starts and the MCP server still run both.
+   */
+  constructor(input: string | SharedModuleContext, migrations: readonly ContinuityMemoryMigration[] = [], options: { trustCurrentSchema?: boolean } = {}) {
     this.shared = typeof input === "string" ? undefined : input;
     this.databasePath = typeof input === "string" ? input : input.databasePath;
     const databasePath = this.databasePath;
@@ -234,7 +239,9 @@ export class SqliteContinuityStore {
       this.database = opened;
       this.database.exec("PRAGMA busy_timeout = 5000;");
       this.database.exec("PRAGMA synchronous = FULL;");
-      this.transaction(msg("continuity.store.initDatabase", {}), () => this.initializeSchema(migrations));
+      if (options.trustCurrentSchema !== true || this.getSchemaVersion() !== SCHEMA_VERSION) {
+        this.transaction(msg("continuity.store.initDatabase", {}), () => this.initializeSchema(migrations));
+      }
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path.resolve(databasePath), 0o600);
     } catch (cause) {

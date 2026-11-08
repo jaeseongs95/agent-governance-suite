@@ -410,7 +410,7 @@ function subagentSituation(input: NormalizedContinuityInput, host: string, envir
     const workflowDatabasePath = resolveWorkflowDatabasePath(environment);
     const continuityDatabasePath = resolveContinuityDatabasePath(environment);
     assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
-    store = new SqliteContinuityStore(continuityDatabasePath);
+    store = new SqliteContinuityStore(continuityDatabasePath, [], { trustCurrentSchema: true });
     return situationText(input, host, store, locale, fits);
   } catch (cause) {
     reportContinuityFailure("subagent-situation", cause);
@@ -488,7 +488,9 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
     const workflowDatabasePath = resolveWorkflowDatabasePath(environment);
     const continuityDatabasePath = resolveContinuityDatabasePath(environment);
     assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
-    continuity = new SqliteContinuityStore(continuityDatabasePath);
+    // A context start verifies and repairs the stores; the many events inside a session trust what it verified.
+    const trustCurrentSchema = !normalized.action;
+    continuity = new SqliteContinuityStore(continuityDatabasePath, [], { trustCurrentSchema });
     const needsWorkflowState = normalized.action?.kind === "pre-compact"
       || normalized.action?.kind === "resume" || normalized.action?.kind === "compact"
       || normalized.action?.kind === "startup" || normalized.action?.kind === "fork" || normalized.action?.kind === "post-compact"
@@ -499,7 +501,7 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
       // The turn-end phase check reads the bound workflow's stages; a failed open reports and checks as unavailable.
       || isTurnEnd(normalized);
     if (needsWorkflowState) {
-      try { workflow = new SqliteWorkflowStore(workflowDatabasePath); }
+      try { workflow = new SqliteWorkflowStore(workflowDatabasePath, { trustCurrentSchema }); }
       catch (cause) {
         // Missing authority keeps roots bound; context remains optional and the cause visible.
         reportContinuityFailure("workflow-store", cause);
