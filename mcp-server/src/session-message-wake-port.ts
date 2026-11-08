@@ -103,7 +103,7 @@ function persistRelayFailureHistory(directory: string, serialized: string): void
     if (!info.isDirectory() || info.isSymbolicLink() || (process.getuid && info.uid !== process.getuid())) return;
     try { chmodSync(history, 0o700); } catch { if (process.platform !== "win32") return; }
     writeRelayDiagnosticSnapshot(path.join(history, `${failureWriter}-${kind}.json`), serialized);
-    // ponytail: reserve one observation per kind before allocating spare history slots.
+    // ceiling: reserve one observation per kind before allocating spare history slots.
     // At most 64 settled snapshots (~4 MiB), at most 4 per kind; bursts can briefly exceed it.
     const records = readdirSync(history, { withFileTypes: true })
       .filter(entry => entry.isFile() && /^\d{13}-\d+-[a-f0-9-]{36}-[a-f0-9]{16}\.json$/u.test(entry.name))

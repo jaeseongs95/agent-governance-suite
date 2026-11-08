@@ -515,7 +515,7 @@ export function observeClaudeExecution(input: HookInput, options: HostAttestatio
   // Only an issuer absent from the transcript window reaches the session model. Subagents get no SessionStart or
   // model-switch hooks, so only their own written message counts.
   const session = observation || agentId ? null : options.readSessionModel?.(sessionId) ?? null;
-  // ponytail: polling under the hook's 10 s limit; a batch still streaming after the wait stays unobserved.
+  // ceiling: polling under the hook's 10 s limit; a batch still streaming after the wait stays unobserved.
   if (!observation && !session && waited < maxWaitWithoutSessionModelMs && elapsedMs() < maxWaitWithoutSessionModelMs) {
     observation = search(maxWaitWithoutSessionModelMs);
     if (!observation) {

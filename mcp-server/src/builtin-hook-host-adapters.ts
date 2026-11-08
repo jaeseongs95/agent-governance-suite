@@ -321,7 +321,7 @@ function adaptGeminiHookInput(input: Record<string, unknown>, host: string): Ada
 
 const ANTIGRAVITY_EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
 
-/** ponytail: Antigravity PreToolUse carries no tool call ID (agy hooks.md), so each hook run
+/** ceiling: Antigravity PreToolUse carries no tool call ID (agy hooks.md), so each hook run
  * draws a random one to keep the root proof one-use. Bind the native ID once Antigravity sends one. */
 function adaptAntigravityHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
   const adapted = adaptInferredRootHookInput(input, host, "ANTIGRAVITY");
@@ -497,7 +497,7 @@ function antigravityQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reas
   // Adapter-owned defaults are settings provenance, never actor, liveness or execution authority.
   // D0364: an inferred default enables the queue only where its idle wake can start. The wake refuses every attempt
   // without the source project identity, so without it the recipient reports no idle wake instead of a live one.
-  // ponytail: gates on the project identity only; agentapi is resolved when the wake runs (PATH fallback off Windows)
+  // ceiling: gates on the project identity only; agentapi is resolved when the wake runs (PATH fallback off Windows)
   // and a missing one still surfaces as a relay failure. Gate on the wake's agentapi resolution if that case appears.
   const wakeReady = Boolean(environment.ANTIGRAVITY_PROJECT_ID?.trim());
   const defaultEnabled = wakeReady && (defaultQueueWake === true || Boolean(environment.ANTIGRAVITY_AGENTAPI_EXE

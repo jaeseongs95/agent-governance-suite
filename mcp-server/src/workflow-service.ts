@@ -898,7 +898,7 @@ export class WorkflowService {
       // Edits made in this window before the start are covered by the run but were not observed under it.
       const priorFileCount = continuity.priorFileCount();
       continuity.settle();
-      // ponytail: a continued root keeps its frozen task, so late adoption is only reported, not added to its constraints.
+      // ceiling: a continued root keeps its frozen task, so late adoption is only reported, not added to its constraints.
       const fresh = request.rootId === null ? minimalTask(request, workspace!, priorFileCount) : null;
       // The root insert below runs inside this transaction's write lock; read the machine ID (a reg.exe/ioreg spawn on
       // first use) before taking it.

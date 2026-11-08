@@ -137,30 +137,13 @@
       "checksumScope": "relative paths and normalized text bytes under skills/evaluation-validity-auditor"
     },
     {
-      "skillId": "ponytail",
-      "path": "skills/ponytail",
-      "source": "https://github.com/DietrichGebert/ponytail.git",
-      "sourcePath": "skills/ponytail",
-      "version": "4.10.0",
-      "versionSource": "version-file",
-      "ref": {
-        "kind": "commit",
-        "value": "83b2cbc3bc50df3030c49d1dfe598ccefe850a85",
-        "commit": "83b2cbc3bc50df3030c49d1dfe598ccefe850a85"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:995cb2e7021987093a4f376e4e7d2801fcfc3f3c4cd5a5fc9fbb4fff2ee4d450",
-      "integratedChecksum": "sha256:1355d79be1c75208c96d079dc19777d79f579a0f57aecc5838d8431f9f9d6e25",
-      "checksumScope": "relative paths and normalized text bytes under skills/ponytail",
-      "downstreamModifications": [
-        "Drop the argument-hint frontmatter key, which the Codex skill validator rejects; the Claude overlay restores it.",
-        "Add agents/openai.yaml with the display name and implicit-invocation policy used by the other suite skills.",
-        "Add LICENSE copied from the upstream repository root, which the skill directory does not carry.",
-        "Remove reviewing from the description's coding-task list and exclude code review, audits, verification, and completion checks, so implicit invocation does not load the skill during governance review stages.",
-        "Scope persistence to responses that write or change code, and replace the Boundaries paragraph so reviews, audits, verification, completion reports and non-coding answers are excluded, user, project and repository instructions override the Output and test rules, requested behavior and acceptance criteria are never cut, and the Caveman pairing, which the suite does not ship, is dropped. Clarify the existing bug-fix paragraph with derived code-mirroring lists or completeness checks, intentional allowlist/test-table and line-local typo exceptions; preserve original-failure verification and diagnostic errors. Explicit disable/user overrides precede implicit or mandatory-first use; later explicit use stays request-scoped. No separate defect gate or mandatory commit format is added.",
-        "Originally imported from https://github.com/jaeseongs95/ponytail.git at commit 83b2cbc3bc50df3030c49d1dfe598ccefe850a85. After that URI became unavailable, verify the same commit and upstream checksum through https://github.com/DietrichGebert/ponytail.git. Future stable-tag notifications now use this public upstream; notify-only policy and automaticInstall: false remain unchanged.",
-        "Replace shortest-patch, reduced-scope and one-test defaults with the smallest complete solution, original-failure evidence and authorized test-environment rules; preserve caller invariants and explicit user overrides, and apply the shared specialist behavior standard."
-      ]
+      "skillId": "minimal-implementation",
+      "path": "skills/minimal-implementation",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:1e26411511d3b47f12fca798c2ed9f6d3e2337d21b5d6500829326c12be08f3a",
+      "checksumScope": "relative paths and normalized text bytes under skills/minimal-implementation"
     },
     {
       "skillId": "software-security-auditor",
@@ -177,7 +160,7 @@
       "version": "0.2.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:fc0d4fa9801c9d53a6fefc4cdb1e0df2c58fec71f4117e636dfba97fdf050975",
+      "integratedChecksum": "sha256:b064d898d5d03cab4a520e2fabbbbd461388399a7d4b20100fec56d81d901359",
       "checksumScope": "relative paths and normalized text bytes under skills/cs-engineering"
     },
     {
@@ -186,7 +169,7 @@
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:63c9698a943e1bd178a3d5d9eccea745a31952f8f19a5b1dbcf9dd1748675cf4",
+      "integratedChecksum": "sha256:683a10d1f5722c529b069092415e6a0225582d6724299016ce3268c39c27c25f",
       "checksumScope": "relative paths and normalized text bytes under skills/test-engineering"
     },
     {
@@ -195,7 +178,7 @@
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:8de3269c8ff18f73e038967664be9baa1ae5b86ddc06a1e58b85ab8fac6aa12c",
+      "integratedChecksum": "sha256:1cd883c8b17d27813ff9b047386febd5855589083d9146b7fbc49bfd06ef594d",
       "checksumScope": "relative paths and normalized text bytes under skills/code-review"
     },
     {
@@ -204,7 +187,7 @@
       "version": "0.1.0",
       "versionSource": "version-file",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:0998891ffd0b24b0361236b48fe1febccfe4afc93bc71c75ab7afcc48585dc3b",
+      "integratedChecksum": "sha256:7aa263fe32e23dfcf3df34e824e9e95cc6b2f9f2bcdf8f490a3b18459063cae8",
       "checksumScope": "relative paths and normalized text bytes under skills/solid-design"
     },
     {
@@ -213,7 +196,7 @@
       "version": "0.1.0",
       "versionSource": "version-file",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:2ce3bfac59b061203b293a962b2d63788f09f8a6ba38c08126cf98092599dd9a",
+      "integratedChecksum": "sha256:abd94e929d857307e1be99c3cf41dbd4c23b30de3564142e9956923a5906ed49",
       "checksumScope": "relative paths and normalized text bytes under skills/prompt-engineering"
     },
     {
@@ -222,7 +205,7 @@
       "version": "0.1.0",
       "versionSource": "version-file",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:0fb9839abb77f27161e196b5d604503634c10af53d486aecc130ed87a0cc3450",
+      "integratedChecksum": "sha256:7065e84462414008a9edd3d0d8f0da2138db7b2419457cd43e33d35e0a88c6aa",
       "checksumScope": "relative paths and normalized text bytes under skills/ui-ux-design"
     }
   ]

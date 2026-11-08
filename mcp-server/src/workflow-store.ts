@@ -276,7 +276,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
   }
 
   withWorkflowTransaction<T>(operation: () => T): T {
-    // ponytail: rollback copies O(store) state; use the SQLite store for large or persistent workflows.
+    // ceiling: rollback copies O(store) state; use the SQLite store for large or persistent workflows.
     const previous = {
       runs: new Map(clone([...this.runs])),
       runUpdatedAt: new Map(this.runUpdatedAt),

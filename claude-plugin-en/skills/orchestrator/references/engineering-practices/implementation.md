@@ -4,7 +4,7 @@
 
 ## IMP-001 — 가장 작은 올바른 변경
 
-**담당:** ponytail
+**담당:** minimal-implementation
 
 **적용:** 구현·리팩토링
 
@@ -20,7 +20,7 @@
 
 ## IMP-002 — 추상화의 사용처 확인
 
-**담당:** ponytail
+**담당:** minimal-implementation
 
 **적용:** 공통 인터페이스·설계 패턴을 추가할 때
 
@@ -36,7 +36,7 @@
 
 ## IMP-003 — 오류 의미 보존
 
-**담당:** ponytail
+**담당:** minimal-implementation
 
 **적용:** 예외·오류·재시도를 수정할 때
 
@@ -52,7 +52,7 @@
 
 ## IMP-004 — 자원 수명과 취소
 
-**담당:** ponytail
+**담당:** minimal-implementation
 
 **적용:** 파일·연결·프로세스·stream 사용
 
@@ -68,7 +68,7 @@
 
 ## IMP-005 — 배포 단위를 검증
 
-**담당:** ponytail
+**담당:** minimal-implementation
 
 **적용:** 번들·CLI·스킬·패키지 변경
 
@@ -84,7 +84,7 @@
 
 ## IMP-006 — 로그는 판별 가능한 최소 정보
 
-**담당:** ponytail
+**담당:** minimal-implementation
 
 **적용:** 디버그 로그나 예외 메시지를 추가할 때
 

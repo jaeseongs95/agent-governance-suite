@@ -54,6 +54,6 @@ truth or reviewer independence and does not approve release.
 
 The binding first becomes pinned in the recorded stage's artifact references. Before
 that point, signed plan, claim, guarded start and resume do not carry a CS binding. The
-server does not determine CS applicability, require ponytail inputs conditionally, or
+server does not determine CS applicability, require minimal-implementation inputs conditionally, or
 force acceptance criteria to equal CS obligations. Those policy/contract changes remain
 explicit follow-up work. An unselected CS stage is not a global acceptance gate.

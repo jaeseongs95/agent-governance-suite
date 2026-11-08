@@ -114,7 +114,7 @@ The versions and sources of the 23 specialist skills follow the [registry](skill
 | [`task-contract`](skills/task-contract/) | AGS | 1.1.0 | Turns goal, scope, acceptance criteria, risk, and authority into a task contract. |
 | [`model-effort-advisor`](skills/model-effort-advisor/) | AGS | 0.2.0 | Selects a model and reasoning effort for an approved subagent assignment before dispatch, using task requirements and host-supported combinations. |
 | [`coordinate-subagents`](skills/coordinate-subagents/) | AGS | 1.1.0 | Decides whether to delegate and sets ownership, handoff context, and verification duties. |
-| [`ponytail`](skills/ponytail/) | Based on [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail/tree/83b2cbc3bc50df3030c49d1dfe598ccefe850a85), modified by AGS | 4.10.0 | Chooses the smallest complete implementation that meets the requirements. |
+| [`minimal-implementation`](skills/minimal-implementation/) | AGS | 1.0.0 | For any deliverable (code, documents, data, settings, procedures), chooses the smallest complete result that contains only what is needed, and never reports a pass produced by a substitute as done. |
 | [`change-scope-guardian`](skills/change-scope-guardian/) | AGS | 1.0.0 | Compares the baseline with current changes to find out-of-scope files. |
 | [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | AGS | 1.0.3 | Checks target, approval, impact, and recovery right before a hard-to-reverse change. |
 | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | AGS | 1.0.0 | Reviews contested decisions through independent viewpoints and rebuttals. |

@@ -15,7 +15,7 @@
 | `skills/orchestrator/references/engineering-practices/index.md` | Engineering Practices는 공유 참조 모듈 |
 | 같은 디렉터리의 `implementation.md` | IMP-001~004의 최소 변경·실제 경계·오류·자원 수명 |
 | 같은 디렉터리의 `agent-instructions.md` | DOC-001/004/006의 선택 조건·단일 원본·의미 보존 |
-| `skills/ponytail/SKILL.md` | 단일 구현인 adapter도 실제 계약 경계를 보존 |
+| `skills/minimal-implementation/SKILL.md` | 단일 구현인 adapter도 실제 계약 경계를 보존 |
 | `skills/cs-engineering/SKILL.md`, `assets/rules/software-design.json` | 정확성 의무·draft 설계 카드의 범위 |
 | `skills/code-review/SKILL.md`, `skills/test-engineering/SKILL.md` | 리뷰·테스트 소유권과 분석 결과의 한계 |
 | `contracts/skill-descriptor.v2.schema.json`, `contracts/provider-result.v1.schema.json` | 기존 provider 등록·결과 envelope |

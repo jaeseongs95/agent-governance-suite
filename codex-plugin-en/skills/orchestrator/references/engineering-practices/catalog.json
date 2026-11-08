@@ -395,7 +395,7 @@
     {
       "id": "IMP-001",
       "module": "implementation",
-      "owner": "ponytail",
+      "owner": "minimal-implementation",
       "title": "가장 작은 올바른 변경",
       "appliesWhen": "구현·리팩토링",
       "action": "요구와 필수 제약을 만족하는 최소 변경을 고르고 무관한 정리는 분리한다.",
@@ -412,7 +412,7 @@
     {
       "id": "IMP-002",
       "module": "implementation",
-      "owner": "ponytail",
+      "owner": "minimal-implementation",
       "title": "추상화의 사용처 확인",
       "appliesWhen": "공통 인터페이스·설계 패턴을 추가할 때",
       "action": "실제 호출자, 명확한 변화 축 또는 신뢰·전송·자원 수명 계약 경계를 확인하고 기존 모듈 경계로 해결되는지 비교한다.",
@@ -429,7 +429,7 @@
     {
       "id": "IMP-003",
       "module": "implementation",
-      "owner": "ponytail",
+      "owner": "minimal-implementation",
       "title": "오류 의미 보존",
       "appliesWhen": "예외·오류·재시도를 수정할 때",
       "action": "호출자가 구별해야 할 실패를 보존하고 재시도는 부작용·상한·취소 조건과 함께 정한다.",
@@ -446,7 +446,7 @@
     {
       "id": "IMP-004",
       "module": "implementation",
-      "owner": "ponytail",
+      "owner": "minimal-implementation",
       "title": "자원 수명과 취소",
       "appliesWhen": "파일·연결·프로세스·stream 사용",
       "action": "성공·오류·timeout·취소의 모든 경로에서 소유자가 자원을 해제하도록 구현한다.",
@@ -463,7 +463,7 @@
     {
       "id": "IMP-005",
       "module": "implementation",
-      "owner": "ponytail",
+      "owner": "minimal-implementation",
       "title": "배포 단위를 검증",
       "appliesWhen": "번들·CLI·스킬·패키지 변경",
       "action": "개발 트리와 설치 트리의 import·경로·의존성을 구분하고 배포와 같은 사본에서 검사한다.",
@@ -480,7 +480,7 @@
     {
       "id": "IMP-006",
       "module": "implementation",
-      "owner": "ponytail",
+      "owner": "minimal-implementation",
       "title": "로그는 판별 가능한 최소 정보",
       "appliesWhen": "디버그 로그나 예외 메시지를 추가할 때",
       "action": "작업 ID·상태 전이·에러 코드·소요 시간 등 판별에 필요한 구조화 필드를 사용한다.",
@@ -583,7 +583,7 @@
       "action": "실제 변경 후보에서 기존 경고를 구별하던 검사와 관련 runtime을 다시 확인한다.",
       "evidence": "고정 후보·새 resolved graph·검사 결과와 되돌리기 조건을 기록한다.",
       "avoid": "버전 숫자가 올라갔다는 이유만으로 경고 해결을 단정하지 않는다.",
-      "exceptions": "업데이트 실행은 ponytail·mutation-risk-preflight 담당이며 감사 자료가 설치 승인을 만들지 않는다.",
+      "exceptions": "업데이트 실행은 minimal-implementation·mutation-risk-preflight 담당이며 감사 자료가 설치 승인을 만들지 않는다.",
       "sourceIds": [
         "AW-DEP"
       ],

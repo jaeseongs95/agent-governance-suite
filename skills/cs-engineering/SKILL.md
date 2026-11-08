@@ -18,7 +18,7 @@ metadata:
 
 ## 책임과 경계
 작업에 필요한 CS 원리를 구체적인 설계 조건과 검증 의무로 바꿔라.
-기존 orchestrator의 선택·순서·위임, ponytail의 최소 구현, task-contract의 계약 동결,
+기존 orchestrator의 선택·순서·위임, minimal-implementation의 최소 구현, task-contract의 계약 동결,
 acceptance-evidence-validator의 근거 수용, 독립 감사의 역할을 유지하라.
 새 세션·큐·상태 DB·상시 실행기·승인 권한을 만들지 마라.
 

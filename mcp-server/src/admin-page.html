@@ -397,7 +397,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     syncSettings(d);
   }
   function reapplyMine() {
-    // ponytail: 규칙(빈 줄 단위) 3방향 병합. 다른 경로가 추가한 규칙은 끝에 붙는다(순서 보존 안 함).
+    // ceiling: 규칙(빈 줄 단위) 3방향 병합. 다른 경로가 추가한 규칙은 끝에 붙는다(순서 보존 안 함).
     const base = S.g.baseRules, mine = editTexts();
     const latestBody = S.data.global ? S.data.global.body : '';
     const latest = splitRules(latestBody);
@@ -411,7 +411,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
 
   // ---------- 줄 단위 비교 ----------
   function lineDiff(a, b) {
-    // ponytail: O(n·m) LCS. 본문이 2,000 byte 이하라 충분하다.
+    // ceiling: O(n·m) LCS. 본문이 2,000 byte 이하라 충분하다.
     const A = String(a).split('\n'), B = String(b).split('\n'), n = A.length, m = B.length;
     const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
     for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);

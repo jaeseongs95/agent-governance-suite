@@ -197,7 +197,7 @@ export class ContextLayerStore {
 
   // --- Signed admin log -------------------------------------------------------------------------------------------
 
-  // ponytail: every read folds the whole log; it holds only human edits, so it stays small. Snapshot a verified prefix
+  // ceiling: every read folds the whole log; it holds only human edits, so it stays small. Snapshot a verified prefix
   // if it ever grows to thousands of records.
   logRecords(): AdminLogRecord[] {
     return (this.database.prepare("SELECT * FROM admin_log ORDER BY seq").all() as unknown as LogRow[]).map(logRecord);

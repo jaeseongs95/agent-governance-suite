@@ -1013,7 +1013,7 @@ function normalizeWorkspacePathForMatch(rawPath, platform = process.platform) {
   }
 }
 
-// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+// # ceiling: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
 export function readTailUtf8(filePath, maxBytes = 65536) {
   let fd;
   try {
@@ -1050,7 +1050,7 @@ export function readTailUtf8(filePath, maxBytes = 65536) {
   }
 }
 
-// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+// # ceiling: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
 export function resolveAntigravityAgentApiExeFromShim(homeDir = "", platform = process.platform, env = process.env, options = {}) {
   const explicitShim = text(options?.agentApiShimPath).trim();
   const shimPath = explicitShim || (
@@ -1093,7 +1093,7 @@ export function resolveAntigravityAgentApiExeFromShim(homeDir = "", platform = p
 
 const AGY_HOOK_LS_CONNECTION_NOT_EXPOSED = "AGY_HOOK_LS_CONNECTION_NOT_EXPOSED";
 
-// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+// # ceiling: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
 export function resolveAntigravityLanguageServerFromProcess(hostProcess = null, env = process.env, platform = process.platform, homeDir = "", options = {}) {
   const detail = hostProcessDetails.get(hostProcess)
     ?? (hostProcess && (typeof hostProcess.command === "string" || typeof hostProcess.commandLine === "string")
@@ -1202,7 +1202,7 @@ export function resolveAntigravityLanguageServerFromProcess(hostProcess = null, 
   return { exe, exeReason, csrfToken, csrfReason, lsAddress, lsReason };
 }
 
-// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+// # ceiling: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
 export function resolveAntigravityProjectIdFromWorkspace(canonicalInput = {}, homeDir = "", platform = process.platform, env = process.env, options = {}) {
   const existingProject = text(env?.ANTIGRAVITY_PROJECT_ID).trim();
   if (existingProject) {
@@ -1262,7 +1262,7 @@ export function resolveAntigravityProjectIdFromWorkspace(canonicalInput = {}, ho
   return { projectId: "", reason: "PROJECT_ID_NOT_MATCHED" };
 }
 
-// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+// # ceiling: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
 // Antigravity's native hook executor (command_hook_executor.go) only injects ANTIGRAVITY_CONVERSATION_ID
 // into hook subprocesses and omits ANTIGRAVITY_PROJECT_ID, ANTIGRAVITY_AGENTAPI_EXE, ANTIGRAVITY_LS_ADDRESS,
 // and ANTIGRAVITY_CSRF_TOKEN. Derive them into an isolated relayEnv object passed ONLY to the detached
@@ -1393,7 +1393,7 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
       : inputWithCurrentArgs;
     const executionBudget = buildExecutionBudgetOption(options);
     const claimTracker = options?.claimTracker ?? createClaimStateTracker(options?.onClaimState);
-    // ponytail: Antigravity fires SessionStart only once for a brand-new conversation, so existing or
+    // ceiling: Antigravity fires SessionStart only once for a brand-new conversation, so existing or
     // reloaded sessions must recover presence/relay via recoverExistingSession here. Because 3.0
     // infers root for Antigravity (AGS-D-0317), child sessions sharing the parent sessionId also
     // pass actorAccess until native actor capture and the child gate return after 3.0.
@@ -1535,7 +1535,7 @@ function recordAgsCallObservation(canonicalInput, options) {
  * and workspace on the session board the way UserPromptSubmit does on the other hosts, so a workflow started without
  * an explicit workspace finds this session's working directory. A failed record leaves the board row unchanged and
  * the server reports the missing workspace; the failure is reported on stderr (runRecordHook).
- * ponytail: no prompt text is passed, so a wake-only turn also counts as a prompt; pass lastUserInput if that matters.
+ * ceiling: no prompt text is passed, so a wake-only turn also counts as a prompt; pass lastUserInput if that matters.
  */
 function recordAgsSessionInput(canonicalInput, options) {
   const input = { hook_event_name: "UserPromptSubmit", session_id: canonicalInput.session_id, ...(canonicalInput.cwd ? { cwd: canonicalInput.cwd } : {}) };

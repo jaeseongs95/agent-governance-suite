@@ -36,7 +36,7 @@ function git(...args) {
  * Fills the immutable cache with every blob under `top` at `revision` in two processes (`ls-tree`, `cat-file --batch`)
  * instead of one `git show` per path. A path the listing does not yield (missing at the revision, an executable script,
  * a name cat-file cannot take on one line) stays uncached and is read by `git show`, which also reports its own error.
- * ponytail: reads the whole `top` tree once per revision, a few MB here; narrow the listing if that tree grows large.
+ * ceiling: reads the whole `top` tree once per revision, a few MB here; narrow the listing if that tree grows large.
  */
 function prefetchHistory(cache, revision, top) {
   const marker = JSON.stringify([ROOT, "prefetched", revision, top]);

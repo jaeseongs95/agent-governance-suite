@@ -28,6 +28,7 @@ export const SKILL_FIELDS = Object.freeze({
   "independent-audit-gate": null,
   "independent-deliberation-panel": null,
   "iteration-frame-auditor": null,
+  "minimal-implementation": null,
   "model-effort-advisor": null,
   "mutation-risk-preflight": null,
   "orchestrator": null,
@@ -41,7 +42,6 @@ export const SKILL_FIELDS = Object.freeze({
   "cs-engineering": "소프트웨어의 동시성·DB·알고리즘·성능",
   "instruction-scope-resolver": "작업 공간의 에이전트 지침 파일",
   "korean-prose-editor": "한국어 산문",
-  "ponytail": "코드 작성·수정",
   "software-security-auditor": "소프트웨어 보안",
   "solid-design": "코드 설계",
   "test-engineering": "소프트웨어 테스트",
@@ -111,7 +111,7 @@ const EXAMPLE_LEAD = /예를 들어|예컨대|\be\.g\.|\bfor example\b|\bsuch as
 const NAMES = /\[[^\]]*\]\(https?:\/\/[^)]*\)|\]\([^)]*\)|\bUI\/UX\b|\b[a-z]+(?:-[a-z]+)+\b|\bClaude Code\b|(?:종료|오류|상태|응답|원인|이유) 코드|화면 캡처/gu;
 // Inline markup alone does not turn a field word into an identifier.
 const INLINE_IDENTIFIER = /^(?:[^\s]+[/\\]|[./\\]|\{|\[|v?\d+\.\d+|(?:node|python3?|git|pnpm|npm|npx)(?:\s|$))|^[^\s]+\.[a-zA-Z][a-zA-Z0-9]{0,7}$/u;
-// ponytail: these explicit clause markers are a wording heuristic, not a language parser.
+// ceiling: these explicit clause markers are a wording heuristic, not a language parser.
 const CLAUSE_BOUNDARY = /(?:하고|하며|이고|이며|쓰고|쓰며|지만|으나|는데),?\s|[;:]|\b(?:and|but),\s/gu;
 
 const blank = (text) => text.replace(/[^\n]/gu, " ");

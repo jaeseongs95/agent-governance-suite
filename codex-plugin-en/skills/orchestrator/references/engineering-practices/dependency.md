@@ -94,6 +94,6 @@
 
 **피할 실패:** 버전 숫자가 올라갔다는 이유만으로 경고 해결을 단정하지 않는다.
 
-**예외:** 업데이트 실행은 ponytail·mutation-risk-preflight 담당이며 감사 자료가 설치 승인을 만들지 않는다.
+**예외:** 업데이트 실행은 minimal-implementation·mutation-risk-preflight 담당이며 감사 자료가 설치 승인을 만들지 않는다.
 
 출처: AW-DEP ([고정 커밋](sources.lock.json)).

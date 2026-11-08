@@ -99,7 +99,7 @@ function wireAdapter(definition: JevProviderDefinition): ClassificationWireAdapt
  */
 export function createJevClassificationProvider(options: {getCredential: (definition: JevProviderDefinition) => Promise<string | null>; fetcher?: typeof fetch}) {
   const routes: ApprovedClassificationRoute[] = [];
-  // ponytail: one route per (provider, model) for the server's lifetime; models are pinned names, so this stays small.
+  // ceiling: one route per (provider, model) for the server's lifetime; models are pinned names, so this stays small.
   const provider = new ApprovedRouteClassificationProvider(routes, options.fetcher);
   const profileFor = (choice: JevModelChoice): ProviderProfile | null => {
     const profile = jevModelProfile(choice);

@@ -9,7 +9,7 @@
 | orchestrator / AGENT | 사용자 경험 작업의 적용 근거와 전문 결과 | 최종 스킬 선택·전체 실행 순서를 대신 결정하지 않음 |
 | JEV 및 vendor 분류 경로 | 사람이 보고 쓰는 결과물이 실제 작업 대상인지 설명 | 키워드만으로 강제 선택하거나 새 분류 모델·호출 경로를 추가하지 않음 |
 | workspace-convention-profiler | 확인된 브랜드·디자인 체계·플랫폼·언어 관례 재사용 | 없는 도구·API·지원 환경을 전제하지 않음 |
-| ponytail / solid-design / cs-engineering | 결과물 구조·상태·데이터 표시·수명 관리 요구 전달 | 전체 아키텍처·서버 권한·실행 불변조건을 사용자에게 보이는 표시로 대체하지 않음 |
+| minimal-implementation / solid-design / cs-engineering | 결과물 구조·상태·데이터 표시·수명 관리 요구 전달 | 전체 아키텍처·서버 권한·실행 불변조건을 사용자에게 보이는 표시로 대체하지 않음 |
 | test-engineering / evaluation-validity-auditor | 대표 동선·경계·실패 사례와 실제 관측 근거 | 기대값을 결과에 맞춰 바꾸거나 자기 점검을 독립 검증으로 세지 않음 |
 | change-scope-guardian / mutation-risk-preflight | 대상 파일·동작·영향 범위와 구현·제작 제약 전달 | 이미 허용된 변경의 점검 순서를 건너뛰거나 새 승인 gate를 만들지 않음 |
 | acceptance-evidence-validator / independent-audit-gate | 동일 후보의 시각·동작·성능 증거와 미확인 항목 전달 | 설계 검토를 수용 판정·독립 감사·출시 승인으로 대체하지 않음 |

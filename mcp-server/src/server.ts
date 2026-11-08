@@ -104,7 +104,7 @@ function localizeContract(document: Record<string, unknown>, locale: SupportedLo
   return walk(document, []) as Record<string, unknown>;
 }
 
-// ponytail: one localized copy per shipped locale, built on first use; the bound is the locale count.
+// ceiling: one localized copy per shipped locale, built on first use; the bound is the locale count.
 const localizedContractCache = new Map<SupportedLocale, ContractDocuments>();
 
 function localizedContracts(locale: SupportedLocale): ContractDocuments {
@@ -249,7 +249,7 @@ function buildInputSchemas(contracts: ContractDocuments, locale: SupportedLocale
 }
 
 type InputSchemas = ReturnType<typeof buildInputSchemas>;
-// ponytail: built once per shipped locale on first use; the bound is the locale count.
+// ceiling: built once per shipped locale on first use; the bound is the locale count.
 const inputSchemaCache = new Map<SupportedLocale, InputSchemas>();
 
 function inputSchemas(locale: SupportedLocale): InputSchemas {
@@ -916,7 +916,7 @@ export function createMcpServer(
       },
     ], locale);
   };
-  // ponytail: each locale's list is built once and kept; the bound is the shipped locale count.
+  // ceiling: each locale's list is built once and kept; the bound is the shipped locale count.
   const toolLists = new Map<SupportedLocale, ReturnType<typeof toolList>>();
   const toolsFor = (locale: SupportedLocale) => {
     let tools = toolLists.get(locale);

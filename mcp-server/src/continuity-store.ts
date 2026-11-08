@@ -556,7 +556,7 @@ export class SqliteContinuityStore {
     `).get(taskCorrelation, epoch, event));
   }
 
-  /** Every other task's anchors in one read, newest kept per anchor. ponytail: full scan bounded by observation cleanup. */
+  /** Every other task's anchors in one read, newest kept per anchor. ceiling: full scan bounded by observation cleanup. */
   /**
    * Every anchor row of other tasks recorded before `beforeObservationId` (the child's own fork record), in store order.
    * The store's insertion order, not a clock, separates revisions saved before the fork from later ones.

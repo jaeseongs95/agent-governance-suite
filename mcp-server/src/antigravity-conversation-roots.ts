@@ -9,7 +9,7 @@ import { resolveWorkflowDatabasePath } from "./runtime-config.js";
  * conversation ID and nothing that names the root or the parent (agy 1.5.3 Linux capture, AGS3-D-0068). The caller
  * ingress records each subagent conversation's root here so the agy hook adapter can give that subagent's later hooks
  * its root session. Hooks that run before the subagent's first AGS tool call find no record.
- * ponytail: one small file per agy subagent conversation, never pruned; move into the workflow store with the state
+ * ceiling: one small file per agy subagent conversation, never pruned; move into the workflow store with the state
  * cleanup if the count matters.
  */
 export function antigravityConversationRootDirectory(databasePath: string = resolveWorkflowDatabasePath()): string {

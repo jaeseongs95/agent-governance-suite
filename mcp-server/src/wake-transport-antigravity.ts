@@ -14,7 +14,7 @@ function isVerifiedWindowsNativeExecutable(candidatePath: string): boolean {
   return isWindowsNativeExecutable(candidatePath)
     && !/(?:^|[\\/])(?:tmp|var[\\/]tmp|dev[\\/]shm|temp|appdata[\\/]local[\\/]temp|users[\\/]public)(?:[\\/]|$)/iu.test(candidatePath);
 }
-// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+// # ceiling: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
 export function resolveWindowsAgentApiFromShim(homeDir: string): { exe: string | null; diagnostic?: string } {
   // Antigravity's native hook executor does not set ANTIGRAVITY_AGENTAPI_EXE when spawning hooks or
   // detached relays, and instead writes <HOME>/.gemini/antigravity/bin/agentapi.bat wrapping the

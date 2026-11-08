@@ -119,7 +119,7 @@ Convergence root, epoch, attempt, lease, review와 workflow 연결도 같은 SQL
 | `test-design`, `test-proof` | `test-engineering` |
 | `code-review` | `code-review` |
 | `debugging` | `blocker-diagnostician` |
-| `implementation` | `ponytail` |
+| `implementation` | `minimal-implementation` |
 | `dependency` | `software-security-auditor` |
 | `verification` | `acceptance-evidence-validator` |
 | `agent-instructions` | `orchestrator`와 스킬 작성자 |

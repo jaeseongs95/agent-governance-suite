@@ -34,7 +34,7 @@ cs-engineering: 제약 도출 (필요한 작업에만)
   ↓
 task-contract: 범위·수용 기준·검증 계획 동결
   ↓
-기존 AGS 흐름: 기준선 → ponytail 구현 → 필요한 변경 사전점검/실행
+기존 AGS 흐름: 기준선 → minimal-implementation 구현 → 필요한 변경 사전점검/실행
   ↓
 범위 확인 / 필요한 보안 감사
   ↓
@@ -55,7 +55,7 @@ acceptance-evidence-validator: 근거의 수용 가능성 검증
 
 `skills/orchestrator/references/entry-details.md`는 필요한 capability의 의미적 선택과 MCP의 결정적 provider 매핑을 분리한다. `selectionCriteria`는 런타임 필터가 아니며, 단순 전문 호출에는 workflow run이나 수렴 root를 만들지 않는다. [R2]
 
-`ponytail`은 `minimal-implementation` capability를 제공한다. 이 provider의 현재 `requiredInputArtifacts`와 `inputBindings`는 빈 배열이다. 따라서 새 CS 보고서를 등록하는 것만으로 구현자가 이를 입력으로 받는 것은 아니다. 입력 전달과 실행 기록 검증을 별도로 연결해야 한다. [R3]
+`minimal-implementation`은 `minimal-implementation` capability를 제공한다. 이 provider의 현재 `requiredInputArtifacts`와 `inputBindings`는 빈 배열이다. 따라서 새 CS 보고서를 등록하는 것만으로 구현자가 이를 입력으로 받는 것은 아니다. 입력 전달과 실행 기록 검증을 별도로 연결해야 한다. [R3]
 
 현재 저장소에는 `software-security-auditor`, `acceptance-evidence-validator`, `independent-audit-gate`, `evaluation-validity-auditor`, `blocker-diagnostician`, `iteration-frame-auditor`가 있다. 새 CS 스킬이 같은 역할을 재구현하지 않는다. [R3]
 
@@ -153,7 +153,7 @@ sources:
 | “캐시를 추가해.” | 먼저 유효성·무효화·상한·계측 필요성 분석; 분산 캐시를 기본 도입하지 않음 |
 | “README의 오탈자를 고쳐.” | CS 스킬 생략 |
 | “큐라는 단어를 설명해.” | 일반 설명; 거버넌스 workflow 생성 안 함 |
-| “이 SQLite claim 설계의 경쟁 조건을 읽기 전용으로 검토해.” | CS 스킬 직접 호출; 구현과 ponytail은 선택하지 않음 |
+| “이 SQLite claim 설계의 경쟁 조건을 읽기 전용으로 검토해.” | CS 스킬 직접 호출; 구현과 minimal-implementation은 선택하지 않음 |
 
 명시한 스킬을 다른 스킬로 치환하지 않는다. CS 입력이 부족하면 허용된 코드·문서·환경 관측으로 먼저 보완한다. 기존 작업 계약이 이미 동결됐다면 이를 덮어쓰지 않고, 새 제약이 기존 기준을 구체화하는지 변경하는지 구분한다.
 
@@ -244,7 +244,7 @@ Codex 전용 `agents/openai.yaml`에는 `allow_implicit_invocation: true`를 유
 
 이미 동결된 계약이 있을 때도 제약 도출은 가능하다. 다만 그 결과가 기준 변경을 요구하면 새 revision과 기존 재검토 절차를 거쳐야 한다. 보고서만 몰래 교체하지 않는다.
 
-### 5.2 구현: 기존 ponytail
+### 5.2 구현: 기존 minimal-implementation
 
 `minimal-implementation`의 현재 역할은 유지한다. 새 역할을 추가하는 것이 아니라, 선택된 CS 작업에서는 고정된 제약 보고서와 검증 의무가 구현 입력에 포함되도록 연결한다.
 
@@ -285,7 +285,7 @@ Codex 전용 `agents/openai.yaml`에는 `allow_implicit_invocation: true`를 유
 
 ### 5.4 기존 사전점검 순서는 건드리지 않음
 
-기준 소스에서 ponytail의 workflow `phaseOrder`는 44, mutation preflight는 45다. 이는 구현 단계에서 허용된 저장소 편집·테스트와 사전점검 대상인 외부·위험 변경이 구분되기 때문이다. CS 팩 도입을 핑계로 이 순서 또는 권한 경계를 재해석하지 않는다. [R2, R3]
+기준 소스에서 minimal-implementation의 workflow `phaseOrder`는 44, mutation preflight는 45다. 이는 구현 단계에서 허용된 저장소 편집·테스트와 사전점검 대상인 외부·위험 변경이 구분되기 때문이다. CS 팩 도입을 핑계로 이 순서 또는 권한 경계를 재해석하지 않는다. [R2, R3]
 
 ## 6. 계약과 결속 설계
 
@@ -467,7 +467,7 @@ Codex·Claude 실제 설치본 각각에서 다음을 검증한다.
 - 스킬 이름을 넣은 명시 호출.
 - 스킬 이름 없이 동작 의미만 설명한 호출.
 - 유사 단어가 있지만 CS 검토가 불필요한 음성 사례.
-- 기존 ponytail·orchestrator·보안·수용 근거 스킬의 선택 유지.
+- 기존 minimal-implementation·orchestrator·보안·수용 근거 스킬의 선택 유지.
 - 세션 재개·압축·업데이트 후 필요한 본문과 참고자료 로딩 유지.
 
 모의 호스트 테스트는 계약 검증에 유용하지만 실제 스킬 목록 노출·설명 절단·자동 선택·설치 캐시 동작 검증을 대체하지 않는다. OpenAI 문서는 스킬이 많으면 초기 목록의 설명 축약 또는 일부 생략이 가능하다고 명시하므로, 전체 팩을 설치한 실제 상태로 평가한다. [R8]
@@ -549,7 +549,7 @@ skills/
   source-lock.json                            EDIT
   orchestrator/SKILL.md                        EDIT (짧은 연결 지침만)
   orchestrator/references/entry-details.md      EDIT
-  ponytail/SKILL.md                            EDIT (조건부 제약 입력 준수)
+  minimal-implementation/SKILL.md                            EDIT (조건부 제약 입력 준수)
   task-contract/                              EDIT (관련 입력·근거 계획 연결)
   acceptance-evidence-validator/               EDIT (CS 의무와 근거 연결)
 
@@ -604,7 +604,7 @@ pnpm new:skill --name cs-engineering --phase cs-constraint-derivation --capabili
 
 ### 단계 C — AGS 흐름 통합
 
-기존 task-contract, ponytail, review, acceptance 사이 입력과 근거를 연결한다. PlanWorkflowRequest와 모든 plan 재구성·서명·실행 경로에 binding을 전달한다. 기존 workflow 의미가 바뀌지 않는 것을 회귀 테스트로 확인한다.
+기존 task-contract, minimal-implementation, review, acceptance 사이 입력과 근거를 연결한다. PlanWorkflowRequest와 모든 plan 재구성·서명·실행 경로에 binding을 전달한다. 기존 workflow 의미가 바뀌지 않는 것을 회귀 테스트로 확인한다.
 
 초기 후보에서는 `observe` 정책으로 기존 gate를 약화하지 않은 채 CS 결과·추가 비용·누락을 관측한다. `enforce`에서는 선택된 필수 의무가 완료 조건으로 작동한다. 모드·정책은 새 작업 시작 때 고정하고, 진행 중 caller가 낮출 수 없게 한다.
 
@@ -660,7 +660,7 @@ git diff --check
 
 - [R1] `AGENTS.md`: 역할·호스트 경계, 배포물, 검증 순서, 스킬/README/source-lock 규칙.
 - [R2] `skills/orchestrator/SKILL.md`, `skills/orchestrator/references/entry-details.md`: 접수·선택·bootstrap/workflow/recovery·직접 호출·필수 gate 경계.
-- [R3] `skills/registry.json`: capability, executionClass, phaseOrder, inputBindings, stateMapping. 특히 task-contract, workspace-convention-profiler, ponytail, change-scope-guardian, software-security-auditor, acceptance-evidence-validator 항목.
+- [R3] `skills/registry.json`: capability, executionClass, phaseOrder, inputBindings, stateMapping. 특히 task-contract, workspace-convention-profiler, minimal-implementation, change-scope-guardian, software-security-auditor, acceptance-evidence-validator 항목.
 - [R4] `contracts/task-envelope.v1.schema.json`: 폐쇄형 필드와 기존 문자열 제약·수용 기준.
 - [R5] `mcp-server/src/workflow-service.ts` 1–340행: planWorkflow, 계획 서명, claimWorkflowAttempt와 expected plan 재구성·frame 검증.
 - [R6] `contracts/types.ts` 1–220행: 기존 상태, 오류 코드, ExecutionContext·ExecutionRequirement.

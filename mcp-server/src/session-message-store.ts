@@ -571,7 +571,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
    * Quiet is a recent claim boundary or an open turn: a marker rung into a running turn reaches the host after that
    * turn's own boundary took the body, as an empty wake (3.5.2).
    */
-  // ponytail: a turn ended without a turn-end hook (an interrupt) stays open until the oldest body waited WAKE_QUIET_MAX_MS.
+  // ceiling: a turn ended without a turn-end hook (an interrupt) stays open until the oldest body waited WAKE_QUIET_MAX_MS.
   private wakePathOpen(key: WakePathKey, nowMs: number): boolean {
     const path = this.wakePath(key);
     if (path && (path.prerequisite_missing !== null || (path.retry_not_before !== null && String(path.retry_not_before) > iso(nowMs)))) return false;
@@ -1416,7 +1416,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
           attempt.relayId, attempt.attemptId, attempt.dispatchEpoch) as { state: string } | undefined;
       if (!row || attempt.dispatchEpoch < 1) return false;
       const path = this.wakePath(attempt);
-      // ponytail: a replayed record of the same attempt counts its transient failure twice (one extra backoff step);
+      // ceiling: a replayed record of the same attempt counts its transient failure twice (one extra backoff step);
       // add a per-attempt recorded flag if replays become common.
       if (outcome.result !== "not-delivered") this.updateWakePath(attempt, "failures = 0", [], nowMs);
       else if (outcome.kind === "transient") {

@@ -39,7 +39,7 @@
 4. `CollaborationDecision.v1.route`가 `delegate`인 경우에만 `subagent-coordination`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `auditSeparationRequired`는 route와 독립된 의무다. `delegate`와 함께 참이면 작업 위임과 별도 감사자를 모두 계획한다. `audit-only`는 작업 위임 없이 감사 의무만 남은 경우다. 감사자는 감사 대상 작업에 참여하지 않고 최종 후보가 준비된 뒤 감사하며, 사용자 금지나 실행 불가가 있으면 감사 완료로 처리하지 않는다. 작업 단위가 둘 이상이거나 `orchestration.requested: true`라는 사실만으로 추가하지 않는다.
 5. 실제로 양립할 수 없는 대안이나 충돌하는 근거 중 하나를 선택해야 하고, 독립 관점과 교차 반박이 그 선택에 필요한 경우에만 `independent-deliberation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `decision.complexity: complex`만으로 추가하지 않으며, 이 단계는 실제 작업이나 완료 게이트를 대체하지 않는다.
 6. 정확한 최종 대상이 있는 고위험 변경의 실행·병합·릴리스·완료 가능 여부를 판정하는 요청에는 `independent-audit`을 추가한다. 감사 전의 구현·수정·자체 검증은 이 provider의 역할이 아니다.
-7. [공통 접수·선택 기준](intake.md#공통-접수선택-기준)에서 코딩 단계가 선택됐으면 `minimal-implementation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 이 단계는 변경 전 기준선 뒤, 위험한 상태 변경의 사전 점검과 범위·수용 근거 확인 전에 실행된다. 이 단계에서는 이력으로 복구할 수 있는 파일(예: Git이 추적하는 파일)의 편집·삭제, 새 파일 생성, 확인용 검사(예: 테스트·빌드) 실행만 한다. 추적되지 않는 기존 파일이나 작업 폴더(예: 저장소) 밖 대상의 삭제·덮어쓰기, 마이그레이션·데이터 변경의 실제 실행, 배포·태그처럼 별도 승인 경계에 있는 작업은 필요한 사전 점검 뒤에 실행한다. 시험 실행, 되돌릴 수 있는 작업 사본 저장과 자동 검사 실행(예: 작업 브랜치의 커밋·push, CI)에는 추가 PRE나 승인을 요구하지 않는다. MCP 계획에 실제 상태 변경에 필요한 stage가 없으면 그 stage를 넣은 새 계획으로 진행하고, 승인이 없으면 대상·영향·실행할 명령을 담아 사용자에게 바로 묻는다. 요청받은 변경을 남은 작업으로 돌려 놓은 채 완료로 보고하지 않는다. provider는 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 방법을 고르고, 의도적으로 뺀 것을 결과에 남긴다. MCP 없이 직접 진행할 때도 이 단계에서 이 capability의 provider를 호출한다. 동결된 `TaskEnvelope.v1`의 범위와 수용 기준은 명시적 요청으로 보고 줄이지 않으며, 줄일 후보는 최종 결과에 제안으로만 남긴다. 검사용 파일(예: 테스트)을 포함한 새 파일은 `scope.included`·`workUnits[].writeTargets` 안에서 작업 공간의 기존 검사 관례와 위치를 따라 만든다. 작업 계약이 없으면 사용자 요청이 정한 범위를 같은 기준으로 삼는다. 코드 리뷰·감사·검증·완료 판정, 코드 설명·조사만 하는 요청, 코딩이 아닌 요청과 검토·감사를 맡은 하위 실행에는 이 capability를 적용하지 않는다.
+7. [공통 접수·선택 기준](intake.md#공통-접수선택-기준)에서 결과물(코드·문서·자료·설정·절차)을 만들거나 바꾸는 단계가 선택됐으면 `minimal-implementation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 이 단계는 변경 전 기준선 뒤, 위험한 상태 변경의 사전 점검과 범위·수용 근거 확인 전에 실행된다. 이 단계에서는 이력으로 복구할 수 있는 파일(예: Git이 추적하는 파일)의 편집·삭제, 새 파일 생성, 확인용 검사(예: 테스트·빌드) 실행만 한다. 추적되지 않는 기존 파일이나 작업 폴더(예: 저장소) 밖 대상의 삭제·덮어쓰기, 마이그레이션·데이터 변경의 실제 실행, 배포·태그처럼 별도 승인 경계에 있는 작업은 필요한 사전 점검 뒤에 실행한다. 시험 실행, 되돌릴 수 있는 작업 사본 저장과 자동 검사 실행(예: 작업 브랜치의 커밋·push, CI)에는 추가 PRE나 승인을 요구하지 않는다. MCP 계획에 실제 상태 변경에 필요한 stage가 없으면 그 stage를 넣은 새 계획으로 진행하고, 승인이 없으면 대상·영향·실행할 명령을 담아 사용자에게 바로 묻는다. 요청받은 변경을 남은 작업으로 돌려 놓은 채 완료로 보고하지 않는다. provider는 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 방법을 고르고, 의도적으로 뺀 것을 결과에 남긴다. MCP 없이 직접 진행할 때도 이 단계에서 이 capability의 provider를 호출한다. 동결된 `TaskEnvelope.v1`의 범위와 수용 기준은 명시적 요청으로 보고 줄이지 않으며, 줄일 후보는 최종 결과에 제안으로만 남긴다. 검사용 파일(예: 테스트)을 포함한 새 파일은 `scope.included`·`workUnits[].writeTargets` 안에서 작업 공간의 기존 검사 관례와 위치를 따라 만든다. 작업 계약이 없으면 사용자 요청이 정한 범위를 같은 기준으로 삼는다. 검토·감사·검증·완료 판정, 설명·조사만 하는 요청과 검토·감사를 맡은 하위 실행에는 이 capability를 적용하지 않는다. 대체물(모의·고정값·자리 채움·조용한 대체 경로·삼킨 오류)이 낸 통과는 완료 근거가 아니며, 실제 실행이 실패하면 `failed`로 기록한다.
 8. 단독 전문 작업과 스킬 생략은 [공통 접수·선택 기준](intake.md#공통-접수선택-기준)을 따르고 수렴 root나 workflow run을 만들지 않는다.
 
 이 스킬을 사용했다는 사실은 MCP `executionMode`나 `CollaborationDecision.v1.route`를 정하지 않는다. 실행 방식은 선택한 capability와 `riskLevel`·`orchestration`을 담은 `TaskEnvelope.v1`로 기존 계획기가 정하고, 위임 여부는 위임 판단 규칙이 따로 정한다. `orchestration.requested: true`는 실패 영향이 크고 순서·gate 연결이 필요한 전문 단계가 둘 이상이며 MCP를 사용할 수 있을 때 적는다. 계획기는 이 값으로 `orchestrated`와 `direct`를 나누므로 `false`이면 direct 계획이 돌아온다.
@@ -91,8 +91,8 @@ READY 조건을 task-contract에 전달해 사용자 요구·수용 기준·검�
 TaskEnvelope.v1을 바꾸지 않고 최종 task digest로 binding을 만든다.
 
 `handoff`로 동결 입력을 재검사하고 같은 reference/digest와 required obligation ID를
-`ponytail`의 구현 지시로 넘긴다. 수신자는 원자료 접근과 조건 수신을 확인한다. 기존
-`ponytail` inputBindings는 유지되며 모든 구현의 자동 인계 증명으로 표현하지 않는다.
+`minimal-implementation`의 작업 지시로 넘긴다. 수신자는 원자료 접근과 조건 수신을 확인한다. 기존
+`minimal-implementation` inputBindings는 유지되며 모든 결과물 작업의 자동 인계 증명으로 표현하지 않는다.
 
 리뷰 capability만 workflow에 요청한다. 선택된 phase67의 MCP stage는
 `cs-review-bundle`과 `cs-review-report` artifact를 받아 검사 스크립트로 task·후보·조건·원시
@@ -107,6 +107,6 @@ MCP stage 검증·실호스트 자동 선택·독립 감사를 각각 구분한�
 
 테스트 작성·보강 요청이면 `test-engineering`을 선택한다. 같은 테스트가 실제 결함에서 실패하는지 확인할 때는 `test-engineering`의 test-sensitivity-review를, prepared test plan의 계약 검사에는 test-plan-validation을 선택한다. 고정된 diff·patch·PR 리뷰에는 `code-review`/change-code-review를 선택한다. 단순 문구 수정·설명이나 순수 결과물 제작에 두 검증 단계를 일률적으로 추가하지 않는다. 입력 자료는 새 스킬의 SKILL.md와 integration descriptor로 확인한다.
 
-작업 조건에 맞는 [Engineering Practices index](engineering-practices/index.md)의 모듈만 읽어 기존 담당자에게 근거와 함께 전달한다. 실패 판별은 `blocker-diagnostician`/debugging, 구현 단순화는 `ponytail`/implementation, 의존성·에이전트 확장 변경은 `software-security-auditor`/dependency, 완료 근거 대조는 `acceptance-evidence-validator`/verification, 스킬 작성은 agent-instructions로 연결한다. 기존 전문 스킬을 직접 호출한 경로에서는 필요한 참조도 명시한다.
+작업 조건에 맞는 [Engineering Practices index](engineering-practices/index.md)의 모듈만 읽어 기존 담당자에게 근거와 함께 전달한다. 실패 판별은 `blocker-diagnostician`/debugging, 구현 단순화는 `minimal-implementation`/implementation, 의존성·에이전트 확장 변경은 `software-security-auditor`/dependency, 완료 근거 대조는 `acceptance-evidence-validator`/verification, 스킬 작성은 agent-instructions로 연결한다. 기존 전문 스킬을 직접 호출한 경로에서는 필요한 참조도 명시한다.
 
 기존 cs-engineering 보고서가 있으면 불변조건·검증 의무 ID를 참조하고 새 규칙으로 교체하지 않는다. 새 권한·PEER·세션 배분·감사 정책은 만들지 않는다. prepared artifacts를 검사 스크립트로 검증한 결과와 원시 근거를 기존 수용/감사 단계에 전달한다. 선택됨·참조 읽음·실행됨·검증됨을 별도로 기록한다. registry 등록과 로컬 CONSISTENT만으로 실제 호스트 활성화나 독립 감사 PASS를 주장하지 않는다.

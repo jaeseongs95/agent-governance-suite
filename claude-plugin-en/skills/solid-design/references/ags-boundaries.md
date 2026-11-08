@@ -7,7 +7,7 @@
 | `AGENTS.md`, `instruction-scope-resolver` | 현재 적용 지침·제외 경로를 입력으로 사용 | 지침 우선순위·override 규칙을 새로 정하지 않는다. |
 | `orchestrator` | 필요한 경우 `solid-design-assessment` 결과 전달 | 선택·순서·권한·위임·gate 연결을 대신하지 않는다. |
 | `task-contract` | 기존 objective/scope/acceptance와 contract 참조 | SOLID 권고로 수용 기준·권한을 자동 변경하지 않는다. |
-| `ponytail` | 필요한 최소 경계와 변경 방향 제공 | 구현·라이브러리 선택 및 최소 구현 규칙은 기존 담당 유지. |
+| `minimal-implementation` | 필요한 최소 경계와 변경 방향 제공 | 구현·라이브러리 선택 및 최소 구현 규칙은 기존 담당 유지. |
 | `cs-engineering` | 기존 rule/obligation ID와 불변조건 참조 | CS 의무를 재발급하거나 concurrency·DB·성능 검증을 대체하지 않는다. |
 | `code-review` | 위치·계약·호출 경로가 있는 설계 finding 제공 | 전체 변경 coverage·결함 검토 완료를 주장하지 않는다. |
 | `test-engineering` | 소비자 계약, 오류·취소·수명·대체 검증 질문 제공 | 테스트 계획·oracle·민감도·proof workflow를 복제하지 않는다. |

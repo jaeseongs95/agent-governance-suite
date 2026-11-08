@@ -139,7 +139,7 @@ function operands(args: Token[], valued: ReadonlySet<string> = new Set()): { opt
   return { options, values, rest };
 }
 
-// Inline interpreter code that writes files. ponytail: a marker list, not a language parser; code without one of these
+// Inline interpreter code that writes files. ceiling: a marker list, not a language parser; code without one of these
 // calls (or a script file run by name) is not counted. Upgrade path: host write mediation (sandbox write events).
 const SCRIPT_WRITES = [
   /\b(?:writeFile|appendFile|copyFile|createWriteStream|writeTextFile|write_text|write_bytes|file_put_contents)/u,

@@ -816,7 +816,7 @@ export class ContinuityService implements ContinuityGateway {
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     // Roots bound earlier do not conflict: overlapping paths are the convergence guard's ROOT_CONFLICT. Only a
     // concurrent epoch change fails here, and the start can be retried, so it is not an infrastructure failure.
-    // ponytail: the owner check and the bind are two continuity statements; the caller's workflow transaction (one
+    // ceiling: the owner check and the bind are two continuity statements; the caller's workflow transaction (one
     // lease, one run) keeps two sessions from starting the same root at once.
     if (this.store.ownedElsewhere(task.taskCorrelation, rootId)) {
       throw new WorkflowContractError("INVALID_INPUT", msg("continuity.binding.rootOwnedElsewhere", { rootId }), { reason: "ROOT_NOT_OWNED", rootId });
@@ -1088,7 +1088,7 @@ export class ContinuityService implements ContinuityGateway {
     if (roots.length > 0) try { host = hostIdentity(); } catch { host = ""; }
     const checked = [...targets.map((key, index) => shown[index] ?? key), ...unversioned];
     const identities = checked.map(given => {
-      // ponytail: a target whose identity cannot be read (or an unread tool target) only counts in the window.
+      // ceiling: a target whose identity cannot be read (or an unread tool target) only counts in the window.
       if (roots.length === 0 || !path.isAbsolute(given)) return null;
       try { return identify(given); } catch { return null; }
     });

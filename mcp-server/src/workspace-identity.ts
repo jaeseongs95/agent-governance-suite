@@ -288,7 +288,7 @@ let cachedMachineId: string | null | undefined;
 /**
  * The OS's own machine ID, or null only where the OS has none (no /etc/machine-id nor /var/lib/dbus/machine-id, or
  * another platform). A failed read throws: "cannot tell" must not become "no machine ID" and a new random host ID.
- * ponytail: Windows and macOS spawn reg.exe / ioreg once per process (about 25 ms warm on Windows).
+ * ceiling: Windows and macOS spawn reg.exe / ioreg once per process (about 25 ms warm on Windows).
  */
 export function osMachineId(): string | null {
   if (cachedMachineId !== undefined) return cachedMachineId;
@@ -330,7 +330,7 @@ function derivedHostId(machineId: string): string {
  * A machine ID that cannot be read is HOST_IDENTITY_UNRESOLVED (root saves are refused; the edit gate takes the
  * same-host side). Only where the OS has no machine ID is a random UUID created once in `host-id` of the shared AGS
  * state directory, published with a hard link (an exclusive create where the file system has none) so two first
- * readers end with the one that won. ponytail: that fallback ID is lost with the file, and copying the state directory
+ * readers end with the one that won. ceiling: that fallback ID is lost with the file, and copying the state directory
  * copies it.
  */
 export function hostIdentity(environment: NodeJS.ProcessEnv = process.env, machineId: () => string | null = osMachineId): string {
@@ -352,7 +352,7 @@ export function hostIdentity(environment: NodeJS.ProcessEnv = process.env, machi
       try { fs.linkSync(draft, file); } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== "EEXIST") {
           // No hard links here (FAT, some network drives): an exclusive create still lets exactly one first reader win.
-          // ponytail: a reader between that create and its write sees no ID yet and is HOST_IDENTITY_UNRESOLVED (retried
+          // ceiling: a reader between that create and its write sees no ID yet and is HOST_IDENTITY_UNRESOLVED (retried
           // on the next call); a crash in that gap leaves an empty file that stays unresolved until it is removed.
           try { fs.writeFileSync(file, content, { flag: "wx", mode: 0o600 }); } catch (exclusive) {
             if ((exclusive as NodeJS.ErrnoException).code !== "EEXIST") throw exclusive;

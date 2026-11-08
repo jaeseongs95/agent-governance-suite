@@ -12,7 +12,7 @@ import { tagProducerFailure } from "./failure-diagnostics.js";
  * - Windows: one PowerShell child opens the host handle first, reads StartTime through that handle and waits for exit.
  *   While a handle is open the process object, and so its PID, cannot be reused (PROCESS_INFORMATION, "Terminating a
  *   Process"). The child also exits when the relay is gone, so it is not left behind.
- *   ponytail: about 52 MB private memory per relay (measured, Windows Server 2022); a compiled OpenProcess/
+ *   ceiling: about 52 MB private memory per relay (measured, Windows Server 2022); a compiled OpenProcess/
  *   WaitForSingleObject helper costs about 9.5 MB if this becomes a limit.
  * - aliveAt: a bound at which the host was certainly alive (the spawning hook's own start). A host born later is a
  *   different process that took the PID after the host ended, so the watch refuses it.

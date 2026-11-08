@@ -112,7 +112,7 @@ agy plugin list
 | [`task-contract`](skills/task-contract/) | AGS | 1.1.0 | 목표, 범위, 완료 기준, 위험, 권한을 작업 계약으로 정리합니다. |
 | [`model-effort-advisor`](skills/model-effort-advisor/) | AGS | 0.2.0 | 승인된 서브에이전트를 호출하기 전에 작업 요구와 호스트 지원 조합으로 모델·추론 수준을 선택합니다. |
 | [`coordinate-subagents`](skills/coordinate-subagents/) | AGS | 1.1.0 | 위임할지 판단하고 담당 범위, 전달할 맥락, 검증 책임을 정합니다. |
-| [`ponytail`](skills/ponytail/) | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail/tree/83b2cbc3bc50df3030c49d1dfe598ccefe850a85) 기반, AGS 수정 | 4.10.0 | 요구를 만족하는 가장 작은 완전한 구현을 고릅니다. |
+| [`minimal-implementation`](skills/minimal-implementation/) | AGS | 1.0.0 | 코드, 문서, 자료, 설정, 절차 등 모든 결과물에서 필요한 것만 담은 가장 작은 완전한 결과를 고르고, 대체물로 만든 통과를 완료로 내지 않습니다. |
 | [`change-scope-guardian`](skills/change-scope-guardian/) | AGS | 1.0.0 | 기준 상태와 현재 변경을 비교해 범위 밖 파일을 찾습니다. |
 | [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | AGS | 1.0.3 | 되돌리기 어려운 변경 직전에 대상, 승인, 영향, 복구 조건을 점검합니다. |
 | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | AGS | 1.0.0 | 갈리는 결정을 독립 관점과 반론으로 검토합니다. |

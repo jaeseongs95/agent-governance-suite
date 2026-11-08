@@ -1896,9 +1896,9 @@
     },
     {
       "schemaVersion": "2.0.0",
-      "skillId": "ponytail",
-      "version": "4.10.0",
-      "path": "./ponytail",
+      "skillId": "minimal-implementation",
+      "version": "1.0.0",
+      "path": "./minimal-implementation",
       "enabled": true,
       "priority": 50,
       "providers": [
@@ -1915,6 +1915,27 @@
           "outputSchema": "contracts/freeform-output.v1.schema.json",
           "resultSchema": "contracts/provider-result.v1.schema.json",
           "stateMapping": {
+            "selector": "/output/status",
+            "values": {
+              "passed": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "failed": {
+                "state": "failed",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "GATE_FAILED"
+                ]
+              },
+              "blocked": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE"
+                ]
+              }
+            },
             "default": {
               "state": "passed",
               "errorRequired": false
@@ -1925,11 +1946,11 @@
             ]
           },
           "selectionCriteria": [
-            "code-writing-step",
+            "deliverable-creation-or-change-step",
             "explicit-minimal-implementation-request"
           ],
           "preconditions": [],
-          "failureHandling": "Report the simplest rung that held and anything deliberately left out; do not add unrequested abstractions or dependencies.",
+          "failureHandling": "Record failed with GATE_FAILED when the actual run fails and blocked when evidence or input is missing; never record a failure or a substitute-path pass as passed. Report what was deliberately left out and any substitute path still present.",
           "gate": {
             "kind": "none",
             "policy": "none",

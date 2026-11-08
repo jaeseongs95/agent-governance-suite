@@ -52,7 +52,7 @@ const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-
 // A node + cli.js installation runs as `node` and is deliberately not recognized (auditor 5970 Q2(b)).
 // The official native installer runs the versioned file itself: <home>/.local/share/claude/versions/<x.y.z> (tester c613
 // k2argv1-r06 1749c788, 2.1.316, uid = the user, mode 0755).
-// ponytail: only observed install shapes; apt, dnf and brew paths are not observed and read as FORK_HOST_UNRECOGNIZED
+// ceiling: only observed install shapes; apt, dnf and brew paths are not observed and read as FORK_HOST_UNRECOGNIZED
 // (lineage decides), add each once its /proc exe is observed.
 export const CLAUDE_NATIVE_EXECUTABLE_PATTERN = /^\/(?:[^/]+\/)+(?:node_modules\/@anthropic-ai\/claude-code\/bin\/claude\.exe|\.local\/share\/claude\/versions\/\d+\.\d+\.\d+)$/u;
 // Shared temporary directories are never a recognized install, as for the agy runner (UNTRUSTED_WRITABLE_PATH_PATTERN).

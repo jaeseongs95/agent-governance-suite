@@ -158,7 +158,7 @@ export function resolveRequestLocale(meta: unknown, fallback: SupportedLocale): 
   return (ranges && lookupLocale(ranges)) ?? fallback;
 }
 
-// ponytail: compiled formatters are kept for the process; the bound is locales x catalog keys, not callers or params.
+// ceiling: compiled formatters are kept for the process; the bound is locales x catalog keys, not callers or params.
 const formatters = new Map<string, IntlMessageFormat>();
 
 function formatter(locale: SupportedLocale, key: string): IntlMessageFormat | null {

@@ -8,7 +8,7 @@
 | [test-proof](test-proof.md) | 6 | test-engineering |
 | [code-review](code-review.md) | 6 | code-review |
 | [debugging](debugging.md) | 6 | blocker-diagnostician |
-| [implementation](implementation.md) | 6 | ponytail |
+| [implementation](implementation.md) | 6 | minimal-implementation |
 | [dependency](dependency.md) | 6 | software-security-auditor |
 | [verification](verification.md) | 6 | acceptance-evidence-validator |
 | [agent-instructions](agent-instructions.md) | 6 | orchestrator |

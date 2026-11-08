@@ -196,7 +196,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   recordCallAdmission(admission: CallAdmission): void {
     this.guard(msg("workflow.store.recordHostCallAdmission", {}), {}, () => this.transaction(() => {
       const now = new Date(this.currentTimeMilliseconds());
-      // ponytail: day-old unclaimed rows are pruned on the next write; no background sweeper.
+      // ceiling: day-old unclaimed rows are pruned on the next write; no background sweeper.
       this.database.prepare("DELETE FROM call_admissions WHERE created_at < ?").run(new Date(now.getTime() - 86_400_000).toISOString());
       this.database.prepare(`
         INSERT OR REPLACE INTO call_admissions(host, call_id, admission_json, created_at) VALUES (?, ?, ?, ?)
@@ -394,7 +394,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
 
   /**
    * Every active root with its identity; `persistAt` saves fresh identities (a root insert), null only reads (the edit
-   * gate). ponytail: every active root is compared in process, on each insert and each gated edit (3.4.0 C9); index the
+   * gate). ceiling: every active root is compared in process, on each insert and each gated edit (3.4.0 C9); index the
    * derived identity if a ledger ever holds thousands.
    */
   private readActiveRoots(persistAt: string | null): IdentifiedRoot[] {

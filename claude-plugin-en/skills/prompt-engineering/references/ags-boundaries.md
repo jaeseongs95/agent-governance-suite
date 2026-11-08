@@ -10,7 +10,7 @@
 | JEV 및 vendor 분류 경로 | 프롬프트가 작성·수정 대상인 경우에만 해당 경로의 원본 파일을 분석 | 원문 전달 앞단 재작성, 별도 의미 요약 모델, profile 변경을 자동 추가하지 않음 |
 | workspace-convention-profiler | 실제 파일·셸·도구·출력 관례를 재사용 | 환경을 추측하거나 새 호스트 기능을 만들어내지 않음 |
 | model-effort-advisor | 필요한 지원 기능과 관찰된 한계를 전달 | 모델·effort·요금·허용 접근 경로(예: API)를 임의 결정하지 않음 |
-| `ponytail` / `solid-design` / `cs-engineering` | 요청된 프롬프트의 최소 변경과 인터페이스 요구를 전달 | 일반 코드 설계·불변조건·전체 구현을 새로 소유하지 않음 |
+| `minimal-implementation` / `solid-design` / `cs-engineering` | 요청된 프롬프트의 최소 변경과 인터페이스 요구를 전달 | 일반 코드 설계·불변조건·전체 구현을 새로 소유하지 않음 |
 | test-engineering | 과업별 판정 기준과 실패 사례를 제안 | 기존 시험 계획을 덮어쓰거나 평가 기준을 결과에 맞게 바꾸지 않음 |
 | evaluation-validity-auditor | 비교 조건·표본 분리·raw 결과를 제공 | 자기 평가를 독립 타당성 PASS로 대체하지 않음 |
 | acceptance-evidence-validator / independent-audit-gate | 동일 후보의 실제 검증 증거를 전달 | 완료·감사·릴리스 승인을 생성하지 않음 |
