@@ -674,7 +674,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
   }
 
   // ---------- 전역 컨텍스트 ----------
-  function gMax() { return S.data.globalMaxBytes || (S.data.global && S.data.global.maxBytes) || 2000; }
+  function gMax() { return S.data.globalMaxBytes || (S.data.global && S.data.global.maxBytes) || 4000; }
   function ruleMeta(text) {
     if (!S.g.baseRules.includes(text)) return text.trim() === '' ? '새 규칙 · 비어 있으면 저장하지 않습니다' : '저장 안 된 변경';
     const hist = S.data.globalHistory;

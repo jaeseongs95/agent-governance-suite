@@ -29,7 +29,7 @@ import { callerMeta, metaIngress, rootCaller } from "../helpers/caller.js";
 import { AdminError } from "../../mcp-server/src/admin-webauthn.js";
 import { ensureBootstrapped, fakeAuthenticator, signAndCommit } from "../helpers/fake-authenticator.js";
 
-// Three contexts (AGS3-T-0023, user decisions 2026-11-07): global (every session, 2000 bytes, changed only by a record
+// Three contexts (AGS3-T-0023, user decisions 2026-11-07): global (every session, 4000 bytes since 4.0.0, changed only by a record
 // the user's passkey signs on the admin page), role (keyed by the registered role the user bound the session to, 1000
 // bytes, shared by that role's sessions) and situational (the session's own current memory, 2000 bytes, unchanged). The
 // role a session may use comes only from its signed binding (AGS3-T-0024), never from the board's self-written role.
@@ -96,14 +96,14 @@ function adminCode(action: () => unknown): string {
 }
 
 describe("context layer store and service", () => {
-  it("keeps the byte limits in UTF-8 bytes of the body: 2000 global, 1000 role, and the situational limit stays 2000", () => {
+  it("keeps the byte limits in UTF-8 bytes of the body: 4000 global, 1000 role, and the situational limit stays 2000", () => {
     const service = serviceAt(path.join(directory(), "layers.sqlite3"));
-    expect([GLOBAL_CONTEXT_MAX_BYTES, ROLE_CONTEXT_MAX_BYTES, CURRENT_MEMORY_MAX_BYTES]).toEqual([2000, 1000, 2000]);
-    // 666 Hangul syllables are 1998 bytes; two ASCII bytes reach the limit exactly, one more passes it.
-    const atLimit = `${"가".repeat(666)}ab`;
-    expect(Buffer.byteLength(atLimit)).toBe(2000);
+    expect([GLOBAL_CONTEXT_MAX_BYTES, ROLE_CONTEXT_MAX_BYTES, CURRENT_MEMORY_MAX_BYTES]).toEqual([4000, 1000, 2000]);
+    // 1333 Hangul syllables are 3999 bytes; one ASCII byte reaches the limit exactly, one more passes it.
+    const atLimit = `${"가".repeat(1333)}a`;
+    expect(Buffer.byteLength(atLimit)).toBe(4000);
     expect(service.proposeGlobal(caller(), null, atLimit)).toMatchObject({ pending: true, adminUrl: ADMIN_URL });
-    expect(code(() => service.proposeGlobal(caller(), null, `${atLimit}c`))).toMatchObject({ code: "INVALID_INPUT", reasonCode: "CONTEXT_LAYER_TOO_LARGE", details: { actualBytes: 2001, maxBytes: 2000 } });
+    expect(code(() => service.proposeGlobal(caller(), null, `${atLimit}c`))).toMatchObject({ code: "INVALID_INPUT", reasonCode: "CONTEXT_LAYER_TOO_LARGE", details: { actualBytes: 4001, maxBytes: 4000 } });
     bind(service, "codex", "s1", "reviewer");
     const role = `${"가".repeat(333)}a`;
     expect(Buffer.byteLength(role)).toBe(1000);

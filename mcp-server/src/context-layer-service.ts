@@ -37,8 +37,8 @@ import {
 
 export { normalizeRoleName, ROLE_NAME_MAX_LENGTH };
 
-/** User decision (2026-11-07): the global context holds 2000 bytes, a role context 1000 (UTF-8 of the body). */
-export const GLOBAL_CONTEXT_MAX_BYTES = 2000;
+/** User decisions: the global context holds 4000 bytes (2026-11-08, was 2000), a role context 1000 (UTF-8 of the body). */
+export const GLOBAL_CONTEXT_MAX_BYTES = 4000;
 export const ROLE_CONTEXT_MAX_BYTES = 1000;
 
 export interface GlobalContextView {
