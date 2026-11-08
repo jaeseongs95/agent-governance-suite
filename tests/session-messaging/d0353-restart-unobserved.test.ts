@@ -11,7 +11,7 @@ import "../../mcp-server/src/builtin-hook-host-adapters.js";
 import {adaptHostInput, registerHookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
 import {recordWakeHookObservation, wakeHookObservationReader, type WakeDispatchOutcome} from "../../mcp-server/src/session-message-wake-port.js";
 
-// D0353 under the AGS 3.0 doorbell (docs/ags30-wake-doorbell-design.md r3.2). The 2.x cases here asserted that a restart,
+// D0353 under the AGS 3.0 doorbell (docs/archive/ags30-wake-doorbell-design.md r3.2). The 2.x cases here asserted that a restart,
 // a new birth or time never releases an unobserved hand-off (permanent latch). They are rewritten to the 2.6 rule: a hand-off
 // ends by a later claim boundary, the end of its birth or its resend deadline, while I2 (an old birth claims nothing),
 // I4/I5 (no second effect before that) and I11 (no revival) still hold.
@@ -37,7 +37,7 @@ const capabilities: NonNullable<Parameters<SessionMessageStore["startPresence"]>
   supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "silent",
 };
 const iso = (at: number) => new Date(at).toISOString();
-// The synthetic host process the hook reported and the birth its relay's watcher bound (docs/ags30-broker-redesign.md 3.3).
+// The synthetic host process the hook reported and the birth its relay's watcher bound (docs/archive/ags30-broker-redesign.md 3.3).
 const HOST_PID = process.pid;
 const HOST_START = "synthetic-host-start";
 const resources: {directory: string; stores: Set<SessionMessageStore>}[] = [];

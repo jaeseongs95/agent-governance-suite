@@ -15,7 +15,7 @@ import { runSessionMessageRelay } from "../../mcp-server/src/session-message-rel
 import { RELAY_START_GRACE_MS, SessionMessageStore, type WakeAttempt, type WakeReservation } from "../../mcp-server/src/session-message-store.js";
 import type { WakeDispatchOutcome, WakeDispatchPort } from "../../mcp-server/src/session-message-wake-port.js";
 
-// Verification obligations CS-1..CS-6 of the broker removal (docs/ags30-broker-redesign.md 3.1-3.4, 5, 7).
+// Verification obligations CS-1..CS-6 of the broker removal (docs/archive/ags30-broker-redesign.md 3.1-3.4, 5, 7).
 // Time is injected (store clock) and contention is forced with a second connection; nothing waits on a wall clock.
 const T0 = Date.parse("2026-11-01T00:00:00.000Z");
 const SECOND = 1000;

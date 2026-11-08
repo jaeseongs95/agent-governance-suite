@@ -23,7 +23,7 @@ import { InMemoryWorkflowStore, type WorkflowStore } from "../../mcp-server/src/
 import { childCaller, rootCaller } from "../helpers/caller.js";
 import { fixtureRootApprovalAccess, storedRootApprovalRefs } from "../helpers/root-approval.js";
 
-// Regression cases for docs/ags30-gates-design.md §6. Each case failed on 4b2dc571.
+// Regression cases for docs/archive/ags30-gates-design.md §6. Each case failed on 4b2dc571.
 const repository = fileURLToPath(new URL("../../", import.meta.url));
 const directories: string[] = [];
 const subject = `sha256:${"b".repeat(64)}` as const;
@@ -429,7 +429,7 @@ describe("D-0049 and D-0141 deliberation", () => {
 });
 
 describe("observed caller from the admitted host caller", () => {
-  // Binding caller -> gates recorder (docs/ags30-gates-design.md 3.8): only a child with a complete chain is attributable.
+  // Binding caller -> gates recorder (docs/archive/ags30-gates-design.md 3.8): only a child with a complete chain is attributable.
   it("treats the root and an incomplete child chain as unavailable and a complete child chain as host-observed", () => {
     const rootActor = hostActorId("codex", "gates-session");
     expect(observedCaller(rootCaller("codex", "gates-session"))).toEqual({ actor: rootActor, parentChain: [], provenance: "unavailable" });

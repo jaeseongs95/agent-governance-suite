@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generates the English-only packages (docs/i18n-design.md 8):
+// Generates the English-only packages (docs/contributing/i18n.md 8):
 //   claude-plugin-en/  the committed claude-plugin/ tree
 //   codex-plugin-en/   the tracked files the Codex plugin reads
 // Both differ from their source in runtime/locale.json, which makes AGS speak English; the Codex

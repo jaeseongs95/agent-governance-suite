@@ -10,7 +10,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { LATE_ADOPTION_LABEL, recordMessageRef } from "../../mcp-server/src/workflow-record-messages.js";
 import { WorkflowService, type MinimalStartContinuity } from "../../mcp-server/src/workflow-service.js";
 
-// docs/i18n-design.md 3, 6: workflow errors carry messageKey and params, keep root-locale text, and render per locale.
+// docs/contributing/i18n.md 3, 6: workflow errors carry messageKey and params, keep root-locale text, and render per locale.
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const workspace = path.resolve(process.platform === "win32" ? "C:\\work\\i18n-repo" : "/work/i18n-repo");
 

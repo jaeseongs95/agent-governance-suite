@@ -19,7 +19,7 @@ import { resolveSessionMessageStateDirectory } from "../../mcp-server/src/runtim
 import type { ActorObservation } from "../../mcp-server/src/input-observation.js";
 
 // Mocked messaging/process core regression fixture only, not native capture or R7 evidence. The hook queries no process
-// identity (docs/ags30-broker-redesign.md 3.4): it passes the adapter observation and its own start bound to the relay.
+// identity (docs/archive/ags30-broker-redesign.md 3.4): it passes the adapter observation and its own start bound to the relay.
 const syntheticHost = "synthetic-verified-relay";
 const syntheticRoot: ActorObservation = {role: "root", basis: "observed", reasonCode: "SYNTHETIC_VERIFIED_RELAY_ROOT"};
 registerHookHostAdapter(syntheticHost, {

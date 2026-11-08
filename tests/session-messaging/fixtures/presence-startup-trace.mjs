@@ -3,7 +3,7 @@ import { syncBuiltinESMExports } from "node:module";
 import { performance } from "node:perf_hooks";
 
 // Disposable child only: never print arguments, results, messages or paths.
-// 3.0 has no broker, TLS listener or key generation (docs/ags30-broker-redesign.md 3.1). The one PowerShell child left
+// 3.0 has no broker, TLS listener or key generation (docs/archive/ags30-broker-redesign.md 3.1). The one PowerShell child left
 // is the relay's host watcher (3.4); a PowerShell child created by any other caller during startup is the regression
 // this trace makes visible.
 const origin = performance.now();

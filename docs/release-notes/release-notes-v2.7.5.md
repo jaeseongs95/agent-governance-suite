@@ -4,7 +4,7 @@
 
 두 번째 퇴역 근거를 넓힙니다. 같은 세션의 최신 presence 행(birth 기준)이 알림을 받은 birth의 살아 있는 행이 아니면 퇴역합니다. 새 birth가 최신이거나, 알림의 birth가 끝났거나 lease가 끊겼거나, presence 행이 모두 지워진 경우입니다. 주입 만료와 유예 조건, 활동 근거, 새 상태 없이 `expired-unobserved`로 끝내는 방식, schema는 그대로입니다. 판정은 instance와 birth generation으로 하고 transport는 보지 않습니다.
 
-이 근거로 퇴역해도 wake 누적 억제의 범위는 줄지 않습니다. 끝났거나 lease가 끊긴 birth는 다시 살아나지 않습니다. heartbeat는 살아 있는 행만 갱신하고, 같은 instance가 다시 등록되면 더 늦은 새 birth를 받습니다. presence 조회, relay tick, 현재 세대 claim과 `autoWake`는 모두 최신 행을 읽습니다. 따라서 최신 행이 알림의 살아 있는 birth가 아니면 그 알림은 현재 세대로 claim될 수 없고, live relay가 없으므로 새 wake도 보내지 않습니다. 세션이 다시 열리면 새 birth가 최신이 되므로 2.7.4에서도 그때 퇴역했습니다. 새 규칙은 세션이 끝난 뒤 다시 열리기 전까지의 구간에서만 결과가 다릅니다. 예외로, 알림의 birth와 같은 ms에 태어난 다른 instance가 최신 행으로 살아 있으면 2.7.4는 영구히 latch로 두었지만 2.7.5는 더 늦은 birth처럼 퇴역시키고 그 instance에 새 wake를 보낼 수 있습니다. 살아 있지만 조용한 세션(relay heartbeat로 lease가 유지되고 활동은 없음)의 알림은 지금처럼 latch로 남고, `autoWake`는 `latched`/`wake-unobserved`입니다. 퇴역한 알림이 늦게 도착하면 기존대로 `late_observed_at`만 기록하고 본문 claim에는 참여하지 않습니다. Codex hook은 이 marker-only 입력을 모델 요청 전에 막습니다. 자세한 규칙은 [미관측 알림 퇴역과 자동 깨우기 신호](session-message-lifecycle.md#미관측-알림-퇴역과-자동-깨우기-신호)를 따릅니다.
+이 근거로 퇴역해도 wake 누적 억제의 범위는 줄지 않습니다. 끝났거나 lease가 끊긴 birth는 다시 살아나지 않습니다. heartbeat는 살아 있는 행만 갱신하고, 같은 instance가 다시 등록되면 더 늦은 새 birth를 받습니다. presence 조회, relay tick, 현재 세대 claim과 `autoWake`는 모두 최신 행을 읽습니다. 따라서 최신 행이 알림의 살아 있는 birth가 아니면 그 알림은 현재 세대로 claim될 수 없고, live relay가 없으므로 새 wake도 보내지 않습니다. 세션이 다시 열리면 새 birth가 최신이 되므로 2.7.4에서도 그때 퇴역했습니다. 새 규칙은 세션이 끝난 뒤 다시 열리기 전까지의 구간에서만 결과가 다릅니다. 예외로, 알림의 birth와 같은 ms에 태어난 다른 instance가 최신 행으로 살아 있으면 2.7.4는 영구히 latch로 두었지만 2.7.5는 더 늦은 birth처럼 퇴역시키고 그 instance에 새 wake를 보낼 수 있습니다. 살아 있지만 조용한 세션(relay heartbeat로 lease가 유지되고 활동은 없음)의 알림은 지금처럼 latch로 남고, `autoWake`는 `latched`/`wake-unobserved`입니다. 퇴역한 알림이 늦게 도착하면 기존대로 `late_observed_at`만 기록하고 본문 claim에는 참여하지 않습니다. Codex hook은 이 marker-only 입력을 모델 요청 전에 막습니다. 자세한 규칙은 [미관측 알림 퇴역과 자동 깨우기 신호](../contributing/session-messaging.md#자동-깨우기-신호autowake)를 따릅니다.
 
 ## 동작 변화(호환성)
 
@@ -24,4 +24,4 @@
 
 퇴역 규칙은 Linux 환경의 시험(두 process 경합 포함)으로 확인했습니다. 실제 PC의 운영 DB와 설치 캐시 동작은 이 검사가 대신하지 않습니다.
 
-공식 [설치 안내](../README.md#설치)에 따라 업데이트한 뒤 새 세션으로 재연결합니다. 운영 DB·키·큐를 지우거나 덮어써 불확실한 상태를 없애지 않습니다. 버전 동기화와 로컬 검사는 실제 설치 bytes나 호스트 동작을 대신하지 않으므로, 설치·재연결 뒤 `get_session_message_status`의 wake 상태를 별도로 확인합니다.
+공식 [설치 안내](../../README.md#설치)에 따라 업데이트한 뒤 새 세션으로 재연결합니다. 운영 DB·키·큐를 지우거나 덮어써 불확실한 상태를 없애지 않습니다. 버전 동기화와 로컬 검사는 실제 설치 bytes나 호스트 동작을 대신하지 않으므로, 설치·재연결 뒤 `get_session_message_status`의 wake 상태를 별도로 확인합니다.

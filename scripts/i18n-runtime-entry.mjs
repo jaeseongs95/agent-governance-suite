@@ -1,4 +1,4 @@
-// Entry of runtime/i18n.mjs: the shared catalog for hook and script files that are not bundled (docs/i18n-design.md 6).
+// Entry of runtime/i18n.mjs: the shared catalog for hook and script files that are not bundled (docs/contributing/i18n.md 6).
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,7 +26,7 @@ export function hostLocale() {
   return resolved.locale;
 }
 
-/** A catalog message rendered in the host locale: script and CLI output (docs/i18n-design.md 6). */
+/** A catalog message rendered in the host locale: script and CLI output (docs/contributing/i18n.md 6). */
 export function hostText(key, params = {}) {
   return render(msg(key, params), hostLocale());
 }

@@ -17,7 +17,7 @@ import { transportDeliveryCapabilities } from '../../mcp-server/src/wake-transpo
 import { TrustStore } from '../../mcp-server/src/trust-store.ts';
 
 const dispatch = (store, operation, payload, reader) => dispatchSessionMessageOperation(store, operation, payload, reader);
-// AGS 3.0 doorbell (docs/ags30-wake-doorbell-design.md r3.2): outcomes are objects, every start/outcome carries the
+// AGS 3.0 doorbell (docs/archive/ags30-wake-doorbell-design.md r3.2): outcomes are objects, every start/outcome carries the
 // port's resend base, and a retry is always a new row. These cases keep I1-I6 and I11.
 const BASE = 10 * 60_000;
 const HANDED = { result: 'handed-off' };

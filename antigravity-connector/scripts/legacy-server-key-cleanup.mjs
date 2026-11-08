@@ -5,7 +5,7 @@ import path from "node:path";
 // AGS3-D-0028: before 3.0 the Antigravity MCP server key was `agent-governance-suite` (mcp_config.json, fade12db). agy
 // names a plugin server `<plugin name>_<server key>` and writes its lazy tool schemas to
 // `<home>/.gemini/antigravity{,-cli}/mcp/<server name>/<tool>.json` plus an optional `instructions.md`
-// (antigravity.google/docs/mcp; docs/antigravity-migration.md). After an update to the `ags` key the old server's
+// (antigravity.google/docs/mcp; docs/archive/antigravity-migration.md). After an update to the `ags` key the old server's
 // folder stayed next to the new one. This moves only that folder, and only when every entry in it is what agy writes
 // there, to a same-disk backup, and reports each target with what it did. It ends no process: the old key's server is
 // a child of the app session that started it and is gone once the app restarts with the new config.

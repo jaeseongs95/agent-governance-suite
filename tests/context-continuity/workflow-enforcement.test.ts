@@ -17,7 +17,7 @@ import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { hostActorId } from "../../mcp-server/src/host-attestation.js";
 import { msg } from "../../mcp-server/src/i18n.js";
 
-// Design docs/ags30-phase-check-design.md 7 (enforcement, 3.1.0). Synthetic hook inputs and stores; no real host run.
+// Design docs/archive/ags30-phase-check-design.md 7 (enforcement, 3.1.0). Synthetic hook inputs and stores; no real host run.
 // Product paths are synthetic paths inside this checkout (under version control, outside the OS temporary directory,
 // which the gate exempts); they are never created. A file outside any checkout is not a product file (7.3).
 const session = "enforce-session";

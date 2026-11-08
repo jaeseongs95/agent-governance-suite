@@ -28,7 +28,7 @@ function fixture(change = {}) {
   return root;
 }
 
-describe("message catalog checks (docs/i18n-design.md 5.3)", () => {
+describe("message catalog checks (docs/contributing/i18n.md 5.3)", () => {
   it("passes a complete, reviewed catalog", () => {
     expect(checkCatalogs(fixture())).toEqual([]);
   });

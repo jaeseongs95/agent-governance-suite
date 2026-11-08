@@ -16,7 +16,7 @@ const { paths, exclude } = JSON.parse(readFileSync(path.join(ROOT, "release", "a
 mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
 // glob magic gives exclude patterns the same meaning as path.matchesGlob in the package test
 // (`**/` also matches no directory); plain git pathspecs would not.
-// The English package differs only in runtime/locale.json (docs/i18n-design.md 8), so that one
+// The English package differs only in runtime/locale.json (docs/contributing/i18n.md 8), so that one
 // file is swapped for a virtual one instead of building a second tree. Git does not apply
 // --prefix to a virtual file (2.55), so its path carries the prefix itself.
 const english = locale === "en"

@@ -22,7 +22,7 @@ import { transportWakePort } from "../../mcp-server/src/wake-transports.js";
 import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
 import { TrustStore } from "../../mcp-server/src/trust-store.js";
 
-// AGS 3.0 wake doorbell (docs/ags30-wake-doorbell-design.md r3.2, 7.1). Synthetic store-level cases with real temporary
+// AGS 3.0 wake doorbell (docs/archive/ags30-wake-doorbell-design.md r3.2, 7.1). Synthetic store-level cases with real temporary
 // SQLite connections. Every time is an explicit argument; no case waits on wall time, raises a limit or retries.
 // Long synchronous sweeps run each simulated step, or the whole sweep, as one writer transaction (store.atomically): the
 // cases assert state transitions at explicit times, never durability between steps, so they need one commit, not one per
@@ -52,7 +52,7 @@ const HANDED: WakeDispatchOutcome = { result: "handed-off" };
 const UNKNOWN: WakeDispatchOutcome = { result: "unknown", reasonCode: "SYNTHETIC_TIMEOUT" };
 const TRANSIENT: WakeDispatchOutcome = { result: "not-delivered", kind: "transient", reasonCode: "CODEX_NO_ACTIVE_SESSION" };
 const PREREQ: WakeDispatchOutcome = { result: "not-delivered", kind: "prerequisite-missing", reasonCode: "SYNTHETIC_EXECUTABLE_MISSING" };
-// The synthetic host process the hook reported and the birth its relay's watcher bound (docs/ags30-broker-redesign.md 3.3).
+// The synthetic host process the hook reported and the birth its relay's watcher bound (docs/archive/ags30-broker-redesign.md 3.3).
 const HOST_PID = process.pid;
 const HOST_START = "synthetic-host-start";
 const iso = (at: number) => new Date(at).toISOString();

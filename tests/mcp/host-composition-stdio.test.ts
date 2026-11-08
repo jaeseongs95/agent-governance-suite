@@ -221,7 +221,7 @@ serverTest("rejects unobserved callers and admits an observed child caller", sco
     // A non-root thread without a parent contradicts itself; it is rejected, not admitted as a root.
     expect((await f.rawCall("plan_workflow", args, f.meta(model, "high", { thread: "owned-child-thread" }))).error)
       .toMatchObject({ code: "BINDING_INVALID", details: { reasonCode: "CODEX_ROOT_THREAD_MISMATCH" } });
-    // Observed child callers are allowed (docs/ags30-session-binding-design.md 2.0); the child acts as itself.
+    // Observed child callers are allowed (docs/archive/ags30-session-binding-design.md 2.0); the child acts as itself.
     const child = await f.rawCall<WorkflowPlanV1>("plan_workflow", args, f.meta(model, "high", { thread: "owned-child-thread", parent: sessionId }));
     expect(child.error).toBeNull();
     expect(child.data?.bootstrapExecution?.context.actorId).toBe(hostActorId("codex", sessionId, "owned-child-thread"));

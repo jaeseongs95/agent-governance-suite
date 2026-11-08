@@ -34,7 +34,7 @@ export function fixedIngress(caller: VerifiedCaller | (() => VerifiedCaller) = r
 
 let metaSequence = 0;
 /**
- * tools/call `_meta` as Codex 0.166 writes it (docs/ags30-session-binding-design.md 1.5), for servers that run the
+ * tools/call `_meta` as Codex 0.166 writes it (docs/archive/ags30-session-binding-design.md 1.5), for servers that run the
  * real codex ingress (AGENT_GOVERNANCE_HOST_ATTESTATION=codex). `thread`/`parent` make a child; a fresh callId per call.
  */
 export function codexCallMeta(sessionId = "test-session", options: {

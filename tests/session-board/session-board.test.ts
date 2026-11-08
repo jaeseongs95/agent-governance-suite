@@ -1,4 +1,4 @@
-// Session board 3.0 (docs/ags30-session-board-design.md 6.1, U1-U10). Real SQLite throughout; the only replaced boundary
+// Session board 3.0 (docs/archive/ags30-session-board-design.md 6.1, U1-U10). Real SQLite throughout; the only replaced boundary
 // is the messaging call in the MCP cases, where a real SessionMessageStore answers listCurrentPresence at a fixed clock.
 // Clocks are explicit; nothing waits on wall time.
 import { createHash } from "node:crypto";
@@ -287,7 +287,7 @@ describe("U6 listCurrentPresence", () => {
 });
 
 describe("U7/U8 MCP board tools", () => {
-  // The caller comes only from tools/call `_meta` (docs/ags30-session-binding-design.md 2.1); a child names its agent key.
+  // The caller comes only from tools/call `_meta` (docs/archive/ags30-session-binding-design.md 2.1); a child names its agent key.
   const call = async (client: Client, tool: string, args: Record<string, unknown>, identity = self, agentKey?: string) => {
     const response = await client.callTool({ name: tool, arguments: args, _meta: callerMeta(identity, agentKey) });
     return JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: unknown; error: { code: string; details: Record<string, unknown> | null } | null };
@@ -436,7 +436,7 @@ describe("U7/U8 MCP board tools", () => {
     expect(await call(blocked.client, "update_session_status", { schemaVersion: "1.0.0", summary: "x" })).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { step: "open" } } });
   });
 
-  // R9 (docs/ags30-session-board-design.md 6): each answer names the step that actually failed. A board the server can
+  // R9 (docs/archive/ags30-session-board-design.md 6): each answer names the step that actually failed. A board the server can
   // read but not write (Linux chmod 0444) still lists its summary with board.status "ok"; an update fails at "write".
   it.runIf(process.platform !== "win32" && process.getuid?.() !== 0)("R9: a read-only board still lists its summary, and an update reports the write step", async () => {
     const store = presenceStore();

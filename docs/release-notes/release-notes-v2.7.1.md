@@ -1,6 +1,6 @@
 # v2.7.1: wake 알림 누적 억제와 continuity DB 호환
 
-세션 메시지 wake 알림이 받는 세션에 쌓이는 문제를 고칩니다. 새 relay는 wake 알림을 본문과 따로 기존 `wake_nonces`에 저장하고, 대상마다 아직 관측되지 않은 알림을 하나만 유지합니다. 뒤따르는 본문은 기존 `messages`에 남아 다음 전달 때 함께 claim됩니다. 알림은 reserved→started→submitted/unknown→observed 순서로 기록하며, 결과가 불확실한 알림은 unknown으로 보존하고 relay·broker 재시작이나 만료를 이유로 다시 보내지 않습니다. 관측은 실제 `UserPromptSubmit` hook의 marker와 hook receipt로만 인정합니다. 자세한 수명과 한계는 [시스템 발급 메시지 ID와 재시도](session-message-lifecycle.md#wake-알림-수명과-누적-억제)를 따릅니다.
+세션 메시지 wake 알림이 받는 세션에 쌓이는 문제를 고칩니다. 새 relay는 wake 알림을 본문과 따로 기존 `wake_nonces`에 저장하고, 대상마다 아직 관측되지 않은 알림을 하나만 유지합니다. 뒤따르는 본문은 기존 `messages`에 남아 다음 전달 때 함께 claim됩니다. 알림은 reserved→started→submitted/unknown→observed 순서로 기록하며, 결과가 불확실한 알림은 unknown으로 보존하고 relay·broker 재시작이나 만료를 이유로 다시 보내지 않습니다. 관측은 실제 `UserPromptSubmit` hook의 marker와 hook receipt로만 인정합니다. 자세한 수명과 한계는 [시스템 발급 메시지 ID와 재시도](../contributing/session-messaging.md#wake-알림-초인종doorbell-모델)를 따릅니다.
 
 공통 relay는 outcome·capability·dispatch port만 사용하고 transport별 처리는 adapter 모듈에 둡니다. 기존 DB에는 컬럼과 활성 대상 UNIQUE index를 transaction으로 추가하며, 기존 nonce는 `legacy`로 남기고 새 누적 억제 보장을 소급하지 않습니다.
 

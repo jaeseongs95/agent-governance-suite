@@ -9,7 +9,7 @@ import { recordWakeHookObservation, wakeHookObservationReader } from '../../../m
 
 // relayId names this worker: a relay that was granted a lease uses the granted relay_id, otherwise this name (fenced).
 const [mode, database, effects, relayId, parentPid] = process.argv.slice(2);
-// The host process the parent test reported for the birth and the birth the relay's watcher bound (docs/ags30-broker-redesign.md 3.3).
+// The host process the parent test reported for the birth and the birth the relay's watcher bound (docs/archive/ags30-broker-redesign.md 3.3).
 const hostPid = Number(parentPid);
 const HOST_START = 'synthetic-host-start';
 // Explicit synthetic root adapter for core regression cases; not native capture or R7 evidence.

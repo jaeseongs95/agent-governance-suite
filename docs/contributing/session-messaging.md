@@ -1,4 +1,10 @@
-# 시스템 발급 메시지 ID와 재시도
+# 세션 메시지 계약
+
+세션 메시지의 ID 발급, 재시도, 회수, ACK, 깨우기(초인종), presence와 peer 결과 대기 판정의 계약을 정리한다. 사용자용 설명은 [세션 협업](../user/collaboration.md)에 있다.
+
+**읽는 법:** 3.0부터 broker 프로세스·TLS 연결·endpoint 파일은 없다. 각 프로세스가 공통 연산 표(`mcp-server/src/session-message-operations.ts`)를 자기 프로세스 안에서 실행하고, 연산 하나는 공유 SQLite의 `BEGIN IMMEDIATE` transaction 하나다. 아래 절 가운데 2.x 판에서 쓴 부분은 「broker」를 그 공통 연산 표를 실행하는 쪽으로 읽는다. 2.x broker의 endpoint·프로토콜 표지(`claim-receipts-v1`, `claimReceiptVersion`, `BROKER_CLAIM_RECEIPTS_REQUIRED`)는 현재 코드에 없으며, 그 서술은 2.x 기록이다.
+
+## 메시지 ID와 재시도
 
 릴레이의 기존 5초 주기는 `relay-tick` 한 요청으로 현재 세션 세대와 relay lease를 확인하고 두 heartbeat를 함께 갱신한다. pending 조회는 해당 transport가 필요한 경우만 포함한다. 오래된 세대·종료된 presence·만료된 lease는 갱신하지 않으며, heartbeat 자체는 실제 wake 관측이 아니다.
 
@@ -41,7 +47,7 @@ ACK는 해당 수신 대상에 대해 broker에 claim 이력이 기록되고 원
 
 ACK는 처음 성공한 ACK에서만 영수증 만료를 줄인다. 두 번째 ACK, 대상이 아닌 세션의 ACK, 모르는 ID의 ACK는 만료를 바꾸지 않으며, 줄인 만료는 다시 늘지 않는다. 따라서 ACK 후 1시간이 지난 ID는 status가 unknown(`null`)이고 같은 ID의 send도 발급 ID 없음으로 거절한다. 이 규칙은 새로 기록되는 ACK에만 적용하며, 이전 버전이 ACK한 기존 영수증의 만료를 소급해 바꾸지 않는다. 영구 tombstone이나 별도 DB·daemon은 없다. status는 준비 상태, 기존 queued/delivered/acknowledged 상태 또는 큐 행이 정리된 뒤 제출 영수증과 `deliveryState: "unknown"`을 구별한다.
 
-ACK 전 lease 재전달은 정상이며 같은 ID·본문을 유지한다. 중복 ACK는 최초 ACK 시각을 늘리지 않는다. ACK는 처리 확인으로, 업무 완료나 승인이 아니다. wake의 전달 결과가 불명확하면 기존 예약을 유지하고 새 wake 효과로 바꾸지 않는다. [peer 대기 판정](peer-wait-policy.md)의 nonce·generation·복귀 증거 만료 계약은 유지한다.
+ACK 전 lease 재전달은 정상이며 같은 ID·본문을 유지한다. 중복 ACK는 최초 ACK 시각을 늘리지 않는다. ACK는 처리 확인으로, 업무 완료나 승인이 아니다. wake의 전달 결과가 불명확하면 기존 예약을 유지하고 새 wake 효과로 바꾸지 않는다. [peer 대기 판정](#peer-결과-대기-판정)의 nonce·generation·복귀 증거 만료 계약은 유지한다.
 
 ## 회수(3.9.0)
 
@@ -96,7 +102,7 @@ ACK 전 lease 재전달은 정상이며 같은 ID·본문을 유지한다. 중�
 
 ## wake 알림: 초인종(doorbell) 모델
 
-3.0의 wake는 "받은함을 보라"는 초인종이다. 본문 전달은 기존 claim/ACK가 맡고, wake는 본문 권한의 경계가 아니다. 본문은 nonce 없이도 턴 종료·도구 경계에서 인수된다. 설계와 근거는 [ags30-wake-doorbell-design.md](ags30-wake-doorbell-design.md)에 있다.
+3.0의 wake는 "받은함을 보라"는 초인종이다. 본문 전달은 기존 claim/ACK가 맡고, wake는 본문 권한의 경계가 아니다. 본문은 nonce 없이도 턴 종료·도구 경계에서 인수된다. 설계와 근거는 [ags30-wake-doorbell-design.md](../archive/ags30-wake-doorbell-design.md)에 있다.
 
 host에 넘긴 표식에는 수신 확인과 취소가 없다. Codex는 대기열을 영속 저장하고 Running·Interrupted·Shutdown 상태에서는 꺼내지 않는다. Claude는 보류한 메시지를 `dialogExpiry`(기본 5분) 뒤에 버린다. agy에는 표식 관측 hook 경로가 없다. 그래서 store는 표식의 소비를 기다리며 슬롯을 영구히 잠그지 않고, 시간과 본문 인수 경계로 슬롯을 비운 뒤 다시 울린다.
 
@@ -267,7 +273,7 @@ AGS-D-0354 수리 뒤 broker가 실제 확인한 부모 PID와 출생토큰은 �
 
 형식 번호 2를 유지하며 기존 행에 nullable 열 세 개를 추가한다. 보장은 수리된 broker가 실제 검증해 보존한 세대부터 적용된다. 이미 정리된 A의 이력은 사후 복원할 수 없고, 출생토큰의 동일 tick·재부팅 식별 한계를 넘는 보장을 추가하지 않는다. 구형 writer는 새 보호 열을 모르므로 혼합 실행의 보호를 보장하지 않는다. 설치 전 기존 생산자의 정상 종료와 세대 단절 확인은 별도 실행·검증 대상이며, 파일 생성이나 새 설치만으로 과거 살아 있는 A가 사라졌다고 판단하지 않는다.
 
-조회(3.0): 현황판은 broker 요청 `list-current-presence {self}` 한 번으로 생존 여부를 받는다. broker는 store의 `listCurrentPresence`를 그대로 부른다. 각 세션의 최신 출생 가운데 online이거나, 끝나지 않았고 lease가 끝난 지 10분이 안 된(`unreachable`) 것만 heartbeat 내림차순으로 돌려주고, 호출한 세션은 상태와 관계없이 맨 앞에 둔다. 응답은 한도(32 KiB)보다 4 KiB 작은 예산까지만 담고 나머지는 `truncated`로 센다. 끝난 세션은 요약이 있어도 현황판에 나오지 않는다. broker가 답하지 않으면 현황판은 목록을 추측하지 않고 `MCP_UNAVAILABLE`(`step: "presence"`)을 돌려준다. `list-presence`는 hook의 relay 복구 확인용으로만 남고 `targets`(1~3개)가 필수다. 2.x의 대상 없는 요청과 3개씩 묶는 service 조회는 없앴다. 설계: `docs/ags30-session-board-design.md`.
+조회(3.0): 현황판은 broker 요청 `list-current-presence {self}` 한 번으로 생존 여부를 받는다. broker는 store의 `listCurrentPresence`를 그대로 부른다. 각 세션의 최신 출생 가운데 online이거나, 끝나지 않았고 lease가 끝난 지 10분이 안 된(`unreachable`) 것만 heartbeat 내림차순으로 돌려주고, 호출한 세션은 상태와 관계없이 맨 앞에 둔다. 응답은 한도(32 KiB)보다 4 KiB 작은 예산까지만 담고 나머지는 `truncated`로 센다. 끝난 세션은 요약이 있어도 현황판에 나오지 않는다. broker가 답하지 않으면 현황판은 목록을 추측하지 않고 `MCP_UNAVAILABLE`(`step: "presence"`)을 돌려준다. `list-presence`는 hook의 relay 복구 확인용으로만 남고 `targets`(1~3개)가 필수다. 2.x의 대상 없는 요청과 3개씩 묶는 service 조회는 없앴다. 설계: [`docs/archive/ags30-session-board-design.md`](../archive/ags30-session-board-design.md).
 
 broker는 relay가 주기적으로 요청하는 동안 종료되지 않으므로, 업데이트 뒤에도 이전 broker가 계속 돌 수 있다. 앞의 안내대로 기존 AGS MCP·relay·broker를 종료한 뒤 재연결한다.
 
@@ -276,3 +282,51 @@ broker는 relay가 주기적으로 요청하는 동안 종료되지 않으므로
 CHECK와 DEFAULT `'legacy'`는 제자리에서 바꿀 수 없으므로 `wake_nonces`를 한 transaction 안에서 다시 만든다. 기존 상태는 `submitted`→`handed-off`, `not-submitted`→`not-delivered`, `expired-unobserved`→`released`(이유 `migrated`), `started`→`unknown`으로 옮기고, `legacy` 행은 지운다. `late_observed_at`이 있는 옛 `unknown`도 `released`(이유 `migrated`)가 된다. 옮긴 활성 행(`handed-off`·`unknown`)에는 `outcome_at`(없으면 `started_at`), `resend_base_ms` 10분과 `resend_due_at = outcome_at + 10분`을 채워 영구히 잠기지 않게 한다. `wake_active_target`은 새 활성 상태 목록으로 다시 만들고, `wake_paths`는 기존 활성 행의 출생마다 streak 0으로 채운다. 옛 transport 값 `gemini-queue`는 presence·relay lease·wake 행에서 `antigravity-queue`로 바꾼다. 도중 실패는 전체를 rollback한다. 2.x broker는 version 3 DB를 열지 못한다(더 높은 version 거절). broker 프로토콜 버전도 2.0.0으로 올라가므로 2.x client·relay와 섞이지 않는다. 기존 AGS MCP·relay·broker를 종료한 뒤 업데이트한다.
 
 독립 process fixture와 번들 검사는 실제 host 설치·wake 관측을 대신하지 않는다. 실제 설치·양 host 실측은 별도 W07/출하 검증이며 로컬 PASS로 승격하지 않는다.
+
+## peer 결과 대기 판정
+
+2.6.0은 메시지 전송, 호출 전 제한, 턴을 끝낸 뒤의 복귀를 별도 기능으로 다룬다. 메시지나 ACK가 존재한다는 사실은 업무 완료나 승인을 뜻하지 않는다.
+
+### 실행 경계
+
+| 경로 | 관측과 실제 효과 |
+| --- | --- |
+| 지원 Codex hook | `PreToolUse`의 정확한 `mcp__codex_app__wait_threads` 이름과 `targets[].threadId`, 로컬 `hostId`, `timeoutMs`를 읽는다. main actor가 관측되고 아래 조건이 충족되면 호출 전에 `permissionDecision: deny`를 반환한다. |
+| hook 없는 기존 CLI | stdin의 `wait` 작업이 같은 판정을 받은 뒤 실제 delay 실행 여부를 결정한다. 거절 시 추가 조회·delay가 없고, 복귀 미확인이면 최대 1000ms 대기 후 한 번만 갱신한다. |
+| 그 밖의 native 호출 | AGS가 실행 경계를 소유하지 않는다. 안내만 가능하며 MCP 서버가 호출을 가로막는다고 주장하지 않는다. |
+
+The exact local Codex app `mcp__codex_app__wait_threads` hook surface is adapted separately from the host-neutral peer wait policy. All targets must correspond to unexpired peer metadata, and the hook must observe a main actor. A fresh current-generation presence, an instance-bound live relay, and a wake nonce reserved and consumed in that same generation are required for enforcement. Unknown, stale, mixed-target, remote, unsupported-tool and unknown-actor cases cannot create resume evidence. The hook can deny before the native call; the MCP server cannot intercept unrelated native calls or code nested in arbitrary execution tools. The portable CLI `wait` operation consumes the same decision before its own delay. A receipt, ACK, transport name or supplied JSON capability is not task completion, approval or proof of resume. Neither path creates a timer or poller while idle.
+
+강제 제한에는 다음 관측이 모두 필요하다.
+
+1. 모든 대상에 현재 hook 결속 sender와 주고받은 만료 전 peer 메시지 메타데이터가 있다. 서로 다른 채팅이나 관계가 미확인인 대상이 섞이면 제한하지 않는다.
+2. sender presence가 online이며 최신 instance의 lease가 유효하다.
+3. 현재 instance의 relay lease가 live이고 그 relay가 host 출생을 결속했다(`host_start`). PID 생존은 확인 근거로 쓰지 않는다. relay가 죽으면 lease가 15초 안에 끝난다.
+4. 같은 instance와 relay에서 예약된 nonce가 실제 host wake hook의 `claim-host-wake`에서 유효하게 소비되었으며 그 관측이 30초 이내이다. 기능 선언·브랜드·ACK·caller JSON만으로 이 증거를 만들지 않는다.
+5. presence에 `peer-wake` 주입과 `idleWake`가 선언되어 있으며 wake visibility와 일치한다. `none`은 복귀 가능한 상태로 취급하지 않는다.
+
+복귀가 확인된 peer 대기의 positive timeout은 거절한다. `timeoutMs: 0`은 첫 조회를 허용한다. 같은 대상·peer 상태·관측 cursor의 반복 조회만 30초 동안 억제하며, 거절된 반복은 만료 시각을 연장하지 않는다. peer 메타데이터나 cursor 변화, 새 사용자 입력 또는 기록 만료는 첫 조회를 다시 허용한다. `get_session_message_status`, 일반 sleep·셀 대기·프로세스·테스트 대기는 이 native 제한 대상이 아니다. 명시적인 사용자 대기 의도를 임의 regex나 `approved` 필드로 추정하지 않는다.
+
+복귀가 없거나 불명확한 상태에서는 대기를 일괄 금지하거나 세션 종료를 강제하지 않는다. 제한된 조회·대기를 사용하고 다음 사용자 턴에 이어가라는 안내를 반환한다. 최초 wake, nonce 예약 때의 generation을 확인할 수 없는 과거 wake, 관측 만료 직후에는 복귀를 미확인으로 둔다. 따라서 이 변경은 모든 첫 대기를 차단하는 기능이 아니다.
+
+native 요청은 JSON 키 순서, `hostId` 생략과 `local`, target 배열 순서, 동일 target·cursor 중복을 같은 의미로 정규화한다. 공통 판정도 target identity를 정렬·중복 제거한 뒤 상태 fingerprint와 억제 key를 계산한다. 실제 target이나 cursor 변화는 보존하며, 같은 target에 서로 다른 cursor가 있으면 distinct cursor 전체를 정규화된 revision에 남긴다. `afterCursor`는 생략 또는 문자열만 지원하며 형식이 다르면 native 강제 제한 경로로 진입하지 않는다.
+
+### 공개 CLI
+
+```json
+{"operation":"wait","payload":{"sender":{"host":"spark","sessionId":"owner"},"targets":[{"host":"grok","sessionId":"worker"}],"timeoutMs":60000}}
+```
+
+이 JSON을 `node mcp-server/dist/session-message-cli.mjs`의 stdin으로 전달한다. 출력의 `data.decision`은 실행 전 판정, `data.snapshot`은 현재 peer 메타데이터 digest, `data.waitedMs`는 수행한 대기 시간, `data.next`는 이어갈 방법이다. CLI는 범용 호스트용 기존 동일 사용자 협업 경로이며, 입력 identity를 보호 principal이나 별도 사용자 승인으로 승격하지 않는다. 새로운 전송·자동화·poller를 만들지 않는다.
+
+### 상태와 실패
+
+3.0부터 판정 근거는 모두 SQLite 행이다. 복귀 관측은 `wake_nonces.observed_at`(같은 instance·relay, 30초 이내)에서 읽고, 반복 억제는 `peer_wait_snapshots` 표(최대 1000행, 만료 행은 조회 때 제거)에 둔다. hook과 CLI처럼 수명이 짧은 프로세스도 같은 판정을 본다. daemon은 없다.
+
+오류에서 hook은 강제 제한을 만들지 않고 미확인 안내를 제공한다. CLI는 해당 작업을 지원하지 못하면 명시적인 오류로 종료한다. 본문·token·nonce 원문을 새 로그에 기록하지 않는다. nonce 결속은 digest로 보관한다. 기존 동일 사용자 협업 모델의 신뢰 경계는 그대로이며, 공격적인 동일 사용자 process의 호출이나 파일 조작을 보안 격리로 막는 기능은 아니다.
+
+### 검증 구분
+
+집중 검사에는 판정, stale/unknown/다른 generation/과거 nonce/미관측 wake, state·cursor 변화와 새 사용자 턴, 실제 배포 hook subprocess의 deny/allow, 공개 CLI의 요청 계수와 delay를 포함한다. 설치 형태의 검사에서는 `node_modules` 없는 별도 트리의 배포 진입점을 실행한다.
+
+subprocess fixture의 PASS는 설치된 Codex가 실제 native `PreToolUse` payload를 보내고 거절을 이행했다는 증거가 아니다. 지원되지 않는 tool 이름이나 중첩 실행 코드까지 통제하는 보장은 없다.

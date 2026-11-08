@@ -33,7 +33,7 @@ CI가 실패하면 코드 결함이어야 한다. 러너가 바빠서 떨어지�
 
 `run-tests.mjs`는 vitest가 실패해도 node:test를 끝까지 돌리고 `{"runner":"summary","vitestExitCode":…,"nodeExitCode":…}`로 두 결과를 함께 알린다. 종료 코드는 하나라도 실패하면 실패다. 예전에는 vitest가 실패하면 node:test가 돌지 않아 그 결과를 보려고 다시 돌려야 했다.
 
-이 방향은 3.4.0 토론으로 정했다(reviewer 3명, 결정 기록은 `docs/release-notes-v3.4.0.md`). isolate·pool·worker 수는 바꾸지 않았다. 모듈 캐시와 공유 상태 디렉터리 때문에 시험 사이 상태가 섞일 수 있고, 2코어 서버에서는 vitest가 이미 worker를 1개만 쓴다. 시간은 느린 시험의 원인을 고쳐 줄였다.
+이 방향은 3.4.0 토론으로 정했다(reviewer 3명, 결정 기록은 [`docs/release-notes/release-notes-v3.4.0.md`](../release-notes/release-notes-v3.4.0.md)). isolate·pool·worker 수는 바꾸지 않았다. 모듈 캐시와 공유 상태 디렉터리 때문에 시험 사이 상태가 섞일 수 있고, 2코어 서버에서는 vitest가 이미 worker를 1개만 쓴다. 시간은 느린 시험의 원인을 고쳐 줄였다.
 
 ## 바꾼 이유(3.2.0)
 

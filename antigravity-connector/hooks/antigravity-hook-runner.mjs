@@ -17,7 +17,7 @@ import { cleanupLegacyServerKey, legacyCleanupActed } from "../scripts/legacy-se
 let denyLocale = null;
 // The component name of every stderr record this connector writes (AGS3-D-0023 common format).
 const COMPONENT = "antigravity-hook-runner";
-/** A deny reason in the host locale (docs/i18n-design.md 4.1 ①); the locale is read once, when the first reason is shown. */
+/** A deny reason in the host locale (docs/contributing/i18n.md 4.1 ①); the locale is read once, when the first reason is shown. */
 function denyReason(key, params) {
   denyLocale ??= resolveHostLocale().locale;
   return render(msg(key, params), denyLocale);
