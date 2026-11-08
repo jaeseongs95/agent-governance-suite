@@ -73,6 +73,6 @@ describe("store open from a hook process", () => {
     const database = new DatabaseSync(foreign);
     database.exec("CREATE TABLE other (id INTEGER);");
     database.close();
-    expect(() => new ContextLayerStore(foreign)).toThrow(/FOREIGN/u);
+    expect(() => new ContextLayerStore(foreign)).toThrow(/holds content/u);
   });
 });
