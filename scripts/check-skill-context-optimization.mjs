@@ -399,11 +399,12 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
     }),
   }),
   // 4.0.0 (AGS3-D-0080, AGS3-D-0081): the purpose check weighs the user's stated priorities and why material was given.
+  // (AGS3-D-0082): it also runs before judging someone else's result, and that result is checked against the purpose.
   Object.freeze({
     revision: "e8bfc9399d13191a5ff12ff28a1def1374d46bb6",
     hashes: Object.freeze({
-      "skills/orchestrator/references/intake.md": ["7fca57e5d1538ecb0ccf9a2adc67a7494c35e9978eef0600b31e8751d40a319d", "d8d71dada86b8a9a87a135371e7142cc8091f6c680f4615993864fd8b6fee758"],
-      "skills/orchestrator/classification.json": ["1ecc972babc27508f73c0f449f51b031dcd4279196198966eb9800428e3b66ef", "072ab94c96dd9921cb3e572bfe36f50feb4d8cf9ac3584a4bf5cccf43718bf7e"],
+      "skills/orchestrator/references/intake.md": ["7fca57e5d1538ecb0ccf9a2adc67a7494c35e9978eef0600b31e8751d40a319d", "982fa06a2765cd990c1a1e347dcc4f4744c2a2b6bff927e6dd485a0fd864f4cc"],
+      "skills/orchestrator/classification.json": ["1ecc972babc27508f73c0f449f51b031dcd4279196198966eb9800428e3b66ef", "36be943e9fa1d0acd8e1ccd2d98863fe4df6b7bc11cbe31481ef2c8d3114236e"],
     }),
   }),
 ]);

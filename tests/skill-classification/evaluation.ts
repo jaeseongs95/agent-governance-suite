@@ -218,7 +218,7 @@ export function oracleDigest(value: { oracleRevision: string; sourceSpecDigest: 
 /** Digest of the frozen 3.9.0 source-binding manifest, fixtures.v390-intake-source-successor.json. */
 export const V390_INTAKE_MANIFEST_DIGEST = "sha256:9a322f2aa89b6e61754a9c129171beb98fdc427e4e2ca8872c5ae1043165736f";
 /** Digest of the current (last) source-binding manifest, fixtures.v400-intake-source-successor.json. */
-export const V400_INTAKE_MANIFEST_DIGEST = "sha256:006175ed83546e9d44ced7b6d7d287938f8e870fade557763f36a0a3f6edffa6";
+export const V400_INTAKE_MANIFEST_DIGEST = "sha256:02ffdfefc1bca2a0e6116086025f0e40cf051e6d7652acf0b3acf251586c803b";
 /** The chain end every successor test checks; the next successor changes only this. */
 export const CURRENT_SOURCE_MANIFEST = Object.freeze({revision: "v400-intake-source-binding-r39", digest: V400_INTAKE_MANIFEST_DIGEST});
 

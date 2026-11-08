@@ -12,10 +12,11 @@
     {
       "defectIds": [
         "AGS3-D-0080",
-        "AGS3-D-0081"
+        "AGS3-D-0081",
+        "AGS3-D-0082"
       ],
       "sourceRevision": "e8bfc9399d13191a5ff12ff28a1def1374d46bb6",
-      "observation": "공통 접수 기준 행동 전 확인 1에 사용자가 밝힌 우선순위·제약 대조(이를 낮춘 안을 기본으로 내밀지 않음)와 붙인 자료를 소재가 아닌 세션 역할에 준 이유로 읽는 조건을 더했다. MCP instructions 예산을 지키려고 무거운 단계 조항의 예시 나열(스킬 목록이 같은 대상을 싣는다)과 항목 3의 낱말을 줄였다. 분류 span의 줄 경계는 그대로이고 줄 8-13·15-20 span의 endByte와 digest만 바뀌었다. 원 평가 fixture·예산·라벨은 바꾸지 않는다."
+      "observation": "공통 접수 기준 행동 전 확인 1에 사용자가 밝힌 우선순위·제약 대조(이를 낮춘 안을 기본으로 내밀지 않음)와 붙인 자료를 소재가 아닌 세션 역할에 준 이유로 읽는 조건을 더했다. 확인 1을 남의 결과물을 판정할 때도 적용하고, 확인 3이 보고·전달·판정(받은 보고·통과 주장 포함) 전에 수용 기준과 함께 1의 효과를 실제 실행과 대조하게 했다(D-0082). MCP instructions 예산을 지키려고 무거운 단계 조항의 예시 나열(스킬 목록이 같은 대상을 싣는다), 항목 4의 예시 괄호와 항목 3·5의 낱말을 줄였다. 분류 span의 줄 경계는 그대로이고 줄 8-13·15-20 span의 endByte와 digest만 바뀌었다. 원 평가 fixture·예산·라벨은 바꾸지 않는다."
     }
   ],
   "fixtureFileRewritten": false,
@@ -26,13 +27,13 @@
     {
       "path": "skills/orchestrator/classification.json",
       "previousDigest": "sha256:1ecc972babc27508f73c0f449f51b031dcd4279196198966eb9800428e3b66ef",
-      "digest": "sha256:072ab94c96dd9921cb3e572bfe36f50feb4d8cf9ac3584a4bf5cccf43718bf7e",
+      "digest": "sha256:36be943e9fa1d0acd8e1ccd2d98863fe4df6b7bc11cbe31481ef2c8d3114236e",
       "bytes": 4813
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "previousDigest": "sha256:7fca57e5d1538ecb0ccf9a2adc67a7494c35e9978eef0600b31e8751d40a319d",
-      "digest": "sha256:d8d71dada86b8a9a87a135371e7142cc8091f6c680f4615993864fd8b6fee758",
+      "digest": "sha256:982fa06a2765cd990c1a1e347dcc4f4744c2a2b6bff927e6dd485a0fd864f4cc",
       "bytes": 8251
     }
   ]

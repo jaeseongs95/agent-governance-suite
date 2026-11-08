@@ -11,7 +11,7 @@ import { skillIntakeText } from "../../mcp-server/src/skill-intake.js";
 // by the pasted material's subject (the product it was about) instead of why it was given to this session's role.
 // Both rules sit in the shared purpose check, so they reach every host and every kind of task.
 const intake = skillIntakeText("ko");
-const purposeCheck = intake.split("\n").find(line => line.startsWith("1. 만들거나 권고하기 전:")) ?? "";
+const purposeCheck = intake.split("\n").find(line => line.startsWith("1. 만들거나 ")) ?? "";
 
 describe("shared intake: stated priorities and the reason material was given (AGS3-D-0080, AGS3-D-0081)", () => {
   it("checks a recommendation against the user's stated priorities and constraints and does not default to a weaker option", () => {
