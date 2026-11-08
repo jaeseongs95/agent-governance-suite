@@ -1,6 +1,6 @@
 ---
 name: coordinate-subagents
-description: "Coordinate subagents on the current host by delegating only when the user requests it or a documented net-benefit check justifies it, assigning ownership, integrating evidence, and separating required high-risk audits. A brief names goal, scope, forbidden areas, write ownership, chosen skills and completion and verification criteria, and never hands off waiting (watching results, polling). Do not activate solely because multiple work units exist, a task is complex, or orchestration is enabled."
+description: "Decide whether to hand work to subagents when a task has a unit that can be completed and verified on its own or a result needs a check by someone other than its author, and when the user asks for subagents, parallel work or an independent auditor; then assign ownership, integrate evidence, and separate required high-risk audits on the current host. A brief names goal, scope, forbidden areas, write ownership, chosen skills and completion and verification criteria, and never hands off waiting (watching results, polling). Do not activate for one step that cannot be split, or solely because a task is complex or orchestration is enabled."
 license: MIT
 metadata:
   version: "1.1.0"

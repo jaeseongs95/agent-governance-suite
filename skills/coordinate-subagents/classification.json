@@ -7,7 +7,9 @@
     "integrate-evidence"
   ],
   "targets": [
-    "subagents"
+    "subagents",
+    "independently-verifiable-work-units",
+    "review-separate-from-author"
   ],
   "constraints": [],
   "dependencies": [],
@@ -16,15 +18,15 @@
       "path": "skills/coordinate-subagents/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f",
+      "digest": "sha256:58c7c79988f6943f2c20290aef44261d4b95ad81d701495419783514a711f31f",
       "startByte": 0,
-      "endByte": 406
+      "endByte": 539
     },
     {
       "path": "skills/coordinate-subagents/SKILL.md",
       "startLine": 9,
       "endLine": 9,
-      "digest": "sha256:33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f",
+      "digest": "sha256:58c7c79988f6943f2c20290aef44261d4b95ad81d701495419783514a711f31f",
       "startByte": 0,
       "endByte": 22
     },
@@ -32,7 +34,7 @@
       "path": "skills/coordinate-subagents/SKILL.md",
       "startLine": 17,
       "endLine": 21,
-      "digest": "sha256:33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f",
+      "digest": "sha256:58c7c79988f6943f2c20290aef44261d4b95ad81d701495419783514a711f31f",
       "startByte": 0,
       "endByte": 175
     },
@@ -40,7 +42,7 @@
       "path": "skills/coordinate-subagents/SKILL.md",
       "startLine": 23,
       "endLine": 24,
-      "digest": "sha256:33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f",
+      "digest": "sha256:58c7c79988f6943f2c20290aef44261d4b95ad81d701495419783514a711f31f",
       "startByte": 0,
       "endByte": 212
     },
@@ -90,15 +92,15 @@
       "path": "skills/coordinate-subagents/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f",
-      "startByte": 407,
-      "endByte": 512
+      "digest": "sha256:58c7c79988f6943f2c20290aef44261d4b95ad81d701495419783514a711f31f",
+      "startByte": 540,
+      "endByte": 656
     },
     {
       "path": "skills/coordinate-subagents/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f",
+      "digest": "sha256:58c7c79988f6943f2c20290aef44261d4b95ad81d701495419783514a711f31f",
       "startByte": 0,
       "endByte": 108
     },
@@ -106,7 +108,7 @@
       "path": "skills/coordinate-subagents/SKILL.md",
       "startLine": 22,
       "endLine": 22,
-      "digest": "sha256:33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f",
+      "digest": "sha256:58c7c79988f6943f2c20290aef44261d4b95ad81d701495419783514a711f31f",
       "startByte": 0,
       "endByte": 83
     },
