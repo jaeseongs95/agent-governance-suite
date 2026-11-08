@@ -311,18 +311,19 @@ function boundaryActor(input: NormalizedContinuityInput, host: string): { sessio
  * step boundary the adapter marks; a subagent gets these two too). A subagent whose hooks learn their root session only
  * mid-turn gets its layers at the first step after that.
  */
-function contextLayerTarget(input: NormalizedContinuityInput, host: string): { sessionId: string; actorId: string; full: boolean } | null {
+function contextLayerTarget(input: NormalizedContinuityInput, host: string): { sessionId: string; actorId: string; full: boolean; turnStart: boolean } | null {
   const { observation, action } = input;
   const actor = boundaryActor(input, host);
   if (!actor) return null;
   const { sessionId, actorId, own } = actor;
-  if (isSubagentStart(input)) return { sessionId, actorId, full: true };
-  if (own && action && CONTEXT_START_ACTIONS.has(action.kind)) return { sessionId, actorId, full: true };
-  if (own && observation.kind === "user-input" && !observation.wakeOnly) return { sessionId, actorId, full: input.restoreCurrentAtTurnStart };
+  const turnStart = own && observation.kind === "user-input" && !observation.wakeOnly;
+  if (isSubagentStart(input)) return { sessionId, actorId, full: true, turnStart: false };
+  if (own && action && CONTEXT_START_ACTIONS.has(action.kind)) return { sessionId, actorId, full: true, turnStart };
+  if (turnStart) return { sessionId, actorId, full: input.restoreCurrentAtTurnStart, turnStart };
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "after" && localToolName(host, observation.toolName ?? "", PROGRESS_TOOLS)) {
-    return { sessionId, actorId, full: false };
+    return { sessionId, actorId, full: false, turnStart: false };
   }
-  if (observation.step === true) return { sessionId, actorId, full: false };
+  if (observation.step === true) return { sessionId, actorId, full: false, turnStart: false };
   return null;
 }
 
@@ -335,7 +336,7 @@ function contextLayerText(input: NormalizedContinuityInput, host: string, enviro
     let adminUrl: string | null = null;
     try { adminUrl = resolveAdminPageUrl(environment); } catch { adminUrl = null; }
     const service = new ContextLayerService(create => ContextLayerStore.open(databasePath, create), undefined, adminUrl);
-    return renderHookText(service.hookText(host, target.sessionId, target.actorId, target.full), locale);
+    return renderHookText(service.hookText(host, target.sessionId, target.actorId, target.full, target.turnStart), locale);
   } catch (cause) {
     reportContinuityFailure("context-layers", cause);
     return null;

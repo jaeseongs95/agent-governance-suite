@@ -66,6 +66,8 @@ export type AdminChange =
   | { op: "role.add"; roleId: string; name: string }
   | { op: "role.rename"; roleId: string; name: string }
   | { op: "role.delete"; roleId: string }
+  /** A role's shared body replaced on the page. The body stays in its own table, where the role's sessions save it too. */
+  | { op: "role.body.set"; roleId: string; body: string; expectedStateToken: string | null }
   | { op: "binding.set"; host: string; sessionId: string; roleId: string | null }
   /**
    * JEV on or off, its budget (null: none, no JEV call), each preset's switch, the model (a provider AGS ships and one of
@@ -189,6 +191,10 @@ export function bindingTarget(host: string, sessionId: string): string {
   return `binding:${encodeURIComponent(host)}:${encodeURIComponent(sessionId)}`;
 }
 
+export function roleBodyTarget(roleId: string): string {
+  return `roleBody:${roleId}`;
+}
+
 export function bindingKey(host: string, sessionId: string): string {
   return `${host}\u0000${sessionId}`;
 }
@@ -258,6 +264,8 @@ export function checkChangeShape(change: unknown): AdminChange {
       case "role.add": case "role.rename": return keys === "name,op,roleId" && typeof value.roleId === "string" && ID.test(value.roleId)
         && normalizeRoleName(value.name) === value.name;
       case "role.delete": return keys === "op,roleId" && typeof value.roleId === "string" && ID.test(value.roleId);
+      case "role.body.set": return keys === "body,expectedStateToken,op,roleId" && typeof value.roleId === "string" && ID.test(value.roleId)
+        && typeof value.body === "string" && (value.expectedStateToken === null || text(value.expectedStateToken, 200));
       case "binding.set": return keys === "host,op,roleId,sessionId" && text(value.host, 200) && text(value.sessionId, 500)
         && (value.roleId === null || (typeof value.roleId === "string" && ID.test(value.roleId)));
       case "ack": return keys === "op,target" && typeof value.target === "string" && isAdminTarget(value.target);
@@ -283,6 +291,7 @@ export function changeTarget(change: AdminChange): string {
     case "key.add": case "key.revoke": return "keys";
     case "global.set": return "global";
     case "role.add": case "role.rename": case "role.delete": return "roles";
+    case "role.body.set": return roleBodyTarget(change.roleId);
     case "binding.set": return bindingTarget(change.host, change.sessionId);
     case "ack": return change.target;
     case "jev.set": return "jev";
@@ -295,7 +304,7 @@ export function changeTarget(change: AdminChange): string {
 /** keys, global, roles, a setting target or binding:<host>:<sessionId> (each part URI-encoded and non-empty). */
 export function isAdminTarget(target: string): boolean {
   if (target === "keys" || target === "global" || target === "roles" || (SETTING_TARGETS as readonly string[]).includes(target)
-    || RETIRED_SETTING_TARGETS.includes(target)) return true;
+    || RETIRED_SETTING_TARGETS.includes(target) || /^roleBody:[A-Za-z0-9_-]{1,200}$/.test(target)) return true;
   const parts = /^binding:([^:]+):([^:]+)$/.exec(target);
   if (!parts || target.length > 1000) return false;
   try { return bindingTarget(decodeURIComponent(parts[1]!), decodeURIComponent(parts[2]!)) === target; } catch { return false; }
@@ -364,6 +373,7 @@ export function checkChange(state: AdminState, change: AdminChange, signer: stri
       return;
     }
     case "role.delete":
+    case "role.body.set":
       if (!state.roles.has(change.roleId)) throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "ROLE_NOT_FOUND" });
       return;
     case "binding.set":
@@ -432,6 +442,7 @@ function apply(state: AdminState, change: AdminChange, record: AdminLogRecord, i
       state.editExempt = { paths: [...change.paths], seq: record.seq, issuedAt: intent.issuedAt };
       return;
     case "ack":
+    case "role.body.set": // The commit wrote the body to its own table; the record only proves who changed it.
       return;
   }
 }

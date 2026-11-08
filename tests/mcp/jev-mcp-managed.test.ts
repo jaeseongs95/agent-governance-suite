@@ -257,7 +257,7 @@ describe("JEV managed by the MCP server (4.0.0)", () => {
 
   it("D0075-NOTICE: the workflow notice says classification support is configured only when advice can be asked", async () => {
     // Tool results are rendered in MODEL_LOCALE (en, 4.0.0); written from locales/en/server.json.
-    const line = "Skill classification support is configured: you may pass the next stage's actual work and the full inventory to classify_skills for advice. Adopt, correct or reject the advice and make the final selection yourself.";
+    const line = "Skill classification support is configured: before choosing skills for the next stage, pass its actual work and the full inventory to classify_skills for advice. Adopt, correct or reject the advice and make the final selection yourself; if the call fails, choose yourself and continue.";
     expect(await notice(false)).not.toContain(line);
     expect(await notice(true)).toContain(line);
   });

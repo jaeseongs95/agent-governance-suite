@@ -22,7 +22,7 @@ import {
   SETTING_TARGETS,
   verifyRecord,
 } from "./admin-log.js";
-import type { AdminSignedSettings } from "./admin-settings.js";
+import { type AdminSignedSettings, jevPresetSwitches, jevReadiness } from "./admin-settings.js";
 import { jevKeyFingerprint, type JevKeyVault } from "./jev-key-vault.js";
 import { type AdminAssertion, AdminError, assertionOrigin, intentChallenge } from "./admin-webauthn.js";
 import { msg, type MessageRef } from "./i18n.js";
@@ -137,7 +137,7 @@ function globalView(state: AdminState): GlobalContextView | null {
 }
 
 function failureLayer(target: string): string {
-  return target.startsWith("binding:") ? "binding" : target;
+  return target.startsWith("binding:") ? "binding" : target.startsWith("roleBody:") ? "roles" : target;
 }
 
 /**
@@ -316,9 +316,10 @@ export class ContextLayerService {
    * The layers a hook adds for one actor. `full`: a context start (session start, resume, compaction, a subagent's
    * start, a host whose turn start is its context start), which gets every non-empty layer. Otherwise only what changed
    * since this actor last received it. Each layer is read on its own (AGS3-D-0069): one failing layer is announced and
-   * the others are still given. A verification failure is announced once per change, with the revision in use.
+   * the others are still given. A verification failure is announced once per change, with the revision in use. `turnStart`:
+   * the session's own user turn, which also gets the cues that make the role save and the JEV call happen (AGS3-D-0087, D-0088).
    */
-  hookText(host: string, sessionId: string, actorId: string, full: boolean): ContextLayerText | null {
+  hookText(host: string, sessionId: string, actorId: string, full: boolean, turnStart = false): ContextLayerText | null {
     return this.with(false, store => {
       const now = this.now().toISOString();
       const lines: MessageRef[] = [];
@@ -350,11 +351,13 @@ export class ContextLayerService {
       }
       let roleName: string | null = null;
       let roleToken: string | null = null;
+      let roleSaveCue: MessageRef | null = null;
       try {
         const binding = this.bindingFor(store, state, host, sessionId);
         const role = binding ? roleView(store.readRole(binding.roleId)) : null;
         roleName = binding?.role ?? null;
         roleToken = role?.stateToken ?? null;
+        if (binding && turnStart) roleSaveCue = msg("hooks.contextLayers.roleSaveCue", { role: binding.role, state: role?.body ? "filled" : "empty" });
         // The binding is the user's assignment and is given even while its role has no body yet (AGS3-D-0072).
         if (binding && (full || before?.role !== binding.role || before?.roleToken !== roleToken)) {
           if (role?.body) lines.push(msg("hooks.contextLayers.role", { role: binding.role, stateToken: role.stateToken, changed: changed ? "yes" : "no", body: role.body }));
@@ -367,12 +370,36 @@ export class ContextLayerService {
       } catch {
         lines.push(msg("hooks.contextLayers.unreadable", { layer: "role" }));
       }
+      if (roleSaveCue) lines.push(roleSaveCue);
+      if (turnStart && this.jevAdviceReady(store, state)) lines.push(msg("hooks.contextLayers.jevCue", {}));
       const delivery = { globalToken, role: roleName, roleToken };
       if (full || before?.globalToken !== delivery.globalToken || before?.role !== delivery.role || before?.roleToken !== delivery.roleToken) {
         try { store.recordDelivery(actorId, delivery, now); } catch { /* The text is still given; it may repeat next time. */ }
       }
       return lines.length > 0 ? lines : null;
     }, null);
+  }
+
+  /**
+   * Whether a turn should ask JEV. ceiling: a hook sees neither the server's spend nor the model list, so a model AGS no
+   * longer knows or a spent budget still gets the cue; that call answers without advice and the agent chooses itself.
+   */
+  private jevAdviceReady(store: ContextLayerStore, state: AdminState): boolean {
+    try {
+      if (!jevPresetSwitches(state.jev)["skill-classification"]) return false;
+      const keyStored = [...state.jevKeys.values()].some(key => store.jevKey(key.name)?.fingerprint === key.fingerprint);
+      return jevReadiness(state.jev, { keyStored, profileFor: () => ({}) }).ready;
+    } catch {
+      return false; // The cue is optional: the layers above were already given.
+    }
+  }
+
+  /** A page edit of a role body: within the limit and based on the body the user was looking at. */
+  private checkRoleBody(store: ContextLayerStore, change: Extract<AdminChange, { op: "role.body.set" }>): void {
+    const bytes = Buffer.byteLength(change.body, "utf8");
+    if (bytes > ROLE_CONTEXT_MAX_BYTES) throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "TOO_LARGE", bytes, limit: ROLE_CONTEXT_MAX_BYTES });
+    const actualStateToken = store.readRole(change.roleId)?.stateToken ?? null;
+    if (actualStateToken !== change.expectedStateToken) throw new AdminError("ADMIN_TARGET_STALE", { actualStateToken });
   }
 
   // --- Admin page ---------------------------------------------------------------------------------------------------
@@ -454,6 +481,7 @@ export class ContextLayerService {
       if (parsed.change.op === "global.set" && Buffer.byteLength(parsed.change.body, "utf8") > GLOBAL_CONTEXT_MAX_BYTES) {
         throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "TOO_LARGE", bytes: Buffer.byteLength(parsed.change.body, "utf8"), limit: GLOBAL_CONTEXT_MAX_BYTES });
       }
+      if (parsed.change.op === "role.body.set") this.checkRoleBody(store, parsed.change);
       const signer = bootstrap && parsed.change.op === "key.add" ? parsed.change.credentialId : [...state.keys.keys()][0]!;
       checkChange(state, parsed.change, signer);
       const head = state.heads.get(parsed.target)?.recordHash ?? null;
@@ -495,6 +523,7 @@ export class ContextLayerService {
       if (intent.change.op === "global.set" && Buffer.byteLength(intent.change.body, "utf8") > GLOBAL_CONTEXT_MAX_BYTES) {
         throw new AdminError("ADMIN_CHANGE_INVALID", { reason: "TOO_LARGE" });
       }
+      if (intent.change.op === "role.body.set") this.checkRoleBody(store, intent.change);
       const proposal = input.proposalId ? store.proposal(input.proposalId) : null;
       if (input.proposalId && (proposal?.state !== "pending" || proposal.target !== intent.target)) throw new AdminError("ADMIN_PROPOSAL_NOT_FOUND");
       const unsigned = { target: intent.target, intent: input.intent, credentialId: input.assertion.credentialId, authenticatorData: input.assertion.authenticatorData,
@@ -503,6 +532,7 @@ export class ContextLayerService {
       verifyRecord(state, { ...record, seq: state.lastSeq + 1 });
       const appended = store.appendRecord(record, input.requestId);
       if (intent.change.op === "role.delete") store.deleteRoleBody(intent.change.roleId);
+      if (intent.change.op === "role.body.set") store.saveRole(intent.change.roleId, intent.change.expectedStateToken, intent.change.body, "admin-page", now.toISOString());
       if (intent.change.op === "jevKey.set") store.putJevKey({ name: intent.change.name, fingerprint: intent.change.fingerprint, sealed: sealed!, storedAt: now.toISOString() });
       if (intent.change.op === "jevKey.delete") store.deleteJevKey(intent.change.name);
       if (proposal) store.decideProposal(proposal.id, "applied", now.toISOString());

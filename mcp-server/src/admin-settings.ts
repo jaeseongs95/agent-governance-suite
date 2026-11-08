@@ -63,7 +63,8 @@ export type JevMissing = "SWITCH_OFF" | "MODEL_NOT_SELECTED" | "MODEL_UNSUPPORTE
  * Whether JEV can be asked now: switched on, a model AGS knows, sending allowed, a key registered on the page, and a
  * budget that covers one call's reservation. Presets are separate: a preset uses JEV only when this is ready and it is on.
  */
-export function jevReadiness(signed: AdminJevState | null, input: { keyStored: boolean; profileFor: JevProfileFor;
+export function jevReadiness(signed: AdminJevState | null, input: { keyStored: boolean;
+  profileFor: (model: { providerId: string; modelId: string }) => { maximumCostUsd?: number | null } | null;
   usage?: { spentUsd: number | null; reservedUsd: number } | null }): { ready: boolean; missing: JevMissing[]; perCallUsd: number | null } {
   const missing: JevMissing[] = [];
   if (!signed?.enabled) missing.push("SWITCH_OFF");

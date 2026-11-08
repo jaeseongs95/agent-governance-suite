@@ -75,6 +75,8 @@ export interface MessageParams {
   "hooks.contextLayers.role": { "role": NestedMessage | number | string; "stateToken": NestedMessage | number | string; "changed": string; "body": NestedMessage | number | string; };
   "hooks.contextLayers.cleared": { "layer": string; "role": NestedMessage | number | string; };
   "hooks.contextLayers.roleBound": { "role": NestedMessage | number | string; "changed": string; };
+  "hooks.contextLayers.roleSaveCue": { "role": NestedMessage | number | string; "state": string; };
+  "hooks.contextLayers.jevCue": Record<string, never>;
   "hooks.contextLayers.roleUnbound": { "role": NestedMessage | number | string; };
   "hooks.contextLayers.parentSituation": { "stateToken": NestedMessage | number | string; "body": NestedMessage | number | string; };
   "hooks.contextLayers.verifyFailed": { "layer": string; "revision": string; "reason": NestedMessage | number | string; "adminUrl": NestedMessage | number | string; };
@@ -101,6 +103,7 @@ export interface MessageParams {
   "server.sessionMessage.sendInvalid": { "cause": NestedMessage | number | string; };
   "server.workflowChange.stage": { "stageId": NestedMessage | number | string; "capability": NestedMessage | number | string; "provider": NestedMessage | number | string; };
   "server.workflowChange.skills": Record<string, never>;
+  "server.workflowChange.verification": Record<string, never>;
   "server.workflowChange.classification": Record<string, never>;
   "workflow.convergence.nonFiniteNumber": { "subject": string; "label": NestedMessage | number | string; };
   "workflow.convergence.nonSerializableValue": { "subject": string; "label": NestedMessage | number | string; };

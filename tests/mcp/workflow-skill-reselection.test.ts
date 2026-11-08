@@ -88,7 +88,7 @@ describe("skill reselection at a workflow change", () => {
 
   it("offers classification advice only when the server has classification support configured", async () => {
     const [notice] = await call("abort_workflow", apiOk(receipt), { classification: true });
-    expect(notice).toContain("Skill classification support is configured: you may pass the next stage's actual work and the full inventory to classify_skills for advice. Adopt, correct or reject the advice and make the final selection yourself.");
+    expect(notice).toContain("Skill classification support is configured: before choosing skills for the next stage, pass its actual work and the full inventory to classify_skills for advice. Adopt, correct or reject the advice and make the final selection yourself; if the call fails, choose yourself and continue.");
   });
 
   it("speaks the model locale whatever language the request names", async () => {
@@ -114,7 +114,8 @@ describe("skill reselection at a workflow change", () => {
     const plan = { stages: [{ ...stage, stageId: "stage-01", skillId: "change-scope-guardian", requiredCapability: "change-baseline" }],
       currentStageId: null, nextStageId: "stage-01" } as unknown as WorkflowPlanV1;
     const fromPlanMessages = workflowChangeNotice(plan, () => null, false);
-    expect(fromPlanMessages.map(line => line.key)).toEqual(["server.workflowChange.stage", "server.workflowChange.skills", "hooks.checkpointCue.refresh"]);
+    expect(fromPlanMessages.map(line => line.key)).toEqual(["server.workflowChange.stage", "server.workflowChange.skills", "hooks.checkpointCue.refresh", "server.workflowChange.verification"]);
+    expect(render(fromPlanMessages.at(-1)!, "en")).toContain("find its readers first and fix them in one pass"); // AGS3-D-0085
     const fromPlan = fromPlanMessages.map(line => render(line, "en"));
     expect(fromPlan[0]).toBe("[AGS workflow change] Next stage: stage-01 (capability change-baseline); record its result under the change-scope-guardian provider contract.");
     const finished = { ...receipt, plan: { ...receipt.plan, currentStageId: null, nextStageId: null } } as WorkflowReceiptV1;

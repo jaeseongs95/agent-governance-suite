@@ -96,7 +96,7 @@ h1:focus,h2:focus{outline:none}
 ol.rules{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
 ol.rules li{padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;gap:8px}
 ol.rules label{font-size:13px;color:var(--muted)}
-ol.rules textarea{width:100%;padding:8px 10px;border:1px solid var(--input);border-radius:6px;resize:vertical;line-height:1.6}
+ol.rules textarea,.dlg textarea{width:100%;padding:8px 10px;border:1px solid var(--input);border-radius:6px;resize:vertical;line-height:1.6}
 .rule-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 16px;font-size:12px;color:var(--muted)}
 ul.hist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px}
 .hist-btn{width:100%;text-align:left;padding:10px 12px;border:1px solid transparent;border-radius:6px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:2px}
@@ -411,7 +411,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
 
   // ---------- 줄 단위 비교 ----------
   function lineDiff(a, b) {
-    // ceiling: O(n·m) LCS. 본문이 2,000 byte 이하라 충분하다.
+    // ceiling: O(n·m) LCS. 본문이 4,000 byte 이하라 충분하다.
     const A = String(a).split('\n'), B = String(b).split('\n'), n = A.length, m = B.length;
     const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
     for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
@@ -884,7 +884,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
   function viewRoles() {
     const d = S.data, roles = d.roles;
     const sec = h('section', { class: 'col', 'aria-labelledby': 'r-title' },
-      head('r-title', '역할', '여기서 만든 역할에만 세션을 결속할 수 있습니다. 역할마다 담당 컨텍스트(' + num(d.roleMaxBytes || 1000) + ' byte)가 하나 있고, 결속된 세션이 읽고 씁니다. 본문은 에이전트가 쓰므로 여기서는 보기만 합니다.'));
+      head('r-title', '역할', '여기서 만든 역할에만 세션을 결속할 수 있습니다. 역할마다 담당 컨텍스트(' + num(d.roleMaxBytes || 1000) + ' byte)가 하나 있고, 결속된 세션이 읽고 씁니다. 여기서도 패스키로 본문을 고칠 수 있습니다.'));
     sec.append(statusEl('roles-screen'));
     if (!S.dialog) { for (const k of ['role-del']) if (S.status[k] && S.status[k].kind !== 'busy') sec.append(statusEl(k)); }
     if (!roles.length) {
@@ -953,7 +953,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
       h('td', { class: 'nowrap' }, roleSize(r)),
       h('td', null, ctx && ctx.updatedAt ? (ctx.updatedBy ? ctx.updatedBy + ' · ' : '') + fmtTime(ctx.updatedAt) : '—'),
       h('td', null, h('div', { class: 'acts' },
-        h('button', { type: 'button', class: 'btn sm', id: 'role-view-' + idSafe(r.roleId), onclick: () => openView(r) }, '본문 보기'),
+        h('button', { type: 'button', class: 'btn sm', id: 'role-view-' + idSafe(r.roleId), onclick: () => openView(r) }, '본문 보기·수정'),
         h('button', { type: 'button', class: 'btn sm', id: 'role-ren-' + idSafe(r.roleId), disabled: !!ren, onclick: () => { S.r.renaming = { roleId: r.roleId, value: r.name }; render(); const f = $('rename-' + idSafe(r.roleId)); if (f) f.focus(); } }, '이름 변경'),
         h('button', { type: 'button', class: 'btn sm danger', id: 'role-del-' + idSafe(r.roleId), onclick: () => openDelete(r) }, '삭제'))));
   }
@@ -1003,15 +1003,35 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     const f = o.focus && $(o.focus); if (f) f.focus();
     return dlg;
   }
-  function openView(r) {
-    const opener = $('role-view-' + idSafe(r.roleId));
-    openDialog({ opener, focus: 'dlg-close', build: () => {
-      const c = r.context;
-      return [h('h2', { id: 'dlg-title' }, r.name + ' · 담당 컨텍스트'),
-        h('p', { class: 'small muted' }, roleSize(r) + (c && c.updatedBy ? ' · ' + c.updatedBy : '') + (c && c.updatedAt ? ' · ' + fmtTime(c.updatedAt) + ' 저장' : '') + ' · 보기만'),
-        r.contextError ? h('p', { class: 'err-t' }, '본문을 읽지 못했습니다: ' + r.contextError) : null,
-        c && c.body ? h('pre', { class: 'body', tabindex: '0', 'aria-label': '담당 컨텍스트 본문' }, c.body) : h('p', { class: 'muted' }, '아직 본문이 없습니다. 결속된 세션이 쓰면 여기에 보입니다.'),
-        h('div', { class: 'dlg-acts' }, h('button', { type: 'button', class: 'btn', id: 'dlg-close', onclick: () => S.dialog && S.dialog.close() }, '닫기'))];
+  function openView(r0) {
+    const opener = $('role-view-' + idSafe(r0.roleId));
+    const startToken = r0.context ? r0.context.stateToken : null;
+    let draft = r0.context ? r0.context.body : '';
+    delete S.status['role-body'];
+    openDialog({ opener, focus: r0.contextError ? 'dlg-close' : 'role-body-input', fallbackFocus: 'r-title', build: (dlg) => {
+      const r = roleById(r0.roleId) || r0, c = r.context;
+      const title = h('h2', { id: 'dlg-title' }, r.name + ' · 담당 컨텍스트');
+      const info = h('p', { class: 'small muted' }, roleSize(r) + (c && c.updatedBy ? ' · ' + c.updatedBy : '') + (c && c.updatedAt ? ' · ' + fmtTime(c.updatedAt) + ' 저장' : ''));
+      const closeBtn = h('button', { type: 'button', class: 'btn', id: 'dlg-close', onclick: () => dlg.close() }, '닫기');
+      if (r.contextError) return [title, info, h('p', { class: 'err-t' }, '본문을 읽지 못했습니다: ' + r.contextError), h('div', { class: 'dlg-acts' }, closeBtn)];
+      const max = S.data.roleMaxBytes || 1000;
+      const moved = (c ? c.stateToken : null) !== startToken;
+      const off = () => moved || utf8len(draft) > max || draft === (c ? c.body : '');
+      const why = () => !hasKeys() ? '패스키가 없어 저장할 수 없습니다.' : moved ? '편집을 시작한 뒤 다른 세션이 본문을 바꿨습니다. 닫고 다시 열어 주세요.' : utf8len(draft) > max ? '본문이 ' + num(utf8len(draft) - max) + ' byte 초과입니다.' : '';
+      const meta = h('span', { id: 'role-body-meta', class: 'small muted' });
+      const whyEl = h('span', { id: 'role-body-why', class: 'small muted why' });
+      const ta = h('textarea', { id: 'role-body-input', rows: '10', value: draft, 'aria-label': '담당 컨텍스트 본문', 'aria-describedby': 'role-body-meta role-body-why' });
+      const btn = signBtn({ id: 'role-body-save', slot: 'role-body', label: '패스키로 저장', off: off(), why: 'role-body-why', onclick: () => runSigned({
+        slot: 'role-body', change: { op: 'role.body.set', roleId: r.roleId, body: draft, expectedStateToken: startToken }, onStale: () => loadState(),
+        onDone: () => { S.status['roles-screen'] = { kind: 'ok', text: '「' + r.name + '」 담당 컨텍스트를 저장했습니다 · ' + fmtHM() + ' · 결속된 세션에는 다음 사용자 입력부터 보입니다.' }; dlg.close(); } }) });
+      const paint = () => {
+        meta.textContent = num(utf8len(draft)) + ' / ' + num(max) + ' byte';
+        whyEl.textContent = why();
+        btn.disabled = !!S.busy || !hasKeys() || slotBlocked('role-body') || off();
+      };
+      paint();
+      ta.addEventListener('input', () => { draft = ta.value; paint(); });
+      return [title, info, ta, meta, statusEl('role-body'), h('div', { class: 'dlg-acts' }, whyEl, closeBtn, btn)];
     } });
   }
   function openDelete(r0) {
