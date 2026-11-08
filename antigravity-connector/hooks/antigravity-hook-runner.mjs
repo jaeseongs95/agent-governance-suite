@@ -2,7 +2,7 @@
 // Antigravity/Gemini isolated hook connector (r09).
 // Translates Antigravity camelCase hook inputs and output contracts at the
 // host boundary without touching shared Codex/Claude hook contracts.
-import { execFile, execFileSync, spawnSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { closeSync, existsSync, fstatSync, openSync, readdirSync, readFileSync, readlinkSync, readSync } from "node:fs";
 import { readFile, readlink } from "node:fs/promises";
 import path from "node:path";
@@ -100,7 +100,6 @@ const TOOL_NAME_MAP = {
 //   `claim-result-unknown` or `after-claim-before-output` (or when `AGS_ANTIGRAVITY_DIAGNOSTIC_STDERR === "1"`).
 // - `#3313 N3`: When remaining budget for `resolveLongLivedHostProcess` is `< MIN_RESOLVER_BUDGET_MS` (100ms),
 //   the resolver is skipped immediately (`null`) instead of clamping up to 100ms.
-const STAGE_TIMEOUT_MS = 2000;
 export const MIN_RESOLVER_BUDGET_MS = 100;
 const MIN_PRIMARY_HOOK_BUDGET_MS = 500;
 export const NATIVE_HOOK_HARD_TIMEOUT_MS = 10000;
@@ -1440,16 +1439,8 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
   if (hookName === "turn") {
     // The per-turn cue the other hosts get from UserPromptSubmit (skill re-selection and checkpoint_context); agy has no
     // prompt-submit event, so a turn's first model call stands for it, as in recordAgsSessionInput.
-    const hookPath = typeof options?.continuityHookPath === "string" ? options.continuityHookPath
-      : fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
     const input = { hook_event_name: "UserPromptSubmit", session_id: canonicalInput.session_id, ...(canonicalInput.cwd ? { cwd: canonicalInput.cwd } : {}) };
-    const remainingBudgetMs = typeof options?.remainingBudgetMs === "function" ? options.remainingBudgetMs() : STAGE_TIMEOUT_MS;
-    const res = spawnSync(process.execPath, [hookPath, "--host=antigravity"], {
-      input: JSON.stringify(input), encoding: "utf8", stdio: ["pipe", "pipe", "ignore"],
-      timeout: Math.max(250, Math.min(STAGE_TIMEOUT_MS, Math.floor(remainingBudgetMs))), env: process.env,
-    });
-    const output = res.status === 0 && res.stdout?.trim() ? record(JSON.parse(res.stdout)) : {};
-    return { output, updatedToolInput: currentToolInput, mutated: false };
+    return { output: await runContinuityStage(input, options), updatedToolInput: currentToolInput, mutated: false };
   }
 
   if (hookName === "continuity") {
@@ -1471,31 +1462,18 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
         delete cleanArgs._continuityBinding;
         mutated = true;
       }
-      // Optimization (G1): Only spawn continuity-hook.mjs on PreToolUse when the tool is actually a continuity-bound tool!
+      // Optimization (G1): Only run the continuity hook on PreToolUse when the tool is actually a continuity-bound tool!
       const localTool = toolBoundary?.localTool ?? "";
       // File edit tools reach continuity so the end-of-turn phase check can see the change.
       if (!CONTINUITY_BOUND_TOOLS.has(localTool) && !PHASE_EDIT_TOOLS.has(localTool)) {
         return { output: {}, updatedToolInput: cleanArgs, mutated };
       }
     }
-    const remainingBudgetMs = typeof options?.remainingBudgetMs === "function"
-      ? options.remainingBudgetMs()
-      : STAGE_TIMEOUT_MS;
-    const effectiveTimeoutMs = Math.max(250, Math.min(STAGE_TIMEOUT_MS, Math.floor(remainingBudgetMs)));
     const preservedSessionBinding = cleanArgs._sessionBinding;
-    const hookPath = typeof options?.continuityHookPath === "string" ? options.continuityHookPath
-      : fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
     // PostInvocation keeps its own name here: continuity reads it as a step inside the turn, not as a tool's end.
-    const res = spawnSync(process.execPath, [hookPath, "--host=antigravity"], {
-      input: JSON.stringify({ ...inputWithCurrentArgs, ...(event === "PostInvocation" ? { hook_event_name: event } : {}),
-        ...(toolBoundary ? { tool_input: cleanArgs } : {}) }),
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "ignore"],
-      timeout: effectiveTimeoutMs,
-      env: process.env,
-    });
-    if (res.status === 0 && res.stdout?.trim()) {
-      const parsed = record(JSON.parse(res.stdout));
+    const parsed = await runContinuityStage({ ...inputWithCurrentArgs, ...(event === "PostInvocation" ? { hook_event_name: event } : {}),
+      ...(toolBoundary ? { tool_input: cleanArgs } : {}) }, options);
+    if (Object.keys(parsed).length > 0) {
       const specific = record(parsed.hookSpecificOutput);
       if (Object.hasOwn(specific, "updatedInput")) {
         cleanArgs = { ...record(specific.updatedInput) };
@@ -1522,24 +1500,34 @@ const AGS_TOOL_PREFIX = "mcp__agent-governance-suite__";
 export const OBSERVED_AGS_TOOLS = new Set(["plan_workflow", "start_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 
 /**
- * Runs a record-only AGS hook (the hook's output is not used). A spawn error, timeout or non-zero exit is reported
- * on stderr under the stage name; the hook decision does not change. options.spawnSync replaces the spawn in tests.
+ * The shared AGS hook bundles run in this process (AGS3-D-0079): a second node process per stage doubled the hook's
+ * start-up cost. Each bundle reports its own phase failures; options.continuityHook, options.governanceHook and
+ * options.sessionBoardHook replace the bundle entries in tests.
+ *
+ * The continuity hook's output for one canonical input; {} when it adds nothing. A failure throws to the stage.
  */
-function runRecordHook(stage, hookPath, input, options, childStderr) {
-  const spawn = typeof options?.spawnSync === "function" ? options.spawnSync : spawnSync;
-  const res = spawn(process.execPath, [hookPath, "--host=antigravity"], {
-    input: JSON.stringify(input), encoding: "utf8", stdio: ["pipe", "ignore", childStderr],
-    timeout: STAGE_TIMEOUT_MS, env: process.env,
-  });
-  if (res?.error || res?.status !== 0) {
-    reportStageFailure(stage, res?.error ?? { code: res?.signal ? "HOOK_KILLED" : "HOOK_EXIT_NONZERO" }, options?.writeStderr);
-  }
+async function runContinuityStage(input, options) {
+  const run = typeof options?.continuityHook === "function" ? options.continuityHook
+    : (await import("../../mcp-server/dist/continuity-hook.mjs")).runContinuityHook;
+  const output = await run(JSON.stringify(input), process.env, "antigravity");
+  return typeof output === "string" && output.trim() ? record(JSON.parse(output)) : {};
+}
+
+/**
+ * Runs a record-only AGS hook (its output is not used). A failure to load or run it is reported on stderr under the
+ * stage name; the hook's own refusal is reported by the hook. The hook decision does not change.
+ */
+async function runRecordHook(stage, write, options) {
+  try { await write(); }
+  catch (cause) { reportStageFailure(stage, cause, options?.writeStderr); }
 }
 
 function recordAgsCallObservation(canonicalInput, options) {
-  const hookPath = typeof options?.governanceHookPath === "string" ? options.governanceHookPath
-    : fileURLToPath(new URL("../../mcp-server/dist/governance-hook.mjs", import.meta.url));
-  runRecordHook("host-attestation-record", hookPath, canonicalInput, options, "ignore");
+  return runRecordHook("host-attestation-record", async () => {
+    const run = typeof options?.governanceHook === "function" ? options.governanceHook
+      : (await import("../../mcp-server/dist/governance-hook.mjs")).runGovernanceHook;
+    await run("antigravity", JSON.stringify(canonicalInput), process.env);
+  }, options);
 }
 
 /**
@@ -1550,10 +1538,12 @@ function recordAgsCallObservation(canonicalInput, options) {
  * ponytail: no prompt text is passed, so a wake-only turn also counts as a prompt; pass lastUserInput if that matters.
  */
 function recordAgsSessionInput(canonicalInput, options) {
-  const hookPath = typeof options?.sessionBoardHookPath === "string" ? options.sessionBoardHookPath
-    : fileURLToPath(new URL("../../mcp-server/dist/session-board-hook.mjs", import.meta.url));
   const input = { hook_event_name: "UserPromptSubmit", session_id: canonicalInput.session_id, ...(canonicalInput.cwd ? { cwd: canonicalInput.cwd } : {}) };
-  runRecordHook("session-board", hookPath, input, options, "inherit");
+  return runRecordHook("session-board", async () => {
+    const run = typeof options?.sessionBoardHook === "function" ? options.sessionBoardHook
+      : (await import("../../mcp-server/dist/session-board-hook.mjs")).runSessionBoardHook;
+    await run("antigravity", JSON.stringify(input));
+  }, options);
 }
 
 export async function executeAntigravityHookEvent(rawInput, explicitEvent, explicitHook, options = {}) {
@@ -1566,7 +1556,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
     // conversation IDs) and refuses caller identity fields itself; the hook neither rewrites nor signs anything.
     // _meta has no model, so the hook records the host's modelName for the server to claim. A failed record only
     // leaves the call unobserved for the server to report; it never blocks the call.
-    if (OBSERVED_AGS_TOOLS.has(toolBoundary.canonicalName.slice(AGS_TOOL_PREFIX.length))) recordAgsCallObservation(canonicalInput, options);
+    if (OBSERVED_AGS_TOOLS.has(toolBoundary.canonicalName.slice(AGS_TOOL_PREFIX.length))) await recordAgsCallObservation(canonicalInput, options);
     return { decision: "allow" };
   }
 
@@ -1685,7 +1675,6 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
         : turnStart ? ["session-message", "intake", "turn"]
           // After each model call the shared layers that changed reach the next one. A subagent's hooks name its root
           // only after its first AGS call, so this is where that subagent first gets its role (AGS3-D-0068).
-          // ponytail: one more node process per model call; check the conversation-root record in-process if it costs.
           : event === "PostInvocation" ? ["session-message", "continuity"] : ["session-message"];
     const injected = [];
     const seenTexts = new Set();
@@ -1713,7 +1702,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
       }
     }
     if (!explicitHook && event === "PreInvocation" && canonicalInput.session_id && remainingBudgetMs() >= minSecondaryBudgetMs) {
-      recordAgsSessionInput(canonicalInput, options);
+      await recordAgsSessionInput(canonicalInput, options);
     }
     return injected.length > 0 ? { injectSteps: injected } : {};
   }

@@ -14,8 +14,10 @@ const files = (entries: Record<string, string>) => (file: string): string => {
 };
 const SETTINGS = "/home/user/.agent-governance-suite/settings.json";
 const PACKAGE = "/plugin/runtime/locale.json";
+// The fixture environment names no shared state directory, so an unpinned signed source would read the tester's home.
+const unsigned = () => null;
 const host = (environment: NodeJS.ProcessEnv, entries: Record<string, string>) =>
-  resolveHostLocale({ environment, settingsPath: SETTINGS, packageLocalePath: PACKAGE, readText: files(entries) });
+  resolveHostLocale({ environment, settingsPath: SETTINGS, packageLocalePath: PACKAGE, readText: files(entries), signedLocale: unsigned });
 
 describe("language lists (RFC 9110 Accept-Language)", () => {
   it("orders by weight, keeps the written order for ties, drops q=0 and *", () => {
@@ -67,9 +69,9 @@ describe("host locale (docs/i18n-design.md 4.1 ①)", () => {
       if (file === SETTINGS) throw Object.assign(new Error("EACCES"), { code: "EACCES" });
       return '{"locale":"ko"}';
     };
-    expect(resolveHostLocale({ environment: {}, settingsPath: SETTINGS, packageLocalePath: PACKAGE, readText: denied }).skipped)
+    expect(resolveHostLocale({ environment: {}, settingsPath: SETTINGS, packageLocalePath: PACKAGE, readText: denied, signedLocale: unsigned }).skipped)
       .toEqual([{ source: "settings", code: "LOCALE_SETTINGS_UNREADABLE" }]);
-    expect(resolveHostLocale({ environment: {}, settingsPath: null, packageLocalePath: PACKAGE, readText: denied }).skipped)
+    expect(resolveHostLocale({ environment: {}, settingsPath: null, packageLocalePath: PACKAGE, readText: denied, signedLocale: unsigned }).skipped)
       .toEqual([{ source: "settings", code: "LOCALE_SETTINGS_UNREADABLE" }]);
   });
 

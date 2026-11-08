@@ -42,7 +42,7 @@ function missing(reasonCode: string): never {
 
 /**
  * The denial names the failed cause: a contract reason, the failed observation step (TRANSCRIPT_READ_FAILED,
- * TRANSCRIPT_LINE_LIMIT_EXCEEDED, SESSION_MODEL_INVALID, ...), a continuity store reason, an OS/SQLite/JSON class or a
+ * SESSION_MODEL_INVALID, ...), a continuity store reason, an OS/SQLite/JSON class or a
  * producer reason. Only a cause with none of these is GOVERNANCE_HOOK_FAILED. All are fixed codes, never messages.
  */
 function failureReasonCode(failure: unknown): string {

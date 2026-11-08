@@ -6,7 +6,7 @@
 
 `classify_skills`에는 사용자 원문과 출처가 확인된 context만 전달한다. 부정문·인용문·금지 행동을 보존하고 확인되지 않은 context는 null로 둔다. 별도 의미 요약 LLM을 호출하지 않는다. 앞단 포장은 결정적 처리이며 의미 해석은 분류 provider의 책임이다. 전체 후보와 dependency를 자르지 않는다. INPUT_TOO_LONG은 실제 누락 없이 보류한다.
 
-JEV ON이고 승인된 키·API·profile이 가용하면 JEV를 사용한다. OFF·키/API 불가·잘못된 응답·timeout이면 같은 사용 벤더의 중앙 고정 model/effort profile로 분류한다. OFF는 JEV 호출 0회이며 모든 분류 호출 금지가 아니다. 외부 전송 허용, 승인 route, profile qualification, 현재 예산은 별도로 확인한다. native 구독 경로를 공급자 호출 허가(예: API 허가)나 비용 0으로 추정하지 않는다. 요청마다 모델 catalog·가격을 탐색하거나 임의 모델/effort 상향을 하지 않는다. JEV와 vendor는 각각 최대 한 시도이며 timeout 소비 불명은 별도 예약으로 남긴다.
+JEV는 관리자 페이지에서 사용자가 서명한 설정(켜짐·모델·정보 전송 허용·예산)과 페이지에 등록한 key가 모두 있을 때만 사용한다. JEV OFF면 사용 벤더의 중앙 고정 model/effort profile로 분류한다. JEV ON에서 키 없음·호출 실패·잘못된 응답·timeout이면 페이지에서 고른 대체 평가자가 있을 때만 그 벤더로 한 번 더 분류하고, 없으면 조언 없이 AGENT가 직접 고른다. OFF는 JEV 호출 0회이며 모든 분류 호출 금지가 아니다. JEV에는 qualification 관문이 없고 그 조언은 검증되지 않은 참고다. 벤더 경로의 외부 전송 허용, 승인 route, profile qualification, 현재 예산은 별도로 확인한다. native 구독 경로를 공급자 호출 허가(예: API 허가)나 비용 0으로 추정하지 않는다. 요청마다 모델 catalog·가격을 탐색하거나 임의 모델/effort 상향을 하지 않는다. JEV와 vendor는 각각 최대 한 시도이며 timeout 소비 불명은 별도 예약으로 남긴다.
 
 `jev`는 선택을 돕는 조언 계층의 자리이며 TypeSafe는 그 자리를 채우는 공급자 하나다. `noul_*` 점수 종류와 `JEV_*` 이유 코드는 TypeSafe adapter가 내는 값이고 계층 공통 의미가 아니다. JEV 예산은 사람이 정한 한도이고 서버가 따로 두는 상한은 없다. 그 한도는 서버 프로세스 하나가 살아 있는 동안 적용되며 재시작을 넘어 누적되지 않는다.
 
@@ -18,4 +18,4 @@ JEV ON이고 승인된 키·API·profile이 가용하면 JEV를 사용한다. OF
 
 선택은 실행 승인·본문 읽기·적용·검증 완료가 아니다. 기존 거버넌스 순서와 권한을 유지하고 각 스킬의 실제 본문·참조를 읽어 수행한다. selected/read/applied/verified는 동일 대상과 산출물 digest의 각 관측으로 기록한다. mode=shadow는 관측용이며 최종 select 동작을 대신하지 않는다.
 
-설정은 승인된 설치에서 AGENT_GOVERNANCE_CLASSIFICATION_CONFIG가 가리키는 파일과 중앙 profile registry로 공급한다. 미설정·미검증 profile에는 임의 기본 모델이나 호출 경로(예: API 경로)가 없으며 UNAVAILABLE을 반환한다. 요청 원문·credential을 새 상태 DB나 로그에 저장하지 않는다. 독립 감사와 릴리스 승인은 기존 담당과 절차를 따른다.
+JEV 설정은 관리자 페이지의 서명 기록과 AGS에 내장된 공급자 정의로만 공급한다. 벤더 경로 설정은 승인된 설치에서 AGENT_GOVERNANCE_CLASSIFICATION_CONFIG가 가리키는 파일과 중앙 profile registry로 공급한다. 미설정·미검증 profile에는 임의 기본 모델이나 호출 경로(예: API 경로)가 없으며 UNAVAILABLE을 반환한다. 요청 원문·credential을 새 상태 DB나 로그에 저장하지 않는다. 독립 감사와 릴리스 승인은 기존 담당과 절차를 따른다.

@@ -6,7 +6,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { runGovernanceHook } from "../../mcp-server/src/governance-hook.js";
 import * as diagnostics from "../../mcp-server/src/hook-error-diagnostics.js";
 import {
-  CLAUDE_TRANSCRIPT_LINE_MAX_BYTES,
   findToolUseObservation,
   observeClaudeExecution,
   probeIssuingMessage,
@@ -14,7 +13,9 @@ import {
 } from "../../mcp-server/src/host-attestation-hook.js";
 
 // A live Claude Code session transcript reached 490 MB, and an 8 MiB whole-file limit refused every attested call
-// with an anonymous GOVERNANCE_HOOK_FAILED. These fixtures are synthetic; no real transcript is read.
+// with an anonymous GOVERNANCE_HOOK_FAILED. Since AGS3-D-0074 only the newest window (2 MiB, 4000 lines) is read: an
+// issuer outside it is not looked for, and the main thread's session model stands in (the main thread has no model
+// floor). These fixtures are synthetic; no real transcript is read.
 const SESSION = "large-transcript-session";
 const CALL = "toolu_large_transcript_current";
 const MODEL = "large-transcript-model";
@@ -71,7 +72,7 @@ describe("Claude transcript observation is independent of the file size", () => 
 
   it("(a) finds an issuing row that straddles a read window and is followed by later rows", () => {
     const row = issuing();
-    // The newest 1 MiB window holds the later row and the second half of the issuing row; its first half is in the next one.
+    // The issuing row ends about 1 MiB before the end of the file, inside the newest window, with a later row after it.
     const later = " ".repeat(MiB - Math.floor(row.length / 2) - 1);
     const content = older + "\n" + row + "\n" + later;
     const transcript = file(content);
@@ -99,31 +100,29 @@ describe("Claude transcript observation is independent of the file size", () => 
     expect(cache).not.toHaveBeenCalled();
   });
 
-  it("(c) reads the whole history: a rejected issuer far before the tail still blocks the fallback", () => {
+  it("(c) a rejected issuer far before the window does not block the main thread's fallback", () => {
     const transcript = file(issuing({ isSidechain: true }) + "\n" + older + "\n");
     const cache = vi.fn(() => session);
     expect(observeClaudeExecution(input(transcript), { maxWaitMs: 0, now, readSessionModel: cache }))
-      .toEqual({ unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" });
-    expect(cache).not.toHaveBeenCalled();
+      .toEqual({ model: session.model, effort: "high", turnId: null, provenance: "claude-code:session-start" });
   });
 
-  it("(c) keeps an incomplete current issuer far before the tail indeterminate", () => {
+  it("(c) an incomplete current issuer far before the window is not read", () => {
     const damaged = issuing().slice(0, issuing().indexOf(CALL) + 5);
     const content = damaged + "\n" + older + "\n";
     const transcript = file(content);
+    // The text probe still judges every line it is given; only the file read is bounded.
     expect(probeIssuingMessage(content, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
     const cache = vi.fn(() => session);
     expect(observeClaudeExecution(input(transcript), { maxWaitMs: 0, now, readSessionModel: cache }))
-      .toEqual({ unavailable: "CURRENT_CALL_INCOMPLETE" });
-    expect(cache).not.toHaveBeenCalled();
+      .toEqual({ model: session.model, effort: "high", turnId: null, provenance: "claude-code:session-start" });
   });
 
-  it("refuses one line over the line bound instead of truncating it, before any fallback", () => {
-    const transcript = file(older + "\n" + " ".repeat(CLAUDE_TRANSCRIPT_LINE_MAX_BYTES + 1) + "\n" + issuing({}, "toolu_previous_call"));
+  it("a row longer than the window is cut by it and skipped, never parsed as a fragment or refused", () => {
+    const transcript = file(older + "\n" + issuing() + " ".repeat(2 * MiB) + "\n");
     const cache = vi.fn(() => session);
-    expect(() => observeClaudeExecution(input(transcript), { maxWaitMs: 0, now, readSessionModel: cache }))
-      .toThrow("TRANSCRIPT_LINE_LIMIT_EXCEEDED");
-    expect(cache).not.toHaveBeenCalled();
+    expect(observeClaudeExecution(input(transcript), { maxWaitMs: 0, now, readSessionModel: cache }))
+      .toEqual({ model: session.model, effort: "high", turnId: null, provenance: "claude-code:session-start" });
   });
 });
 
@@ -140,7 +139,6 @@ describe("(d) the governance hook denial names the actual observation failure", 
   }
 
   it.each([
-    ["an oversized line", () => file(" ".repeat(CLAUDE_TRANSCRIPT_LINE_MAX_BYTES + 1)), "TRANSCRIPT_LINE_LIMIT_EXCEEDED", undefined],
     ["an unreadable transcript", () => path.dirname(file("")), "TRANSCRIPT_READ_FAILED",
       process.platform === "win32" ? expect.stringMatching(/^E[A-Z]+$/u) : "EISDIR"],
   ])("denies %s with its own code", async (_label, transcript, reasonCode, causeReason) => {

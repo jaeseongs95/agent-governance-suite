@@ -1,8 +1,7 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
-import { fileURLToPath } from "node:url";
 
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -11,10 +10,10 @@ vi.mock("node:child_process", async (importOriginal) => {
   const actual = await importOriginal();
   return { ...actual, spawnSync(command, args, options) {
     // Observe the real child without changing its argv, stdin, environment or deadline. Only this test captures stderr.
-    const observedOptions = options.stdio[2] === "ignore" ? { ...options, stdio: [options.stdio[0], options.stdio[1], "pipe"] } : options;
+    const observedOptions = options?.stdio?.[2] === "ignore" ? { ...options, stdio: [options.stdio[0], options.stdio[1], "pipe"] } : options;
     const started = performance.now();
     const result = actual.spawnSync(command, args, observedOptions);
-    childRuns.push({ command, args, input: options.input, timeoutMs: options.timeout, elapsedMs: performance.now() - started,
+    childRuns.push({ command, args, input: options?.input, timeoutMs: options?.timeout, elapsedMs: performance.now() - started,
       status: result.status, signal: result.signal, error: result.error ? { code: result.error.code, message: result.error.message } : null,
       stdout: result.stdout, stderr: result.stderr });
     return result;
@@ -29,7 +28,7 @@ import { executeAntigravityHookEvent } from "./antigravity-hook-runner.mjs";
 // cue as an ephemeralMessage, like the intake pointer, so it does not pile up in the trajectory.
 const SESSION = "00000000-0000-4000-8000-0000000060e1";
 const tmpDir = mkdtempSync(path.join(os.tmpdir(), "ags-agy-turn-cue-"));
-// The real continuity hook child inherits process.env; keep its stores out of the tester's state.
+// The real continuity hook reads process.env; keep its stores out of the tester's state.
 for (const [key, value] of Object.entries({
   AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(tmpDir, "shared"),
   AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(tmpDir, "session-board.sqlite3"),
@@ -44,56 +43,54 @@ afterAll(() => rmSync(tmpDir, { recursive: true, force: true }));
 const INTAKE = "AGS-INTAKE-POINTER-60e1";
 const TURN = "AGS-TURN-CUE-60e1";
 
-/** A stand-in continuity hook: records its stdin and argv, answers like the UserPromptSubmit cue. */
-function fakeContinuityHook(name) {
-  const seen = path.join(tmpDir, `${name}.json`), script = path.join(tmpDir, `${name}.mjs`);
-  writeFileSync(script, `import { readFileSync, writeFileSync } from "node:fs";
-const input = readFileSync(0, "utf8");
-writeFileSync(${JSON.stringify(seen)}, JSON.stringify({ input: JSON.parse(input), argv: process.argv.slice(2) }));
-process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: ${JSON.stringify(TURN)} } }));
-`);
-  return { script, seen: () => JSON.parse(readFileSync(seen, "utf8")) };
+/** A stand-in continuity hook entry: records its input and host, answers like the UserPromptSubmit cue. */
+function fakeContinuityHook() {
+  const calls = [];
+  const hook = (raw, _environment, host) => {
+    calls.push({ input: JSON.parse(raw), host });
+    return JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: TURN } });
+  };
+  return { hook, calls };
 }
 
-const noopScript = path.join(tmpDir, "noop.mjs");
-writeFileSync(noopScript, "process.stdin.resume(); process.stdin.on(\"end\", () => {});\n");
-
-function options(continuityHookPath) {
+function options(continuityHook) {
   return {
     resolveHostProcess: () => null,
     sessionMessageHook: async () => ({}),
     intakeHook: () => ({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: INTAKE } }),
-    sessionBoardHookPath: noopScript,
-    ...(continuityHookPath ? { continuityHookPath } : {}),
+    sessionBoardHook: async () => "",
+    ...(continuityHook ? { continuityHook } : {}),
   };
 }
 
+/** Children started with a shared hook bundle; the bundles run in the runner's own process (AGS3-D-0079). */
+const bundleChildren = () => childRuns.filter(run => run.args?.some(arg => /mcp-server[\\/]dist[\\/][^\\/]+\.mjs$/u.test(String(arg))));
+
 describe("agy turn cue (behavior 6)", () => {
   it("a turn's first model call adds the continuity hook's UserPromptSubmit cue as an ephemeralMessage after the intake pointer", async () => {
-    const hook = fakeContinuityHook("first-call");
+    const hook = fakeContinuityHook();
     const out = await executeAntigravityHookEvent({ conversationId: SESSION, invocationNum: 0, workspacePaths: [tmpDir] },
-      "PreInvocation", "", options(hook.script));
+      "PreInvocation", "", options(hook.hook));
     expect(out).toEqual({ injectSteps: [{ ephemeralMessage: INTAKE }, { ephemeralMessage: TURN }] });
     // Only the session and workspace reach the hook: no prompt text, model fields or agy raw keys.
-    expect(hook.seen()).toEqual({ input: { hook_event_name: "UserPromptSubmit", session_id: SESSION, cwd: tmpDir }, argv: ["--host=antigravity"] });
+    expect(hook.calls).toEqual([{ input: { hook_event_name: "UserPromptSubmit", session_id: SESSION, cwd: tmpDir }, host: "antigravity" }]);
   });
 
   it("a later model call of the same turn runs neither intake nor the turn cue", async () => {
-    const hook = fakeContinuityHook("later-call");
+    const hook = fakeContinuityHook();
     const out = await executeAntigravityHookEvent({ conversationId: SESSION, invocationNum: 1, workspacePaths: [tmpDir] },
-      "PreInvocation", "", options(hook.script));
+      "PreInvocation", "", options(hook.hook));
     expect(out).toEqual({});
-    expect(() => hook.seen()).toThrow();
+    expect(hook.calls).toEqual([]);
   });
 
   it("the built continuity hook gives the AGS turn check naming checkpoint_context and skill re-selection, not the context-continuity skill", async () => {
-    const built = fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
-    // The built intake hook too: no stand-in, so the context start below is what agy really gets.
-    const builtOptions = options(built);
+    // The built continuity and intake hooks: no stand-in, so the context start below is what agy really gets.
+    const builtOptions = options();
     delete builtOptions.intakeHook;
     const stageDiagnostics = [], started = performance.now();
     const out = await executeAntigravityHookEvent({ conversationId: SESSION, invocationNum: 0, workspacePaths: [tmpDir] },
-      "PreInvocation", "", { ...builtOptions, continuityHookPath: built, writeStderr: line => stageDiagnostics.push(line) });
+      "PreInvocation", "", { ...builtOptions, writeStderr: line => stageDiagnostics.push(line) });
     const trace = JSON.stringify({ out, elapsedMs: performance.now() - started, childRuns, stageDiagnostics });
     expect(out.injectSteps, trace).toHaveLength(2);
     expect(Object.keys(out.injectSteps[0])).toEqual(["ephemeralMessage"]);
@@ -110,5 +107,16 @@ describe("agy turn cue (behavior 6)", () => {
     expect(start).toContain("- cs-engineering: concurrency, database, messaging, algorithms, resource-lifetime, performance");
     expect(cue).toContain("맥락 시작에 받은 AGS 스킬별 대상 목록과 대조하고");
     expect(cue).not.toContain("- cs-engineering:");
+    // AGS3-D-0079: the built bundle ran in this process, not as a second node process.
+    expect(bundleChildren(), trace).toEqual([]);
+    expect(stageDiagnostics, trace).toEqual([]);
+  });
+
+  it("the continuity step after a model call runs the built bundle in the runner's own process", async () => {
+    const stageDiagnostics = [];
+    await executeAntigravityHookEvent({ conversationId: SESSION, invocationNum: 2, workspacePaths: [tmpDir] },
+      "PostInvocation", "continuity", { ...options(), writeStderr: line => stageDiagnostics.push(line) });
+    expect(bundleChildren()).toEqual([]);
+    expect(stageDiagnostics).toEqual([]);
   });
 });
