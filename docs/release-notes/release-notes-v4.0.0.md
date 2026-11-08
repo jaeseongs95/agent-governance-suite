@@ -14,6 +14,7 @@ AGS 4.0.0은 결함 수정을 중심으로 한 주 버전입니다. 깨지는 �
 - **JEV 실패 뒤 벤더 경로를 자동으로 시도하지 않습니다.** 3.x는 JEV가 실패하면 현재 벤더 경로를 시도했습니다. 4.0.0의 기본값은 「사용 안 함」이며, 원하면 「JEV 평가 불가 시 대체 평가자」에서 고릅니다.
 - 벤더 경로만 쓰는 사용자는 바꿀 것이 없습니다. 벤더 경로·qualification·전송 허용 규칙과 벤더 경로 key의 환경 변수 우선 규칙은 그대로입니다.
 - **`ponytail` 스킬이 `minimal-implementation`으로 바뀌었습니다.** `/agent-governance-suite:ponytail`로 부르던 것은 `/agent-governance-suite:minimal-implementation`으로 부릅니다. workflow capability 이름(`minimal-implementation`)과 단계 순서는 그대로입니다. 강도 인자(`lite|full|ultra`)는 없어졌습니다. 자세한 내용은 아래 「ponytail을 minimal-implementation으로 교체」를 봅니다.
+- **`cs-engineering` 지식팩 digest가 바뀌었습니다.** 지식팩 판 번호(0.1.0)와 규칙 카드는 그대로이지만, 스킬에서 설계 초안 사본을 빼면서 잠금 digest가 바뀌었습니다. 3.x에서 만들어 보관한 `cs-constraint-report`·binding·review는 이전 digest를 담고 있어 4.0.0의 `check-bundle`에서 무결성 오류로 거부됩니다. 4.0.0에서 제약 보고서를 다시 만듭니다.
 - **AGS 문구에 언어 설정이 없습니다.** 모델이 읽는 문구는 문구마다 토큰이 적은 형태 하나로 고정됩니다. 그래서 hook 안내, MCP 도구 설명·결과, 오류, 스킬·hook CLI 출력, 스킬 description은 영어이고, MCP instructions의 공통 접수 기준은 한국어입니다(아래 「모델이 읽는 문구를 토큰이 적은 형태로」). 환경 변수 `AGENT_GOVERNANCE_LOCALE`, 요청 `_meta`의 `acceptLanguage`, 공유 상태 폴더 `settings.json`의 locale, 패키지의 `runtime/locale.json`, 관리자 페이지의 표시 언어는 더 이상 효과가 없습니다. 사용자에게 보이는 답은 에이전트가 사용자의 언어로 씁니다.
 - **영어 전용 패키지(`agent-governance-suite-en`, agy `-en.zip`)를 더 배포하지 않습니다.** 설치했다면 [업데이트와 이전](../user/update.md#이전-판에서-올릴-때)대로 지우고 `agent-governance-suite`를 설치합니다. 상태는 같은 위치에 있으므로 그대로 이어집니다.
 - **문서 위치가 바뀌었습니다.** 사용자 문서는 `docs/user/`, 기여자 문서는 `docs/contributing/`, 지난 설계 문서는 `docs/archive/`, 릴리스 노트는 `docs/release-notes/`에 있습니다. 시작점은 `docs/README.md`입니다.
@@ -33,6 +34,7 @@ AGS 4.0.0은 결함 수정을 중심으로 한 주 버전입니다. 깨지는 �
 
 - 사용자 결정으로 외부 원본을 들여온 `ponytail`을 빼고 AGS 전용 스킬 `minimal-implementation` 1.0.0을 새로 썼습니다. 코드만이 아니라 문서·자료·설정·절차까지, 결과물을 만들거나 바꾸는 모든 작업에 적용합니다. 원 요구를 줄이지 않는 가장 작은 완전한 결과물을 고르고, 저장소에 이미 있는 것·표준·플랫폼 기능을 먼저 씁니다. 검토·감사·검증·완료 판정과 설명·조사만 하는 답에는 적용하지 않습니다.
 - 「결과물을 만들거나 바꿀 때 먼저 호출한다」는 조건은 이 스킬의 description에 둡니다(아래 「모델이 읽는 문구를 토큰이 적은 형태로」).
+- 스킬 폴더는 에이전트가 읽을 수 있고 읽으면 그만큼 문맥 비용이 듭니다. 그래서 `cs-engineering`에 들어 있던 2.7.7 설계 초안 사본(`references/design-basis.ko.md`, 47 KB, `ponytail` 언급 9곳)을 스킬에서 뺐습니다. 어느 스킬 문서도 이 파일을 가리키지 않았고, 같은 내용의 원본은 `docs/archive/cs-engineering-design.ko.md`에 있습니다. 지식팩 출처 목록(`sources.json`)의 설계 근거 주소도 그 원본으로 바꿨습니다.
 
 ## 모델이 읽는 문구를 토큰이 적은 형태로
 
