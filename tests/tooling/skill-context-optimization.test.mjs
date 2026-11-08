@@ -367,6 +367,9 @@ describe("skill context optimization", () => {
       { revision: "e6e313864a4fe1be15ac2b199fb56284dbc327a9", skillIds: ["context-continuity"] },
       { revision: "14549a2e83fd9143cf8184bd71979db23fd43172", skillIds: ["codex-token-usage-analyzer"] },
       { revision: "24c241d28e130912a0606090727b2b964c811757", skillIds: ["ponytail"] },
+      // 4.0.0 (ef149789): the 2.7.7 design-draft copy left cs-engineering; no skill retires with it.
+      { revision: "24c241d28e130912a0606090727b2b964c811757", skillIds: [],
+        hashes: { "skills/cs-engineering/references/design-basis.ko.md": "01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034" } },
     ]);
     expect(Object.keys(report.retiredSkills[0].hashes).toSorted()).toEqual(retiredSources);
     for (const relative of retiredSources) {

@@ -190,7 +190,8 @@ describe("generated Claude plugin", () => {
         // Exempt only that exact anchor Map, not the rest of this file or other tests.
         // 3.9.0: 0e8c40ff chained it to the v390 successor manifest; that change adds no intake sentence.
         // 4.0.0: 9b78c492 reads the chain end from CURRENT_SOURCE_MANIFEST and the r39 rows; that change adds no intake sentence.
-        expect(createHash("sha256").update(text).digest("hex"), file).toBe("34e3d62ab52cb23c11c7febb3da3c021e981eeed51721a15a17b959c2e3a52d1");
+        // 4.0.0: 9c680c6c reads the r40 minimal-implementation rows first (fixture lookup only); that change adds no intake sentence.
+        expect(createHash("sha256").update(text).digest("hex"), file).toBe("6a7e8e87a1eb87498ad89a0be32968563c09fb0a16ea25c7ec3443716c03f0e3");
         const historicalAnchors = text.match(/ {2}const anchors = new Map\(\[\n[\s\S]*?\n {2}\]\);/u);
         expect(historicalAnchors, file).not.toBeNull();
         text = text.replace(historicalAnchors[0], "");

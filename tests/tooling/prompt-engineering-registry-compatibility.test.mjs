@@ -38,7 +38,23 @@ const withoutStageValidator = (entry) => entry.skillId !== "cs-engineering" ? en
 // Restore only the approved removal/purpose predecessors, then the preflight version successor.
 // Every unrelated descriptor, field and ordering change still affects the original 22-descriptor hash.
 // Later additive specialists are excluded explicitly without rewriting that oracle.
-const historicalRegistry = (registry) => {
+// AGS 4.0.0: the approved minimal-implementation descriptor stands in ponytail's place. Only that exact descriptor
+// (registryDescriptorSha256) reads as ponytail's descriptor at the successor's baseline; ponytail itself must be gone.
+const minimalImplementation = approvedHistory.currentMinimalImplementation;
+const minimalPredecessor = JSON.parse(execFileSync("git", ["show", `${minimalImplementation.baselineRevision}:skills/registry.json`], {
+  cwd: new URL("../../", import.meta.url), encoding: "utf8",
+}));
+const beforeMinimalImplementation = (registry) => {
+  expect(registry.skills.filter(entry => entry.skillId === "ponytail")).toHaveLength(0);
+  const successors = registry.skills.filter(entry => entry.skillId === "minimal-implementation");
+  expect(successors).toHaveLength(1);
+  expect(digest(successors[0])).toBe(minimalImplementation.registryDescriptorSha256);
+  const ponytail = minimalPredecessor.skills.find(entry => entry.skillId === "ponytail");
+  expect(ponytail).toBeDefined();
+  return { ...registry, skills: registry.skills.map(entry => entry.skillId === "minimal-implementation" ? ponytail : entry) };
+};
+const historicalRegistry = (current) => {
+  const registry = beforeMinimalImplementation(current);
   expect(registry.skills.filter(entry => retirement.skillIds.includes(entry.skillId))).toHaveLength(0);
   const advisors = registry.skills.filter(entry => entry.skillId === "model-effort-advisor");
   expect(advisors).toHaveLength(1);

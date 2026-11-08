@@ -13,6 +13,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   beforeGuidanceSuccessor,
+  beforeMinimalImplementationSuccessor,
   beforeSpecialistBehaviorSuccessor,
   checkSkillContextOptimization,
   checkSpecialistBehaviorSources,
@@ -26,17 +27,20 @@ const common = "skills/independent-audit-gate/references/specialist-behavior.md"
 const current = relative => readFileSync(path.join(root, relative));
 const approvedHistory = checkSkillContextOptimization();
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
-const sourceBeforeApprovedChanges = relative => {
+const liveBeforeApprovedChanges = relative => {
   const retirement = approvedHistory.retiredSkills.find(entry => Object.hasOwn(entry.hashes, relative));
-  if (retirement) {
-    expect(existsSync(path.join(root, relative)), relative).toBe(false);
-    const before = execFileSync("git", ["show", `${retirement.revision}:${relative}`], { cwd: root });
-    expect(hash(before), relative).toBe(retirement.hashes[relative]);
-    return before;
-  }
+  if (!retirement) return beforeMinimalImplementationSuccessor(relative, current(relative));
+  expect(existsSync(path.join(root, relative)), relative).toBe(false);
+  const before = execFileSync("git", ["show", `${retirement.revision}:${relative}`], { cwd: root });
+  expect(hash(before), relative).toBe(retirement.hashes[relative]);
+  return before;
+};
+const sourceBeforeApprovedChanges = relative => {
+  // 4.0.0: the minimal-implementation successor (or the retired source at its retirement revision) reads as the
+  // 24c241d2 bytes first, exactly as the checker's projection does; older approved changes then apply unchanged.
   // 3.9.0 guidance successors (GUIDANCE_SUCCESSORS) come after the purpose change; the checker reads their exact
   // predecessor, so this does too before the purpose pins apply.
-  const bytes = beforeGuidanceSuccessor(relative, current(relative));
+  const bytes = beforeGuidanceSuccessor(relative, liveBeforeApprovedChanges(relative));
   const purpose = approvedHistory.currentPurposeChange;
   const pins = purpose.hashes[relative];
   if (!pins) return bytes;
@@ -147,6 +151,8 @@ describe("specialist behavior source successor", () => {
 
   it.each(["changed", "unavailable"])("refuses %s predecessor history instead of substituting current bytes", async mode => {
     const relative = "skills/code-review/SKILL.md";
+    // 4.0.0 bytes read as their exact 24c241d2 predecessor first; that predecessor is the specialist successor.
+    const live = liveBeforeApprovedChanges(relative);
     vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
       // The checker prefetches history with ls-tree + cat-file --batch; an unlisted path is read by `git show`.
       if (file === "git" && args.includes("ls-tree")) {
@@ -160,7 +166,7 @@ describe("specialist behavior source successor", () => {
     } }));
     try {
       vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
-      expect(() => checker.beforeSpecialistBehaviorSuccessor(relative, current(relative))).toThrow(mode === "unavailable"
+      expect(() => checker.beforeSpecialistBehaviorSuccessor(relative, live)).toThrow(mode === "unavailable"
         ? "SYNTHETIC_BEHAVIOR_HISTORY_MISSING" : `Specialist behavior predecessor bytes differ: ${relative}`);
       expect(() => checker.checkSkillContextOptimization()).toThrow(mode === "unavailable"
         ? "SYNTHETIC_BEHAVIOR_HISTORY_MISSING" : `Specialist behavior predecessor bytes differ: ${relative}`);

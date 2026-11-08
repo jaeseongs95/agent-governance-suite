@@ -39,7 +39,23 @@ const withoutStageValidator = (entry) => entry.skillId !== "cs-engineering" ? en
     return rest;
   }),
 };
-const withoutAddition = (registry) => {
+// AGS 4.0.0: the approved minimal-implementation descriptor stands in ponytail's place. Only that exact descriptor
+// (registryDescriptorSha256) reads as ponytail's descriptor at the successor's baseline; ponytail itself must be gone.
+const minimalImplementation = approvedHistory.currentMinimalImplementation;
+const minimalPredecessor = JSON.parse(execFileSync("git", ["show", `${minimalImplementation.baselineRevision}:skills/registry.json`], {
+  cwd: root, encoding: "utf8",
+}));
+const beforeMinimalImplementation = (registry) => {
+  expect(registry.skills.filter(entry => entry.skillId === "ponytail")).toHaveLength(0);
+  const successors = registry.skills.filter(entry => entry.skillId === "minimal-implementation");
+  expect(successors).toHaveLength(1);
+  expect(digest(successors[0])).toBe(minimalImplementation.registryDescriptorSha256);
+  const ponytail = minimalPredecessor.skills.find(entry => entry.skillId === "ponytail");
+  expect(ponytail).toBeDefined();
+  return { ...registry, skills: registry.skills.map(entry => entry.skillId === "minimal-implementation" ? ponytail : entry) };
+};
+const withoutAddition = (current) => {
+  const registry = beforeMinimalImplementation(current);
   expect(registry.skills.filter(entry => retirement.skillIds.includes(entry.skillId))).toHaveLength(0);
   const advisors = registry.skills.filter(entry => entry.skillId === "model-effort-advisor");
   expect(advisors).toHaveLength(1);
@@ -123,7 +139,11 @@ describe("additive UI/UX specialist integration", () => {
       for (const span of metadata[group]) {
         expect(span.path).toBe(relative);
         expect(span.digest).toBe(sourceDigest);
-        const selected = instructions.split(/\r?\n/u).slice(span.startLine - 1, span.endLine).join("\n").trim();
+        // 4.0.0: the one-line description holds both clauses, so a span may narrow its joined lines to startByte..endByte.
+        const block = Buffer.from(instructions.split(/\r?\n/u).slice(span.startLine - 1, span.endLine).join("\n"), "utf8");
+        const start = span.startByte ?? 0, end = span.endByte ?? block.length;
+        expect(start >= 0 && start < end && end <= block.length, `${group} byte range`).toBe(true);
+        const selected = block.subarray(start, end).toString("utf8").trim();
         expect(selected.length).toBeGreaterThan(0);
         expect(skill[group]).toContain(selected);
       }

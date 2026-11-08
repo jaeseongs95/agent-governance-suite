@@ -66,7 +66,7 @@ describe("CG05 workspace profiler regressions", () => {
     const omitted = await profileWorkspace(request(root, 64));
     expect(absent.limitations).toEqual([]);
     expect(omitted.verdict).toBe("PASS");
-    expect(omitted.limitations).toEqual(["Omitted an evidence file because of the maxBytesPerFile(64) limit:package.json (65 bytes)."]);
+    expect(omitted.limitations).toEqual(["Omitted an evidence file because of the maxBytesPerFile(64) limit: package.json (65 bytes)."]);
     expect(omitted.ecosystems).toEqual([]);
     expect(omitted.commands).toEqual([]);
     expect(omitted.evidenceIndex).toEqual([]);
@@ -84,9 +84,9 @@ describe("CG05 workspace profiler regressions", () => {
     const second = await profileWorkspace(input);
     expect(first.verdict).toBe("PASS");
     expect(first.limitations).toEqual([
-      "Omitted an evidence file because of the maxBytesPerFile(64) limit:.github/workflows/check.yml (65 bytes).",
-      "Omitted an evidence file because of the maxBytesPerFile(64) limit:AGENTS.md (65 bytes).",
-      "Omitted an evidence file because of the maxBytesPerFile(64) limit:README.md (65 bytes).",
+      "Omitted an evidence file because of the maxBytesPerFile(64) limit: .github/workflows/check.yml (65 bytes).",
+      "Omitted an evidence file because of the maxBytesPerFile(64) limit: AGENTS.md (65 bytes).",
+      "Omitted an evidence file because of the maxBytesPerFile(64) limit: README.md (65 bytes).",
     ]);
     expect(first.evidenceIndex).toEqual([]);
     expect(first.commands).toEqual([]);

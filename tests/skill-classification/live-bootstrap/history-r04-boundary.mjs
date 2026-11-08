@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
 import {writeSync} from "node:fs";
-import {cp, mkdir, readdir, readFile, rm} from "node:fs/promises";
+import {cp, mkdir, readFile, rm, writeFile} from "node:fs/promises";
 import {spawn} from "node:child_process";
 import path from "node:path";
 import {clearTimeout, setTimeout} from "node:timers";
@@ -79,16 +79,7 @@ async function prepareDefaultSourceFixture(repo, temporary) {
   }
   // Existing retirement provenance, not a replacement oracle: restore complete skill trees and their registry.
   const predecessor = "14549a2e83fd9143cf8184bd71979db23fd43172";
-  // The restored registry fixes the skill membership too: a skill retired after the predecessor (4.0.0: ponytail)
-  // comes back from the predecessor, and a skill added after it (4.0.0: minimal-implementation) is not part of it.
-  const registryShow = await runProcess("git", ["show", `${predecessor}:skills/registry.json`], {cwd: repo, timeout: 30000});
-  assert.equal(registryShow.error, undefined);
-  assert.equal(registryShow.status, 0, `historical registry: ${registryShow.stderr}`);
-  const historicalIds = new Set(JSON.parse(registryShow.stdout).skills.map(({skillId}) => skillId));
-  const currentIds = (await readdir(path.join(temporary, "skills"), {withFileTypes: true})).filter(entry => entry.isDirectory()).map(entry => entry.name);
-  for (const id of currentIds.filter(id => !historicalIds.has(id))) await rm(path.join(temporary, "skills", id), {recursive: true, force: true});
-  const skillRoots = [...new Set([...PROVIDER_RETENTION_SOURCE_CHANGES.map(({path: file}) => file.split("/").slice(0, 2).join("/")),
-    ...[...historicalIds].filter(id => !currentIds.includes(id)).map(id => `skills/${id}`)])];
+  const skillRoots = [...new Set(PROVIDER_RETENTION_SOURCE_CHANGES.map(({path: file}) => file.split("/").slice(0, 2).join("/")))];
   for (const skill of skillRoots) await rm(path.join(temporary, skill), {recursive: true, force: true});
   const archive = path.join(temporary, "pre-purpose-source.tar");
   const archived = await runProcess("git", ["archive", "--format=tar", `--output=${archive}`, predecessor, "--", ...skillRoots, "skills/registry.json"],
@@ -99,6 +90,22 @@ async function prepareDefaultSourceFixture(repo, temporary) {
   assert.equal(unpack.error, undefined);
   assert.equal(unpack.status, 0, `historical role extract: ${unpack.stderr}`);
   await rm(archive);
+  // AGS 4.0.0: ponytail is retired (the current source bindings require its absence) and the approved
+  // minimal-implementation descriptor takes its place, exactly as checkRegistryContextCompatibility applies it.
+  // Only the descriptor whose digest is the reviewed registryDescriptorSha256 is accepted; ponytail must be in the
+  // restored registry so that the replacement is the one approved transition, not an unrelated edit.
+  const {checkMinimalImplementationSources} = await import(new URL("../../../scripts/check-skill-context-optimization.mjs", import.meta.url).href);
+  const {registryDescriptorSha256} = checkMinimalImplementationSources();
+  const successors = JSON.parse(await readFile(path.join(repo, "skills/registry.json"), "utf8")).skills
+    .filter(({skillId}) => skillId === "minimal-implementation");
+  assert.equal(successors.length, 1, "minimal-implementation descriptor");
+  assert.equal(createHash("sha256").update(JSON.stringify(successors[0])).digest("hex"), registryDescriptorSha256, "minimal-implementation descriptor digest");
+  const registryPath = path.join(temporary, "skills/registry.json");
+  const restoredRegistry = JSON.parse(await readFile(registryPath, "utf8"));
+  const ponytailIndex = restoredRegistry.skills.findIndex(({skillId}) => skillId === "ponytail");
+  assert.ok(ponytailIndex >= 0, "restored registry holds ponytail");
+  restoredRegistry.skills[ponytailIndex] = successors[0];
+  await writeFile(registryPath, `${JSON.stringify(restoredRegistry, null, 2)}\n`);
   // All seven historical inputs remain bound to the original predecessors; do not use retention's replacement gold.
   for (const source of PROVIDER_RETENTION_SOURCE_CHANGES) {
     const bytes = await readFile(path.join(temporary, source.path));
