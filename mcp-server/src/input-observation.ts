@@ -12,6 +12,12 @@ export interface ActorObservation {
   reasonCode: string;
 }
 
+/** `skill-tool`: the host's own call that loads a skill. `skill-file-read`: a read of the skill's SKILL.md. */
+export interface SkillCallObservation {
+  skillId: string;
+  basis: "skill-tool" | "skill-file-read";
+}
+
 export interface InputObservation {
   host: string;
   sessionId: string;
@@ -26,6 +32,8 @@ export interface InputObservation {
   /** After a tool: the tail of what it returned, as its adapter reads it. Absent for a tool whose result is a file's
    * text rather than this run's outcome. */
   toolResult?: string;
+  /** After a tool: the AGS skill this call loaded, as its adapter recognizes one on that host. */
+  skillCalls?: SkillCallObservation[];
   /** File-edit tool boundary only: the absolute paths the host tool will change, as its adapter reads them from the
    * tool input. An empty list is an edit tool whose target the adapter could not read. Absent: not a file edit. */
   editTargets?: string[];

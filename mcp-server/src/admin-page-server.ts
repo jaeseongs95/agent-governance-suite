@@ -13,6 +13,7 @@ import { failureCode } from "./failure-diagnostics.js";
 import { writeDiagnostic } from "./hook-error-diagnostics.js";
 import { hostMarksNoSubagents } from "./host-input-adapter.js";
 import { readAdminPageRecord, resolveAdminPageRecordPath } from "./runtime-config.js";
+import { SKILL_USAGE_RETAIN_DAYS, type SkillUsageSummary } from "./skill-usage-store.js";
 
 /**
  * The local admin page (AGS3-T-0024): node:http on 127.0.0.1, opened as http://localhost:<port> (a WebAuthn relying
@@ -52,7 +53,12 @@ export interface AdminPageDependencies {
   listSessions: () => Promise<AdminSessionView[]>;
   /** The settings with what bounds them (environment, installation); never a secret value. */
   settings: (admin: AdminPageState) => Promise<AdminSettingsView>;
+  /** The skills AGS ships and the calls hosts made to them in the last `days` days. */
+  skillUsage: (days: number) => { skills: string[] } & SkillUsageSummary;
 }
+
+/** The periods the statistics page offers (days); the longest is everything kept. */
+export const SKILL_USAGE_PERIODS: readonly number[] = [1, 7, 30, SKILL_USAGE_RETAIN_DAYS];
 
 const STATUS: Partial<Record<AdminErrorCode, number>> = {
   ADMIN_ORIGIN_REJECTED: 403, ADMIN_KEY_NOT_REGISTERED: 403, ADMIN_KEY_UNKNOWN: 403, ADMIN_KEY_REVOKED: 403,
@@ -175,6 +181,11 @@ export function createAdminRequestHandler(dependencies: AdminPageDependencies) {
     if (method === "GET") {
       if (url.pathname === "/") return page(response, ADMIN_PAGE_HTML);
       if (url.pathname === "/api/state") return json(response, 200, await state());
+      if (url.pathname === "/api/skill-usage") {
+        const days = Number(url.searchParams.get("days"));
+        if (!SKILL_USAGE_PERIODS.includes(days)) throw new HttpError(400, "REQUEST_INVALID", { field: "days" });
+        return json(response, 200, { schemaVersion: "1.0.0", days, retainDays: SKILL_USAGE_RETAIN_DAYS, ...dependencies.skillUsage(days) });
+      }
       const lookup = /^\/api\/request\/([^/]+)$/.exec(url.pathname);
       if (lookup) {
         if (!REQUEST_ID.test(lookup[1]!)) throw new HttpError(400, "REQUEST_INVALID", { field: "requestId" });

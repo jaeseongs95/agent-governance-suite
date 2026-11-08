@@ -47,6 +47,7 @@ import { bindNativeClassificationDefinitions } from "./skill-classification/nati
 import { failureContext } from "./failure-diagnostics.js";
 import { writeDiagnostic, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import { type AdminSessionView, sessionKindUnknown, startAdminPage } from "./admin-page-server.js";
+import { resolveSkillUsageDatabasePath, skillUsageSummary } from "./skill-usage-store.js";
 import { type AdminPageState } from "./context-layer-service.js";
 import { adminSettingsView, type AdminSettingsView, type JevInstallationView, type JevProfileFor, type JevProviderView } from "./admin-settings.js";
 import { composeJev } from "./skill-classification/jev-composition.js";
@@ -215,6 +216,10 @@ export async function startMcpServer(
     listSessions: () => adminSessions(sessionMessages, resolveSessionBoardDatabasePath()),
     settings: async admin => adminSettings(admin, classificationConfig, classificationRoot, jevUsage(classificationBudget),
       await jev.views(), jev.profileFor),
+    skillUsage: days => ({
+      skills: (JSON.parse(readFileSync(registryPath, "utf8")) as { skills: Array<{ skillId: string }> }).skills.map(skill => skill.skillId),
+      ...skillUsageSummary(resolveSkillUsageDatabasePath(), days),
+    }),
   });
 }
 

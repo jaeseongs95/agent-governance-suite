@@ -13,6 +13,7 @@ import { ContinuityService, minimalWorkflowStartExample, renderHookText, subagen
 import { editExemptPaths } from "./admin-settings.js";
 import { ContextLayerService } from "./context-layer-service.js";
 import { ContextLayerStore } from "./context-layer-store.js";
+import { recordSkillCall, resolveSkillUsageDatabasePath } from "./skill-usage-store.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
 import { hookFailureContext, hookFailureReason, retainHookFailureSecondary, writeDiagnostic } from "./hook-error-diagnostics.js";
 import { failureReason } from "./failure-diagnostics.js";
@@ -297,7 +298,21 @@ export function handleContinuityHook(input: HookInput, service: ContinuityServic
 }
 
 type ContinuityHookPhase = "host-entry" | "stdin" | "input" | "storage" | "workflow-store" | "handle" | "close" | "stdout"
-  | "context-layers" | "subagent-situation";
+  | "context-layers" | "subagent-situation" | "skill-usage";
+
+/** The statistics are advisory: a failed write is reported and never touches the tool call that was observed. */
+function recordObservedSkillCalls(observation: InputObservation, environment: NodeJS.ProcessEnv): void {
+  if (!observation.skillCalls?.length || !observation.sessionId) return;
+  try {
+    const file = resolveSkillUsageDatabasePath(environment);
+    for (const { skillId, basis } of observation.skillCalls) {
+      recordSkillCall(file, { host: observation.host, sessionId: observation.sessionId, skillId, basis, subagent: isObservedSubagent(observation), at: new Date(),
+        ...(observation.callId ? { callId: `${observation.callId}:${skillId}` } : {}) });
+    }
+  } catch (cause) {
+    reportContinuityFailure("skill-usage", cause);
+  }
+}
 
 const CONTEXT_START_ACTIONS: ReadonlySet<string> = new Set(["startup", "fork", "clear", "resume", "compact"]);
 
@@ -445,6 +460,7 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
     const input = JSON.parse(raw) as HookInput;
     const normalized = normalizedContinuityInput(adaptHostInput(input, host));
     normalizedInput = normalized;
+    recordObservedSkillCalls(normalized.observation, environment);
     if (isSubagentStart(normalized)) {
       // The cue reads no state; the shared layers and the session's situational context are read best-effort, so a
       // storage failure takes only them away, never the cue.

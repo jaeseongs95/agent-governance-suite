@@ -460,7 +460,7 @@ describe("admin page HTTP boundary", () => {
     const settings = (admin: { signedSettings: Parameters<typeof adminSettingsView>[0]["signed"] }): AdminSettingsView => adminSettingsView({ environment: {},
       signed: admin.signedSettings, usage: null,
       installation: { configured: false, vendorIds: [], credentials: [], ignoredJev: { routes: 0, profiles: 0 }, error: null }, providers: [], profileFor: () => null });
-    server.on("request", createAdminRequestHandler({ service, port, settings: async admin => settings(admin),
+    server.on("request", createAdminRequestHandler({ service, port, settings: async admin => settings(admin), skillUsage: () => ({ skills: [], rows: [], hosts: [] }),
       listSessions: async () => { if (options.failSessions) throw Object.assign(new Error("x"), { code: "PRESENCE_DOWN" }); return options.sessions ?? []; } }));
     cleanups.push(() => new Promise<void>(resolve => server.close(() => resolve())));
     const call = (method: string, pathName: string, headers: Record<string, string> = {}, body?: string) =>
@@ -490,6 +490,17 @@ describe("admin page HTTP boundary", () => {
     expect(response.text).not.toContain("__CSP_NONCE__");
     expect(response.text.length).toBeGreaterThanOrEqual(ADMIN_PAGE_HTML.length - 200);
     expect(response.headers["x-frame-options"]).toBe("DENY");
+  });
+
+  it("serves the skill statistics for an offered period only", async () => {
+    const { call } = await page();
+    const served = await call("GET", "/api/skill-usage?days=30");
+    expect([served.status, JSON.parse(served.text)]).toEqual([200, { schemaVersion: "1.0.0", days: 30, retainDays: 90, skills: [], rows: [], hosts: [] }]);
+    for (const days of ["", "0", "2", "365", "x"]) {
+      const refused = await call("GET", `/api/skill-usage?days=${days}`);
+      expect([refused.status, JSON.parse(refused.text).error]).toEqual([400, { code: "REQUEST_INVALID", details: { field: "days" } }]);
+    }
+    expect(ADMIN_PAGE_HTML).toContain("/api/skill-usage?days=");
   });
 
   it("refuses a foreign Host (DNS rebinding) and moves 127.0.0.1 to localhost with the reason", async () => {

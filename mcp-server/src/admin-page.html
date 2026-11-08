@@ -121,6 +121,8 @@ caption{text-align:left;padding:12px;font-size:14px;font-weight:700}
 th{text-align:left;font-weight:500;font-size:13px;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:12px;border-bottom:1px solid var(--line2);font-size:14px;vertical-align:top}
 td.nowrap{white-space:nowrap}
+td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
+#usage-days{width:auto;max-width:100%}
 td .acts{display:flex;flex-wrap:nowrap;gap:6px;align-items:center}
 td .acts .small{white-space:normal;min-width:160px}
 .empty{margin:0;padding:24px;text-align:center;background:#fff;border:1px dashed var(--input);border-radius:8px;color:var(--muted)}
@@ -221,6 +223,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     b: { filter: 'active', limit: LIMIT },
     newKeyLabel: '', firstKeyNotice: false,
     j: { base: null, cur: null }, ex: { base: [], cur: null, newPath: '' },
+    u: { days: 30, seq: 0, data: null, error: null, loading: false },
     dialog: null,
   };
   let ruleSeq = 0;
@@ -552,6 +555,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     { key: 'bindings', label: '세션 결속' },
     { key: 'jev', label: 'JEV', group: '도구' },
     { key: 'general', label: '일반 설정' },
+    { key: 'stats', label: '스킬 통계', group: '분석' },
     { key: 'passkey', label: '패스키', group: '보안' },
   ];
   function go(tab, focusId) {
@@ -559,6 +563,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     render();
     const f = focusId && $(focusId);
     if (f) f.focus();
+    if (tab === 'stats') loadUsage();
   }
   function head(id, title, desc) {
     return h('div', { class: 'head' }, h('h1', { id, tabindex: '-1' }, title), desc ? h('p', { class: 'desc' }, desc) : null);
@@ -671,7 +676,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
         : h('p', { class: 'muted' }, '불러오는 중…'));
       return;
     }
-    const v = { global: viewGlobal, roles: viewRoles, bindings: viewBindings, jev: viewJev, general: viewGeneral, passkey: viewPasskey }[S.tab];
+    const v = { global: viewGlobal, roles: viewRoles, bindings: viewBindings, jev: viewJev, general: viewGeneral, stats: viewStats, passkey: viewPasskey }[S.tab];
     main.replaceChildren(v());
   }
 
@@ -1554,6 +1559,80 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
 
   /** 절대 경로처럼 보이는지(서버가 이 PC의 규칙으로 다시 검사한다). */
   const looksAbsolute = (p) => /^(?:[A-Za-z]:[\\/]|\\\\|\/)/.test(p);
+  // ---------- 스킬 통계 ----------
+  const USAGE_PERIODS = [[1, '최근 24시간'], [7, '최근 7일'], [30, '최근 30일'], [90, '최근 90일 (보관 전체)']];
+  const USAGE_BASIS = { 'skill-tool': '스킬 도구 호출', 'skill-file-read': 'SKILL.md 읽기' };
+  async function loadUsage() {
+    const u = S.u, seq = ++u.seq;
+    u.loading = true; render();
+    let r = null, error = null;
+    try {
+      r = await api('GET', '/api/skill-usage?days=' + u.days);
+      if (!r.ok) error = errOf(r);
+    } catch (e) { error = { code: e.kind, details: {} }; }
+    if (seq !== u.seq) return; // 늦게 온 이전 응답은 버린다
+    u.loading = false; u.error = error;
+    if (!error) u.data = r.json;
+    render();
+  }
+  /** 호스트 열은 기록과 현재 세션에서 나온다. 한 번도 기록이 없는 호스트도 빠지지 않게 세션 목록을 함께 본다. */
+  function usageModel(d) {
+    const hosts = [...new Set([...d.hosts.map((x) => x.host), ...d.rows.map((x) => x.host), ...S.data.sessions.map((x) => x.host)])].sort();
+    const bases = new Map(), skills = new Map();
+    const skill = (id) => { if (!skills.has(id)) skills.set(id, { id, total: 0, last: '', cells: new Map() }); return skills.get(id); };
+    d.skills.forEach(skill);
+    for (const x of d.rows) {
+      const s = skill(x.skillId);
+      const c = s.cells.get(x.host) || { calls: 0, sub: 0 };
+      c.calls += x.calls; if (x.subagent) c.sub += x.calls;
+      s.cells.set(x.host, c);
+      s.total += x.calls;
+      if (x.lastAt > s.last) s.last = x.lastAt;
+      if (!bases.has(x.host)) bases.set(x.host, new Set());
+      bases.get(x.host).add(x.basis);
+    }
+    const rows = [...skills.values()].sort((a, b) => b.total - a.total || a.id.localeCompare(b.id));
+    return { hosts, bases, rows };
+  }
+  function viewUsageTable(d) {
+    const m = usageModel(d);
+    const recorded = new Set(d.hosts.map((x) => x.host));
+    const hostHead = (host) => h('th', { scope: 'col' }, host, h('br'), h('span', { class: 'small' },
+      m.bases.has(host) ? [...m.bases.get(host)].map((b) => USAGE_BASIS[b] || b).join(' · ') : recorded.has(host) ? '이 기간 호출 없음' : '기록 없음'));
+    const body = h('tbody', null, m.rows.map((s) => h('tr', null,
+      h('td', null, h('code', null, s.id)),
+      m.hosts.map((host) => {
+        const c = s.cells.get(host);
+        return h('td', { class: 'num' }, c ? String(c.calls) : h('span', { class: 'muted' }, '0'), c && c.sub ? h('span', { class: 'small muted' }, ' · 서브 ' + c.sub) : null);
+      }),
+      h('td', { class: 'num' }, h('b', null, String(s.total))),
+      h('td', { class: 'num' }, s.last ? fmtTime(s.last) : '—'))));
+    return h('div', { class: 'tbl-wrap' }, h('table', null, h('caption', null, '스킬별 호출 수 · 호스트 이름 아래가 그 호스트에서 세는 기준입니다'),
+      h('thead', null, h('tr', null, h('th', { scope: 'col' }, '스킬'), m.hosts.map(hostHead), h('th', { scope: 'col' }, '합계'), h('th', { scope: 'col' }, '마지막 호출'))), body));
+  }
+  function viewStats() {
+    const u = S.u, d = u.data;
+    const sec = h('section', { class: 'col', 'aria-labelledby': 'u-title' }, head('u-title', '스킬 통계', '어느 호스트가 어느 AGS 스킬을 몇 번 호출했는지 봅니다. 보기만 하는 화면이라 패스키가 필요 없습니다.'));
+    const select = h('select', { id: 'usage-days', class: 'txt-in' }, USAGE_PERIODS.map(([days, label]) => h('option', { value: String(days), selected: days === u.days }, label)));
+    select.addEventListener('change', () => { u.days = Number(select.value); loadUsage(); });
+    sec.append(h('div', { class: 'row center' }, h('label', { for: 'usage-days' }, '기간'), select,
+      h('button', { type: 'button', class: 'btn sm', id: 'usage-reload', disabled: u.loading, onclick: () => loadUsage() }, u.loading ? '불러오는 중…' : '다시 불러오기')));
+    if (u.error) {
+      sec.append(h('div', { class: 'note-err', role: 'alert' }, '통계를 불러오지 못했습니다. ' + describe(u.error.code, u.error.details) + ' ', h('code', null, codeText(u.error.code, u.error.details))));
+    }
+    if (!d) { if (!u.error) sec.append(h('p', { class: 'muted', role: 'status' }, '불러오는 중…')); return sec; }
+    const total = d.rows.reduce((n, x) => n + x.calls, 0);
+    if (!d.hosts.length) {
+      sec.append(h('p', { class: 'empty' }, '아직 기록된 호출이 없습니다. AGS 4.1.0을 설치한 뒤의 호출부터 기록합니다.'));
+    } else {
+      const used = new Set(d.rows.map((x) => x.skillId)).size;
+      sec.append(h('p', { role: 'status' }, '총 ' + total + '회 · 호출된 스킬 ' + used + '개 / 전체 ' + d.skills.length + '개'), viewUsageTable(d));
+    }
+    sec.append(h('p', { class: 'small muted' }, '호스트마다 스킬을 여는 방식이 달라 세는 기준이 다릅니다. SKILL.md 읽기는 본문을 연 횟수이므로 같은 스킬을 다시 읽으면 또 셉니다. 호스트 사이의 숫자는 이 차이를 감안해 비교하세요.'),
+      h('p', { class: 'small muted' }, '이 화면에 나오지 않는 호출: 호스트가 훅에 보여 주지 않는 방식으로 연 스킬(사용자가 슬래시나 이름으로 직접 불러 본문이 바로 들어간 경우 등)과 AGS 밖의 스킬. 서브에이전트 표시를 주지 않는 호스트에서는 서브에이전트 호출도 메인으로 셉니다. 기록은 ' + d.retainDays + '일 보관합니다.'));
+    return sec;
+  }
+
   function viewGeneral() {
     const st = S.data.settings || {};
     const sec = h('section', { class: 'col', 'aria-labelledby': 's-title' }, head('s-title', '일반 설정', '항목마다 따로 저장하며, 저장할 때 패스키를 확인합니다.'));

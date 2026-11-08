@@ -20,6 +20,7 @@ import { observeClaudeExecution, readSessionModel, sessionModelDirectory } from 
 import { resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { shellEditTargets } from "./shell-edit-targets.js";
 import { HOOK_TOOL_RESULT_MAX_CHARACTERS } from "./environment-failure.js";
+import { skillFilesNamed, skillFilesReadByCommand } from "./skill-file-read.js";
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -61,6 +62,19 @@ function setEditTargets(adapted: AdaptedHostInput, input: Record<string, unknown
   observation.editTargets = editTargetPaths(input, read.paths);
   if (read.unknown && observation.editTargets.length > 0) observation.editTargetsIncomplete = true;
 }
+
+/** A finished tool call that loaded AGS skills. Each host loads a skill its own way, so `read` is that host's rule. */
+function setSkillCalls(adapted: AdaptedHostInput, input: Record<string, unknown>, read: (toolName: string, toolInput: Record<string, unknown>) => InputObservation["skillCalls"]): void {
+  const { observation } = adapted;
+  if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "after") return;
+  const result = record(input.tool_response);
+  const exit = result.exit_code ?? result.exitCode;
+  if (typeof exit === "number" && exit !== 0) return;
+  const calls = read(observation.toolName ?? "", observation.toolInput ?? {});
+  if (calls?.length) observation.skillCalls = calls;
+}
+
+const skillFileReads = (skillIds: string[]): InputObservation["skillCalls"] => skillIds.map(skillId => ({ skillId, basis: "skill-file-read" }));
 
 /** What the tool returned, as one text: its tail, where an error ends up. */
 function toolResultTail(value: unknown): string | undefined {
@@ -157,6 +171,9 @@ function adaptInferredRootHookInput(input: Record<string, unknown>, host: string
 
 function adaptCodexHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
   const adapted = adaptInferredRootHookInput(input, host, "CODEX");
+  // Codex has no skill tool: it opens a skill by reading its SKILL.md with a shell command.
+  setSkillCalls(adapted, input, (tool, toolInput) => tool === "Bash" || tool === "exec_command" || tool === "shell_command" || tool === "shell"
+    ? skillFileReads(skillFilesReadByCommand(toolInput.command)) : []);
   // apply_patch is Codex's file edit; its patch text is tool_input.command (Codex hooks, PreToolUse).
   setEditTargets(adapted, input, (tool, toolInput) => {
     if (tool === "apply_patch") return { paths: applyPatchTargets(toolInput.command) };
@@ -250,6 +267,11 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
   // Claude Code PostToolUse additionalContext reaches the next model call, a subagent's included: its step boundary.
   if (adapted.outputEventName === "PostToolUse") adapted.observation.step = true;
   if (CLAUDE_CONTENT_TOOLS.has(adapted.observation.toolName ?? "")) delete adapted.observation.toolResult;
+  // Claude Code loads a skill through its Skill tool; a plugin skill's name carries the plugin as a prefix.
+  setSkillCalls(adapted, input, (tool, toolInput) => {
+    const skill = tool === "Skill" ? /^agent-governance-suite:([a-z0-9][a-z0-9-]*)$/u.exec(text(toolInput.skill)) : null;
+    return skill ? [{ skillId: skill[1]!, basis: "skill-tool" }] : [];
+  });
   if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CLAUDE_NATIVE_SESSION_ID_INVALID";
   else if (Object.hasOwn(input, "agent_type") && (typeof input.agent_type !== "string" || !input.agent_type.trim())) {
     actor.reasonCode = "CLAUDE_NATIVE_AGENT_TYPE_INVALID";
@@ -384,6 +406,10 @@ function adaptAntigravityHookInput(input: Record<string, unknown>, host: string)
     if (tool === "Bash") return shellEditTargets(toolInput.CommandLine ?? toolInput.command, process.platform === "win32" ? "either" : "posix");
     return tool === "PowerShell" ? shellEditTargets(toolInput.CommandLine ?? toolInput.command, "powershell") : null;
   });
+  // agy opens a skill by reading its SKILL.md, with its file tool or a shell command.
+  setSkillCalls(adapted, input, (tool, toolInput) => tool === "Bash" || tool === "PowerShell"
+    ? skillFileReads(skillFilesReadByCommand(toolInput.CommandLine ?? toolInput.command))
+    : skillFileReads(skillFilesNamed(toolInput.Path ?? toolInput.AbsolutePath ?? toolInput.TargetFile ?? toolInput.file_path)));
   const { observation } = adapted;
   // agy delivers a hook's injected step from PostInvocation, after each model call, not from PostToolUse (AGS3-D-0068).
   if (observation.kind === "turn-step") {

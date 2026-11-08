@@ -64,7 +64,7 @@ function page(port: number, retryMs = 50) {
   const service = new ContextLayerService(() => null);
   const stop = new AbortController();
   stops.push(stop);
-  return startAdminPage({ service, port, listSessions: async () => [], settings: async () => ({}) as never },
+  return startAdminPage({ service, port, listSessions: async () => [], settings: async () => ({}) as never, skillUsage: () => ({ skills: [], rows: [], hosts: [] }) },
     { environment, retryMs, signal: stop.signal });
 }
 
