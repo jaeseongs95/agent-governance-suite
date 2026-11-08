@@ -37,59 +37,57 @@
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 1,
       "endLine": 4,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23",
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
       "startByte": 0,
-      "endByte": 188
+      "endByte": 243
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 4,
       "endLine": 4,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23",
-      "startByte": 298,
-      "endByte": 445
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
+      "startByte": 387,
+      "endByte": 580
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 4,
       "endLine": 6,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23",
-      "startByte": 507,
-      "endByte": 1141
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
+      "startByte": 664,
+      "endByte": 1558
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 8,
       "endLine": 13,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23"
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
+      "startByte": 0,
+      "endByte": 2529
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 15,
       "endLine": 20,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23"
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
+      "startByte": 0,
+      "endByte": 3606
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 21,
       "endLine": 21,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23",
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
       "startByte": 0,
-      "endByte": 180
+      "endByte": 187
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 22,
       "endLine": 22,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23",
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
       "startByte": 0,
-      "endByte": 113
-    },
-    {
-      "path": "skills/orchestrator/references/intake.md",
-      "startLine": 23,
-      "endLine": 23,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23"
+      "endByte": 121
     },
     {
       "path": "skills/orchestrator/SKILL.md",
@@ -121,41 +119,41 @@
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 4,
       "endLine": 4,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23",
-      "startByte": 128,
-      "endByte": 179
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
+      "startByte": 183,
+      "endByte": 248
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 4,
       "endLine": 4,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23",
-      "startByte": 180,
-      "endByte": 297
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
+      "startByte": 249,
+      "endByte": 386
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 21,
       "endLine": 21,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23",
-      "startByte": 181,
-      "endByte": 231
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
+      "startByte": 188,
+      "endByte": 238
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 4,
       "endLine": 4,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23",
-      "startByte": 446,
-      "endByte": 506
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
+      "startByte": 581,
+      "endByte": 663
     },
     {
       "path": "skills/orchestrator/references/intake.md",
       "startLine": 22,
       "endLine": 22,
-      "digest": "sha256:9102284fc1b4a4d7cb0e1750ed2a82cd5e2e3f453b166c3437d65aa6772cab23",
-      "startByte": 114,
-      "endByte": 212
+      "digest": "sha256:69a798343945029d745369988258daa0195f3be2973af9534969e6567c1b76ca",
+      "startByte": 122,
+      "endByte": 284
     }
   ]
 }

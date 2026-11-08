@@ -5,7 +5,7 @@ import { failureReason } from "./failure-diagnostics.js";
 import { hookFailureReason, writeDiagnostic } from "./hook-error-diagnostics.js";
 import { isHookEntry } from "./hook-entry.js";
 import { adaptHostInput, resolveHookHost } from "./host-input-adapter.js";
-import { resolveHostLocale, type SupportedLocale } from "./i18n.js";
+import { MODEL_LOCALE, type SupportedLocale } from "./i18n.js";
 import { skillIntakePointer, skillTargetsContext } from "./skill-intake.js";
 
 export { skillTargetsContext };
@@ -19,7 +19,7 @@ export { skillTargetsContext };
  * event each turn's first model call) and names the output event; nothing here depends on which host it is.
  */
 export function intakeHookOutput(input: Record<string, unknown>, host: string,
-  locale: SupportedLocale = resolveHostLocale().locale): Record<string, unknown> {
+  locale: SupportedLocale = MODEL_LOCALE): Record<string, unknown> {
   const adapted = adaptHostInput(input, host);
   if (adapted.lifecycle !== "start" || !adapted.outputEventName) return {};
   return { hookSpecificOutput: { hookEventName: adapted.outputEventName, additionalContext: `${skillIntakePointer(locale)}\n${skillTargetsContext(locale)}` } };

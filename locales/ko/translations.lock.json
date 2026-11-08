@@ -35,7 +35,7 @@
   "continuity.purge.stateChanged": "182f9b3c7cd19e9c8db0d09d614991cec6facab38b8225b4655310ed4e4e78be",
   "continuity.restore.candidate": "a3694b7029d7bddc97b44c97e4755d1ee32a011f450479e8fc3998d51af62fea",
   "continuity.restore.candidateMismatch": "9448f743e4ddbcdc53f493f1e2f8c4dae761ac746061d72dbef4a07ff170cf47",
-  "continuity.restore.current": "3994b5b010e29c97efef6cb293c3bcf9ff7a851a45082752715a35d80db3ddec",
+  "continuity.restore.current": "cb642bf36b87d4b0bcd69654cd8fad8e8d3895dba76837a7d1ea62d5e6624ae7",
   "continuity.restore.directStale": "4718b660c4503a60cd0154b5ecd747a4ade5963f66c6c703a0c6fafc5893380f",
   "continuity.restore.forkChildHasState": "ea0dc7388b72b4a51c080d547b9fe1be903fb63082decde9dabae8ab0b100ab4",
   "continuity.restore.forkParentStale": "c786643d4a95b94384411a94018583eef02dca6daeb0cd5c331f47d439daa712",

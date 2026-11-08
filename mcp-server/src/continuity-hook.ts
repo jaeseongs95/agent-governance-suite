@@ -24,7 +24,7 @@ import {
   resolveWorkflowDatabasePath,
 } from "./runtime-config.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
-import { msg, render, resolveHostLocale, type SupportedLocale } from "./i18n.js";
+import { MODEL_LOCALE, msg, render, type SupportedLocale } from "./i18n.js";
 import { hostActorId } from "./host-attestation.js";
 
 type HookInput = Record<string, unknown>;
@@ -280,9 +280,9 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
   return {};
 }
 
-/** The host locale is read once per hook call (docs/contributing/i18n.md 4.1 ①); a test may pin it. */
+/** Hook output is model-only text, rendered in MODEL_LOCALE; a test may pin another locale. */
 export function handleContinuityHook(input: HookInput, service: ContinuityService, host = "codex",
-  environment: NodeJS.ProcessEnv = process.env, locale: SupportedLocale = resolveHostLocale({ environment }).locale): Record<string, unknown> {
+  environment: NodeJS.ProcessEnv = process.env, locale: SupportedLocale = MODEL_LOCALE): Record<string, unknown> {
   return handleNormalizedContinuityHook(normalizedContinuityInput(adaptHostInput(input, host)), service, host, environment, locale);
 }
 
@@ -427,7 +427,7 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
       // The cue reads no state; the shared layers and the session's situational context are read best-effort, so a
       // storage failure takes only them away, never the cue.
       phase = "handle";
-      const locale = resolveHostLocale({ environment }).locale;
+      const locale = MODEL_LOCALE;
       const added = [contextLayerText(normalized, host, environment, locale), subagentSituation(normalized, host, environment, locale)]
         .filter((text): text is string => Boolean(text)).join("\n\n");
       result = JSON.stringify(withAddedContext(subagentStartOutput(normalized, locale), normalized.outputEventName, added || null));
@@ -457,7 +457,7 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
       }
     }
     phase = "handle";
-    const locale = resolveHostLocale({ environment }).locale;
+    const locale = MODEL_LOCALE;
     const handled = handleNormalizedContinuityHook(normalized, new ContinuityService(continuity, null, workflow, undefined, workflowFailure), host, environment,
       locale);
     const added = [contextLayerText(normalized, host, environment, locale), situationText(normalized, host, continuity, locale)]
@@ -483,7 +483,7 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
   // The shared layers do not live in the continuity store: its failure (reported above) takes only its own context.
   if (failed && normalizedInput) {
     const output = withAddedContext({}, normalizedInput.outputEventName,
-      contextLayerText(normalizedInput, host, environment, resolveHostLocale({ environment }).locale));
+      contextLayerText(normalizedInput, host, environment, MODEL_LOCALE));
     if (Object.keys(output).length > 0) return JSON.stringify(output);
   }
   return result;

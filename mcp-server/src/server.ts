@@ -24,7 +24,7 @@ import {
   WorkflowContractError,
   contractErrorBody,
 } from "../../contracts/types.js";
-import { CONTENT_LANGUAGE_META, msg, render, resolveHostLocale, resolveRequestLocale, ROOT_LOCALE, type MessageKey, type MessageRef, type SupportedLocale } from "./i18n.js";
+import { CONTENT_LANGUAGE_META, MODEL_LOCALE, msg, render, resolveHostLocale, resolveRequestLocale, ROOT_LOCALE, type MessageKey, type MessageRef, type SupportedLocale } from "./i18n.js";
 import { CATALOGS } from "./i18n-catalog.generated.js";
 import { BoardFormatError, locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../runtime/session-board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
@@ -636,7 +636,8 @@ export function sessionMessageServerInstructions(locale: SupportedLocale): strin
 export const SKILL_INTAKE_SERVER_INSTRUCTIONS = skillIntakeServerInstructions("ko");
 export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = sessionMessageServerInstructions("ko");
 
-export function serverInstructions(locale: SupportedLocale = resolveHostLocale().locale): string {
+/** Model-only text (MODEL_LOCALE); a test may render another locale. */
+export function serverInstructions(locale: SupportedLocale = MODEL_LOCALE): string {
   return `${skillIntakeServerInstructions(locale)}\n${sessionMessageServerInstructions(locale)}`;
 }
 
@@ -668,7 +669,7 @@ export function createMcpServer(
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     // SDK 1.30.0 fixes instructions at construction (private _oninitialize), so they use the service default locale.
-    { capabilities: { tools: {} }, instructions: serverInstructions(defaultLocale) },
+    { capabilities: { tools: {} }, instructions: serverInstructions(MODEL_LOCALE) },
   );
 
   const rootOperation = createRootApprovalHandler(server, service);

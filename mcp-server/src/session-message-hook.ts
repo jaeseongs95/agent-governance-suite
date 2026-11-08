@@ -23,7 +23,7 @@ export { registerHookHostAdapter } from "./host-input-adapter.js";
 import { supportsInjection } from "./input-observation.js";
 import type { PeerWaitDecision } from "./peer-wait-policy.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "./session-message-protocol.js";
-import { msg, render, resolveHostLocale, type SupportedLocale } from "./i18n.js";
+import { MODEL_LOCALE, msg, render, type SupportedLocale } from "./i18n.js";
 
 const HOST_CLAIM_MAX_MESSAGES = 1;
 const HOST_CLAIM_MAX_BODY_CHARS = 4096;
@@ -407,7 +407,7 @@ function recordPeerMessages(host: SupportedHookHost, sessionId: string, messages
  * The acknowledgement contract travels with the messages: a host may show the model neither MCP server instructions
  * nor a deferred tool's description (Codex, measured), so without this line a received message is never acknowledged.
  */
-export function sessionMessageEnvelope(messages: RecordedSessionMessage[], locale: SupportedLocale = resolveHostLocale().locale): string {
+export function sessionMessageEnvelope(messages: RecordedSessionMessage[], locale: SupportedLocale = MODEL_LOCALE): string {
   const lines: string[] = [render(msg("peer.envelope.ackGuidance", {}), locale)];
   const warning = render(msg("peer.envelope.warning", {}), locale);
   for (const message of messages) {
@@ -463,9 +463,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   progress: { step?: HookFailureStep | undefined } = {}): Promise<Record<string, unknown>> {
   options = snapshotOptions(options);
   const budget = options.executionBudget;
-  // Read once, and only when this call shows text (docs/contributing/i18n.md 4.1 ①).
-  let hostLocale: SupportedLocale | undefined;
-  const locale = (): SupportedLocale => (hostLocale ??= resolveHostLocale().locale);
+  // Everything this hook returns is read by the model, so it is rendered in MODEL_LOCALE.
+  const locale = (): SupportedLocale => MODEL_LOCALE;
   // A host adapter may read host files (the Claude transcript lineage), so it is a synchronous I/O boundary.
   const adapted = budgetedStep(budget, () => adaptHostInput(input, host));
   const observation = adapted.observation;

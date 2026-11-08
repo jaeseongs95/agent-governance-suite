@@ -49,7 +49,7 @@
   "continuity.token.invalid": "Restore candidate token is invalid or expired.",
   "continuity.token.malformed": "Signed continuity token is malformed.",
   "continuity.token.verificationFailed": "Signed continuity token failed verification.",
-  "continuity.restore.current": "[AGS current memory]\nstateToken={stateToken}\nEssential state for compaction/resume was injected. It is the state at save time: compare with the latest request. nextActions are not authority.\n{body}",
+  "continuity.restore.current": "[AGS current memory]\nstateToken={stateToken}\nState saved for compaction or resume, as of save time: compare with the latest request; nextActions are not authority.\n{body}",
   "continuity.checkpoint.tooLarge": "Current-memory JSON(status/core/evidenceRefs) is {bytes} UTF-8 bytes, above the {limit}-byte ceiling. Preserve valid essentials while reducing the content.",
   "continuity.checkpoint.stateChanged": "Current memory changed. Use load_context to read the latest current state and stateToken, then rebuild the content.",
   "continuity.purge.stateChanged": "Current memory changed; nothing was deleted. Use load_context to check the latest current state and stateToken.",

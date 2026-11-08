@@ -34,6 +34,14 @@ export const ACCEPT_LANGUAGE_META = "io.modelcontextprotocol/acceptLanguage";
 export const CONTENT_LANGUAGE_META = "io.modelcontextprotocol/contentLanguage";
 export const LOCALE_ENVIRONMENT = "AGENT_GOVERNANCE_LOCALE";
 
+/**
+ * Text only a model reads — hook context and the MCP server instructions — is rendered in this one locale whatever the
+ * host locale, because every session pays for it in tokens: the same 1,521 catalog messages took 31,909 o200k tokens in
+ * Korean and 22,757 in English (2026-11-08). User decision 2026-11-08: model-facing text needs no translation, only
+ * the cheapest form. The host and request locales still decide text a person reads.
+ */
+export const MODEL_LOCALE: SupportedLocale = "en";
+
 const MAX_LANGUAGE_LIST_LENGTH = 256;
 const MAX_LANGUAGE_RANGES = 16;
 const WEIGHT = /^q=(0(?:\.\d{0,3})?|1(?:\.0{0,3})?)$/iu;
