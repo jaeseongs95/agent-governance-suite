@@ -403,6 +403,7 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
     revision: "e8bfc9399d13191a5ff12ff28a1def1374d46bb6",
     hashes: Object.freeze({
       "skills/orchestrator/references/intake.md": ["7fca57e5d1538ecb0ccf9a2adc67a7494c35e9978eef0600b31e8751d40a319d", "d8d71dada86b8a9a87a135371e7142cc8091f6c680f4615993864fd8b6fee758"],
+      "skills/orchestrator/classification.json": ["1ecc972babc27508f73c0f449f51b031dcd4279196198966eb9800428e3b66ef", "072ab94c96dd9921cb3e572bfe36f50feb4d8cf9ac3584a4bf5cccf43718bf7e"],
     }),
   }),
 ]);
