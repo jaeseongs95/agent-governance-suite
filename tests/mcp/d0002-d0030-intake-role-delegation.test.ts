@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
-import { skillIntakeText, skillTargetsContext } from "../../mcp-server/src/skill-intake.js";
+import { skillIntakeText } from "../../mcp-server/src/skill-intake.js";
 
 // The shared intake is the one policy every host reads at session start (MCP server instructions and the Codex/agy
 // session-start pointer). Before 3.8.0 it had no sentence that made a session consider delegation (AGS3-D-0002), the
@@ -14,6 +14,8 @@ const intake = skillIntakeText("ko");
 // 3.9.0 (AGS3-D-0032): the shortened intake states each rule once. The role-field rule is read where the field is
 // written (the update_session_status description), the message tools in the session-message guide of the same MCP
 // instructions, and the brief contents in the skill line every session start carries.
+// 4.0.0 (token optimization): the brief contents moved from that skill line into the coordinate-subagents description,
+// which every host lists with the installed skills (AGS3-D-0003: not only in the skill body read after invoking it).
 const tools = JSON.parse(readFileSync(`${root}locales/ko/tools.json`, "utf8")) as Record<string, string>;
 
 // D32 재결속 사전 사례: 검토된 C8.3~C8.9와 역할 참고 자료를 입력으로 삼는다.
@@ -36,7 +38,8 @@ describe("shared intake: role and delegation", () => {
 
   it("reviews delegation for independent units instead of defaulting to direct work, with the brief rules", () => {
     expect(intake).toContain("독립 완료·검증 단위는 직접 수행을 기본값으로 삼지 말고 `coordinate-subagents`로 위임 여부를 정한다");
-    expect(skillTargetsContext("ko")).toContain("맡길 때는 지시문에 목표·범위·금지 구역·쓰기 소유, 고른 스킬과 완료·검증 기준을 적고, 결과 감시·진행 폴링 같은 대기는 맡기지 않는다");
+    const description = /^description: (.*)$/mu.exec(readFileSync(`${root}skills/coordinate-subagents/SKILL.md`, "utf8"))?.[1] ?? "";
+    expect(description).toContain("A brief names goal, scope, forbidden areas, write ownership, chosen skills and completion and verification criteria, and never hands off waiting (watching results, polling).");
   });
 
   it("no longer keeps work local by default in the delegation references", () => {

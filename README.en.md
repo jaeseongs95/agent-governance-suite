@@ -22,7 +22,7 @@ The Korean documents are the source of truth. The documents linked below are in 
 - **Skills:** 23 specialist skills, `orchestrator` to connect them, and `session-board` for the session board
 - **Local MCP server:** tools for workflows, work records, the session board, session messages, and state cleanup
 - **Host hooks:** add guidance and observe edit targets at session, turn, and tool boundaries.
-- **Local admin page:** you change settings that people decide, such as the global context, roles, JEV, and display language, by signing with a passkey. The default address is `http://localhost:47615/`.
+- **Local admin page:** you change settings that people decide, such as the global context, roles, and JEV, by signing with a passkey. The default address is `http://localhost:47615/`.
 
 Guidance being present does not mean the agent followed it or that the result was verified. What AGS does not guarantee is in [Usage](docs/user/usage.md#보장하지-않는-것).
 
@@ -36,17 +36,15 @@ The current public release is `v4.0.0`, and the examples below install it. From 
 
 If AGS is already installed, follow [Updates and migration](docs/user/update.md).
 
-### Choose a package
+### Package and language
 
-Each host has a Korean package and an English-only package. The English-only package shows AGS messages, MCP tool descriptions, hook text, and errors in English; skill text stays in its source language (mostly Korean). Both use the same state, so you can switch languages by reinstalling. **Enable only one of the two in a host.** With both enabled, Claude Code loads the hooks of only one, and Codex runs both.
+Each host has one package. Model-facing AGS text has no language setting: each text is fixed in the form that costs the fewest tokens, so hook guidance, MCP tool descriptions and results, errors, skill and hook CLI output and skill descriptions are English, and the common intake block in the MCP instructions is Korean; skill text stays in its source language (mostly Korean). If you installed the 3.x English-only package (`agent-governance-suite-en`), follow [Updates and migration](docs/user/update.md) (Korean).
 
-| Host | Korean package | English-only package |
-| --- | --- | --- |
-| Claude Code | `agent-governance-suite@agent-governance-claude` | `agent-governance-suite-en@agent-governance-claude` |
-| Codex | `agent-governance-suite@agent-governance` | `agent-governance-suite-en@agent-governance` |
-| Antigravity | `agent-governance-suite-antigravity-<tag>.zip` | `agent-governance-suite-antigravity-<tag>-en.zip` |
-
-The commands below install the Korean package. For the English-only package, substitute the name or file from the table. In Claude Code both packages keep the skill names `agent-governance-suite:<skill>`; the Codex English package is named `agent-governance-suite-en` because Codex requires the entry name and the manifest name to match.
+| Host | Package |
+| --- | --- |
+| Claude Code | `agent-governance-suite@agent-governance-claude` |
+| Codex | `agent-governance-suite@agent-governance` |
+| Antigravity | `agent-governance-suite-antigravity-<tag>.zip` |
 
 ### Claude Code
 

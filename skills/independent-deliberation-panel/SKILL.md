@@ -1,6 +1,6 @@
 ---
 name: independent-deliberation-panel
-description: 복잡하거나 실패 비용이 큰 설계·의사결정·감사를 독립 관점, 조건부 반박, 증거 검증과 별도 판정으로 검토한다. 단순 조회·요약·정형 변환에는 사용하지 않는다.
+description: "Review complex or costly design, decisions or audits through independent viewpoints, conditional rebuttal, evidence checks and a separate verdict. Not for simple lookups, summaries or format conversion."
 license: MIT
 metadata:
   version: "1.0.0"

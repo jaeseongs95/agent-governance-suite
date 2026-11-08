@@ -54,7 +54,6 @@ import { JevKeyVault } from "./jev-key-vault.js";
 import { InMemoryClassificationBudget as ClassificationBudget } from "./skill-classification/service.js";
 import { mergeSessionBoard } from "./server.js";
 import { SessionMessageService } from "./session-message-service.js";
-import { resolveHostLocale, SUPPORTED_LOCALES } from "./i18n.js";
 
 
 /** Trusted installation code supplies adapters; request JSON and environment names cannot register them. */
@@ -207,7 +206,7 @@ export async function startMcpServer(
   });
   const classificationBudget = providerRuntime.budget;
   const sessionMessages = new SessionMessageService();
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), sessionMessages, trust, classification, builtinCallerIngress(process.env.AGENT_GOVERNANCE_HOST_ATTESTATION, store), undefined,
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), sessionMessages, trust, classification, builtinCallerIngress(process.env.AGENT_GOVERNANCE_HOST_ATTESTATION, store),
     contextLayers);
   await server.connect(new StdioServerTransport());
   await startAdminPage({
@@ -258,7 +257,6 @@ async function adminSessions(sessionMessages: SessionMessageService, boardPath: 
 /** What the page shows about the settings: the signed values, the JEV providers AGS ships and the installation's vendors. */
 async function adminSettings(admin: AdminPageState, classificationConfig: string | undefined, classificationRoot: string,
   usage: { spentUsd: number | null; reservedUsd: number } | null, providers: JevProviderView[], profileFor: JevProfileFor): Promise<AdminSettingsView> {
-  const locale = resolveHostLocale({ environment: process.env });
   const installation: JevInstallationView = { configured: Boolean(classificationConfig), vendorIds: [], credentials: [],
     ignoredJev: { routes: 0, profiles: 0 }, error: null };
   if (classificationConfig) {
@@ -280,8 +278,7 @@ async function adminSettings(admin: AdminPageState, classificationConfig: string
       installation.error = failureContext(error).type === "syntax-error" ? "CONFIG_INVALID" : "CONFIG_UNREADABLE";
     }
   }
-  return adminSettingsView({ environment: process.env, signed: admin.signedSettings, locale: { value: locale.locale, source: locale.source },
-    localeOptions: SUPPORTED_LOCALES, installation, usage, providers, profileFor });
+  return adminSettingsView({ environment: process.env, signed: admin.signedSettings, installation, usage, providers, profileFor });
 }
 
 /** `server.mjs admin-reset`: archives the signed admin log after every passkey was lost (no HTTP or MCP path). */
@@ -291,7 +288,7 @@ function adminResetCommand(args: string[]): number {
   const summary = { keys: state.keys.length, roles: state.roles.length, bindings: state.bindings.length, lastSeq: state.lastSeq };
   if (!args.includes("--yes")) {
     process.stdout.write(`${JSON.stringify({ command: "admin-reset", dryRun: true, wouldArchive: summary,
-      effect: "Every signed admin item returns to its default (no global context, no roles, no bindings, no passkeys, JEV off, no JEV keys; the locale and the edit gate exceptions come from the environment or the defaults). Re-run with --yes." })}\n`);
+      effect: "Every signed admin item returns to its default (no global context, no roles, no bindings, no passkeys, JEV off, no JEV keys; the edit gate exceptions come from the environment or the default). Re-run with --yes." })}\n`);
     return 0;
   }
   const reset = service.reset();

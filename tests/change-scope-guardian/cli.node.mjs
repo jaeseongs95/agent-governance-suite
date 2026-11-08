@@ -77,23 +77,27 @@ test("capture CLI rejects input that does not match ChangeScopeRequest.v1", () =
   assert.match(result.stderr, /request schema validation failed/);
 });
 
-test("i18n: the capture CLI reports an invalid request in the host locale", () => {
-  const capture = (locale) => spawnSync(process.execPath, [join(repoRoot, "scripts/capture-workspace-baseline.mjs")], {
-    input: JSON.stringify({ repositoryRoot: ".", comparisonTarget: "working-tree" }),
-    encoding: "utf8",
-    env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale }
-  });
-  const english = capture("en");
-  const korean = capture("ko");
-  assert.notEqual(english.status, 0);
-  assert.notEqual(korean.status, 0);
-  assert.match(english.stderr, /^request schema validation failed: /);
-  assert.match(korean.stderr, /^request 스키마 검증에 실패했다: /);
-  const missingRoot = (locale) => spawnSync(process.execPath, [join(repoRoot, "scripts/validate-report.mjs")], {
-    input: JSON.stringify({}),
-    encoding: "utf8",
-    env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale }
-  });
-  assert.equal(missingRoot("en").stderr.trim(), "artifact and externally frozen expectedArtifactDigest are required");
-  assert.equal(missingRoot("ko").stderr.trim(), "artifact와 외부에서 고정한 expectedArtifactDigest가 필요하다");
+test("i18n: the CLIs report an invalid request in the model locale, whatever the host locale", () => {
+  const hangul = /[가-힣]/u;
+  const withLocale = (locale) => {
+    const env = { ...process.env };
+    if (locale === undefined) delete env.AGENT_GOVERNANCE_LOCALE; else env.AGENT_GOVERNANCE_LOCALE = locale;
+    return env;
+  };
+  for (const locale of ["en", "ko", undefined]) {
+    const capture = spawnSync(process.execPath, [join(repoRoot, "scripts/capture-workspace-baseline.mjs")], {
+      input: JSON.stringify({ repositoryRoot: ".", comparisonTarget: "working-tree" }),
+      encoding: "utf8",
+      env: withLocale(locale)
+    });
+    assert.notEqual(capture.status, 0);
+    assert.match(capture.stderr, /^request schema validation failed: /);
+    assert.doesNotMatch(capture.stderr, hangul);
+    const missingRoot = spawnSync(process.execPath, [join(repoRoot, "scripts/validate-report.mjs")], {
+      input: JSON.stringify({}),
+      encoding: "utf8",
+      env: withLocale(locale)
+    });
+    assert.equal(missingRoot.stderr.trim(), "artifact and externally frozen expectedArtifactDigest are required");
+  }
 });

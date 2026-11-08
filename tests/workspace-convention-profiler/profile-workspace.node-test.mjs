@@ -8,11 +8,12 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 
-// The assertions compare the Korean source sentences of profileWorkspace (catalog domain skillChecksKo); validateProfile is English-sourced (skillChecks).
+// The assertions compare the English model-locale sentences (catalog domains skillChecksKo and skillChecks, locales/en);
+// the host locale is set to ko on purpose, since it must not change the output.
 process.env.AGENT_GOVERNANCE_LOCALE = "ko";
 async function inLocale(locale, action) {
   const previous = process.env.AGENT_GOVERNANCE_LOCALE;
-  process.env.AGENT_GOVERNANCE_LOCALE = locale;
+  if (locale === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE; else process.env.AGENT_GOVERNANCE_LOCALE = locale;
   try { return await action(); } finally { process.env.AGENT_GOVERNANCE_LOCALE = previous; }
 }
 
@@ -53,7 +54,7 @@ test("Node monorepo를 읽기 전용으로 조사하고 결정적 fingerprint를
   assert.equal(first.workspace.vcsType, "none");
   assert.ok(first.ecosystems.some((item) => item.language === "JavaScript/TypeScript" && item.packageManager === "pnpm"));
   assert.ok(first.commands.some((item) => item.command === "pnpm build"));
-  assert.ok(first.openQuestions.some((item) => item.includes("test 목적의 명령")));
+  assert.ok(first.openQuestions.some((item) => item.startsWith("The commands for the test purpose differ between sources: ")));
   assert.equal(await treeDigest(fixture), before);
   assert.deepEqual(validateProfile(first), []);
 });
@@ -157,24 +158,33 @@ test("confirmed 관례와 모든 criterion ref는 checksum evidence index에 결
   assert.ok((await inLocale("en", () => validateProfile(commandTampered))).some((error) => error.includes("references missing evidence")));
 });
 
-test("사람이 읽는 문장은 호스트 locale(en·ko)로 나오고 profileFingerprint는 locale과 무관하다", async () => {
+test("사람이 읽는 문장은 host locale과 무관하게 model locale(en)로 나오고 profileFingerprint도 같다", async () => {
   const workspace = path.join(fixtures, "node-monorepo");
   const run = (locale, overrides) => inLocale(locale, () => profileWorkspace(request(workspace, overrides)));
   const limited = { evidenceLimits: { maxFiles: 100, maxBytesPerFile: 10, excludedPatterns: [] } };
-  const [en, ko] = [await run("en", limited), await run("ko", limited)];
+  const hostLocales = ["en", "ko", undefined];
+  const [en, ...others] = [await run("en", limited), await run("ko", limited), await run(undefined, limited)];
   assert.match(en.limitations[0], /^Omitted an evidence file because of the maxBytesPerFile\(10\) limit: /);
-  assert.match(ko.limitations[0], /^근거 파일을 maxBytesPerFile\(10\) 제한으로 생략했습니다: /);
-  assert.equal(en.profileFingerprint, ko.profileFingerprint);
-  const [fullEn, fullKo] = [await run("en"), await run("ko")];
+  for (const other of others) {
+    assert.deepEqual(other.limitations, en.limitations);
+    assert.equal(other.profileFingerprint, en.profileFingerprint);
+  }
+  const [fullEn, ...fullOthers] = [await run("en"), await run("ko"), await run(undefined)];
   assert.match(fullEn.conventions[0].observedPattern, /^Confirmed the .+ structure at /);
-  assert.match(fullKo.conventions[0].observedPattern, / 경로에서 .+ 구조를 확인했습니다.$/);
-  assert.equal(fullEn.profileFingerprint, fullKo.profileFingerprint);
-  const blocked = await inLocale("en", () => profileWorkspace({}));
-  assert.match(blocked.limitations[0], /^WorkspaceProfileRequest.v1 contract violation: /);
+  assert.doesNotMatch(fullEn.conventions[0].observedPattern, /[가-힣]/u);
+  for (const other of fullOthers) {
+    assert.equal(other.conventions[0].observedPattern, fullEn.conventions[0].observedPattern);
+    assert.equal(other.profileFingerprint, fullEn.profileFingerprint);
+  }
+  for (const locale of hostLocales) {
+    const blocked = await inLocale(locale, () => profileWorkspace({}));
+    assert.match(blocked.limitations[0], /^WorkspaceProfileRequest.v1 contract violation: /);
+  }
   const tampered = structuredClone(fullEn);
   tampered.commands[0].sourceRef = "missing.json#sha256:" + "a".repeat(64);
-  assert.match((await inLocale("en", () => validateProfile(tampered)))[0], /^command .+ references missing evidence: /);
-  assert.match((await inLocale("ko", () => validateProfile(tampered)))[0], /^존재하지 않는 근거를 참조한다 \(명령 .+\): /);
+  for (const locale of hostLocales) {
+    assert.match((await inLocale(locale, () => validateProfile(tampered)))[0], /^command .+ references missing evidence: /);
+  }
 });
 
 test("request 런타임 검증은 schemaVersion, item과 additionalProperties를 엄격히 적용한다", async () => {
@@ -189,7 +199,7 @@ test("request 런타임 검증은 schemaVersion, item과 additionalProperties를
   for (const input of invalidRequests) {
     const output = await profileWorkspace(input);
     assert.equal(output.verdict, "BLOCKED");
-    assert.match(output.limitations[0], /계약 위반/);
+    assert.match(output.limitations[0], /^WorkspaceProfileRequest.v1 contract violation: /);
     assert.deepEqual(validateProfile(output), []);
   }
 });
@@ -207,7 +217,7 @@ test("validateProfile은 전체 output schema를 적용한다", async () => {
 test("workspace 밖 대상과 Windows 경로 표현을 안전하게 처리한다", async () => {
   const output = await profileWorkspace(request(path.join(fixtures, "node-monorepo"), { targetPaths: ["../outside"] }));
   assert.equal(output.verdict, "BLOCKED");
-  assert.match(output.limitations[0], /workspace 밖/);
+  assert.match(output.limitations[0], /outside the workspace cannot be examined: /);
   assert.equal(portablePath("C:\\Repo\\src\\file.ts"), "c:/Repo/src/file.ts");
   assert.equal(portablePath("D:/Repo//tests"), "d:/Repo/tests");
 });

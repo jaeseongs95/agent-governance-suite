@@ -1,6 +1,6 @@
 ---
 name: software-security-auditor
-description: 소스·설정과 허용된 로컬 재현으로 웹·API 및 CLI·MCP의 공격 경로와 방어 통제를 감사하고 취약점·근거·검사 공백을 보고한다. 일반 코드 리뷰, 자동 수정, 운영 서비스 능동 검사나 릴리스 승인에는 사용하지 않는다.
+description: "Audit attack paths and defensive controls of web, API, CLI and MCP from source, config and allowed local reproduction, and report vulnerabilities, evidence and coverage gaps. Not for general code review, automatic fixes, active probing of production services or release approval."
 license: MIT
 metadata:
   version: "0.1.0"

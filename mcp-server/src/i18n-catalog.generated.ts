@@ -50,7 +50,6 @@ export const CATALOGS: Readonly<Record<SupportedLocale, Readonly<Record<string, 
 };
 
 export interface MessageParams {
-  "hooks.checkpointCue.notice": Record<string, never>;
   "hooks.checkpointCue.refresh": Record<string, never>;
   "hooks.checkpointCue.resume": Record<string, never>;
   "hooks.checkpointCue.save": Record<string, never>;
@@ -101,7 +100,7 @@ export interface MessageParams {
   "server.stateCleanup.unavailable": Record<string, never>;
   "server.sessionMessage.sendInvalid": { "cause": NestedMessage | number | string; };
   "server.workflowChange.stage": { "stageId": NestedMessage | number | string; "capability": NestedMessage | number | string; "provider": NestedMessage | number | string; };
-  "server.workflowChange.skills": { "targets": NestedMessage | number | string; };
+  "server.workflowChange.skills": Record<string, never>;
   "server.workflowChange.classification": Record<string, never>;
   "workflow.convergence.nonFiniteNumber": { "subject": string; "label": NestedMessage | number | string; };
   "workflow.convergence.nonSerializableValue": { "subject": string; "label": NestedMessage | number | string; };

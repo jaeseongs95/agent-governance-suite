@@ -13,7 +13,7 @@ const fixture = async (relative) => JSON.parse(await readFile(path.join(testsRoo
 
 async function inLocale(locale, run) {
   const previous = process.env.AGENT_GOVERNANCE_LOCALE;
-  process.env.AGENT_GOVERNANCE_LOCALE = locale;
+  if (locale === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE; else process.env.AGENT_GOVERNANCE_LOCALE = locale;
   try { return await run(); } finally {
     if (previous === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE; else process.env.AGENT_GOVERNANCE_LOCALE = previous;
   }
@@ -26,21 +26,23 @@ async function receiptInput() {
   return input;
 }
 
-for (const [locale, schemaFailure, receipt] of [
-  ["en", "Task contract schema validation failed.", "A provenance receipt cannot authorize an action or satisfy an approval requirement."],
-  ["ko", "작업 계약 schema 검증에 실패했다.", "출처 영수증은 행동을 허가하거나 승인 요구를 충족할 수 없다."],
-]) {
-  test(`validation errors are rendered in the ${locale} host locale`, async () => {
+// Script output is rendered in the model locale (en), whatever the host locale.
+const schemaFailure = "Task contract schema validation failed.";
+const receipt = "A provenance receipt cannot authorize an action or satisfy an approval requirement.";
+
+for (const locale of ["en", "ko", undefined]) {
+  test(`validation errors are rendered in the model locale, whatever the host locale (${locale ?? "unset"})`, async () => {
     await inLocale(locale, async () => {
       await assert.rejects(validateTaskContract({ schemaVersion: "1.0.0" }), { code: "INVALID_INPUT", message: schemaFailure });
       await assert.rejects(validateTaskContract(await receiptInput()), { code: "INVALID_INPUT", message: receipt });
     });
   });
 
-  test(`the CLI writes its error sentence in the ${locale} host locale`, async () => {
+  test(`the CLI writes its error sentence in the model locale, whatever the host locale (${locale ?? "unset"})`, async () => {
+    const env = { ...process.env, AGENT_GOVERNANCE_LOCALE: locale };
+    if (locale === undefined) delete env.AGENT_GOVERNANCE_LOCALE;
     const result = spawnSync(process.execPath, [script], {
-      input: JSON.stringify(await receiptInput()), encoding: "utf8", windowsHide: true,
-      env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale },
+      input: JSON.stringify(await receiptInput()), encoding: "utf8", windowsHide: true, env,
     });
     assert.equal(result.status, 1);
     const body = JSON.parse(result.stdout);

@@ -161,7 +161,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       } else {
         const envelope = JSON.parse(result.stdout);
         if (envelope?.protocolVersion !== "1.0.0" || envelope.ok !== false
-          // The text follows the host locale; the key is the language-independent contract.
+          // The text is in the model locale; the key is the language-independent contract.
           || envelope.messageKey !== "services.sessionMessage.cli.unsupportedOperation" || typeof envelope.error !== "string") {
           throw new Error(`${script} did not reject invalid messaging input.\n${output}`);
         }
@@ -181,10 +181,10 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     }
 
     const results = [];
-    // Expected output is a code or a root-locale (en) sentence; the user's locale settings must not change the probe.
-    const englishEnvironment = { ...environment, AGENT_GOVERNANCE_LOCALE: "en" };
+    // Expected output is a code or a model-locale (en) sentence: the default environment already renders English, so the
+    // probe runs in it unchanged.
     for (const entrypoint of SKILL_RUNTIME_ENTRYPOINTS) {
-      const result = runNode(entrypoint.path, "{}\n", [], englishEnvironment);
+      const result = runNode(entrypoint.path, "{}\n", [], environment);
       const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
       if (result.error) {
         throw new Error(`${entrypoint.path} could not run in the clean room: ${result.error.message}`);

@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: diff·patch·PR 등 고정된 변경분을 검토할 때 쓴다. 변경 파일의 검토 범위와 실제 실패 경로를 확인하고 근거가 있는 결함·권고·질문을 구분한다. 기본은 읽기 전용이며 전체 아키텍처 감사, 수정 실행, 보안 심층 감사, 최종 수용·독립 감사·릴리스 승인을 대신하지 않는다.
+description: "Review a fixed change set (diff, patch, PR): confirm review coverage of changed files and real failure paths, and separate evidenced defects, recommendations and questions. Read-only by default; does not replace architecture audit, fixes, deep security audit, final acceptance, independent audit or release approval."
 license: MIT
 metadata:
   version: "0.1.0"

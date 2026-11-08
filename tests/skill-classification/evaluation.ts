@@ -217,10 +217,12 @@ export function oracleDigest(value: { oracleRevision: string; sourceSpecDigest: 
 
 /** Digest of the frozen 3.9.0 source-binding manifest, fixtures.v390-intake-source-successor.json. */
 export const V390_INTAKE_MANIFEST_DIGEST = "sha256:9a322f2aa89b6e61754a9c129171beb98fdc427e4e2ca8872c5ae1043165736f";
-/** Digest of the current (last) source-binding manifest, fixtures.v400-intake-source-successor.json. */
+/** Digest of the frozen 4.0.0 intake source-binding manifest, fixtures.v400-intake-source-successor.json. */
 export const V400_INTAKE_MANIFEST_DIGEST = "sha256:02ffdfefc1bca2a0e6116086025f0e40cf051e6d7652acf0b3acf251586c803b";
+/** Digest of the current (last) source-binding manifest, fixtures.v400-minimal-implementation-source-successor.json. */
+export const V400_MINIMAL_IMPLEMENTATION_MANIFEST_DIGEST = "sha256:4de33dbcc7da9927e1704c0c1cac206393df8d78cdda5d351b60fd58318c360e";
 /** The chain end every successor test checks; the next successor changes only this. */
-export const CURRENT_SOURCE_MANIFEST = Object.freeze({revision: "v400-intake-source-binding-r39", digest: V400_INTAKE_MANIFEST_DIGEST});
+export const CURRENT_SOURCE_MANIFEST = Object.freeze({revision: "v400-minimal-implementation-source-binding-r40", digest: V400_MINIMAL_IMPLEMENTATION_MANIFEST_DIGEST});
 
 /** 동결 fixture는 덮지 않는다. 검토된 후속 manifest만 현재 원문 결속을 바꾼다. */
 export function loadCurrentSourceBindings(repo: string) {
@@ -461,17 +463,26 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, v400Intake.frozenPredecessor.path) !== v390IntakePath || v390IntakeBytes.length !== v400Intake.frozenPredecessor.bytes || hashBytes(v390IntakeBytes) !== v400Intake.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings, ...intakeLength.bindings, ...writtenCases.bindings, ...delivery.bindings, ...d38References.bindings, ...v390Intake.bindings, ...v400Intake.bindings];
+  // 4.0.0: ponytail retires; minimal-implementation succeeds it with a changed purpose (AGS3-D-0083/0084), and the
+  // model-facing text optimization (one-line English descriptions, compressed intake) rebinds the same sources.
+  const v400MinimalPath = resolve(repo, "tests/skill-classification/fixtures.v400-minimal-implementation-source-successor.json");
+  const v400MinimalBytes = readFileSync(v400MinimalPath);
+  if (hashBytes(v400MinimalBytes) !== V400_MINIMAL_IMPLEMENTATION_MANIFEST_DIGEST) throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const v400Minimal = JSON.parse(v400MinimalBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, v400Minimal.frozenPredecessor.path) !== v400IntakePath || v400IntakeBytes.length !== v400Minimal.frozenPredecessor.bytes || hashBytes(v400IntakeBytes) !== v400Minimal.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings, ...intakeLength.bindings, ...writtenCases.bindings, ...delivery.bindings, ...d38References.bindings, ...v390Intake.bindings, ...v400Intake.bindings, ...v400Minimal.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: v400Intake.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath, intakeLengthPath, writtenCasesPath, deliveryPath, d38ReferencesPath, v390IntakePath, v400IntakePath);
+  const currentManifest = {...manifest, revision: v400Minimal.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath, intakeLengthPath, writtenCasesPath, deliveryPath, d38ReferencesPath, v390IntakePath, v400IntakePath, v400MinimalPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(v400IntakeBytes),
+    manifest: currentManifest, files, digest: hashBytes(v400MinimalBytes),
     /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
     resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);

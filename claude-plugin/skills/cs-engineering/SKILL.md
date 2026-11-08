@@ -1,12 +1,6 @@
 ---
 name: cs-engineering
-description: >
-  동시성·DB·메시징·알고리즘·자원 수명·성능이 정확성에 영향을 주는
-  설계·구현·기술 검토에서 CS 원리를 적용해 불변조건과 검증 의무를 만들고
-  최종 후보와 대조한다. CS 검토를 명시적으로 요청하거나 경쟁·재시도·그래프·
-  저장 정합성 문제를 분석할 때 사용한다. 단순 문구 수정·일반 개념 설명에는
-  workflow를 만들지 않으며 파일 이동·장부 반영 같은 운영 작업과 자원·성능에 영향이 없는
-  작은 수정에는 쓰지 않는다. 구현·보안 감사·독립 감사·배포 승인을 대신하지 않는다.
+description: "Apply CS principles where concurrency, databases, messaging, algorithms, resource lifetime or performance affect correctness in design, implementation or technical review: derive invariants and verification duties and check the final candidate against them. Use when CS review is requested or races, retries, graphs or storage consistency are analysed. No workflow for simple wording fixes or concept explanations; not for operational work such as moving files or ledger entries, or small changes without resource or performance impact. Does not replace implementation, security audit, independent audit or deploy approval."
 license: MIT
 metadata:
   version: "0.2.0"

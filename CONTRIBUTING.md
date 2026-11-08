@@ -13,7 +13,7 @@ AGS 자체를 고치는 사람을 위한 안내입니다. 저장소 작업 규�
 1. 작업 브랜치를 만듭니다. Codex 세션은 `codex/<작업명>`, Claude Code 세션은 `claude/<작업명>`, Gemini 세션은 `gemini/<작업명>` 형식을 씁니다.
 2. 저장소 구조와 관례는 [아키텍처](docs/contributing/architecture.md)와 [개발 참고](docs/contributing/development.md)에서 확인합니다.
 3. 변경과 함께 시험을 둡니다. 각 스킬에는 정상, 경계, 예상 실패 사례를 둡니다. 어떤 시험이 CI에서, 어떤 시험이 시험 서버에서 도는지는 [시험과 CI](docs/contributing/testing-and-ci.md)에 있습니다.
-4. 생성물(`mcp-server/dist/`, `claude-plugin/`, `claude-plugin-en/`, `codex-plugin-en/`)이 원본을 담고 있으면 다시 만들어 함께 커밋합니다. [생성물](docs/contributing/development.md#생성물)
+4. 생성물(`mcp-server/dist/`, `claude-plugin/`)이 원본을 담고 있으면 다시 만들어 함께 커밋합니다. [생성물](docs/contributing/development.md#생성물)
 5. 아래 검증 명령을 실행합니다.
 6. 커밋은 `feat: add acceptance evidence validator`, `docs: define skill boundaries`처럼 명령형 Conventional Commit으로 씁니다.
 

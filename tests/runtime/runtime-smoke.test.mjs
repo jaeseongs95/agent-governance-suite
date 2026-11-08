@@ -48,7 +48,6 @@ describe("installed skill runtime", () => {
       await mkdir(path.join(cleanRoot, "runtime"), { recursive: true });
       await cp(path.join(root, "runtime/schema-validation.mjs"), path.join(cleanRoot, "runtime/schema-validation.mjs"));
       await cp(path.join(root, "runtime/i18n.mjs"), path.join(cleanRoot, "runtime/i18n.mjs"));
-      await cp(path.join(root, "runtime/locale.json"), path.join(cleanRoot, "runtime/locale.json"));
       await cp(path.join(root, "runtime/model-policy.mjs"), path.join(cleanRoot, "runtime/model-policy.mjs"));
       await mkdir(path.join(cleanRoot, "contracts"), { recursive: true });
       await cp(path.join(root, "contracts/model-policy.v1.schema.json"), path.join(cleanRoot, "contracts/model-policy.v1.schema.json"));

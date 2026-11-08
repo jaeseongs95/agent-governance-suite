@@ -1,9 +1,6 @@
 ---
 name: prompt-engineering
-description: >-
-  실제 LLM 프롬프트·에이전트 지침·도구 설명·입력 템플릿을 설계, 진단, 개선하고 기준판과 비교할 검증 사례를 만든다.
-  프롬프트 작성·개선·검토를 명시적으로 요청하거나, 허용된 작업에서 모델에 전달할 지시·문맥·예시·출력 계약을 실제로 바꿔야 할 때 사용한다.
-  일반 질문, 단순 산문 편집·번역, prompt라는 단어만 포함한 코드·로그, 프롬프트 변경과 무관한 장애·모델 설정·감사만 다루는 요청에는 자동 적용하지 않는다.
+description: "Design, diagnose and improve real LLM prompts, agent instructions, tool descriptions and input templates, and make verification cases against a baseline. Use when prompt work is explicitly requested or allowed work must actually change the instructions, context, examples or output contract given to a model. Not automatically for general questions, plain prose editing or translation, code or logs that merely contain the word prompt, or incidents, model settings or audits unrelated to prompt changes."
 ---
 
 # Prompt Engineering

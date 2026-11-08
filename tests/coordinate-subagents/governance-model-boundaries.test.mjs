@@ -100,8 +100,9 @@ describe("GOV09/10 actual provider replacement boundary", () => {
   it("keeps shared guidance capability-based and preserves required one-implementation adapter boundaries", () => {
     const panel = readFileSync(path.join(root, "skills/independent-deliberation-panel/references/orchestration-policy.md"), "utf8");
     expect(panel).not.toContain("reviewer에는 Terra"); expect(panel).not.toContain("Judge에는 Sol");
-    const pony = readFileSync(path.join(root, "skills/ponytail/SKILL.md"), "utf8");
-    expect(pony).not.toContain("no interface with one implementation"); expect(pony).toContain("vendor/host adapter");
+    // 4.0.0: ponytail retired; its AGS successor keeps the one-implementation adapter boundary.
+    const minimal = readFileSync(path.join(root, "skills/minimal-implementation/SKILL.md"), "utf8");
+    expect(minimal).not.toContain("no interface with one implementation"); expect(minimal).toContain("벤더·호스트 어댑터는 하나뿐이어도 프로토콜·권한·전송·자원 수명을 가르면 유지한다.");
     const implementation = readFileSync(path.join(root, "skills/orchestrator/references/engineering-practices/implementation.md"), "utf8");
     expect(implementation).toContain("단일 구현"); expect(implementation).toContain("adapter");
     const catalog = JSON.parse(readFileSync(path.join(root, "skills/orchestrator/references/engineering-practices/catalog.json"), "utf8"));
@@ -109,9 +110,9 @@ describe("GOV09/10 actual provider replacement boundary", () => {
   });
   it("passes the actual Claude adaptation functions without generating or writing the host tree", () => {
     const files = new Map();
-    for (const relative of ["skills/ponytail/SKILL.md", "skills/model-effort-advisor/SKILL.md", "skills/independent-deliberation-panel/references/orchestration-policy.md", "skills/coordinate-subagents/references/model-routing.md", "skills/orchestrator/references/engineering-practices/implementation.md"]) files.set(relative, readFileSync(path.join(root, relative)));
-    for (const skill of ["ponytail", "model-effort-advisor"]) applySkillAdaptation(files, skill, JSON.parse(readFileSync(path.join(root, `claude-overlay/adaptations/${skill}.json`), "utf8")));
-    expect(files.get("skills/ponytail/SKILL.md").toString()).toContain("vendor/host adapter");
+    for (const relative of ["skills/minimal-implementation/SKILL.md", "skills/model-effort-advisor/SKILL.md", "skills/independent-deliberation-panel/references/orchestration-policy.md", "skills/coordinate-subagents/references/model-routing.md", "skills/orchestrator/references/engineering-practices/implementation.md"]) files.set(relative, readFileSync(path.join(root, relative)));
+    for (const skill of ["minimal-implementation", "model-effort-advisor"]) applySkillAdaptation(files, skill, JSON.parse(readFileSync(path.join(root, `claude-overlay/adaptations/${skill}.json`), "utf8")));
+    expect(files.get("skills/minimal-implementation/SKILL.md").toString()).toContain("벤더·호스트 어댑터는 하나뿐이어도 프로토콜·권한·전송·자원 수명을 가르면 유지한다.");
     expect(files.get("skills/model-effort-advisor/SKILL.md").toString()).not.toContain("GPT-5.6 Sol High");
     expect(files.get("skills/independent-deliberation-panel/references/orchestration-policy.md").toString()).not.toContain("Judge에는 Sol");
   });

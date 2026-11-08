@@ -1,6 +1,6 @@
 ---
 name: iteration-frame-auditor
-description: 반복 작업의 불변 계약과 frame 변경을 fresh-context로 비교해 의미 보존 여부와 다음 수렴 경로를 판정한다. 수정 구현, 저수준 원인 진단, 사용자 가치 변경 승인에는 사용하지 않는다.
+description: "Compare an iterated task's invariant contract with its frame changes in a fresh context and judge meaning preservation and the next convergence path. Not for fixes, low-level root-cause diagnosis or approving changes to user values."
 metadata:
   version: "1.0.0"
 ---

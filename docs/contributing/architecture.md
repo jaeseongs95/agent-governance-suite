@@ -139,8 +139,7 @@ hooks/hooks.json                 Codex hook 등록
 hooks.json                       Antigravity hook 등록
 antigravity-connector/           Antigravity hook runner와 보조 스크립트
 claude-overlay/                  Claude Code 전용 파일과 스킬별 문구 보정(adaptations/)
-claude-plugin/, claude-plugin-en/, codex-plugin-en/
-                                 생성된 배포물(직접 수정 금지)
+claude-plugin/                   생성된 Claude Code 배포물(직접 수정 금지)
 skills/                          오케스트레이터와 전문 스킬, registry, source lock
 contracts/                       스킬·도구가 공유하는 JSON Schema와 TypeScript 계약
 locales/                         메시지 카탈로그

@@ -15,15 +15,15 @@
       "path": "skills/recovery-strategy-selector/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e",
+      "digest": "sha256:9c1e3a3a6b898627add1bac83b42a7759bcdd61d766957e94871ef5c1a34d06c",
       "startByte": 0,
-      "endByte": 175
+      "endByte": 171
     },
     {
       "path": "skills/recovery-strategy-selector/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e",
+      "digest": "sha256:9c1e3a3a6b898627add1bac83b42a7759bcdd61d766957e94871ef5c1a34d06c",
       "startByte": 0,
       "endByte": 179
     },
@@ -49,15 +49,15 @@
       "path": "skills/recovery-strategy-selector/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e",
-      "startByte": 176,
-      "endByte": 263
+      "digest": "sha256:9c1e3a3a6b898627add1bac83b42a7759bcdd61d766957e94871ef5c1a34d06c",
+      "startByte": 172,
+      "endByte": 241
     },
     {
       "path": "skills/recovery-strategy-selector/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e",
+      "digest": "sha256:9c1e3a3a6b898627add1bac83b42a7759bcdd61d766957e94871ef5c1a34d06c",
       "startByte": 180,
       "endByte": 255
     },

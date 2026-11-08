@@ -1,6 +1,6 @@
 ---
 name: model-effort-advisor
-description: 승인된 서브에이전트 작업을 호출하기 전에 역할·난도·위험·품질과 비용 선호·검증 가능성을 판단하고, 호스트가 제공한 가용 조합에서 모델과 추론 수준을 선택한다. 현재 메인 모델 관측을 전제로 하지 않는다. 위임 여부·에이전트 수·권한·감사 결정이나 현재 메인 UI 설정 상담에는 사용하지 않는다.
+description: "Before invoking an approved subagent task, weigh role, difficulty, risk, quality and cost preference and verifiability, and choose model and reasoning effort from host-provided combinations. Does not assume the current main model is observed. Not for delegation, agent count, permission or audit decisions, or advice on the current main UI settings."
 license: MIT
 metadata:
   version: "0.2.0"

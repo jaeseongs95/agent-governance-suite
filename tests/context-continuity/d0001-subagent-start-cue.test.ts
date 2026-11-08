@@ -45,20 +45,20 @@ function context(output: Record<string, unknown>): string {
 
 describe("subagent start cue", () => {
   it.each([["claude-code", claudeStart], ["codex", codexStart]] as const)("%s: a subagent start gets the skill targets and its brief's scope", (host, input) => {
-    const ko = context(handleContinuityHook(input, service(), host, {}));
-    expect(ko).toContain("[AGS 서브에이전트 시작 확인]");
-    expect(ko).toContain("맡은 일에서 할 판단·행동을 아래 스킬별 대상과 대조하고");
-    // Expected lines written from skills/*/classification.json by hand, not by the function under test.
-    expect(ko).toContain("- test-engineering: tests, regression-tests");
-    expect(ko).toContain("- ponytail: code, libraries, dependencies");
-    expect(ko).toContain("지시문이 정한 목표·범위·금지 구역·쓰기 소유 안에서 일한다.");
-    // The main agent's per-message duties (save the user's words, restore after compaction) are not the subagent's.
-    expect(ko).not.toContain("checkpoint_context");
-    expect(ko).not.toContain("inspect_context");
-    const en = context(handleContinuityHook(input, service(), host, { AGENT_GOVERNANCE_LOCALE: "en" }));
-    expect(en).toContain("[AGS subagent start check]");
-    expect(en).toContain("- test-engineering: tests, regression-tests");
-    expect(en).toContain("Work inside the goal, scope, forbidden areas and write ownership your brief sets.");
+    // Model-only text: the same English whatever the host locale (MODEL_LOCALE, 4.0.0).
+    for (const environment of [{}, { AGENT_GOVERNANCE_LOCALE: "ko" }, { AGENT_GOVERNANCE_LOCALE: "en" }]) {
+      const cue = context(handleContinuityHook(input, service(), host, environment));
+      expect(cue).toContain("[AGS subagent start check]");
+      expect(cue).toContain("Match each judgment and action of your assignment (investigation and checks included) against the skill targets below");
+      // Expected lines written from skills/*/classification.json by hand, not by the function under test.
+      expect(cue).toContain("- test-engineering: tests, regression-tests");
+      expect(cue).toContain("- minimal-implementation: deliverables, documents, data, configuration, procedures, dependencies");
+      expect(cue).toContain("Stay within your brief's goal, scope, forbidden areas and write ownership.");
+      expect(cue).not.toMatch(/[\uac00-\ud7a3]/u);
+      // The main agent's per-message duties (save the user's words, restore after compaction) are not the subagent's.
+      expect(cue).not.toContain("checkpoint_context");
+      expect(cue).not.toContain("inspect_context");
+    }
   });
 
   it("observes the subagent as a child, never as the root, so it cannot bind the parent's continuity state", () => {
@@ -81,7 +81,7 @@ describe("subagent start cue", () => {
     // Positive control: any other event opens the store here and fails closed.
     expect(() => runContinuityHook(JSON.stringify({ hook_event_name: "UserPromptSubmit", session_id: parent, prompt: "x" }), environment, "codex", true)).toThrow();
     const output = JSON.parse(runContinuityHook(JSON.stringify(codexStart), environment, "codex", true)) as Record<string, unknown>;
-    expect(context(output)).toContain("[AGS 서브에이전트 시작 확인]");
+    expect(context(output)).toContain("[AGS subagent start check]");
   });
 
   it("registers SubagentStart for the continuity hook in the Claude Code and Codex hook configurations", () => {

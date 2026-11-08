@@ -222,22 +222,26 @@ test("integration adapter is optional for direct CLI execution", async () => {
   assert.ok((await readFile(descriptor, "utf8")).includes("acceptance-evidence-validation"));
 });
 
-test("i18n: errors render in the host locale, in process and from the CLI", () => {
+test("i18n: errors render in the model locale, whatever the host locale, in process and from the CLI", () => {
+  const hangul = /[가-힣]/u;
+  const withLocale = (locale) => {
+    const env = { ...process.env };
+    if (locale === undefined) delete env.AGENT_GOVERNANCE_LOCALE; else env.AGENT_GOVERNANCE_LOCALE = locale;
+    return env;
+  };
   const inLocale = (locale, action) => {
-    process.env.AGENT_GOVERNANCE_LOCALE = locale;
+    if (locale === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE; else process.env.AGENT_GOVERNANCE_LOCALE = locale;
     try { return action(); } finally { process.env.AGENT_GOVERNANCE_LOCALE = "en"; }
   };
   const thrown = () => { try { analyzeAcceptance(null); } catch (error) { return error.message; } return null; };
-  assert.equal(inLocale("en", thrown), "Input must be an object.");
-  assert.equal(inLocale("ko", thrown), "입력은 객체여야 한다.");
-  assert.deepEqual(inLocale("en", () => validateReport(null)), ["validation input must be an object"]);
-  assert.deepEqual(inLocale("ko", () => validateReport(null)), ["검증 입력은 객체여야 한다"]);
-  const cli = (locale) => spawnSync(process.execPath, [path.join(root, "scripts", "cli.mjs")], {
-    encoding: "utf8", input: "null", env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale }
-  });
-  for (const [locale, message] of [["en", "Input must be an object."], ["ko", "입력은 객체여야 한다."]]) {
-    const run = cli(locale);
+  for (const locale of ["en", "ko", undefined]) {
+    assert.equal(inLocale(locale, thrown), "Input must be an object.");
+    assert.deepEqual(inLocale(locale, () => validateReport(null)), ["validation input must be an object"]);
+    const run = spawnSync(process.execPath, [path.join(root, "scripts", "cli.mjs")], {
+      encoding: "utf8", input: "null", env: withLocale(locale)
+    });
     assert.equal(run.status, 2);
-    assert.deepEqual(JSON.parse(run.stdout).error, { code: "INVALID_INPUT", message, details: null });
+    assert.deepEqual(JSON.parse(run.stdout).error, { code: "INVALID_INPUT", message: "Input must be an object.", details: null });
+    assert.doesNotMatch(run.stdout, hangul);
   }
 });

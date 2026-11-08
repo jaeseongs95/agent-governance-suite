@@ -19,15 +19,15 @@
       "path": "skills/software-security-auditor/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:294e5f7314049536f8eab3f1799bc5879a1d95e740310ad6b163f047fe492081",
+      "digest": "sha256:c74b2c9b79ab8bbcce8984a5412e97f0dc523b7cf7165ca8e83994a2eab7f149",
       "startByte": 0,
-      "endByte": 182
+      "endByte": 188
     },
     {
       "path": "skills/software-security-auditor/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:294e5f7314049536f8eab3f1799bc5879a1d95e740310ad6b163f047fe492081",
+      "digest": "sha256:c74b2c9b79ab8bbcce8984a5412e97f0dc523b7cf7165ca8e83994a2eab7f149",
       "startByte": 0,
       "endByte": 77
     }
@@ -37,15 +37,15 @@
       "path": "skills/software-security-auditor/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:294e5f7314049536f8eab3f1799bc5879a1d95e740310ad6b163f047fe492081",
-      "startByte": 183,
-      "endByte": 300
+      "digest": "sha256:c74b2c9b79ab8bbcce8984a5412e97f0dc523b7cf7165ca8e83994a2eab7f149",
+      "startByte": 189,
+      "endByte": 293
     },
     {
       "path": "skills/software-security-auditor/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:294e5f7314049536f8eab3f1799bc5879a1d95e740310ad6b163f047fe492081",
+      "digest": "sha256:c74b2c9b79ab8bbcce8984a5412e97f0dc523b7cf7165ca8e83994a2eab7f149",
       "startByte": 78,
       "endByte": 168
     },
@@ -53,7 +53,7 @@
       "path": "skills/software-security-auditor/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:294e5f7314049536f8eab3f1799bc5879a1d95e740310ad6b163f047fe492081",
+      "digest": "sha256:c74b2c9b79ab8bbcce8984a5412e97f0dc523b7cf7165ca8e83994a2eab7f149",
       "startByte": 169,
       "endByte": 283
     },
@@ -61,7 +61,7 @@
       "path": "skills/software-security-auditor/SKILL.md",
       "startLine": 26,
       "endLine": 26,
-      "digest": "sha256:294e5f7314049536f8eab3f1799bc5879a1d95e740310ad6b163f047fe492081",
+      "digest": "sha256:c74b2c9b79ab8bbcce8984a5412e97f0dc523b7cf7165ca8e83994a2eab7f149",
       "startByte": 0,
       "endByte": 359
     }

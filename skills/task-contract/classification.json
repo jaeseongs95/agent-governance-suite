@@ -16,15 +16,15 @@
       "path": "skills/task-contract/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:92b529e3423386cce32d3b2eb6302c42b6aba344624604d413fc0e90f86ef61b",
+      "digest": "sha256:3545dd0730b8d322af7efe42e547496717ffa26b7276af136877e4d24dcb4369",
       "startByte": 0,
-      "endByte": 197
+      "endByte": 200
     },
     {
       "path": "skills/task-contract/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:92b529e3423386cce32d3b2eb6302c42b6aba344624604d413fc0e90f86ef61b",
+      "digest": "sha256:3545dd0730b8d322af7efe42e547496717ffa26b7276af136877e4d24dcb4369",
       "startByte": 0,
       "endByte": 88
     }
@@ -34,15 +34,15 @@
       "path": "skills/task-contract/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:92b529e3423386cce32d3b2eb6302c42b6aba344624604d413fc0e90f86ef61b",
-      "startByte": 198,
-      "endByte": 321
+      "digest": "sha256:3545dd0730b8d322af7efe42e547496717ffa26b7276af136877e4d24dcb4369",
+      "startByte": 201,
+      "endByte": 286
     },
     {
       "path": "skills/task-contract/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:92b529e3423386cce32d3b2eb6302c42b6aba344624604d413fc0e90f86ef61b",
+      "digest": "sha256:3545dd0730b8d322af7efe42e547496717ffa26b7276af136877e4d24dcb4369",
       "startByte": 89,
       "endByte": 181
     }

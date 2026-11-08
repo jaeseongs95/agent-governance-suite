@@ -16,12 +16,12 @@ const verification = lines.find(line => line.startsWith("3. ")) ?? "";
 
 describe("shared intake: judging someone else's result (AGS3-D-0082)", () => {
   it("sets the purpose sentence before judging, not only before making or recommending", () => {
-    expect(purposeCheck.startsWith("1. 만들거나 권고·판정하기 전:")).toBe(true);
+    expect(purposeCheck.startsWith("1. 만들기·권고·판정 전:")).toBe(true);
   });
 
   it("treats a received report or pass claim as something to check, against the purpose as well as the criteria", () => {
-    expect(verification).toContain("보고·전달·판정(받은 보고·통과 주장 포함)·다음 단계 전에는");
-    expect(verification).toContain("1의 효과·수용 기준의 대상과 실제 실행한 대상을 하나씩 대조해");
+    expect(verification).toContain("보고·전달·판정(받은 보고·통과 주장 포함)·다음 단계 전엔");
+    expect(verification).toContain("1의 효과·수용 기준 대상과 실제 실행 대상을 하나씩 대조해");
   });
 
   it("delivers the rule to every host in both locales, within the instructions budget", () => {

@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: 어떤 거버넌스 전문 스킬이 필요한지 정해야 하거나 여러 전문 결과의 실행 순서·입출력·gate를 연결해야 할 때 사용한다. 한 전문 스킬로 충분하면 그 스킬을 직접 쓰고, 전문 스킬이 필요 없는 요청이나 전문 판단·감사 자체에는 사용하지 않는다.
+description: "Decide which governance specialist skills a request needs, or chain several specialist results' order, inputs and outputs and gates. If one specialist skill suffices, use it directly; not for requests needing no specialist skill or for the specialist judgment or audit itself."
 license: MIT
 metadata:
   version: "1.2.0"

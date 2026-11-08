@@ -66,25 +66,12 @@ function sharedUserStateDirectory(
   return path.resolve(homeDirectory, ".agent-governance-suite");
 }
 
-/** The user's AGS settings (display locale), beside the other shared host state. */
-export function resolveUserSettingsPath(
-  environment: NodeJS.ProcessEnv = process.env,
-  homeDirectory: string = homedir(),
-): string {
-  return path.join(sharedUserStateDirectory(environment, homeDirectory), "settings.json");
-}
-
 /** This machine's persistent AGS host ID (root identities), beside the other shared host state. */
 export function resolveHostIdPath(
   environment: NodeJS.ProcessEnv = process.env,
   homeDirectory: string = homedir(),
 ): string {
   return path.join(sharedUserStateDirectory(environment, homeDirectory), "host-id");
-}
-
-/** The default locale the installed package was built for (docs/contributing/i18n.md 4.1 ①). */
-export function resolvePackageLocalePath(moduleUrl: string = import.meta.url): string {
-  return fileURLToPath(new URL("../../runtime/locale.json", moduleUrl));
 }
 
 /** Resolves the per-user TLS broker directory shared by supported local hosts. */

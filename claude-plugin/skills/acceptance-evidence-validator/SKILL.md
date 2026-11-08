@@ -1,6 +1,6 @@
 ---
 name: acceptance-evidence-validator
-description: 사용자가 요구사항별 결과물·검증 근거 판정을 요청했을 때, 또는 수용 기준이 여럿인 계약 작업이나 고위험 작업을 마치고 완료 선언에 필요한 근거를 점검해야 할 때 쓴다. 고정된 작업 결과물과 실제 근거를 기준별로 대조해 충족·실패·증거 부족을 판정한다. 작은 단일 작업의 완료 보고, 단순 조회, 설계 대안 선택, 반복 실패 원인 분석, 고위험 독립 감사, 릴리스 승인에는 쓰지 않는다.
+description: Use when the user asks for a per-requirement verdict on work products and verification evidence, or when contract work with several acceptance criteria or high-risk work is finished and its completion evidence must be checked. Judges each criterion met, failed or lacking evidence by matching the frozen work product against actual evidence. Not for small single-task completion reports, simple lookups, choosing design alternatives, repeated-failure diagnosis, high-risk independent audit or release approval.
 license: MIT
 metadata:
   version: "1.0.0"

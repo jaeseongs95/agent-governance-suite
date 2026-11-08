@@ -87,24 +87,33 @@ test("classification binds current, distinct applicability and exclusion source 
   const classification = JSON.parse(await readFile(new URL("../../skills/solid-design/classification.json", import.meta.url), "utf8"));
   const digest = `sha256:${createHash("sha256").update(skill).digest("hex")}`;
   const lines = skill.toString("utf8").split("\n");
-  const spans = (entries) => entries.flatMap((entry) => {
+  // 4.0.0: the one-line description holds both an applicability and an exclusion clause, so spans are compared as
+  // byte ranges of the file (a span selects its lines joined by "\n", then startByte..endByte), not as whole lines.
+  const lineStart = (line) => Buffer.byteLength(lines.slice(0, line - 1).map((text) => `${text}\n`).join(""));
+  const spans = (entries) => entries.map((entry) => {
     assert.equal(entry.digest, digest);
     assert.equal(entry.path, "skills/solid-design/SKILL.md");
     assert.ok(entry.startLine >= 1 && entry.endLine >= entry.startLine && entry.endLine <= lines.length);
-    return Array.from({ length: entry.endLine - entry.startLine + 1 }, (_, i) => i + entry.startLine);
+    const block = Buffer.from(lines.slice(entry.startLine - 1, entry.endLine).join("\n"));
+    const start = entry.startByte ?? 0, end = entry.endByte ?? block.length;
+    assert.ok(start >= 0 && start < end && end <= block.length);
+    assert.ok(block.subarray(start, end).toString("utf8").trim());
+    return [lineStart(entry.startLine) + start, lineStart(entry.startLine) + end];
   });
   const positive = spans(classification.applicability);
   const negative = spans(classification.exclusions);
   assert.ok(positive.length && negative.length);
-  assert.ok(!positive.some((line) => negative.includes(line)));
+  assert.ok(positive.every(([start, end]) => negative.every(([from, to]) => end <= from || to <= start)));
   assert.deepEqual(classification.dependencies, []);
 });
 
-test("i18n: check errors render in the host locale", () => {
+test("i18n: check errors render in the model locale, whatever the host locale", () => {
   const inLocale = (locale) => {
-    process.env.AGENT_GOVERNANCE_LOCALE = locale;
+    if (locale === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE;
+    else process.env.AGENT_GOVERNANCE_LOCALE = locale;
     try { return checkReport(Buffer.from("{"), base); } finally { process.env.AGENT_GOVERNANCE_LOCALE = "en"; }
   };
-  assert.deepEqual(inLocale("en"), { valid: false, errors: ["request is not valid JSON"] });
-  assert.deepEqual(inLocale("ko"), { valid: false, errors: ["request가 올바른 JSON이 아니다"] });
+  for (const locale of ["en", "ko", undefined]) {
+    assert.deepEqual(inLocale(locale), { valid: false, errors: ["request is not valid JSON"] });
+  }
 });

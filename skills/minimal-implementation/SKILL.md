@@ -1,6 +1,6 @@
 ---
 name: minimal-implementation
-description: "코드·문서·자료·설정·절차 같은 결과물을 만들거나 바꿀 때, 그리고 workflow의 `minimal-implementation` 단계에서 쓴다. 꼭 필요한지부터 따지고 이미 있는 것, 표준, 플랫폼 기능, 설치된 도구 순으로 찾아 요구와 필요한 검증을 모두 충족하는 가장 작은 완전한 결과를 고른다. 모의·고정값·자리 채움·조용한 대체 경로·삼킨 오류로 만든 통과를 완료로 내지 않는다. 검토·감사·검증·완료 판정과 설명·조사만 하는 요청에는 쓰지 않는다."
+description: "Use when making or changing any output (code, docs, data, config, procedures) and in the workflow `minimal-implementation` stage; invoke it first when available, active and not against user instructions. Ask whether it is needed at all, then look for what exists, standards, platform features and installed tools in that order, and pick the smallest complete result meeting every requirement and needed check. Never report passes made by mocks, fixed values, placeholders, silent fallbacks or swallowed errors as done. Not for reviews, audits, verification, completion judgments, or explanation or research only."
 license: MIT
 metadata:
   version: "1.0.0"

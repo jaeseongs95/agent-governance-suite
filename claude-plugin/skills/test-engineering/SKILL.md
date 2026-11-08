@@ -1,6 +1,6 @@
 ---
 name: test-engineering
-description: 테스트를 작성·보강하거나 회귀 테스트의 결함 탐지 능력을 확인할 때 쓴다. 요구·실제 코드 경계에서 사례를 설계하고 red/green 또는 표적 mutation 근거를 정리한다. 원인 진단, 제품 구현 총괄, 최종 수용·독립 감사·릴리스 승인에는 쓰지 않는다.
+description: "Use when writing or strengthening tests or checking that regression tests catch defects: design cases at real requirement and code boundaries and gather red/green or targeted mutation evidence. Not for cause diagnosis, owning product implementation, final acceptance, independent audit or release approval."
 license: MIT
 metadata:
   version: "0.1.0"

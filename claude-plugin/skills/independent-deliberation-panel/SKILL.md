@@ -1,6 +1,6 @@
 ---
 name: independent-deliberation-panel
-description: 설계 대안이 갈리거나 결정이 틀리면 비용이 큰 판단, 기존 설계나 AI 산출물을 독립 감사해야 할 때, 사용자가 '검토해 봐'·'맞는지 봐 줘'·반박 패널을 요구할 때 쓴다. 독립 관점 reviewer, 조건부 반박, 증거 검증, 별도 판정으로 결론을 낸다. 단순 조회·요약·정형 변환에는 쓰지 않는다.
+description: Use for judgments where design alternatives split or a wrong decision is costly, when an existing design or AI output needs an independent audit, or when the user asks to review something, check whether it is right, or for a rebuttal panel. Concludes through independent-viewpoint reviewers, conditional rebuttal, evidence checks and a separate verdict. Not for simple lookups, summaries or format conversion.
 license: MIT
 metadata:
   version: "1.0.0"

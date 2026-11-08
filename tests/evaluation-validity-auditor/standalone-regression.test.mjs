@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
-// The messages are Korean in the source locale for the human view; the spawned CLIs pin it.
+// The human view renders in the model locale (en) whatever the host locale; a ko host shows that.
 const env = { ...process.env, AGENT_GOVERNANCE_LOCALE: "ko" };
 
 describe("evaluation-validity-auditor imported core", () => {
@@ -40,7 +40,8 @@ describe("evaluation-validity-auditor imported core", () => {
       { encoding: "utf8", windowsHide: true, env },
     );
     expect(koIoRun.status).toBe(2);
-    expect(koIoRun.stdout).toContain("결론: 입출력 오류 (EISDIR).");
+    expect(koIoRun.stdout).toContain("Conclusion: I/O error (EISDIR).");
+    expect(koIoRun.stdout).not.toMatch(/[가-힣]/u);
 
     const invalidInputRun = spawnSync(
       process.execPath,

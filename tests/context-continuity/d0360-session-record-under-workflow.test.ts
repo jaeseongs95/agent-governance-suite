@@ -210,18 +210,23 @@ describe("D0360 per-turn cue (behavior 5)", () => {
     return output.hookSpecificOutput?.additionalContext ?? "";
   }
 
+  // The cue is model-only text: English (MODEL_LOCALE, 4.0.0) whatever the host locale.
   it.each([
-    ["ko", {}, "[AGS 턴 확인]", "스킬 선택을 다시 판단"],
-    ["en", { AGENT_GOVERNANCE_LOCALE: "en" }, "[AGS turn check]", "re-decide skill selection for the changed goal, scope and risk; call newly needed skills now"],
-  ] as const)("%s: the cue names checkpoint_context and skill re-selection, not the context-continuity skill, with or without a bound root", (_locale, environment, header, reselect) => {
+    ["unset", {}],
+    ["ko", { AGENT_GOVERNANCE_LOCALE: "ko" }],
+    ["en", { AGENT_GOVERNANCE_LOCALE: "en" }],
+  ] as const)("host locale %s: the cue names checkpoint_context and skill re-selection, not the context-continuity skill, with or without a bound root", (_locale, environment) => {
     for (const bound of [false, true]) {
       const workflow = new InMemoryWorkflowStore(), value = root();
       expect(workflow.insertConvergenceRoot(value)).toBeNull();
       const target = service(workflow);
       if (bound) expect(target.bindOpenedRoot(caller, value.rootId)).toBe(true);
       const text = cue(target, environment);
-      expect(text.startsWith(header)).toBe(true);
-      for (const expected of ["checkpoint_context", "inspect_context", "load_context", reselect]) expect(text).toContain(expected);
+      expect(text.startsWith("[AGS turn check] ")).toBe(true);
+      for (const expected of ["checkpoint_context", "inspect_context", "load_context",
+        "re-select skills for it, then checkpoint_context"]) expect(text).toContain(expected);
+      // 4.0.0: the cue no longer quotes the Korean intake section title, so it carries no Korean at all.
+      expect(text).not.toMatch(/[가-힣]/u);
       expect(text).not.toContain("context-continuity");
       expect(target.store.getCurrent(target.correlateSession(session), 1)?.memory ?? null).toBeNull();
     }

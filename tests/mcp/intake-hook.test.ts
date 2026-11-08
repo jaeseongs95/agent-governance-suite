@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { resolveHostLocale } from "../../mcp-server/src/i18n.js";
+import { MODEL_LOCALE } from "../../mcp-server/src/i18n.js";
 import { intakeHookOutput } from "../../mcp-server/src/intake-hook.js";
 import { skillIntakeServerInstructions } from "../../mcp-server/src/server.js";
 import { skillIntakePointer, skillIntakeText, skillTargetsContext } from "../../mcp-server/src/skill-intake.js";
@@ -45,19 +45,20 @@ describe("shared context-start intake", () => {
   });
 
   it("uses successful retained reads rather than visibility to decide when to reread", () => {
+    // 4.0.0 (token optimization): both pointers were shortened; the same four rules, from locales/*/instructions.json:
+    // reread unless the text from the MCP instructions or a successful read is kept in context; compaction is such a loss;
+    // read before task work and follow it; only a successful, full read of this revision counts (not a failed or partial
+    // read or another revision).
     const required = {
       ko: [
-        "성공적으로 읽은 근거와 본문이 함께 유지될 때만 재읽기를 생략한다",
-        "그렇지 않거나 압축으로 근거나 본문을 잃으면",
+        "MCP instructions나 이 판의 성공한 전체 읽기로 받은 본문이 문맥에 없으면",
+        "(예: 압축 뒤)",
         "과업 작업 전에 그 절을 읽고 따른다",
-        "실패·부분 출력·다른 판본은 성공한 읽기로 세지 않는다",
       ],
       en: [
-        "skip rereading only while the current context retains both evidence of a successful read",
-        "and that text",
-        "Otherwise, including after either is lost to compaction",
+        "if its text from the MCP instructions or a successful full read of this revision is not in context",
+        "(e.g. after compaction)",
         "read that section before task work and follow it",
-        "Failed reads, partial output, or another revision do not count as a successful read",
       ],
     };
     for (const locale of ["ko", "en"] as const) {
@@ -69,15 +70,16 @@ describe("shared context-start intake", () => {
 
   it.each(["codex", "antigravity", "claude-code"])("the %s adapter gets the pointer and skill targets at every session start and nowhere else", (host) => {
     for (const source of SOURCES) {
-      expect(intakeHookOutput({ hook_event_name: "SessionStart", source, session_id: `intake-${host}`, conversationId: `intake-${host}` }, host, "ko"))
-        .toEqual({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: contextStart("ko") } });
+      // The hook's default is MODEL_LOCALE (en, 4.0.0); the delivered text is checked, not a pinned locale.
+      expect(intakeHookOutput({ hook_event_name: "SessionStart", source, session_id: `intake-${host}`, conversationId: `intake-${host}` }, host))
+        .toEqual({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: contextStart("en") } });
     }
     for (const input of [
       { hook_event_name: "UserPromptSubmit", session_id: "s", prompt: "x" },
       { hook_event_name: "Stop", session_id: "s" },
       { hook_event_name: "SessionEnd", session_id: "s" },
       { hook_event_name: "PreToolUse", session_id: "s", tool_name: "Bash", tool_input: { command: "true" } },
-    ]) expect(intakeHookOutput(input, host, "ko")).toEqual({});
+    ]) expect(intakeHookOutput(input, host)).toEqual({});
   });
 
   it("Codex registers it for every session start, compaction included, with a context limit that holds the pointer and targets", () => {
@@ -113,10 +115,11 @@ describe("shared context-start intake", () => {
       sessionMessageHook: () => ({}),
       sessionBoardHook: async () => "",
       writeStderr: () => undefined,
-      intakeHook: (input: Record<string, unknown>, host: string) => intakeHookOutput(input, host, resolveHostLocale().locale),
+      // The hook renders in MODEL_LOCALE (en, 4.0.0) by default.
+      intakeHook: (input: Record<string, unknown>, host: string) => intakeHookOutput(input, host),
     };
     expect(await executeAntigravityHookEvent({ conversationId: "intake-agy-turn", invocationNum: 0, initialNumSteps: 18 }, "PreInvocation", undefined, options))
-      .toEqual({ injectSteps: [{ ephemeralMessage: contextStart(resolveHostLocale().locale) }, { ephemeralMessage: "TURN-CUE" }] });
+      .toEqual({ injectSteps: [{ ephemeralMessage: contextStart(MODEL_LOCALE) }, { ephemeralMessage: "TURN-CUE" }] });
     for (const [event, input] of [
       ["PreInvocation", { conversationId: "intake-agy-turn", invocationNum: 1, initialNumSteps: 21 }],
       ["PreInvocation", { conversationId: "intake-agy-turn" }],

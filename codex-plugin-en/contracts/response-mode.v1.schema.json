@@ -1,6 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://skill-suite.local/contracts/response-mode.v1.schema.json",
-  "title": "ResponseMode.v1",
-  "enum": ["compact", "full"]
-}

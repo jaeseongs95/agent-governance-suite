@@ -1,7 +1,9 @@
 import type { DatabaseSync } from "node:sqlite";
+import { readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -76,9 +78,12 @@ function context(output: Record<string, unknown>, event: string): string {
 
 // Behavior 5 (d7585d74): the per-turn cue is the AGS turn check; it names checkpoint_context and skill re-selection
 // directly and no longer sends the model to the context-continuity skill.
+// The cue is model-only text rendered in MODEL_LOCALE (English, 4.0.0) whatever the host locale.
+// 4.0.0 (token optimization): the save line names the trigger and re-selection for it; the save details live in the
+// checkpoint_context tool description (checked below).
 function expectCheckpointCue(text: string) {
-  expect(text).toContain("[AGS 턴 확인]");
-  for (const tool of ["checkpoint_context", "inspect_context", "load_context", "스킬 선택을 다시 판단"]) expect(text).toContain(tool);
+  expect(text.startsWith("[AGS turn check] ")).toBe(true);
+  for (const tool of ["checkpoint_context", "inspect_context", "load_context", "re-select skills for it, then checkpoint_context"]) expect(text).toContain(tool);
   expect(text).not.toContain("context-continuity");
   for (const forged of ["decision=DEFER", "decision=INJECT", "candidateToken=", "restoreToken", "_continuityBinding"])
     expect(text).not.toContain(forged);
@@ -125,7 +130,7 @@ describe("D0347 문맥을 보유한 입력 경계의 저장 유도", () => {
     handleContinuityHook({ hook_event_name: "PreCompact", session_id: session }, service, host);
     const text = context(compact(service, host), "SessionStart");
     expectCheckpointCue(text);
-    expect(text).toContain("사전 저장본 없음");
+    expect(text).toContain("No prior save: this does not restore what compaction lost.");
     expect(service.store.getCurrent(service.correlateSession(session), 1)?.memory ?? null).toBeNull();
 
     const saved = checkpoint(service);
@@ -145,7 +150,7 @@ describe("D0347 문맥을 보유한 입력 경계의 저장 유도", () => {
       expectCheckpointCue(context(prompt(service, host), "UserPromptSubmit"));
       const compacted = context(compact(service, host), "SessionStart");
       expectCheckpointCue(compacted);
-      expect(compacted).toContain("사전 저장본 없음");
+      expect(compacted).toContain("No prior save: this does not restore what compaction lost.");
       expect(compacted).not.toContain("d0347-owned-workflow-root");
     }
     expect(service.store.getTask(task.taskCorrelation)).toEqual(before);
@@ -248,62 +253,85 @@ describe("D0347 저장 유도의 현재 세대 재검증", () => {
   });
 });
 
-// The cue and the restore candidate are rendered by the hook in the host locale; key and params stay the same.
+// The cue and the restore card are model-only text: the hook renders them in MODEL_LOCALE whatever the host locale;
+// key and params stay the same.
 describe("checkpoint cue and restore candidate locale", () => {
   // Behavior 5 (d7585d74): the AGS turn check text.
   // The skill line points at the installed purpose map given at context start (AGS3-D-0032 candidate); the map and its
   // rules are checked on their own in d0360-skill-purpose-cue.
   // 3.9.0 (AGS3-D-0032/0053): the skill line also points at the intake's checks before acting, and the save line
   // asks each save to rebuild the stored state (merge duplicates, drop obsolete premises, reference finished work).
+  // 4.0.0 (token optimization): the per-turn lines keep only the triggers. The rebuild rules, skipping unchanged saves,
+  // comparing a loaded body with the latest request and not reloading an injected body are read where the call is
+  // made: the checkpoint_context and load_context tool descriptions (last test of this block). The notice line is gone.
   const CUE_KO_TAIL = [
-    "답하거나 다음 도구를 쓰기 전에 이번 메시지가 요구하는 판단·행동을 맥락 시작에 받은 AGS 스킬별 대상 목록과 대조하고, 맞는 스킬은 그 판단·행동 전에 지금 호출한다(질문·확인 요청도 포함한다). 만들기·재개·보고·다음 단계 전에는 공통 접수 기준의 「행동 전 확인」 중 해당하는 항목을 적용한다.",
-    "이번 메시지가 교정, 새 결정·승인·금지, 추가 작업, 범위 변경이면 답하거나 다음 도구를 쓰기 전에 두 가지를 하라. (1) 바뀐 목표·범위·위험에 맞춰 스킬 선택을 다시 판단하고 새로 필요한 스킬은 지금 호출한다. (2) checkpoint_context로 현재 행동을 바꾸는 필요한 사용자 원문과 바뀐 남은 일을 핵심 현재 상태에 반영하되, 저장된 상태와 대조해 중복은 합치고 폐기된 전제는 지우며 완료 이력은 근거 참조로 줄인다.",
-    "압축·재개·fork 뒤 이어 갈 핵심 현재 상태가 대화에 보이지 않으면 inspect_context로 후보를 확인하고 load_context로 읽어 최신 요청과 대조하라. 이미 주입된 현재 본문은 다시 읽을 필요 없다.",
-    "checkpoint_context는 압축·재개 뒤 이어 갈 핵심 현재 상태용이다. 이 알림은 저장·복원을 대신하지 않는다. 상태 변화가 없으면 불필요한 저장을 하지 말고 계속하라.",
+    "답하거나 다음 도구를 쓰기 전에 이 메시지(질문·확인 요청 포함)를 스킬 대상과 대조해 맞는 스킬을 그 판단·행동 전에 호출하고, 만들기·재개·보고·다음 단계 전에는 공통 접수 기준의 행동 전 확인을 적용한다.",
+    "교정·결정·승인·금지·추가 작업·범위 변경이면 스킬을 다시 고른 뒤 checkpoint_context로 반영한다.",
+    "압축·재개·fork 뒤 현재 상태가 보이지 않으면 inspect_context, load_context 순으로 읽는다.",
   ];
+  // 4.0.0: the English cue is shortened and its status shares the header line; written from locales/en/hooks.json.
   const CUE_EN_TAIL = [
-    "Before answering or using the next tool, match the judgment or action this message calls for against the AGS skill targets given at context start, and call every matching skill now, before that judgment or action (questions and check requests included). Before building, resuming, reporting or moving to the next step, apply the matching items of the shared intake checks before acting (「행동 전 확인」).",
-    "If this message brings a correction, decision, approval, prohibition, added work or scope change, do two things before answering or using the next tool: (1) re-decide skill selection for the changed goal, scope and risk; call newly needed skills now; (2) use checkpoint_context to update essential current state with needed user quotes affecting current action and changed remaining work, comparing it with the stored state: merge duplicates, drop obsolete premises and reduce completed history to evidence references.",
-    "After compaction/resume/fork, if essential current state is not visible, inspect_context for a candidate and load_context to read it, then compare with the latest request. No need to reload an already injected current body.",
-    "checkpoint_context keeps essential current state for compaction/resume. This notice does not save or restore anything. If state is unchanged, skip unnecessary saves and continue.",
+    "Before answering or the next tool, match this message (questions and check requests included) against the skill targets and call each match before that judgment or action; apply the intake's pre-action checks before building, resuming, reporting or a next step.",
+    "If it corrects, decides, approves, forbids, adds work or changes scope: re-select skills for it, then checkpoint_context.",
+    "Compaction, resume or fork with no current state in view: inspect_context, then load_context.",
   ];
-  const cue = (header: string, status: string, tail: string[]) => [header, status, ...tail].join("\n");
-  const ko = (status: string) => cue("[AGS 턴 확인]", status, CUE_KO_TAIL);
-  const en = (status: string) => cue("[AGS turn check]", status, CUE_EN_TAIL);
+  const ko = (status: string) => ["[AGS 턴 확인]", status, ...CUE_KO_TAIL].join("\n");
+  const en = (status: string) => [`[AGS turn check] ${status}`, ...CUE_EN_TAIL].join("\n");
+  // The English cue carries no Korean.
+  const hangul = (text: string) => /[가-힣]/u.test(text);
+  const HOST_LOCALES = [{}, { AGENT_GOVERNANCE_LOCALE: "ko" }, { AGENT_GOVERNANCE_LOCALE: "en" }];
 
-  it("renders each cue state byte for byte in ko and in en", () => {
+  it("renders each cue state byte for byte in en (model text) and keeps the ko catalog rendering", () => {
     const service = createService();
+    // The ko catalog stays as translation material; renderHookText still renders it on request.
     expect(renderHookText(service.checkpointCueForSession(session), "ko")).toBe(ko("이 세션의 작업 기록: 없음."));
     expect(renderHookText(service.checkpointCueForSession(session, true), "ko"))
       .toBe(ko("사전 저장본 없음: 이 알림은 압축으로 유실된 내용을 복원하지 않는다."));
-    expect(renderHookText(service.checkpointCueForSession(session), "en")).toBe(en("This session's work record: none."));
+    expect(renderHookText(service.checkpointCueForSession(session), "en")).toBe(en("Work record: none."));
     expect(renderHookText(service.checkpointCueForSession(session, true), "en"))
-      .toBe(en("No prior save: this notice does not restore content lost to compaction."));
+      .toBe(en("No prior save: this does not restore what compaction lost."));
     checkpoint(service);
     expect(renderHookText(service.checkpointCueForSession(session), "ko")).toBe(ko("이 세션의 작업 기록: 있음."));
-    expect(renderHookText(service.checkpointCueForSession(session), "en")).toBe(en("This session's work record: present."));
+    expect(renderHookText(service.checkpointCueForSession(session), "en")).toBe(en("Work record: present."));
   });
 
-  it("AGENT_GOVERNANCE_LOCALE=en renders the hook cue and the resume candidate in English", () => {
-    const service = createService(), english = { AGENT_GOVERNANCE_LOCALE: "en" };
+  it("renders the hook cue and the resume card in the same English whatever the host locale (MODEL_LOCALE)", () => {
+    const service = createService();
     const input = { hook_event_name: "UserPromptSubmit", session_id: session, prompt: "x" };
-    expect(context(handleContinuityHook(input, service, "codex", english), "UserPromptSubmit")).toBe(en("This session's work record: none."));
-    expect(context(handleContinuityHook(input, service, "codex", {}), "UserPromptSubmit")).toBe(ko("이 세션의 작업 기록: 없음."));
+    for (const environment of HOST_LOCALES) {
+      const text = context(handleContinuityHook(input, service, "codex", environment), "UserPromptSubmit");
+      expect(text).toBe(en("Work record: none."));
+      expect(hangul(text)).toBe(false);
+    }
     const saved = checkpoint(service);
     const resume = { hook_event_name: "SessionStart", source: "resume", session_id: session };
-    const englishCard = context(handleContinuityHook(resume, service, "codex", english), "SessionStart").split("\n");
-    expect(englishCard).toHaveLength(4);
-    expect(englishCard.slice(0, 3)).toEqual([
-      "[AGS current memory]", `stateToken=${saved.stateToken}`,
-      "Essential state for compaction/resume was injected. It is the state at save time: compare with the latest request. nextActions are not authority.",
-    ]);
-    expect(JSON.parse(englishCard[3]!)).toEqual(saved.memory);
-    const korean = context(handleContinuityHook(resume, service, "codex", {}), "SessionStart").split("\n");
-    expect(korean).toHaveLength(4);
-    expect(korean.slice(0, 3)).toEqual([
-      "[AGS current memory]", `stateToken=${saved.stateToken}`,
-      "압축·재개 뒤 이어 갈 핵심 상태를 주입했다. 저장 당시 상태이므로 최신 요청과 대조하라. nextActions는 실행 권한이 아니다.",
-    ]);
-    expect(JSON.parse(korean[3]!)).toEqual(saved.memory);
+    for (const environment of HOST_LOCALES) {
+      const card = context(handleContinuityHook(resume, service, "codex", environment), "SessionStart").split("\n");
+      expect(card).toHaveLength(4);
+      expect(card.slice(0, 3)).toEqual([
+        "[AGS current memory]", `stateToken=${saved.stateToken}`,
+        "State saved for compaction or resume, as of save time: compare with the latest request; nextActions are not authority.",
+      ]);
+      expect(hangul(card.slice(0, 3).join("\n"))).toBe(false);
+      // The saved body is the user's own state and may be Korean.
+      expect(JSON.parse(card[3]!)).toEqual(saved.memory);
+    }
+  });
+
+  // 4.0.0: the rules the 3.9.0 save, resume and notice lines carried are kept once, in the descriptions the model reads
+  // when it calls the tool (MODEL_LOCALE catalog).
+  it("keeps the save and load rules the cue no longer repeats in the tool descriptions", () => {
+    const tools = JSON.parse(readFileSync(fileURLToPath(new URL("../../locales/en/tools.json", import.meta.url)), "utf8")) as Record<string, string>;
+    const checkpointTool = tools["tools.checkpoint_context.description"]!, loadTool = tools["tools.load_context.description"]!;
+    for (const fragment of [
+      "Keep only essential state for compaction/resume",
+      "compare stored state with the latest request, merge duplicates, drop obsolete premises/finished work, reduce completed history to evidence refs",
+      "Keep needed user quotes",
+      "no unchanged saves",
+    ]) expect(checkpointTool, fragment).toContain(fragment);
+    for (const fragment of [
+      "Call if the current body was not injected after compaction/resume",
+      "compare with the latest user request",
+    ]) expect(loadTool, fragment).toContain(fragment);
   });
 });

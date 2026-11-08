@@ -1,6 +1,6 @@
 ---
 name: coordinate-subagents
-description: 사용자가 서브에이전트·병렬 작업·독립 감사자를 요청했을 때, 또는 문서화된 순이익 검사가 위임을 정당화할 때 쓴다. 소유권 배정, 근거 통합, 고위험 감사 분리를 맡는다. 작업 단위가 많거나 복잡하다는 이유만으로, 또는 orchestration이 켜져 있다는 이유만으로는 쓰지 않는다.
+description: Use when the user asks for subagents, parallel work or an independent auditor, or a documented net-benefit check justifies delegation. Handles ownership assignment, evidence integration and separating high-risk audits. A brief names goal, scope, forbidden areas, write ownership, chosen skills and completion and verification criteria, and never hands off waiting (watching results, polling). Not just because there are many work units, the task is complex, or orchestration is on.
 license: MIT
 metadata:
   version: "1.1.0"

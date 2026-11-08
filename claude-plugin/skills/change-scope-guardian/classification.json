@@ -16,15 +16,15 @@
       "path": "skills/change-scope-guardian/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:c40977808a57ee10e97c4945caa8f5f9363140e745f2dbac002ece68cba6d7ca",
+      "digest": "sha256:cc9942a0075f497609f20738cb0ee44dacec9ed5708fab98de90112390f38a56",
       "startByte": 0,
-      "endByte": 166
+      "endByte": 255
     },
     {
       "path": "skills/change-scope-guardian/SKILL.md",
       "startLine": 16,
       "endLine": 20,
-      "digest": "sha256:c40977808a57ee10e97c4945caa8f5f9363140e745f2dbac002ece68cba6d7ca",
+      "digest": "sha256:cc9942a0075f497609f20738cb0ee44dacec9ed5708fab98de90112390f38a56",
       "startByte": 0,
       "endByte": 334
     }
@@ -34,15 +34,15 @@
       "path": "skills/change-scope-guardian/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:c40977808a57ee10e97c4945caa8f5f9363140e745f2dbac002ece68cba6d7ca",
-      "startByte": 167,
-      "endByte": 243
+      "digest": "sha256:cc9942a0075f497609f20738cb0ee44dacec9ed5708fab98de90112390f38a56",
+      "startByte": 256,
+      "endByte": 310
     },
     {
       "path": "skills/change-scope-guardian/SKILL.md",
       "startLine": 22,
       "endLine": 22,
-      "digest": "sha256:c40977808a57ee10e97c4945caa8f5f9363140e745f2dbac002ece68cba6d7ca",
+      "digest": "sha256:cc9942a0075f497609f20738cb0ee44dacec9ed5708fab98de90112390f38a56",
       "startByte": 0,
       "endByte": 166
     }

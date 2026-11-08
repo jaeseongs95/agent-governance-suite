@@ -16,7 +16,6 @@ import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js";
 import { ContractValidator, contractSchemas } from "../../mcp-server/src/schema-validator.js";
 import { SESSION_MESSAGE_SERVER_INSTRUCTIONS, SKILL_INTAKE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
-import { ACCEPT_LANGUAGE_META, LOCALE_ENVIRONMENT, SUPPORTED_LOCALES, type SupportedLocale } from "../../mcp-server/src/i18n.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
@@ -52,11 +51,14 @@ function updateService(): PluginUpdateService {
   return new PluginUpdateService(store);
 }
 
-// The service default locale is explicit: the English tool texts and the Korean instructions are compared below.
-async function connect(profile?: ToolSchemaProfile, trace?: ProtocolTrace, ingress: CallerIngress | null = fixedIngress(rootCaller()), locale: SupportedLocale = "en"): Promise<Client> {
+// 4.0.0: tool texts and instructions are rendered in MODEL_LOCALE (en); the server has no default locale to set.
+// The SEP-2792 request key it used to honor is still sent below to show a requested language changes nothing.
+const ACCEPT_LANGUAGE_META = "io.modelcontextprotocol/acceptLanguage";
+
+async function connect(profile?: ToolSchemaProfile, trace?: ProtocolTrace, ingress: CallerIngress | null = fixedIngress(rootCaller())): Promise<Client> {
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-  const server = createMcpServer(service, updateService(), undefined, undefined, undefined, validator, profile, null, null, undefined, null, null, ingress, locale);
+  const server = createMcpServer(service, updateService(), undefined, undefined, undefined, validator, profile, null, null, undefined, null, null, ingress);
   const client = new Client({ name: "tool-schema-profile", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   if (trace) {
@@ -110,11 +112,12 @@ describe("MCP tool schema profiles", () => {
           expect(JSON.stringify(tool.inputSchema), `${tool.name}.${field}`).not.toContain(field);
         }
       }
-      // Hosts cap tool descriptions at 1024 characters, so every shipped locale must fit, not only the default one.
-      for (const locale of SUPPORTED_LOCALES) {
-        for (const tool of (await implicit.listTools({ _meta: { [ACCEPT_LANGUAGE_META]: locale } })).tools) {
-          expect(tool.description?.length ?? 0, `${locale} ${tool.name}`).toBeLessThanOrEqual(1024);
-        }
+      // Hosts cap tool descriptions at 1024 characters. Whatever language a request names, the same English list is
+      // returned, so it fits too.
+      for (const language of ["en", "ko"]) {
+        const listed = (await implicit.listTools({ _meta: { [ACCEPT_LANGUAGE_META]: language } })).tools;
+        expect(listed, language).toEqual(implicitTools);
+        for (const tool of listed) expect(tool.description?.length ?? 0, `${language} ${tool.name}`).toBeLessThanOrEqual(1024);
       }
       expect(planning).toMatchObject({ type: "object", oneOf: expect.any(Array) });
     } finally {
@@ -269,27 +272,31 @@ describe("MCP tool schema profiles", () => {
   });
 
   it("advertises the same host-neutral intake instructions to every schema profile", async () => {
-    const expected = `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
-    expect(serverInstructions("ko")).toBe(expected);
+    // The ko rendering stays as translation material; every profile receives the MODEL_LOCALE (en) rendering.
+    expect(serverInstructions("ko")).toBe(`${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);
+    const expected = serverInstructions("en");
+    expect(serverInstructions()).toBe(expected);
     // Initialization projects the actual shared criteria, not merely their location.
     const shared = await readFile(new URL("../../skills/orchestrator/references/intake.md", import.meta.url), "utf8");
     const intake = shared.split("<!-- skill-intake:start -->\n")[1]?.split("\n<!-- skill-intake:end -->")[0];
     expect(intake).toBeTruthy();
     expect(SKILL_INTAKE_SERVER_INSTRUCTIONS.split(intake!)).toHaveLength(2);
+    expect(expected.split(intake!)).toHaveLength(2);
     // Outside the projected block, no common sentence may be repeated or pre-stated.
     const outside = expected.split(intake!).join("\n");
     const sentences = intake!.split("\n").filter((line) => !line.startsWith("#")).flatMap((line) => line.replace(/^- /u, "").split(/(?<=다\.) /u)).filter((sentence) => sentence.length > 20);
     expect(sentences.length).toBeGreaterThan(10);
     for (const sentence of sentences) expect(outside.includes(sentence), sentence).toBe(false);
     expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).not.toMatch(/실패 영향이 낮으면|BINDING_/u);
+    expect(expected).not.toMatch(/실패 영향이 낮으면|BINDING_/u);
     // Skill IDs are common; native invocation syntax remains in adapters.
     for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9-]*/u, /Claude/u, /Codex/u, /Anthropic/iu, /UserPromptSubmit/u]) {
       expect(expected).not.toMatch(hostSpecific);
     }
     const traces: ProtocolTrace[] = [[], [], []];
-    const implicit = await connect(undefined, traces[0], undefined, "ko");
-    const codex = await connect("default", traces[1], undefined, "ko");
-    const claude = await connect("anthropic", traces[2], undefined, "ko");
+    const implicit = await connect(undefined, traces[0]);
+    const codex = await connect("default", traces[1]);
+    const claude = await connect("anthropic", traces[2]);
     try {
       for (const trace of traces) {
         const requests = trace.filter(row => row.direction === "client").map(row => JSON.parse(row.wire));
@@ -300,7 +307,8 @@ describe("MCP tool schema profiles", () => {
         const response = trace.filter(row => row.direction === "server").map(row => JSON.parse(row.wire))
           .find(row => row.id === initialize.id && row.result);
         expect(response?.result.instructions).toBe(expected);
-        expect(response.result.instructions).toContain("분류 지원(`classify_skills`)은 설정된 환경에서만");
+        // 4.0.0 (token optimization): "classification support only where configured" left the instructions; every
+        // profile reads it in the classify_skills description from tools/list (checked below).
         expect(response.result.instructions).toContain("독립 작업을 계속하며 턴·전체 작업을 끝내지 않는다.");
         expect(Object.keys(response.result)).toEqual(expect.arrayContaining(["protocolVersion", "capabilities", "serverInfo", "instructions"]));
       }
@@ -316,9 +324,10 @@ describe("MCP tool schema profiles", () => {
       // which every profile receives in tools/list before the call.
       for (const tools of [(await implicit.listTools()).tools, codexTools, claudeTools]) {
         const classify = tools.find((tool) => tool.name === "classify_skills")?.description ?? "";
-        expect(classify).toContain("이 도구가 노출됐다는 사실만으로 분류 지원이 설정됐다고 추정하지 않는다");
-        expect(classify).toContain("미확정·거부·미가용·미검증은 성공이 아니다");
-        expect(classify).toContain("공통 분류 지원 계약의 실패 처리대로 직접 고른 스킬로 독립 작업을 계속한다");
+        // tools/list is rendered in MODEL_LOCALE (en); written from locales/en/tools.json.
+        expect(classify).toContain("Do not assume classification support is configured only because this tool is exposed.");
+        expect(classify).toContain("undecided, refused, unavailable or unverified is not success");
+        expect(classify).toContain("follow the shared classification contract failure handling and continue the independent work with skills you choose");
       }
     } finally {
       await implicit.close();
@@ -337,12 +346,13 @@ describe("MCP tool schema profiles", () => {
     environment.AGENT_GOVERNANCE_DB_PATH = join(stateDirectory, "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = join(stateDirectory, "continuity.sqlite3");
     environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE = "anthropic";
-    environment[LOCALE_ENVIRONMENT] = "ko";
+    // A host locale no longer changes anything: the bundled server still sends the MODEL_LOCALE (en) instructions.
+    environment.AGENT_GOVERNANCE_LOCALE = "ko";
     return scope.connect("tool-schema-profile-stdio", { command: process.execPath, args: [bundledServer], cwd: rootDirectory, env: environment });
   }, async ({ client }) => {
     const planning = (await client.listTools()).tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
     expect(planning).toBeDefined();
     expect(planning).not.toHaveProperty("oneOf");
-    expect(client.getInstructions()).toBe(serverInstructions("ko"));
+    expect(client.getInstructions()).toBe(serverInstructions("en"));
   }, 30_000);
 });

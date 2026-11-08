@@ -15,7 +15,7 @@
 
 - 사람이 바꾸는 항목의 정본은 공유 상태 파일(`context-layers.sqlite3`)의 `admin_log` 하나다. 기록은 추가만 한다.
 - 기록 하나는 패스키가 서명한 canonical JSON 문자열(intent) 하나다. 내용은 `{v, domain:"ags.admin", rpId:"localhost", target, prevTargetHash, change, issuedAt}`이고 challenge는 SHA-256(intent)이다. 읽을 때 `canonicalJson(JSON.parse(s)) === s`를 강제한다.
-- 대상(target)은 `keys`, `global`, `roles`, `binding:<host>:<sessionId>`, 그리고 설정의 `jev`(켜고 끄기·예산·프리셋), `jevKeys`, `locale`, `editExempt`다. 대상마다 이전 기록의 hash를 이어 거는 사슬이라 서로 무관한 대상끼리는 경합하지 않는다.
+- 대상(target)은 `keys`, `global`, `roles`, `binding:<host>:<sessionId>`, 그리고 설정의 `jev`(켜고 끄기·예산·프리셋), `jevKeys`, `locale`, `editExempt`다. `locale`(`locale.set`)은 4.0.0부터 적용하지 않는다. 기존 기록은 사슬 검증에만 쓰고, 새 `locale.set`은 `ADMIN_CHANGE_INVALID`로 거절한다(모든 문구가 `MODEL_LOCALE`로 고정됐다, [i18n.md](i18n.md) 4.1). 대상마다 이전 기록의 hash를 이어 거는 사슬이라 서로 무관한 대상끼리는 경합하지 않는다.
 - 검증 항목: client data type(`webauthn.get`), challenge, origin(`http://localhost[:port]`), rpIdHash(`localhost`), 사용자 존재·사용자 확인(UP·UV) 플래그, 서명(ES256·RS256·EdDSA, `node:crypto`만 씀). signCount는 기록만 하고 판정에 쓰지 않는다. 페이지 서버는 저장할 때 origin이 자기 주소(`http://localhost:<설정 포트>`)와 같아야 받는다. 다른 localhost 포트에 띄운 비슷한 페이지가 받아 낸 서명으로는 저장할 수 없다. 이미 저장된 기록을 읽을 때는 포트 설정이 바뀔 수 있으므로 localhost의 어느 포트든 받는다.
 - 첫 키는 자기 서명으로 등록한다(TOFU). 그 뒤 키 추가·폐기는 유효한 키의 서명이 있어야 한다. 마지막 키는 폐기할 수 없다. 폐기된 키가 그 뒤에 서명한 기록은 무효다.
 - 저장은 검사와 추가를 한 트랜잭션(`BEGIN IMMEDIATE`)으로 한다. 같은 요청 ID로 다시 보내면 이미 저장된 기록을 돌려준다. 응답을 받지 못한 페이지는 다시 보내지 않고 `GET /api/request/:id`로 결과만 확인한다.
@@ -34,14 +34,12 @@
 
 | 항목 | 읽는 곳 | 바뀐 값이 적용되는 때 |
 | --- | --- | --- |
-| 표시 언어 | 모든 hook·CLI의 locale 결정(`resolveHostLocale`), MCP 서버의 기본 locale | hook은 다음 호출부터, MCP 서버는 다시 시작할 때 |
 | 편집 관문 예외 경로 | 편집 관문 hook(`continuity-hook.ts` `exemptEditRoots`) | 다음 편집부터 |
 | JEV 켜고 끄기·모델·정보 전송 허용·대체 평가자·프리셋 | MCP 서버의 분류 런타임 읽기(`classify_skills`·선택 기록 때마다) | 다음 호출부터 |
 | JEV 예산 | MCP 서버의 예산 예약(예약할 때마다) | 다음 예약부터 |
 | JEV key | JEV 호출과 모델 목록 갱신 때 key 읽기(이름 `JEV_API_KEY`) | 다음 호출부터 |
 | 벤더 경로 key | 설치 설정의 벤더 경로 자격 증명 읽기(`credentialEnvName`) | 다음 호출부터 |
 
-- 표시 언어 기록을 읽지 못하면 그 단계만 건너뛰고(`LOCALE_SIGNED_UNREADABLE`) 설정 파일·패키지 기본값으로 간다.
 - 예외 경로 기록을 읽지 못하면 예외를 하나도 더하지 않는다. 읽기 실패가 관문을 열지 않는다. 예외 경로는 최대 50개다(`EDIT_EXEMPT_MAX_PATHS`).
 - JEV 설정을 읽지 못하면 JEV는 꺼진다. 예산을 읽지 못하면 JEV 예약을 하지 않는다.
 - 비용: hook 한 번에 서명 기록을 한두 번 검증한다(파일 열기 + 기록 수만큼 서명 검증). 기록은 사람이 저장한 것만 쌓이므로 작다. 수천 개로 늘면 검증된 앞부분을 저장해 두는 방식으로 바꾼다(`context-layer-store.ts`의 `ceiling:` 주석).
@@ -50,7 +48,7 @@
 
 기존 사용자가 환경 변수로 정한 값은 조용히 무시되지 않는다.
 
-- **표시 언어:** `AGENT_GOVERNANCE_LOCALE`이 있으면 환경 변수가 이긴다. 순서는 환경 변수 → 서명한 값 → `settings.json` → 패키지 기본값 → `en`이다. 페이지는 환경 변수가 있으면 선택 칸을 잠그고, 잠근 환경 변수 이름과 서명해 둔 값을 함께 보여 준다. 서명할 때 「설정 파일·기본값 따름」을 고르면 `settings.json` 이후 순서를 그대로 쓴다.
+- **표시 언어(4.0.0에서 없앰):** `AGENT_GOVERNANCE_LOCALE`, 서명한 값, `settings.json`, 패키지 기본값 모두 효과가 없다. 언어를 고르는 설정 자체가 없어졌으므로 사용자 문서([admin-page.md](../user/admin-page.md#언어))에 그 사실을 적는다.
 - **편집 관문 예외 경로:** `AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS`가 비어 있지 않으면 그 목록이 이기고 서명한 목록은 쓰지 않는다(합치지 않는다). 페이지는 편집을 잠그고 환경 변수 목록을 보여 주며, 서명한 목록이 몇 개인지 적는다.
 - **JEV(4.0.0부터):** MCP 서버가 전부 관리한다. 설치 설정 파일과 환경 변수는 JEV에 쓰지 않는다. 아래 「JEV 구성」을 본다.
 - **벤더 경로 key:** 경로가 요구하는 이름(`credentialEnvName`)의 환경 변수가 있으면 그 값을 쓴다. 없을 때만 페이지에서 등록한 key를 쓴다. 페이지는 환경 변수가 있다는 사실만 보여 주고 값은 보여 주지 않는다.

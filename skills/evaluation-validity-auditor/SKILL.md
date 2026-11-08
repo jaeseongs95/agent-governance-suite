@@ -1,6 +1,6 @@
 ---
 name: evaluation-validity-auditor
-description: 동결된 스킬·모델 평가의 입력, 판정 방법과 결과 집계가 공정하고 재현 가능한지 실행 전후에 감사한다. 평가 실행·채점·수정이나 일반 구현 검증에는 사용하지 않는다.
+description: "Audit, before and after a run, whether a frozen skill or model evaluation's inputs, judging method and aggregation are fair and reproducible. Not for running, scoring or fixing evaluations or general implementation checks."
 license: MIT
 metadata:
   version: "1.0.0"

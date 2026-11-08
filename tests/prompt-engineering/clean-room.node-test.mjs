@@ -17,7 +17,7 @@ test("shipped CLI validates and rejects invalid artifacts without node_modules",
     await cp(path.join(repository, "skills/prompt-engineering"), path.join(root, "skills/prompt-engineering"), { recursive: true });
     await cp(path.join(repository, "runtime/schema-validation.mjs"), path.join(root, "runtime/schema-validation.mjs"));
     // The shipped runtime directory carries the message renderer next to the schema validator.
-    for (const file of ["i18n.mjs", "locale.json"]) await cp(path.join(repository, "runtime", file), path.join(root, "runtime", file));
+    await cp(path.join(repository, "runtime/i18n.mjs"), path.join(root, "runtime/i18n.mjs"));
     await cp(path.join(repository, "tests/prompt-engineering/fixtures"), path.join(root, "fixtures"), { recursive: true });
     assert.equal(existsSync(path.join(root, "node_modules")), false);
     const cli = "skills/prompt-engineering/scripts/check-report.mjs";

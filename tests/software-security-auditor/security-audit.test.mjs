@@ -108,17 +108,18 @@ describe("security audit evidence contract", () => {
     });
   });
 
-  it("reports CLI usage errors in the host locale and keeps the INVALID_INPUT code", () => {
+  it("reports CLI usage errors in the model locale, whatever the host locale, and keeps the INVALID_INPUT code", () => {
     const cli = path.join(repo, "skills/software-security-auditor/scripts/cli.mjs");
     const run = (locale, ...args) => {
       const env = { ...process.env, AGENT_GOVERNANCE_LOCALE: locale }; delete env.NODE_PATH; delete env.NODE_OPTIONS;
+      if (locale === undefined) delete env.AGENT_GOVERNANCE_LOCALE;
       const result = spawnSync(process.execPath, [cli, ...args], { encoding: "utf8", env, timeout: 10000, windowsHide: true });
       expect(result.status).toBe(2);
       return JSON.parse(result.stdout);
     };
-    expect(run("en", "snapshot", "--bogus", "x")).toMatchObject({ valid: false, code: "INVALID_INPUT", errors: ["INVALID_INPUT: invalid or repeated option"] });
-    expect(run("ko", "snapshot", "--bogus", "x")).toMatchObject({ valid: false, code: "INVALID_INPUT", errors: ["INVALID_INPUT: 옵션이 올바르지 않거나 반복되었다"] });
-    expect(run("en", "bogus").errors).toEqual(["INVALID_INPUT: use snapshot|validate --input request.json --target-root root; validate also requires --report and --evidence-root"]);
-    expect(run("ko", "bogus").errors).toEqual(["INVALID_INPUT: snapshot|validate --input request.json --target-root root 형식으로 쓴다. validate에는 --report와 --evidence-root도 필요하다"]);
+    for (const locale of ["en", "ko", undefined]) {
+      expect(run(locale, "snapshot", "--bogus", "x")).toMatchObject({ valid: false, code: "INVALID_INPUT", errors: ["INVALID_INPUT: invalid or repeated option"] });
+      expect(run(locale, "bogus").errors).toEqual(["INVALID_INPUT: use snapshot|validate --input request.json --target-root root; validate also requires --report and --evidence-root"]);
+    }
   });
 });

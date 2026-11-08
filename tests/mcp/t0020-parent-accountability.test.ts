@@ -32,7 +32,7 @@ describe("parent accountability in the common intake (AGS3-T-0020)", () => {
     for (const locale of ["ko", "en"] as const) for (const fragment of fragments) {
       expect(serverInstructions(locale).split(fragment)).toHaveLength(2);
     }
-    for (const pkg of ["claude-plugin", "claude-plugin-en", "codex-plugin-en"]) {
+    for (const pkg of ["claude-plugin"]) { // 4.0.0: the English packages were removed
       expect(readFileSync(new URL(`${pkg}/skills/orchestrator/references/intake.md`, root), "utf8"), pkg).toBe(intake);
     }
   });

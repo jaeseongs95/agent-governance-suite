@@ -13,7 +13,7 @@ AGS가 이 컴퓨터에 남기는 상태 파일의 위치, 위치를 바꾸는 �
 | 입력 출처 영수증 | `trust.sqlite3` | `session-messaging/` 안 | `AGENT_GOVERNANCE_TRUST_DB_PATH` |
 | 전역·담당 컨텍스트, 관리자 서명 기록 | `context-layers.sqlite3` | 공유 상태 폴더 | `AGENT_GOVERNANCE_CONTEXT_LAYER_DB_PATH` |
 | 페이지에서 등록한 key의 데이터 키 | `jev-key-vault.bin` | `context-layers.sqlite3`와 같은 폴더 | (위 경로를 따름) |
-| 표시 언어 설정 파일 | `settings.json` | 공유 상태 폴더 | (공유 상태 폴더를 따름) |
+| 3.x 표시 언어 설정 파일(4.0.0부터 읽지 않음, 지워도 됨) | `settings.json` | 공유 상태 폴더 | (공유 상태 폴더를 따름) |
 | 관리자 페이지를 연 프로세스의 포트·pid(4.0.0부터) | `admin-page.json` | 공유 상태 폴더 | (공유 상태 폴더를 따름) |
 | 기계 ID가 없는 환경의 호스트 ID | `host-id` | 공유 상태 폴더 | (공유 상태 폴더를 따름) |
 

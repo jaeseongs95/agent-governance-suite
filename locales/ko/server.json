@@ -20,6 +20,6 @@
   "server.stateCleanup.unavailable": "로컬 저장소가 초기화되지 않아 상태 정리를 쓸 수 없다.",
   "server.sessionMessage.sendInvalid": "{cause} 새 전송 의도에는 prepare_session_message를 쓰고, 그 결과로 받은 messageId만 보낸다. 이전 전송 결과가 불확실하면 이미 아는 그 ID로 재시도하거나 저장한 영수증·status를 대조한다.",
   "server.workflowChange.stage": "[AGS workflow 변경] 다음 단계: {stageId}(capability {capability}). 그 결과는 {provider} provider 계약으로 기록한다.",
-  "server.workflowChange.skills": "workflow가 바뀌었으니 작업의 목적이 바뀌었을 수 있다. 다음 판단·행동 전에 그 판단·행동을 아래 설치된 스킬 전체의 대상과 대조하고, 맞는 스킬은 모두 지금 호출한다(없으면 0개, 여럿이면 여럿). 단계의 provider는 그 단계 결과를 기록하는 계약일 뿐이다. 그 단계에서 쓸 스킬을 제한하지 않으며, 다른 스킬을 쓰는 데 계획 수정이 필요하지 않다. 앞 단계에서 호출한 스킬의 지침은 그때의 판단·행동에만 적용한다.\n{targets}",
+  "server.workflowChange.skills": "workflow가 바뀌었다. 다음 판단·행동 전에 스킬 대상과 다시 대조해 맞는 스킬을 지금 모두 호출한다. 단계의 provider는 결과를 기록하는 계약일 뿐 그 단계에서 쓰는 스킬을 제한하지 않으며, 다른 스킬을 쓰는 데 계획 변경은 필요 없다.",
   "server.workflowChange.classification": "스킬 분류 지원이 설정돼 있다. 다음 단계의 실제 작업과 전체 inventory를 classify_skills에 넘겨 조언을 받을 수 있다. 조언은 채택·교정·기각하고 최종 선택은 직접 한다."
 }

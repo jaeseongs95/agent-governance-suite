@@ -18,21 +18,21 @@
   "applicability": [
     {
       "path": "skills/prompt-engineering/SKILL.md",
-      "startLine": 4,
-      "endLine": 5,
-      "digest": "sha256:f6f48836e02c7940798a39f458a92d54836d6ce270e6f41db1d509a17970e46e",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:7c503e5ac1deb17145e3b919f28ce588eea41650885cfdd17e42f1616abb4e65",
       "startByte": 0,
-      "endByte": 362
+      "endByte": 322
     }
   ],
   "exclusions": [
     {
       "path": "skills/prompt-engineering/SKILL.md",
-      "startLine": 6,
-      "endLine": 6,
-      "digest": "sha256:f6f48836e02c7940798a39f458a92d54836d6ce270e6f41db1d509a17970e46e",
-      "startByte": 0,
-      "endByte": 215
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:7c503e5ac1deb17145e3b919f28ce588eea41650885cfdd17e42f1616abb4e65",
+      "startByte": 323,
+      "endByte": 517
     }
   ]
 }

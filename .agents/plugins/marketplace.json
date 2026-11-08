@@ -16,20 +16,6 @@
         "authentication": "ON_INSTALL"
       },
       "category": "Developer Tools"
-    },
-    {
-      "name": "agent-governance-suite-en",
-      "source": {
-        "source": "git-subdir",
-        "url": "https://github.com/jaeseongs95/agent-governance-suite.git",
-        "path": "codex-plugin-en",
-        "ref": "v4.0.0"
-      },
-      "policy": {
-        "installation": "AVAILABLE",
-        "authentication": "ON_INSTALL"
-      },
-      "category": "Developer Tools"
     }
   ]
 }

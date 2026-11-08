@@ -106,8 +106,13 @@ test("a field named as one example among others, or as an explicit branch, passe
     "화면이면 아래 기준을 함께 적용한다.",
     "## 화면일 때\n\n- 기존 컴포넌트를 재사용하고 렌더링을 정리한다.",
     "구현, 반복 실패 원인 분석, 릴리스 승인에는 사용하지 않는다.",
-    "코드 작성 단계에는 `ponytail`을 먼저 호출한다.",
-    "문서를 검토하며, 코드 작성 단계에는 `ponytail`을 먼저 호출한다.",
+    // 4.0.0: ponytail retired; solid-design is the field-specific (code design) skill routed to here.
+    "코드 작성 단계에는 `solid-design`을 먼저 호출한다.",
+    "문서를 검토하며, 코드 작성 단계에는 `solid-design`을 먼저 호출한다.",
+    // 4.0.0 English descriptions name the exclusion first.
+    "Not for implementation, repeated-failure diagnosis or release approval.",
+    "Not automatically for general questions, non-visual CLI work or logs merely mentioning UI.",
+    "Do not use it for code review.",
     "예를 들어 코드 변경을 검토한다.",
     "결과물(`코드`, 문서, 영상)의 근거를 확인한다.",
     "원문 `skills/code-review/SKILL.md`와 `node scripts/check-domain-neutral-wording.mjs`를 읽는다.",
@@ -125,6 +130,10 @@ test("a sentence that ties the work to one field is caught, even inside an exclu
     ["Use when reviewing code changes.", "code"],
     ["코드 작업에만 쓰고 그 밖의 작업에는 쓰지 않는다.", "코드"],
     ["구현자와 분리된 검토자로서 판정하고, 승인 결정을 대신하지 않는다.", "구현"],
+    // An English exclusion lead covers only its own clause and never an "only" limit.
+    ["Not for documents; use it for code changes.", "code"],
+    ["Use only for code changes and not for documents.", "code"],
+    ["Review code changes. Not for documents.", "code"],
   ]) assert.ok(findFieldWording(sentence).some((finding) => finding.term === term), `${term}: ${sentence}`);
 });
 
@@ -154,10 +163,12 @@ test("every skill is classified as general or field-specific, and the code-only 
     .filter((entry) => entry.isDirectory() && readdirSync(path.join(root, "skills", entry.name)).includes("SKILL.md"))
     .map((entry) => entry.name).sort();
   assert.deepEqual(Object.keys(SKILL_FIELDS).sort(), skills);
-  for (const id of ["ponytail", "code-review", "test-engineering", "software-security-auditor"]) {
+  for (const id of ["solid-design", "code-review", "test-engineering", "software-security-auditor"]) {
     assert.equal(typeof SKILL_FIELDS[id], "string", id);
   }
-  for (const id of ["acceptance-evidence-validator", "independent-audit-gate", "mutation-risk-preflight", "blocker-diagnostician",
+  // 4.0.0: ponytail's AGS successor makes any kind of output, so it is general.
+  assert.equal(Object.hasOwn(SKILL_FIELDS, "ponytail"), false);
+  for (const id of ["minimal-implementation", "acceptance-evidence-validator", "independent-audit-gate", "mutation-risk-preflight", "blocker-diagnostician",
     "task-contract", "orchestrator", "ui-ux-design"]) {
     assert.equal(SKILL_FIELDS[id], null, id);
   }

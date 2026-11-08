@@ -149,7 +149,7 @@ test("guarded lease/start and SQLite restart retain recorded bundle pins; finali
 test("existing non-CS plan stays unselected and rejects unknown CS wire fields", () => {
   const f=fixture();const task={...f.task,requiredCapabilities:["minimal-implementation"]};
   delete task.artifactContracts; // No CS output is selected in this planning-only case.
-  expect(f.service.planWorkflow(task).data?.selectedSkills).toEqual(["ponytail"]);
+  expect(f.service.planWorkflow(task).data?.selectedSkills).toEqual(["minimal-implementation"]);
   expect(f.service.planWorkflow({...task,csEngineeringBinding:f.binding}).ok).toBe(false);
   expect(f.service.planWorkflow({schemaVersion:"1.1.0",taskEnvelope:task,csEngineeringBinding:f.binding}).ok).toBe(false);
 });

@@ -272,28 +272,36 @@ test("classification references current, distinct applicability and exclusion so
   const bytes = await readFile(new URL("../../skills/prompt-engineering/SKILL.md", import.meta.url));
   const metadata = JSON.parse(await readFile(new URL("../../skills/prompt-engineering/classification.json", import.meta.url), "utf8"));
   const lines = bytes.toString("utf8").split(/\r?\n/u);
-  const readSpans = (entries) => entries.flatMap((entry) => {
+  // 4.0.0: the one-line description holds both an applicability and an exclusion clause, so spans are compared as
+  // byte ranges of the file (a span selects its lines joined by "\n", then startByte..endByte), not as whole lines.
+  const lineStart = (line) => Buffer.byteLength(lines.slice(0, line - 1).map((text) => `${text}\n`).join(""));
+  const readSpans = (entries) => entries.map((entry) => {
     assert.equal(entry.path, "skills/prompt-engineering/SKILL.md");
     assert.equal(entry.digest, sha256(bytes));
     assert.ok(Number.isSafeInteger(entry.startLine) && Number.isSafeInteger(entry.endLine));
     assert.ok(entry.startLine > 0 && entry.endLine >= entry.startLine && entry.endLine <= lines.length);
-    assert.ok(lines.slice(entry.startLine - 1, entry.endLine).join("\n").trim());
-    return Array.from({ length: entry.endLine - entry.startLine + 1 }, (_, index) => entry.startLine + index);
+    const block = Buffer.from(lines.slice(entry.startLine - 1, entry.endLine).join("\n"));
+    const start = entry.startByte ?? 0, end = entry.endByte ?? block.length;
+    assert.ok(start >= 0 && start < end && end <= block.length);
+    assert.ok(block.subarray(start, end).toString("utf8").trim());
+    return [lineStart(entry.startLine) + start, lineStart(entry.startLine) + end];
   });
   const applicable = readSpans(metadata.applicability);
   const excluded = readSpans(metadata.exclusions);
   assert.ok(applicable.length && excluded.length);
-  assert.ok(applicable.every((line) => !excluded.includes(line)));
+  assert.ok(applicable.every(([start, end]) => excluded.every(([from, to]) => end <= from || to <= start)));
   assert.equal(metadata.schemaVersion, "1.0.0");
   assert.equal(metadata.taxonomyRevision, "1.0.0");
   assert.deepEqual(metadata.dependencies, []);
 });
 
-test("i18n: check errors render in the host locale", () => {
+test("i18n: check errors render in the model locale, whatever the host locale", () => {
   const inLocale = (locale) => {
-    process.env.AGENT_GOVERNANCE_LOCALE = locale;
+    if (locale === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE;
+    else process.env.AGENT_GOVERNANCE_LOCALE = locale;
     try { return checkReport(Buffer.from("{"), reportTemplate); } finally { process.env.AGENT_GOVERNANCE_LOCALE = "en"; }
   };
-  assert.deepEqual(inLocale("en"), { valid: false, errors: ["request is not valid JSON"] });
-  assert.deepEqual(inLocale("ko"), { valid: false, errors: ["request가 올바른 JSON이 아니다"] });
+  for (const locale of ["en", "ko", undefined]) {
+    assert.deepEqual(inLocale(locale), { valid: false, errors: ["request is not valid JSON"] });
+  }
 });

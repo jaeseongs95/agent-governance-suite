@@ -15,15 +15,15 @@
       "path": "skills/model-effort-advisor/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:5d554bb4fdb11ca9a2c833ff0a3403f23aaf28d5a9c459005a5222fb21cdd0ce",
+      "digest": "sha256:a387ac3bf8532ab0def8c8e09b1262bf2563f3b03c67a7c5554b9515f3515f6d",
       "startByte": 0,
-      "endByte": 297
+      "endByte": 256
     },
     {
       "path": "skills/model-effort-advisor/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:5d554bb4fdb11ca9a2c833ff0a3403f23aaf28d5a9c459005a5222fb21cdd0ce",
+      "digest": "sha256:a387ac3bf8532ab0def8c8e09b1262bf2563f3b03c67a7c5554b9515f3515f6d",
       "startByte": 0,
       "endByte": 336
     },
@@ -31,7 +31,7 @@
       "path": "skills/model-effort-advisor/SKILL.md",
       "startLine": 17,
       "endLine": 17,
-      "digest": "sha256:5d554bb4fdb11ca9a2c833ff0a3403f23aaf28d5a9c459005a5222fb21cdd0ce",
+      "digest": "sha256:a387ac3bf8532ab0def8c8e09b1262bf2563f3b03c67a7c5554b9515f3515f6d",
       "startByte": 0,
       "endByte": 143
     }
@@ -41,15 +41,15 @@
       "path": "skills/model-effort-advisor/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:5d554bb4fdb11ca9a2c833ff0a3403f23aaf28d5a9c459005a5222fb21cdd0ce",
-      "startByte": 298,
-      "endByte": 419
+      "digest": "sha256:a387ac3bf8532ab0def8c8e09b1262bf2563f3b03c67a7c5554b9515f3515f6d",
+      "startByte": 257,
+      "endByte": 363
     },
     {
       "path": "skills/model-effort-advisor/SKILL.md",
       "startLine": 18,
       "endLine": 19,
-      "digest": "sha256:5d554bb4fdb11ca9a2c833ff0a3403f23aaf28d5a9c459005a5222fb21cdd0ce",
+      "digest": "sha256:a387ac3bf8532ab0def8c8e09b1262bf2563f3b03c67a7c5554b9515f3515f6d",
       "startByte": 0,
       "endByte": 435
     }

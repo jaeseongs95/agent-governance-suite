@@ -10,10 +10,14 @@ import { makeFixture, makePostFixture, rawDigest } from "./fixture.mjs";
 
 const suiteRoot = fileURLToPath(new URL("../../", import.meta.url));
 const scriptPath = (suite, script) => path.join(suite, "skills/evaluation-validity-auditor/scripts", script);
-// The human view is Korean in the source locale; each run pins the locale it expects.
-const execute = (script, args, suite = suiteRoot, locale = "ko") => spawnSync(process.execPath, [scriptPath(suite, script), ...args], {
-  encoding: "utf8", timeout: 15000, maxBuffer: 1024 * 1024, env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale },
-});
+// The human view renders in the model locale (en) whatever the host locale; runs default to a ko host
+// to show that, and null leaves AGENT_GOVERNANCE_LOCALE unset.
+const hangul = /[가-힣]/u;
+const execute = (script, args, suite = suiteRoot, locale = "ko") => {
+  const env = { ...process.env };
+  if (locale === null) delete env.AGENT_GOVERNANCE_LOCALE; else env.AGENT_GOVERNANCE_LOCALE = locale;
+  return spawnSync(process.execPath, [scriptPath(suite, script), ...args], { encoding: "utf8", timeout: 15000, maxBuffer: 1024 * 1024, env });
+};
 
 async function prepare(t, post = true) {
   const fixture = await (post ? makePostFixture() : makeFixture());
@@ -44,17 +48,18 @@ test("GOV07 human CLI explains the same report without changing identity, denomi
   assert.equal(json.stdout, `${JSON.stringify(expected, null, 2)}\n`);
   const human = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"]);
   assert.equal(human.status, 0, human.stderr);
-  assert.match(human.stdout, /결론: 판정 보류 \(BLOCKED\), 실행 후 평가 유효성/);
-  for (const label of ["이유:", "검증 범위:", "한계:", "실제 신원을 인증하지 않았습니다", "대상 소스를 별도로 검증하지 않았습니다"]) assert.ok(human.stdout.includes(label), label);
-  assert.match(human.stdout, /결과 레코드 관측 4 \/ 예정 8/);
-  assert.match(human.stdout, /분자 1, 분모 4, 값 0\.25/);
-  assert.match(human.stdout, /분자 2, 분모 4, 값 0\.5/);
-  assert.match(human.stdout, /실패·시간초과 실행도 원래 분모에 포함/);
+  assert.match(human.stdout, /Conclusion: Verdict withheld \(BLOCKED\), post-execution evaluation validity/);
+  for (const label of ["Reason:", "Verification coverage:", "Limitations:", "actual identities were not authenticated", "the target source was not verified separately"]) assert.ok(human.stdout.includes(label), label);
+  assert.match(human.stdout, /result records observed 4 \/ planned 8/);
+  assert.match(human.stdout, /numerator 1, denominator 4, value 0\.25/);
+  assert.match(human.stdout, /numerator 2, denominator 4, value 0\.5/);
+  assert.match(human.stdout, /Failed and timed-out runs stay in the original denominator/);
+  assert.doesNotMatch(human.stdout, hangul);
   for (const id of [expected.auditId, expected.target.evaluationId, expected.target.identifier, expected.target.digest, expected.requestDigest, expected.reportDigest, f.ids.evidence]) assert.ok(human.stdout.includes(id), id);
   assert.equal(execute("cli.mjs", auditArgs(f)).stdout, json.stdout);
   const validation = execute("validate-report.mjs", [...await validationArgs(f, expected), "--format", "human-ko"]);
   assert.equal(validation.status, 0, validation.stdout + validation.stderr);
-  assert.match(validation.stdout, /보고서 검증: 통과/);
+  assert.match(validation.stdout, /Report validation: passed/);
   assert.ok(validation.stdout.endsWith(human.stdout));
 });
 
@@ -62,10 +67,10 @@ test("GOV07 실행 전 신원 미관측은 결과 검사나 품질 근거를 주
   const f = await prepare(t, false);
   const result = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"]);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /결론: 판정 보류 \(BLOCKED\), 실행 전 설계 준비/);
-  assert.match(result.stdout, /실행 결과와 집계는 이 단계에서 검사하지 않았습니다/);
-  assert.match(result.stdout, /품질·릴리스 판단의 결과 근거로 사용할 수 없습니다/);
-  assert.doesNotMatch(result.stdout, /공개 집계와 재계산 결과의 일치: 통과/);
+  assert.match(result.stdout, /Conclusion: Verdict withheld \(BLOCKED\), pre-execution design readiness/);
+  assert.match(result.stdout, /Run results and aggregates were not checked at this stage/);
+  assert.match(result.stdout, /Not usable as result evidence for quality and release decisions/);
+  assert.doesNotMatch(result.stdout, /Published aggregate matches the recomputed result: Pass/);
 });
 
 test("GOV07 FAIL and BLOCKED remain distinct and explain their actual cause", async t => {
@@ -74,16 +79,16 @@ test("GOV07 FAIL and BLOCKED remain distinct and explain their actual cause", as
   await writeFile(f.input, JSON.stringify(f.request), "utf8");
   const failed = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"]);
   assert.equal(failed.status, 0, failed.stderr);
-  assert.match(failed.stdout, /결론: 실패 \(FAIL\)/);
-  assert.match(failed.stdout, /자기보고만으로 판정했습니다.*SELF_REPORT_ONLY/);
-  assert.match(failed.stdout, /결과 근거로 사용할 수 없습니다/);
+  assert.match(failed.stdout, /Conclusion: Fail \(FAIL\)/);
+  assert.match(failed.stdout, /The judgment relied on self-report alone\..*SELF_REPORT_ONLY/);
+  assert.match(failed.stdout, /Not usable as result evidence/);
   f.request.criteria[0].judgmentMethods = ["independent-review", "self-report"];
   f.request.artifacts.find(a => a.role === "rubric").provenance = null;
   await writeFile(f.input, JSON.stringify(f.request), "utf8");
   const blocked = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"]);
   assert.equal(blocked.status, 0, blocked.stderr);
-  assert.match(blocked.stdout, /결론: 판정 보류 \(BLOCKED\)/);
-  assert.match(blocked.stdout, /출처 또는 시점 증거가 부족합니다.*PROVENANCE_MISSING/);
+  assert.match(blocked.stdout, /Conclusion: Verdict withheld \(BLOCKED\)/);
+  assert.match(blocked.stdout, /provenance or timing evidence is insufficient\..*PROVENANCE_MISSING/);
 });
 
 test("GOV07 missing results never become an aggregate or a quality PASS", async t => {
@@ -94,10 +99,10 @@ test("GOV07 missing results never become an aggregate or a quality PASS", async 
   await writeFile(f.input, JSON.stringify(f.request), "utf8");
   const result = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"]);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /결론: 실패 \(FAIL\)/);
-  assert.match(result.stdout, /필수 결과가 누락됐습니다.*RESULT_MISSING/);
-  assert.match(result.stdout, /집계 지표가 생성되지 않았습니다/);
-  assert.doesNotMatch(result.stdout, /분자 \d/);
+  assert.match(result.stdout, /Conclusion: Fail \(FAIL\)/);
+  assert.match(result.stdout, /required result of a completed run is missing\..*RESULT_MISSING/);
+  assert.match(result.stdout, /No aggregate metrics were produced/);
+  assert.doesNotMatch(result.stdout, /numerator \d/);
 });
 
 test("GOV07 stored-report view rejects changed denominator, request binding and free text", async t => {
@@ -112,8 +117,8 @@ test("GOV07 stored-report view rejects changed denominator, request binding and 
     mutation(changed);
     const result = execute("validate-report.mjs", [...await validationArgs(f, changed), "--format", "human-ko"]);
     assert.equal(result.status, 1, result.stdout + result.stderr);
-    assert.match(result.stdout, /보고서 검증: 실패/);
-    assert.doesNotMatch(result.stdout, /결론: 통과|분자|SYNTHETIC_UNTRUSTED_REPORT_PROSE/);
+    assert.match(result.stdout, /Report validation: failed/);
+    assert.doesNotMatch(result.stdout, /Conclusion: Pass|numerator|SYNTHETIC_UNTRUSTED_REPORT_PROSE/);
   }
 });
 
@@ -136,7 +141,7 @@ test("GOV07 source artifact prose and invalid-input details never enter human ou
   for (const [script, argv] of [["cli.mjs", auditArgs(f)], ["validate-report.mjs", args]]) {
     const invalid = execute(script, [...argv, "--format", "human-ko"]);
     assert.equal(invalid.status, 2, invalid.stdout + invalid.stderr);
-    assert.match(invalid.stdout, /입력 오류/);
+    assert.match(invalid.stdout, /input error/);
     assert.doesNotMatch(invalid.stdout + invalid.stderr, new RegExp(canary));
   }
 });
@@ -149,44 +154,46 @@ test("GOV07 human report CLI works in an installation tree without node_modules"
   await cp(path.join(suiteRoot, "skills/evaluation-validity-auditor"), path.join(installed, "skills/evaluation-validity-auditor"), { recursive: true });
   await cp(path.join(suiteRoot, "runtime/schema-validation.mjs"), path.join(installed, "runtime/schema-validation.mjs"));
   await cp(path.join(suiteRoot, "runtime/i18n.mjs"), path.join(installed, "runtime/i18n.mjs"));
-  await cp(path.join(suiteRoot, "runtime/locale.json"), path.join(installed, "runtime/locale.json"));
   const result = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"], installed);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /결론: 판정 보류 \(BLOCKED\)/);
-  assert.match(result.stdout, /분자 1, 분모 4, 값 0\.25/);
+  assert.match(result.stdout, /Conclusion: Verdict withheld \(BLOCKED\)/);
+  assert.match(result.stdout, /numerator 1, denominator 4, value 0\.25/);
   const json = execute("cli.mjs", auditArgs(f), installed);
   const validation = execute("validate-report.mjs", [...await validationArgs(f, JSON.parse(json.stdout)), "--format", "human-ko"], installed);
   assert.equal(validation.status, 0, validation.stdout + validation.stderr);
-  assert.match(validation.stdout, /보고서 검증: 통과/);
+  assert.match(validation.stdout, /Report validation: passed/);
   assert.equal((await readFile(f.input, "utf8")), JSON.stringify(f.request));
 });
 
-test("the human view and the input errors follow the host locale while the JSON stays the same", async t => {
+test("the human view and the input errors render in the model locale, whatever the host locale, and the JSON stays the same", async t => {
   const f = await prepare(t);
-  const jsonKo = execute("cli.mjs", auditArgs(f), suiteRoot, "ko");
   const jsonEn = execute("cli.mjs", auditArgs(f), suiteRoot, "en");
   assert.equal(jsonEn.status, 0, jsonEn.stderr);
-  assert.equal(jsonEn.stdout, jsonKo.stdout);
   const report = JSON.parse(jsonEn.stdout);
+  const humanEn = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"], suiteRoot, "en");
+  assert.equal(humanEn.status, 0, humanEn.stderr);
 
-  const ko = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"], suiteRoot, "ko");
-  const en = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"], suiteRoot, "en");
-  assert.equal(en.status, 0, en.stderr);
-  assert.match(ko.stdout, /결론: 판정 보류 \(BLOCKED\), 실행 후 평가 유효성 감사입니다\./);
-  assert.match(en.stdout, /Conclusion: Verdict withheld \(BLOCKED\), post-execution evaluation validity audit\./);
-  assert.match(en.stdout, /Metric \S+: numerator 1, denominator 4, value 0\.25;/);
-  assert.match(en.stdout, /\(COOPERATIVE_PROVENANCE_ASSERTIONS\)/);
-  assert.doesNotMatch(en.stdout, /[가-힣]/u);
-  for (const id of [report.auditId, report.requestDigest, report.reportDigest]) assert.ok(en.stdout.includes(id), id);
+  for (const locale of ["en", "ko", null]) {
+    assert.equal(execute("cli.mjs", auditArgs(f), suiteRoot, locale).stdout, jsonEn.stdout);
 
-  const validationEn = execute("validate-report.mjs", [...await validationArgs(f, report), "--format", "human-ko"], suiteRoot, "en");
-  assert.equal(validationEn.status, 0, validationEn.stdout + validationEn.stderr);
-  assert.match(validationEn.stdout, /^Report validation: passed\./);
-  assert.ok(validationEn.stdout.endsWith(en.stdout));
+    const human = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"], suiteRoot, locale);
+    assert.equal(human.status, 0, human.stderr);
+    assert.equal(human.stdout, humanEn.stdout);
+    assert.match(human.stdout, /Conclusion: Verdict withheld \(BLOCKED\), post-execution evaluation validity audit\./);
+    assert.match(human.stdout, /Metric \S+: numerator 1, denominator 4, value 0\.25;/);
+    assert.match(human.stdout, /\(COOPERATIVE_PROVENANCE_ASSERTIONS\)/);
+    assert.doesNotMatch(human.stdout, hangul);
+    for (const id of [report.auditId, report.requestDigest, report.reportDigest]) assert.ok(human.stdout.includes(id), id);
 
-  const missingRoot = (locale) => JSON.parse(execute("cli.mjs", ["--input", f.input], suiteRoot, locale).stdout);
-  assert.deepEqual(missingRoot("en"), { schemaVersion: "1.0.0", ok: false, error: { code: "INVALID_INPUT", message: "--artifact-root is required.", details: null } });
-  assert.deepEqual(missingRoot("ko"), { schemaVersion: "1.0.0", ok: false, error: { code: "INVALID_INPUT", message: "--artifact-root가 필요하다.", details: null } });
-  const ioEn = execute("cli.mjs", ["--format", "human-ko", "--input", f.root, "--artifact-root", f.root], suiteRoot, "en");
-  assert.match(ioEn.stdout, /^Conclusion: I\/O error \(EISDIR\)\./);
+    const validation = execute("validate-report.mjs", [...await validationArgs(f, report), "--format", "human-ko"], suiteRoot, locale);
+    assert.equal(validation.status, 0, validation.stdout + validation.stderr);
+    assert.match(validation.stdout, /^Report validation: passed\./);
+    assert.ok(validation.stdout.endsWith(human.stdout));
+
+    const missingRoot = JSON.parse(execute("cli.mjs", ["--input", f.input], suiteRoot, locale).stdout);
+    assert.deepEqual(missingRoot, { schemaVersion: "1.0.0", ok: false, error: { code: "INVALID_INPUT", message: "--artifact-root is required.", details: null } });
+    const io = execute("cli.mjs", ["--format", "human-ko", "--input", f.root, "--artifact-root", f.root], suiteRoot, locale);
+    assert.match(io.stdout, /^Conclusion: I\/O error \(EISDIR\)\./);
+    assert.doesNotMatch(io.stdout, hangul);
+  }
 });

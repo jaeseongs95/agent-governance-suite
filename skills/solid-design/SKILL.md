@@ -1,9 +1,6 @@
 ---
 name: solid-design
-description: >-
-  현재 코드·설계에서 책임 분리, 확인된 확장 지점, 구현 대체 가능성, 소비자별 인터페이스, 정책과 세부 구현의 의존 방향을 판단한다.
-  SOLID 설계 검토를 명시적으로 요청하거나, 허용된 개발 작업에서 실제 모듈·공개 계약·호스트 어댑터 경계의 선택이 필요할 때 사용한다.
-  단순 문구·상수 수정, 일반 개념 설명, 경계 판단이 필요 없는 구현, 전체 코드 리뷰·테스트·보안 감사·최종 수용·배포 승인만 필요한 요청에는 자동 적용하지 않는다.
+description: "Judge responsibility split, confirmed extension points, implementation substitutability, consumer-specific interfaces and policy-to-detail dependency direction in current code or design. Use when SOLID review is requested or allowed development must choose real module, public contract or host adapter boundaries. Not automatically for simple wording or constant fixes, concept explanations, implementations needing no boundary decision, or requests needing only full code review, tests, security audit, final acceptance or deploy approval."
 ---
 
 # SOLID Design

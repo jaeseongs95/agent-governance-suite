@@ -17,19 +17,18 @@ Node.js 24.0.0 이상과 `pnpm@11.19.0`을 씁니다. 주요 명령은 `package.
 | `pnpm validate:all` | 저장소·스킬 전체 검증 |
 | `pnpm validate:official` | Codex 공식 validator 검사 |
 | `pnpm claude:build`, `pnpm claude:check`, `pnpm claude:drift` | Claude Code 배포물 생성·검사·차이 경고 |
-| `pnpm en:build`, `pnpm en:check` | 영어 전용 배포물 생성·검사 |
 
 전체 검증은 `pnpm install --frozen-lockfile` 뒤 `pnpm bundle:check`를 빌드보다 먼저 실행합니다. 이어 `pnpm claude:drift`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`를 실행합니다. 빌드가 stale 번들을 덮어쓸 수 있으므로 순서를 바꾸지 않습니다. 어떤 시험을 어디서 돌리는지는 [시험과 CI](testing-and-ci.md)에 있습니다.
 
 ## 생성물
 
-`mcp-server/dist/`, `claude-plugin/`, `claude-plugin-en/`, `codex-plugin-en/`, `mcp-server/src/admin-page.generated.ts`는 생성물이며 직접 고치지 않습니다. 생성물이 포함하는 원본(`README.md`, `README.en.md`, `contracts/`, `skills/` 등)을 바꾸면 다음으로 다시 만들어 함께 커밋합니다.
+`mcp-server/dist/`, `claude-plugin/`, `mcp-server/src/admin-page.generated.ts`는 생성물이며 직접 고치지 않습니다. 생성물이 포함하는 원본(`README.md`, `README.en.md`, `contracts/`, `skills/` 등)을 바꾸면 다음으로 다시 만들어 함께 커밋합니다.
 
 ```bash
-corepack pnpm run build && corepack pnpm run claude:build && corepack pnpm run en:build && node scripts/admin-page.mjs --write
+corepack pnpm run build && corepack pnpm run claude:build && node scripts/admin-page.mjs --write
 ```
 
-영어 전용 배포물은 `README.en.md`를 `README.md`로 담습니다. 공용 원본과 호스트별 부분의 경계는 [AGENTS.md](../../AGENTS.md)의 「Claude Code 배포물」 절을 따릅니다.
+공용 원본과 호스트별 부분의 경계는 [AGENTS.md](../../AGENTS.md)의 「Claude Code 배포물」 절을 따릅니다.
 
 ## 한국어 산문 평가
 

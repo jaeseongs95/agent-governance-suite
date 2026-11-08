@@ -34,32 +34,29 @@ function zipFiles(bytes) {
   return files;
 }
 
-for (const locale of ["ko", "en"]) {
-  test(`AGS3-D-0028: actual ${locale} install ZIP retains the official plugin identity and one ags server`, () => {
-    const temporary = mkdtempSync(path.join(os.tmpdir(), "ags38-agy-package-"));
-    try {
-      const out = path.join(temporary, "package.zip");
-      execFileSync(process.execPath, [
-        path.join(ROOT, "scripts/build-antigravity-package.mjs"), "--ref", "HEAD", "--out", out,
-        ...(locale === "en" ? ["--locale", "en"] : []),
-      ], { cwd: ROOT, stdio: "pipe" });
-      const files = zipFiles(readFileSync(out));
-      const prefix = "agent-governance-suite/";
-      const manifestBytes = files.get(prefix + "plugin.json");
-      assert.ok(manifestBytes, "install ZIP must contain the current official root plugin.json");
-      const manifest = JSON.parse(manifestBytes.toString("utf8"));
-      const source = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
-      assert.equal(manifest.name, "agent-governance-suite");
-      assert.equal(manifest.version, source.version);
-      const legacy = JSON.parse(files.get(prefix + ".gemini-plugin/plugin.json").toString("utf8"));
-      assert.deepEqual(manifest, legacy, "current and compatibility manifest identities agree");
-      const config = JSON.parse(files.get(prefix + "mcp_config.json").toString("utf8"));
-      assert.deepEqual(Object.keys(config.mcpServers), ["ags"]);
-      assert.equal(config.mcpServers.ags.env.AGENT_GOVERNANCE_HOST_ATTESTATION, "antigravity");
-      const runtimeLocale = JSON.parse(files.get(prefix + "runtime/locale.json").toString("utf8"));
-      assert.equal(runtimeLocale.locale, locale);
-    } finally {
-      rmSync(temporary, { recursive: true, force: true });
-    }
-  });
-}
+test("AGS3-D-0028: actual install ZIP retains the official plugin identity and one ags server", () => {
+  const temporary = mkdtempSync(path.join(os.tmpdir(), "ags38-agy-package-"));
+  try {
+    const out = path.join(temporary, "package.zip");
+    execFileSync(process.execPath, [
+      path.join(ROOT, "scripts/build-antigravity-package.mjs"), "--ref", "HEAD", "--out", out,
+    ], { cwd: ROOT, stdio: "pipe" });
+    const files = zipFiles(readFileSync(out));
+    const prefix = "agent-governance-suite/";
+    const manifestBytes = files.get(prefix + "plugin.json");
+    assert.ok(manifestBytes, "install ZIP must contain the current official root plugin.json");
+    const manifest = JSON.parse(manifestBytes.toString("utf8"));
+    const source = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
+    assert.equal(manifest.name, "agent-governance-suite");
+    assert.equal(manifest.version, source.version);
+    const legacy = JSON.parse(files.get(prefix + ".gemini-plugin/plugin.json").toString("utf8"));
+    assert.deepEqual(manifest, legacy, "current and compatibility manifest identities agree");
+    const config = JSON.parse(files.get(prefix + "mcp_config.json").toString("utf8"));
+    assert.deepEqual(Object.keys(config.mcpServers), ["ags"]);
+    assert.equal(config.mcpServers.ags.env.AGENT_GOVERNANCE_HOST_ATTESTATION, "antigravity");
+    // 4.0.0 renders everything in MODEL_LOCALE; no package locale file ships any more.
+    assert.equal(files.has(prefix + "runtime/locale.json"), false);
+  } finally {
+    rmSync(temporary, { recursive: true, force: true });
+  }
+});

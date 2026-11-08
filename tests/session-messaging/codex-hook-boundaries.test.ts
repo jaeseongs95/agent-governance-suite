@@ -102,7 +102,7 @@ const runs = (hook: Hook, script: string) => hook.command.includes(script);
 const messageHooks = (hooks: ReturnType<typeof codexHooks>, event: string) => (hooks[event] ?? []).flatMap((group) => group.hooks)
   .filter((hook) => runs(hook, "session-message-hook.mjs"));
 
-it.each(["hooks/hooks.json", "codex-plugin-en/hooks/hooks.json"])("%s: Windows input, after-tool and Stop hooks run no host process query", (file) => {
+it.each(["hooks/hooks.json"])("%s: Windows input, after-tool and Stop hooks run no host process query", (file) => {
   const hooks = codexHooks(file);
   const [start] = messageHooks(hooks, "SessionStart");
   const [end] = messageHooks(hooks, "SessionEnd");
@@ -121,7 +121,7 @@ it.each(["hooks/hooks.json", "codex-plugin-en/hooks/hooks.json"])("%s: Windows i
   }
 });
 
-it.each(["hooks/hooks.json", "codex-plugin-en/hooks/hooks.json"])("%s: Codex Stop runs the session message hook after the continuity phase check", (file) => {
+it.each(["hooks/hooks.json"])("%s: Codex Stop runs the session message hook after the continuity phase check", (file) => {
   const stopHooks = codexHooks(file).Stop!.flatMap((group) => group.hooks);
   const continuity = stopHooks.findIndex((hook) => runs(hook, "continuity-hook.mjs"));
   const messaging = stopHooks.findIndex((hook) => runs(hook, "session-message-hook.mjs"));
@@ -132,7 +132,7 @@ it.each(["hooks/hooks.json", "codex-plugin-en/hooks/hooks.json"])("%s: Codex Sto
 
 it("binds the hook command budget to every timed hooks.json entry that runs the session message hook", async () => {
   const { HOOK_COMMAND_TIMEOUT_MS, HOOK_COMMAND_BUDGET } = await import("../../mcp-server/src/session-message-hook.js");
-  for (const file of ["hooks/hooks.json", "codex-plugin-en/hooks/hooks.json"]) {
+  for (const file of ["hooks/hooks.json"]) {
     const hooks = codexHooks(file);
     for (const event of Object.keys(hooks)) for (const hook of messageHooks(hooks, event)) {
       // SessionEnd takes Codex's own SessionEnd limit (default 1 s, at most 3 s); the budget does not reach it.

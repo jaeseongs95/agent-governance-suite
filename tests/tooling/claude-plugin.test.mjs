@@ -22,7 +22,6 @@ import {
   reportClaudePluginDrift,
 } from "../../scripts/build-claude-plugin.mjs";
 import { SEMVER } from "../../scripts/release-metadata.mjs";
-import { PACKAGES as EN_PACKAGES } from "../../scripts/build-en-packages.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const pluginRoot = path.join(root, OUTPUT_DIRECTORY);
@@ -90,14 +89,8 @@ describe("generated Claude plugin", () => {
         version: release.version,
         ref: `v${release.version}`,
       }),
-      // The English-only package (docs/contributing/i18n.md 8) releases with the same version.
-      expect.objectContaining({
-        name: "agent-governance-suite-en",
-        source: `./${OUTPUT_DIRECTORY}-en`,
-        version: release.version,
-        ref: `v${release.version}`,
-      }),
     ]);
+    expect(codexMarketplace.plugins.map((plugin) => plugin.name)).toEqual(["agent-governance-suite"]);
     expect(claudeMarketplace.plugins[0].ref).toBe(codexMarketplace.plugins[0].source.ref);
     const codexManifest = await readFile(path.join(root, ".codex-plugin", "plugin.json"), "utf8");
     expect(codexManifest).not.toContain(OUTPUT_DIRECTORY);
@@ -154,7 +147,7 @@ describe("generated Claude plugin", () => {
     const sharedIntake = await orchestrator(root, "references", "intake.md");
     const generatedIntake = await orchestrator(pluginRoot, "references", "intake.md");
     // 2913050c shortened the common wording; assert the current clauses, not its historical predecessor.
-    for (const sentence of ["키워드·파일 종류·`complex`만으로 고르지 않는다.", "사용자가 지정한 스킬을 우선해 대체하지 않되 승인·검증·독립성 gate를 생략할 권한으로 보지 않는다.", "선택·이름 언급·호출 시작 응답·문서 읽기는 실행이 아니다."]) {
+    for (const sentence of ["키워드·파일 종류·`complex`만으로 고르지 않는다.", "사용자 지정 스킬은 대체하지 않되 승인·검증·독립성 gate 생략 권한은 아니다.", "선택·이름 언급·호출 시작 응답·문서 읽기는 실행이 아니다."]) {
       expect(sharedIntake.split(sentence)).toHaveLength(2);
       expect(generatedIntake.split(sentence)).toHaveLength(2);
       expect(generated).not.toContain(sentence);
@@ -188,13 +181,6 @@ describe("generated Claude plugin", () => {
     const allowed = new Set(["skills/orchestrator/references/intake.md", "claude-plugin/skills/orchestrator/references/intake.md", "tests/tooling/claude-plugin.test.mjs", projectionPath, frozenAdditionPath]);
     const listed = spawnSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
     expect(listed.status).toBe(0);
-    // The English packages are generated copies of those files (scripts/build-en-packages.mjs).
-    for (const file of [...allowed]) {
-      for (const [name, select] of Object.entries(EN_PACKAGES)) {
-        const target = select(file);
-        if (target !== null) allowed.add(`${name}/${target}`);
-      }
-    }
     const files = listed.stdout.split("\0").filter((file) => file && !allowed.has(file));
     expect(files.length).toBeGreaterThan(500);
     for (const file of files) {
@@ -220,8 +206,8 @@ describe("generated Claude plugin", () => {
     await mkdir(path.join(directory, "hooks"));
     await mkdir(path.join(directory, "runtime"));
     await mkdir(path.join(directory, "skills", "orchestrator", "references"), { recursive: true });
-    // The plugin layout: hooks/ beside runtime/, whose catalog bundle and package locale (ko) the launcher reads.
-    for (const file of ["i18n.mjs", "locale.json"]) await writeFile(path.join(directory, "runtime", file), await readFile(path.join(root, "runtime", file)));
+    // The plugin layout: hooks/ beside runtime/, whose catalog bundle the launcher reads.
+    await writeFile(path.join(directory, "runtime", "i18n.mjs"), await readFile(path.join(root, "runtime", "i18n.mjs")));
     const launcher = await readFile(path.join(root, "claude-overlay", "hooks", "skill-trigger-hook.mjs"));
     const shared = await readFile(path.join(root, "skills", "orchestrator", "references", "intake.md"), "utf8");
     // A changed source must change the emitted context, proving there is no adapter policy copy.
@@ -244,10 +230,10 @@ describe("generated Claude plugin", () => {
     const hostEnvironment = { ...process.env };
     delete hostEnvironment.AGENT_GOVERNANCE_LOCALE;
     const invoke = (input, env = hostEnvironment) => spawnSync(process.execPath, [hook], { input: JSON.stringify(input), encoding: "utf8", env });
-    const invocation = {
-      ko: "Claude Code 호출: MCP 서버 instructions의 공통 접수 기준을 따르고, 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.",
-      en: "Claude Code invocation: follow the common intake criteria in the MCP server instructions, and actually invoke each selected installed skill with the Skill tool or the /agent-governance-suite:<skill-name> command.",
-    };
+    // Model-only text: the launcher renders it in MODEL_LOCALE (en) whatever the host locale. 4.0.0 (token optimization):
+    // the line keeps only the Claude invocation syntax; following the intake is the pointer's own rule ("read that
+    // section before task work and follow it"), checked below.
+    const invocation = "Claude Code: invoke chosen installed skills with the Skill tool or /agent-governance-suite:<skill-name>.";
     const installed = path.join(directory, "skills", "orchestrator", "references", "intake.md");
     // Exercise the deployed launcher, not only the shared helper's Claude adapter.
     for (const source of ["startup", "fork", "clear", "resume", "compact"]) {
@@ -257,13 +243,13 @@ describe("generated Claude plugin", () => {
         expect(start.status).toBe(0);
         expect(start.stderr).toBe("");
         const context = JSON.parse(start.stdout).hookSpecificOutput;
-        const sharedContext = intakeHookOutput(input, "claude-code", locale).hookSpecificOutput.additionalContext;
+        const sharedContext = intakeHookOutput(input, "claude-code", "en").hookSpecificOutput.additionalContext;
         expect(context.hookEventName).toBe("SessionStart");
-        expect(context.additionalContext).toBe(`${invocation[locale]}\n${sharedContext}`);
-        expect(context.additionalContext).toContain(locale === "ko" ? "근거와 본문이 함께 유지될 때만" : "retains both evidence of a successful read");
-        expect(context.additionalContext).toContain(locale === "ko" ? "과업 작업 전에" : "before task work");
+        expect(context.additionalContext).toBe(`${invocation}\n${sharedContext}`);
+        expect(context.additionalContext).toContain("a successful full read of this revision is not in context");
+        expect(context.additionalContext).toContain("read that section before task work and follow it");
         expect(context.additionalContext.split(installed)).toHaveLength(2);
-        expect(context.additionalContext.split(skillTargetsContext(locale))).toHaveLength(2);
+        expect(context.additionalContext.split(skillTargetsContext("en"))).toHaveLength(2);
         expect(context.additionalContext).not.toContain(intake);
         expect(context.additionalContext).not.toContain("fixture-source-revision");
       }
@@ -647,7 +633,7 @@ syncBuiltinESMExports();
     expect(await readFile(path.join(directory, installed))).toEqual(await readFile(path.join(root, file)));
   });
 
-  it("keeps shared descriptions, including pre-dispatch model advice, aligned across both Claude package locales", async () => {
+  it("keeps shared descriptions, including pre-dispatch model advice, aligned in the Claude package", async () => {
     for (const [skillId, forbiddenTriggers] of [
       ["change-scope-guardian", ["여러 파일을 고치거나", "미커밋 변경이 있는 트리에서 작업을 시작할 때 기준 상태를 남기고", "git commit·merge 전에"]],
       ["korean-prose-editor", ["문서 초안을 쓰거나 다듬을 때"]],
@@ -661,12 +647,9 @@ syncBuiltinESMExports();
       applySkillAdaptation(files, skillId, adaptation);
       expect(files.get(relative).toString("utf8"), skillId).toBe(shared);
       const extractDescription = (text) => text.match(/^---\r?\n[\s\S]*?^description:\s*(.+)$/mu)?.[1]?.trim();
-      // English packages currently copy skill prose verbatim; their runtime locale is separate.
-      for (const packageRoot of [pluginRoot, `${pluginRoot}-en`]) {
-        const generated = await readFile(path.join(packageRoot, relative), "utf8");
-        expect(extractDescription(generated), packageRoot).toBe(extractDescription(shared));
-        for (const phrase of forbiddenTriggers) expect(generated, packageRoot).not.toContain(phrase);
-      }
+      const generated = await readFile(path.join(pluginRoot, relative), "utf8");
+      expect(extractDescription(generated), skillId).toBe(extractDescription(shared));
+      for (const phrase of forbiddenTriggers) expect(generated, skillId).not.toContain(phrase);
     }
   });
 
@@ -679,14 +662,33 @@ syncBuiltinESMExports();
     const description = extractDescription(generated);
     expect(description).toBe(adaptation.description);
     expect(description).not.toBe(extractDescription(shared));
-    for (const phrase of ["구현을 마치고 완료를 보고하기 전", "'다 됐는지'", "다 됐는지"]) {
+    for (const phrase of ["구현을 마치고 완료를 보고하기 전", "'다 됐는지'", "다 됐는지", "before reporting completion", "whether it is done"]) {
       expect(description).not.toContain(phrase);
     }
     // The body limits the skill to per-requirement judgments and multi-criteria contract or high-risk work.
-    expect(description).toContain("요구사항별 결과물·검증 근거 판정");
-    expect(description).toContain("수용 기준이 여럿인 계약 작업이나 고위험 작업");
-    expect(description).toContain("작은 단일 작업의 완료 보고");
+    // 4.0.0: descriptions are English (fewest tokens); the Claude trigger keeps the same three limits.
+    expect(description).toContain("per-requirement verdict on work products and verification evidence");
+    expect(description).toContain("contract work with several acceptance criteria or high-risk work");
+    expect(description).toContain("small single-task completion reports");
     expect(shared).toContain("작은 단일 작업은 이 스킬 없이");
+  });
+
+  it("carries the rules the 4.0.0 intake moved into skill descriptions into the Claude package", async () => {
+    // A Claude adaptation replaces the whole description, so a rule moved into the shared description must be in the
+    // Claude one too, or Claude sessions lose it (the intake no longer states it).
+    const extractDescription = (text) => text.match(/^---\r?\n[\s\S]*?^description:\s*(.+)$/mu)?.[1]?.trim();
+    for (const [skillId, moved] of [
+      ["coordinate-subagents", "A brief names goal, scope, forbidden areas, write ownership, chosen skills and completion and verification criteria, and never hands off waiting (watching results, polling)."],
+      ["mutation-risk-preflight", "Judge heaviness by scale, reversibility, real data, shared resources and public-state impact, not the action's name."],
+      ["mutation-risk-preflight", "Same-disk moves and renames, reversible local edits and checks, and test or work-branch pushes are just done, without this skill"],
+      ["minimal-implementation", "invoke it first when available, active and not against user instructions"],
+      ["change-scope-guardian", "Call only when work overlaps other work or before a default-branch merge or publication."],
+    ]) {
+      const shared = await readFile(path.join(root, "skills", skillId, "SKILL.md"), "utf8");
+      const generated = await readFile(path.join(pluginRoot, "skills", skillId, "SKILL.md"), "utf8");
+      expect(extractDescription(shared), skillId).toContain(moved);
+      expect(extractDescription(generated), skillId).toContain(moved);
+    }
   });
 
   it("does not render Codex-only OpenAI agent metadata", async () => {

@@ -34,10 +34,14 @@ const realEntryPoint = sentence("끝나면 그 사례를 사용자의 실제 진
 const runnableChecks = sentence("가능한 검증을 사용자에게 넘기지 않고");
 const userOnly = sentence("사용자만 할 승인·비밀값 입력·본인 조작이 남으면");
 const blockedStep = sentence("다른 담당의 수정 대기는");
+// 4.0.0 (token optimization) splits the approval ask and the no-ask list into two consecutive sentences.
 const askApproval = sentence("우회하지 말고 대상·영향·명령을 모아");
+const noAsk = sentence("승인된 목표의 후속 수정·복구");
 const premiseSignal = sentence("증거가 흔한 기본값과 어긋나면");
 const peerBlocker = sentence("다른 세션이 해결을 요청한 막힘");
-const added = [casesFirst, realEntryPoint, runnableChecks, userOnly, askApproval, premiseSignal, peerBlocker];
+const added = [casesFirst, realEntryPoint, runnableChecks, userOnly, askApproval, noAsk, premiseSignal, peerBlocker];
+// The pre-execution check moved from the intake into the description of the skill it names (4.0.0).
+const preflightDescription = /^description: (.*)$/mu.exec(readFileSync(new URL("skills/mutation-risk-preflight/SKILL.md", root), "utf8"))?.[1] ?? "";
 
 describe("shared intake: verification cases first (AGS3-D-0036)", () => {
   it("has any work that makes or changes something fix what, where and which result is success before it starts", () => {
@@ -55,7 +59,7 @@ describe("shared intake: run the cases where the user uses the result (AGS3-D-00
     expect(realEntryPoint).not.toBe("");
     // It runs the cases fixed before the work, after the work.
     expect(sentences.indexOf(casesFirst)).toBeLessThan(sentences.indexOf(realEntryPoint));
-    for (const boundary of ["끝나면", "사용자의 실제 진입점·대상 환경", "직접 실행해 확인한다"]) expect(realEntryPoint).toContain(boundary);
+    for (const boundary of ["끝나면", "사용자의 실제 진입점·대상 환경", "직접 실행한다"]) expect(realEntryPoint).toContain(boundary);
     // The case: a check inside the server (12 tools) stood in for the user's path (10 tools).
     expect(runnableChecks).toContain("내부 점검·일부 통과로 대신하거나");
   });
@@ -87,25 +91,26 @@ describe("shared intake: name what the user is asked to do (AGS3-D-0039)", () =>
 
 describe("shared intake: follow-up repairs inside an approved goal (AGS3-D-0040)", () => {
   it("does not ask again for a follow-up fix or repair the approved goal needs, even when the action differs", () => {
-    expect(askApproval).toContain("승인된 목표의 후속 수정·복구는 행동이 달라도 다시 묻지 않는다");
-    expect(premiseSignal).toContain("증거가 흔한 기본값과 어긋나면 질문 신호로 본다");
+    expect(noAsk).toContain("승인된 목표의 후속 수정·복구는 행동이 달라도 다시 묻지 않는다");
+    expect(premiseSignal).toContain("증거가 흔한 기본값과 어긋나면 질문 신호다");
     // What it already did not ask about stays.
-    expect(askApproval).toContain("되돌릴 수 있는 방식·관례로 정할 값·이미 답한 사항");
+    expect(noAsk).toContain("되돌릴 수 있는 방식·관례로 정할 값·이미 답한 사항");
   });
 
   it("still asks for a new high-risk action outside the approval, and the pre-execution check stays", () => {
-    expect(askApproval).toContain("현재 권한 밖 승인이나 받은 승인 밖 고위험 행동은");
-    expect(askApproval).toContain("우회하지 말고 대상·영향·명령을 모아 한 번에 묻고");
-    expect(source).toContain("변경 직전에만 `mutation-risk-preflight`를");
-    // The ask comes before the no-ask list in the same sentence.
-    expect(askApproval.indexOf("한 번에 묻고")).toBeLessThan(askApproval.indexOf("다시 묻지 않는다"));
+    expect(askApproval).toContain("현재 권한 밖 승인·받은 승인 밖 고위험 행동은");
+    expect(askApproval).toContain("우회하지 말고 대상·영향·명령을 모아 한 번에 묻는다");
+    expect(preflightDescription).toContain("Right before a hard-to-reverse change or one affecting others");
+    // The ask comes right before the no-ask list (the next sentence of the same line).
+    expect(askApproval).not.toContain("다시 묻지 않는다");
+    expect(sentences.indexOf(noAsk)).toBe(sentences.indexOf(askApproval) + 1);
   });
 });
 
 describe("shared intake: a peer's blocker inside this session's role is handled now (AGS3-D-0041)", () => {
   it("handles or starts it in that turn and answers the asking session instead of holding it as its own blocked step", () => {
     expect(peerBlocker).not.toBe("");
-    expect(peerBlocker).toContain("맡은 범위의 것(진단 공백, 다른 세션이 해결을 요청한 막힘 포함)");
+    expect(peerBlocker).toContain("맡은 범위의 결함·막힘(진단 공백, 다른 세션이 해결을 요청한 막힘 포함)");
     expect(peerBlocker).toContain("보고로 끝내지 말고");
     expect(peerBlocker).toContain("그 턴에 고치기 시작해 결과를 답한다");
   });
@@ -120,7 +125,7 @@ describe("shared intake: the new rules reach every host (AGS3-D-0031/0036/0039/0
     for (const instructions of [skillIntakeText("ko"), skillIntakeText("en"), serverInstructions(), serverInstructions("en")]) {
       for (const rule of added) expect(count(instructions, rule), rule).toBe(1);
     }
-    for (const pkg of ["claude-plugin", "claude-plugin-en", "codex-plugin-en"]) {
+    for (const pkg of ["claude-plugin"]) { // 4.0.0: the English packages were removed
       const installed = block(readFileSync(new URL(`${pkg}/skills/orchestrator/references/intake.md`, root), "utf8"));
       expect(installed, pkg).toBe(source);
     }

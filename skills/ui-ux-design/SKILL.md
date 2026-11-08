@@ -1,9 +1,6 @@
 ---
 name: ui-ux-design
-description: >-
-  사람이 보고 이해하고 행동하는 결과물(화면, 인쇄·광고, 영상, 공간·안내물, 제품, 서비스 절차, 문서·양식)의 사용자 흐름·정보 계층·행동 유도·접근성·예외 상황을 설계·점검하고, 결과물이 대상 사용자에게 실제로 통하는지 확인한다.
-  UI/UX·사용자 경험의 설계·검토를 요청하거나 허용된 작업에서 이런 결과물의 동선·구성·문구·입력·접근성·상태를 실제로 다뤄야 할 때 사용한다.
-  일반 질의·순수 백엔드·비시각적 CLI 작업, UI라는 단어만 포함한 로그, 아이콘·이미지 생성만 필요한 요청, 독립 감사·출시 승인만 필요한 요청에는 자동 적용하지 않는다.
+description: "Design and review user flow, information hierarchy, calls to action, accessibility and exceptions of things people see, understand and act on (screens, print and ads, video, spaces and signage, products, service procedures, documents and forms), and confirm they work for the intended users. Use when UI/UX design or review is requested or allowed work must actually handle such outputs' flow, layout, wording, input, accessibility or states. Not automatically for general questions, pure backend or non-visual CLI work, logs merely mentioning UI, icon or image generation alone, or independent audit or release approval alone."
 ---
 
 # UI/UX Design

@@ -1,6 +1,6 @@
 ---
 name: change-scope-guardian
-description: 작업 전 기준 상태와 현재 Git 변경을 비교해 요청 범위 밖 파일, 제외 경로, 기존 사용자 변경과의 겹침을 판정한다. 요구사항 충족이나 코드 품질 검토에는 사용하지 않는다.
+description: "Compare the pre-work baseline with current Git changes to flag files outside the requested scope, excluded paths and overlap with existing user changes. Call only when work overlaps other work or before a default-branch merge or publication. Not for requirement fulfilment or code quality review."
 ---
 
 # Change Scope Guardian

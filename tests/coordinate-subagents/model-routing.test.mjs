@@ -179,26 +179,28 @@ describe("packaged model routing", () => {
     });
   });
 
-  it.each([
-    ["en", /independent-audit requires highRisk: true/, "Requested combination unavailable"],
-    ["ko", /independent-audit에는 highRisk: true가 필요하다/, "요청한 조합을 쓸 수 없다"],
-  ])("renders thrown errors and fallback reasons in the %s host locale", (locale, thrown, reason) => {
-    vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
+  it.each([["en"], ["ko"], [undefined]])("renders thrown errors and fallback reasons in the model locale, whatever the host locale (%s)", (locale) => {
+    if (locale === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE; else vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
     const audit = { ...options(), role: "independent-audit", user: { model: "gpt-5.6-luna", effort: "high" } };
-    expect(() => resolveModelSelection(audit)).toThrow(thrown);
+    expect(() => resolveModelSelection(audit)).toThrow(/independent-audit requires highRisk: true/);
     const inherited = resolveModelSelection({ ...options(), highRisk: true, user: { model: "missing" }, inherited: { model: "gpt-5.6-sol", effort: "high" } });
-    expect(inherited.fallbackReason).toBe(reason);
+    expect(inherited.fallbackReason).toBe("Requested combination unavailable");
   });
 
-  it("prints the usage sentence of the host locale and the bare message keys when the skill is copied alone", () => {
+  it("prints the model-locale usage sentence whatever the host locale and the bare message keys when the skill is copied alone", () => {
     const clean = mkdtempSync(path.join(tmpdir(), "routing-i18n-"));
     try {
       cpSync(new URL("../../skills/coordinate-subagents", import.meta.url), path.join(clean, "skill"), { recursive: true });
       const standaloneCli = path.join(clean, "skill/scripts/model-routing.mjs");
-      const run = (script, locale) => spawnSync(process.execPath, [script], { cwd: clean, encoding: "utf8", windowsHide: true, env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale } });
+      const run = (script, locale) => {
+        const env = { ...process.env };
+        if (locale === undefined) delete env.AGENT_GOVERNANCE_LOCALE; else env.AGENT_GOVERNANCE_LOCALE = locale;
+        return spawnSync(process.execPath, [script], { cwd: clean, encoding: "utf8", windowsHide: true, env });
+      };
       const installed = fileURLToPath(new URL("../../skills/coordinate-subagents/scripts/model-routing.mjs", import.meta.url));
-      expect(run(installed, "en").stderr.trim()).toBe("Usage: node model-routing.mjs resolve|record input.json [--presets presets.json]");
-      expect(run(installed, "ko").stderr.trim()).toBe("사용법: node model-routing.mjs resolve|record input.json [--presets presets.json]");
+      for (const locale of ["en", "ko", undefined]) {
+        expect(run(installed, locale).stderr.trim()).toBe("Usage: node model-routing.mjs resolve|record input.json [--presets presets.json]");
+      }
       // No runtime/i18n.mjs beside a lone skill folder: the key is all there is to print.
       expect(run(standaloneCli, "en").stderr.trim()).toBe("skillTools.modelRouting.usage");
     } finally {

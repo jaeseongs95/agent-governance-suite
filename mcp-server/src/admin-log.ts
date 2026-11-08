@@ -34,14 +34,16 @@ const FINGERPRINT = /^sha256:[a-f0-9]{64}$/u;
 export const JEV_PRESETS = [{ presetId: "skill-classification", tool: "classify_skills" }] as const;
 export type JevPresetId = (typeof JEV_PRESETS)[number]["presetId"];
 /** Targets of the settings the page edits besides the contexts (AGS3-T-0024 completion condition 2). */
-export const SETTING_TARGETS = ["jev", "jevKeys", "locale", "editExempt"] as const;
+export const SETTING_TARGETS = ["jev", "jevKeys", "editExempt"] as const;
+/** Targets of settings 4.0.0 removed: their signed records and acks still verify, and change nothing. */
+const RETIRED_SETTING_TARGETS: readonly string[] = ["locale"];
 /** ADMIN_CHANGE_INVALID reasons (details.reason) of the settings; the page has a sentence for each. */
 export const SETTING_CHANGE_REASONS = ["JEV_PRESET_UNKNOWN", "JEV_KEY_NOT_FOUND", "JEV_KEY_FINGERPRINT_MISMATCH", "SECRET_UNEXPECTED",
   "JEV_KEY_VAULT_UNAVAILABLE"] as const;
 
 /**
  * Canonical JSON (sorted keys, no spaces), the same form convergence-logic.ts writes. Kept here so the hook-side
- * readers (locale, edit gate) load the verifier without the workflow modules.
+ * readers (edit gate) load the verifier without the workflow modules.
  */
 export function canonicalJson(value: unknown, subject = "Admin intent"): string {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
@@ -76,7 +78,7 @@ export type AdminChange =
   /** A JEV key: the signed record holds its fingerprint; the encrypted value is stored beside it (jev-key-vault.ts). */
   | { op: "jevKey.set"; name: string; fingerprint: string }
   | { op: "jevKey.delete"; name: string }
-  /** The display locale; null follows the AGS settings file and the package default. */
+  /** The display locale, removed in 4.0.0 (everything renders in MODEL_LOCALE): kept so older signed records verify. */
   | { op: "locale.set"; locale: string | null }
   /** The edit gate's extra exempt directories (absolute paths), replaced as a whole. */
   | { op: "editExempt.set"; paths: string[] }
@@ -174,7 +176,6 @@ export interface AdminState {
   /** The settings the page edits; null (or absent) means no valid signed revision: the default or the environment applies. */
   jev: AdminJevState | null;
   jevKeys: Map<string, AdminJevKeyState>;
-  locale: (AdminSettingRevision & { locale: string | null }) | null;
   editExempt: (AdminSettingRevision & { paths: string[] }) | null;
   heads: Map<string, { recordHash: string; seq: number }>;
   /** When each key last signed a valid record. */
@@ -293,13 +294,16 @@ export function changeTarget(change: AdminChange): string {
 
 /** keys, global, roles, a setting target or binding:<host>:<sessionId> (each part URI-encoded and non-empty). */
 export function isAdminTarget(target: string): boolean {
-  if (target === "keys" || target === "global" || target === "roles" || (SETTING_TARGETS as readonly string[]).includes(target)) return true;
+  if (target === "keys" || target === "global" || target === "roles" || (SETTING_TARGETS as readonly string[]).includes(target)
+    || RETIRED_SETTING_TARGETS.includes(target)) return true;
   const parts = /^binding:([^:]+):([^:]+)$/.exec(target);
   if (!parts || target.length > 1000) return false;
   try { return bindingTarget(decodeURIComponent(parts[1]!), decodeURIComponent(parts[2]!)) === target; } catch { return false; }
 }
 
 export function buildIntent(change: AdminChange, prevTargetHash: string | null, issuedAt: string): string {
+  // A new record may not use a retired setting; older ones still verify (parseIntent).
+  if (change.op === "locale.set") throw new AdminError("ADMIN_CHANGE_INVALID", { op: change.op });
   const intent: AdminIntent = { v: ADMIN_INTENT_VERSION, domain: ADMIN_DOMAIN, rpId: ADMIN_RP_ID, target: changeTarget(change), prevTargetHash, change, issuedAt };
   return canonicalJson(intent, "Admin intent");
 }
@@ -326,7 +330,7 @@ export function parseIntent(intent: string): AdminIntent {
 
 export function emptyAdminState(): AdminState {
   return { keys: new Map(), revoked: new Set(), bootstrap: null, global: null, globalHistory: [], roles: new Map(), bindings: new Map(),
-    jev: null, jevKeys: new Map(), locale: null, editExempt: null, heads: new Map(), keyLastUsed: new Map(), failures: [], lastSeq: 0 };
+    jev: null, jevKeys: new Map(), editExempt: null, heads: new Map(), keyLastUsed: new Map(), failures: [], lastSeq: 0 };
 }
 
 /**
@@ -422,7 +426,7 @@ function apply(state: AdminState, change: AdminChange, record: AdminLogRecord, i
       state.jevKeys.delete(change.name);
       return;
     case "locale.set":
-      state.locale = { locale: change.locale, seq: record.seq, issuedAt: intent.issuedAt };
+      // Retired in 4.0.0: the record stays in the verified chain and changes nothing.
       return;
     case "editExempt.set":
       state.editExempt = { paths: [...change.paths], seq: record.seq, issuedAt: intent.issuedAt };

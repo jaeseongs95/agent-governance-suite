@@ -203,7 +203,7 @@ async function server() {
   const contextLayers = serviceAt(layers);
   const mcp = createMcpServer(service, new PluginUpdateService(new InMemoryPluginUpdateStore()), new ContinuityService(continuityStore, validator, store),
     undefined, undefined, validator, "default", null, path.join(root, "board.sqlite3"), new SessionMessageService(messaging), null, null, metaIngress(),
-    "en", contextLayers);
+    contextLayers);
   // No form capability: nothing in these tools asks the client for an approval any more.
   const client = new Client({ name: "context-layers", version: "1" }, { capabilities: {} });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();

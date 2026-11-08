@@ -28,6 +28,15 @@ const CUE_GOAL = "workflow 목표: Phase check fixture.";
 const CUE_TAIL = "이 목표가 아직 이뤄지지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 방금 받은 요청을 끝냈어도 목표가 남았으면 이어서 한다. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.\n"
   + "사용자의 답이나 승인이 있어야 진행할 수 있으면 무엇을 기다리는지 한 줄로 쓰고 끝내라. 필요 없는 단계는 계획을 고쳐 뺀다.";
 const UNAVAILABLE = "[AGS] workflow 상태를 확인하지 못해 이번 구간의 제품 파일 변경을 막지 않았다. 원인 코드: ";
+// The hook gives model-only text in MODEL_LOCALE (English, 4.0.0) whatever the host locale; the Korean lines above are
+// the ko catalog, still checked through renderHookText as translation material. Written from locales/en/hooks.json.
+const CUE_EN_HEAD = "[AGS stage check] Workflow runId run-latest (rootId phase-root) has stages not yet passed: ";
+const CUE_EN_IDS = " Check with get_workflow_status (runId) or get_convergence_status (rootId).";
+const CUE_EN_GOAL = "Workflow goal: Phase check fixture.";
+const CUE_EN_TAIL = "If the goal is unmet, keep working, even after finishing the request just received. Record a stage result only after its work and verification are actually done, and do not stop at recording.\n"
+  + "If only the user's answer or approval lets you proceed, state in one line what you wait for and stop. Drop unneeded stages by revising the plan.";
+const UNAVAILABLE_EN = "[AGS] The workflow state could not be checked, so product file changes in this window were not blocked. Cause codes: ";
+const HOST_LOCALES: NodeJS.ProcessEnv[] = [{}, { AGENT_GOVERNANCE_LOCALE: "ko" }, { AGENT_GOVERNANCE_LOCALE: "en" }];
 
 afterEach(async () => {
   vi.restoreAllMocks();
@@ -44,6 +53,10 @@ function createService(workflow: WorkflowStore | null = null, databasePath = ":m
 
 function cue(missing: string): string {
   return `${CUE_HEAD}${missing}.${CUE_IDS}\n${CUE_GOAL}\n${CUE_TAIL}`;
+}
+
+function cueEn(missing: string): string {
+  return `${CUE_EN_HEAD}${missing}.${CUE_EN_IDS}\n${CUE_EN_GOAL}\n${CUE_EN_TAIL}`;
 }
 
 function workflowRoot(state: ConvergenceRootV1["state"] = "open"): ConvergenceRootV1 {
@@ -193,32 +206,30 @@ describe("phase check hook", () => {
   it("Claude: an Edit before the tool, then Stop, gives the cue as Stop additionalContext", () => {
     const service = boundWorkflow(["stage-01-testing"], []);
     expect(handleContinuityHook(pre("Edit"), service, "claude-code")).toEqual({});
-    expect(handleContinuityHook(stop, service, "claude-code")).toEqual({ hookSpecificOutput: { hookEventName: "Stop", additionalContext: cue("stage-01-testing") } });
+    expect(handleContinuityHook(stop, service, "claude-code")).toEqual({ hookSpecificOutput: { hookEventName: "Stop", additionalContext: cueEn("stage-01-testing") } });
     expect(handleContinuityHook(stop, service, "claude-code")).toEqual({});
   });
 
   it("Codex: apply_patch then Stop gives a block decision whose reason is the cue", () => {
     const service = boundWorkflow(["stage-01-testing"], []);
     expect(handleContinuityHook(pre("apply_patch"), service, "codex")).toEqual({});
-    expect(handleContinuityHook(stop, service, "codex")).toEqual({ decision: "block", reason: cue("stage-01-testing") });
+    expect(handleContinuityHook(stop, service, "codex")).toEqual({ decision: "block", reason: cueEn("stage-01-testing") });
     expect(handleContinuityHook(stop, service, "codex")).toEqual({});
   });
 
-  it("AGENT_GOVERNANCE_LOCALE=en renders the stage check and the unavailable notice in English", () => {
-    const en = { AGENT_GOVERNANCE_LOCALE: "en" };
-    const service = boundWorkflow(["stage-01-testing"], []);
-    expect(handleContinuityHook(pre("apply_patch"), service, "codex", en)).toEqual({});
-    expect(handleContinuityHook(stop, service, "codex", en)).toEqual({ decision: "block", reason: [
-      "[AGS stage check] The running workflow (runId run-latest, rootId phase-root) has stages that are not passed yet: stage-01-testing. Check this workflow's state by calling get_workflow_status with this runId or get_convergence_status with this rootId.",
-      "Workflow goal: Phase check fixture.",
-      "If this goal is not met yet, do not stop; continue the remaining work. Even when the request just received is done, continue while the goal remains. Record a stage result only after actually finishing that stage's work and verification, and do not stop at recording.",
-      "If you cannot proceed without the user's answer or approval, write in one line what you are waiting for and stop. Remove unneeded stages by revising the plan.",
-    ].join("\n") });
+  it("renders the stage check and the unavailable notice in the same English whatever the host locale", () => {
+    for (const environment of HOST_LOCALES) {
+      const service = boundWorkflow(["stage-01-testing"], []);
+      expect(handleContinuityHook(pre("apply_patch"), service, "codex", environment)).toEqual({});
+      const output = handleContinuityHook(stop, service, "codex", environment);
+      expect(output).toEqual({ decision: "block", reason: cueEn("stage-01-testing") });
+      expect(JSON.stringify(output)).not.toMatch(/[가-힣]/u);
+    }
     const unavailable = createService(null);
     bindRoot(unavailable, "phase-root");
     unavailable.recordEditForSession(session);
     expect(renderHookText(unavailable.phaseCheckForSession(session), "en"))
-      .toBe("[AGS] The workflow state could not be checked, so product file changes in this window were not blocked. Cause codes: phase-gate-unavailable:WORKFLOW_STORE_UNAVAILABLE.");
+      .toBe(`${UNAVAILABLE_EN}phase-gate-unavailable:WORKFLOW_STORE_UNAVAILABLE.`);
   });
 
   it("does not count Bash, PowerShell, Agent or Task as edits", () => {
@@ -227,7 +238,7 @@ describe("phase check hook", () => {
     expect(handleContinuityHook(stop, service, "claude-code")).toEqual({});
     // Positive control: the root's own edit is counted.
     expect(handleContinuityHook(pre("Write"), service, "claude-code")).toEqual({});
-    expect(handleContinuityHook(stop, service, "claude-code")).toMatchObject({ hookSpecificOutput: { additionalContext: cue("stage-01-testing") } });
+    expect(handleContinuityHook(stop, service, "claude-code")).toMatchObject({ hookSpecificOutput: { additionalContext: cueEn("stage-01-testing") } });
   });
 
   it("does not check at SessionEnd; the pending edit is checked at the next Stop", () => {

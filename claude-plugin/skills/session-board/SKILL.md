@@ -1,6 +1,6 @@
 ---
 name: session-board
-description: 같은 컴퓨터에서 여러 세션이 같은 작업 폴더·저장소나 플러그인 설치를 동시에 다룰 때 쓴다. 세션마다 지금 하는 일을 한 줄로 로컬 현황판에 적고, main 병합·push·태그·릴리스·설치 전이나 다른 세션의 작업이 궁금할 때 현황판을 읽는다. 작업 내용이나 다음 외부 작업이 바뀔 때 한 줄을 갱신한다. 요청 원문·비밀·개인정보는 적지 않는다.
+description: "Use when several sessions on one computer handle the same work folder (for example a repository) or plugin install. Each session writes its current work in one line on the local board, reads the board before shared-state actions such as main merge, push, tag, release or install or when others' work matters, and updates the line when its work or next external action changes. Never write request text, secrets or personal data."
 license: MIT
 metadata:
   version: "1.0.0"

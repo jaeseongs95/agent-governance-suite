@@ -218,7 +218,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     r: { query: '', newName: '', renaming: null },
     b: { filter: 'active', limit: LIMIT },
     newKeyLabel: '', firstKeyNotice: false,
-    j: { base: null, cur: null }, loc: { base: '', cur: null }, ex: { base: [], cur: null, newPath: '' },
+    j: { base: null, cur: null }, ex: { base: [], cur: null, newPath: '' },
     dialog: null,
   };
   let ruleSeq = 0;
@@ -1277,7 +1277,6 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     const j = jevOf(d);
     if (j) { const base = jevBase(j); if (!S.j.cur || !isJevDirty()) S.j.cur = { ...base, presets: { ...base.presets } }; S.j.base = base; }
     const st = d.settings || {};
-    if (st.locale) { const b = st.locale.signed || ''; if (S.loc.cur === null || S.loc.cur === S.loc.base) S.loc.cur = b; S.loc.base = b; }
     if (st.editGateExceptions) {
       const b = st.editGateExceptions.signedPaths || [];
       if (S.ex.cur === null || sameList(S.ex.cur, S.ex.base)) S.ex.cur = b.slice();
@@ -1285,7 +1284,6 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     }
   }
   const sameList = (a, b) => !!a && !!b && a.length === b.length && a.every((x, i) => x === b[i]);
-  const isLocaleDirty = () => S.loc.cur !== null && S.loc.cur !== S.loc.base;
   const isExemptDirty = () => S.ex.cur !== null && !sameList(S.ex.cur, S.ex.base);
   function lockLine(lockedBy, text, id) {
     return h('span', { class: 'small muted', id }, lockedBy ? ['환경 변수 ', h('code', null, lockedBy), '로 고정됨 · ', text] : text);
@@ -1499,30 +1497,11 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
           onDone: () => { S.status['jev-keys'] = { kind: 'ok', text: 'key 「' + k.name + '」를 삭제했습니다 · ' + fmtHM() }; dlg.close(); } }) }))] });
   }
 
-  const SOURCE = { environment: '환경 변수', signed: '이 페이지(서명 기록)', settings: '설정 파일', package: '패키지 기본값', root: '기본값' };
-  const LOCALE_NAME = { ko: '한국어', en: 'English' };
   /** 절대 경로처럼 보이는지(서버가 이 PC의 규칙으로 다시 검사한다). */
   const looksAbsolute = (p) => /^(?:[A-Za-z]:[\\/]|\\\\|\/)/.test(p);
   function viewGeneral() {
     const st = S.data.settings || {};
     const sec = h('section', { class: 'col', 'aria-labelledby': 's-title' }, head('s-title', '일반 설정', '항목마다 따로 저장하며, 저장할 때 패스키를 확인합니다.'));
-    const loc = st.locale;
-    if (loc) {
-      const sel = h('select', { id: 'lang', class: 'txt-in', disabled: !loc.editable, 'aria-describedby': 'lang-note', style: 'width:240px' },
-        h('option', { value: '', selected: S.loc.cur === '' }, '설정 파일·기본값 따름'),
-        ...(loc.options || []).map((o) => h('option', { value: o, selected: S.loc.cur === o }, LOCALE_NAME[o] || o)));
-      sel.addEventListener('change', () => { S.loc.cur = sel.value; delete S.status.locale; render(); });
-      const dirty = isLocaleDirty();
-      sec.append(h('div', { class: 'box' }, h('label', { for: 'lang' }, h('b', null, '표시 언어')),
-        h('div', { class: 'row center' }, sel,
-          loc.editable ? signBtn({ id: 'lang-save', slot: 'locale', label: '패스키로 저장', off: !dirty, onclick: () => runSigned({ slot: 'locale',
-            change: { op: 'locale.set', locale: S.loc.cur || null }, onStale: () => loadState(),
-            onDone: (rec, loaded) => { if (loaded) { S.loc.cur = null; syncSettings(S.data); } S.status.locale = { kind: 'ok', text: '표시 언어를 저장했습니다 · ' + fmtHM(rec.createdAt) + ' · 각 세션의 다음 hook부터, MCP 서버는 다시 시작할 때 적용됩니다.' }; } }) }) : null,
-          dirty ? h('button', { type: 'button', class: 'btn', id: 'lang-undo', disabled: !!S.busy, onclick: () => { S.loc.cur = S.loc.base; render(); } }, '변경 취소') : null),
-        h('span', { id: 'lang-note', class: 'small muted' }, '지금 적용 중: ' + (LOCALE_NAME[loc.value] || loc.value) + ' · 출처: ' + (SOURCE[loc.source] || loc.source)),
-        loc.editable ? null : lockLine(loc.lockedBy, '페이지에서 바꿀 수 없습니다' + (loc.signed ? ' (서명한 값 ' + (LOCALE_NAME[loc.signed] || loc.signed) + '는 환경 변수가 없을 때 씁니다)' : ''), 'lang-lock'),
-        statusEl('locale')));
-    }
     const ex = st.editGateExceptions;
     if (ex) sec.append(viewExempt(ex));
     return sec;
@@ -1666,7 +1645,7 @@ input[type="checkbox"][role="switch"]{width:20px;height:20px;margin:0}
     if (isGlobalDirty()) return true;
     if (S.r.newName.trim()) return true;
     const ren = S.r.renaming; if (ren) { const r = roleById(ren.roleId); if (r && ren.value.normalize('NFC').trim() !== r.name) return true; }
-    if (isJevDirty() || isLocaleDirty() || isExemptDirty() || S.ex.newPath.trim()) return true;
+    if (isJevDirty() || isExemptDirty() || S.ex.newPath.trim()) return true;
     return false;
   }
   window.addEventListener('beforeunload', (e) => { if (hasUnsaved()) { e.preventDefault(); e.returnValue = ''; } });

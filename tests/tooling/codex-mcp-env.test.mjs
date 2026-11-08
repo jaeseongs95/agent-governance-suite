@@ -29,7 +29,7 @@ describe("Codex MCP server environment", () => {
   // Codex hands a stdio MCP server only its default variables plus the names in env_vars (codex rust-v0.166.0
   // rmcp-client/src/utils.rs create_env_for_mcp_server); hooks get the full environment. A state path variable missing
   // here makes the hooks and the server read different databases (the first start_workflow then finds no workspace).
-  it.each([".mcp.json", "codex-plugin-en/.mcp.json"])("%s passes every AGS variable and the state base through", async (file) => {
+  it.each([".mcp.json"])("%s passes every AGS variable and the state base through", async (file) => {
     const server = JSON.parse(await readFile(path.join(root, file), "utf8")).mcpServers["agent-governance-suite"];
     const passed = new Set(server.env_vars);
     const missing = [...await governanceVariables()]

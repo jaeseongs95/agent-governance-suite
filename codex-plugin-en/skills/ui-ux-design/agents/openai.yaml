@@ -1,6 +1,0 @@
-interface:
-  display_name: "UI/UX 설계"
-  short_description: "화면·광고·영상·안내물·양식 등 결과물이 대상 사용자에게 통하는지 설계·검토"
-  default_prompt: "$ui-ux-design을 사용해 이 결과물의 사용자 경험을 설계하거나 점검하고, 대상 사용자에게 통하는지와 실제 검증 범위를 알려줘."
-policy:
-  allow_implicit_invocation: true

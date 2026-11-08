@@ -17,15 +17,15 @@
       "path": "skills/test-engineering/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:c85f226a5b28c98891b6ed8a719a05e0c42463aa1a9fff83ce1c0b1f0aa2553a",
+      "digest": "sha256:5502a40df4d50f297a7d4b904a618624f40244fefabab4b6b901fa3daeb90651",
       "startByte": 0,
-      "endByte": 231
+      "endByte": 207
     },
     {
       "path": "skills/test-engineering/SKILL.md",
       "startLine": 14,
       "endLine": 14,
-      "digest": "sha256:c85f226a5b28c98891b6ed8a719a05e0c42463aa1a9fff83ce1c0b1f0aa2553a",
+      "digest": "sha256:5502a40df4d50f297a7d4b904a618624f40244fefabab4b6b901fa3daeb90651",
       "startByte": 0,
       "endByte": 69
     },
@@ -33,7 +33,7 @@
       "path": "skills/test-engineering/SKILL.md",
       "startLine": 13,
       "endLine": 14,
-      "digest": "sha256:c85f226a5b28c98891b6ed8a719a05e0c42463aa1a9fff83ce1c0b1f0aa2553a",
+      "digest": "sha256:5502a40df4d50f297a7d4b904a618624f40244fefabab4b6b901fa3daeb90651",
       "startByte": 0,
       "endByte": 89
     },
@@ -41,7 +41,7 @@
       "path": "skills/test-engineering/SKILL.md",
       "startLine": 14,
       "endLine": 14,
-      "digest": "sha256:c85f226a5b28c98891b6ed8a719a05e0c42463aa1a9fff83ce1c0b1f0aa2553a",
+      "digest": "sha256:5502a40df4d50f297a7d4b904a618624f40244fefabab4b6b901fa3daeb90651",
       "startByte": 266,
       "endByte": 382
     }
@@ -51,15 +51,15 @@
       "path": "skills/test-engineering/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:c85f226a5b28c98891b6ed8a719a05e0c42463aa1a9fff83ce1c0b1f0aa2553a",
-      "startByte": 232,
-      "endByte": 339
+      "digest": "sha256:5502a40df4d50f297a7d4b904a618624f40244fefabab4b6b901fa3daeb90651",
+      "startByte": 208,
+      "endByte": 320
     },
     {
       "path": "skills/test-engineering/SKILL.md",
       "startLine": 14,
       "endLine": 14,
-      "digest": "sha256:c85f226a5b28c98891b6ed8a719a05e0c42463aa1a9fff83ce1c0b1f0aa2553a",
+      "digest": "sha256:5502a40df4d50f297a7d4b904a618624f40244fefabab4b6b901fa3daeb90651",
       "startByte": 70,
       "endByte": 265
     }

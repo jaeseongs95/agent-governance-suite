@@ -28,10 +28,13 @@ const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtu
 const v390 = JSON.parse(v390Bytes.toString("utf8"));
 const laterBinding = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
 const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
+const v400Minimal = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-minimal-implementation-source-successor.json"), "utf8"));
+/** A source only r40 rebinds (the independent-audit-gate SKILL.md one-line description) still has its r37 bytes at the r40 base. */
+const r40Binding = (file: string) => laterBinding(file) ? undefined : v400Minimal.bindings.find((row: {path: string}) => row.path === file);
 function boundSource(file: string): Buffer {
-  const later = laterBinding(file);
+  const later = laterBinding(file) ?? r40Binding(file);
   if (!later) return readFileSync(path.join(root, file));
-  const bytes = execFileSync("git", ["show", `${v390.sourceBaseRevision}:${file}`], {cwd: root});
+  const bytes = execFileSync("git", ["show", `${laterBinding(file) ? v390.sourceBaseRevision : v400Minimal.sourceBaseRevision}:${file}`], {cwd: root});
   expect(hash(bytes)).toBe(later.previousDigest);
   return bytes;
 }
@@ -70,7 +73,7 @@ it("D38 DR01-04 appends five exact r37 bindings and preserves all audit span ide
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
     const later = laterBinding(binding.path);
     expect(later ? later.previousDigest : binding.digest).toBe(binding.digest);
-    const latest = v400.bindings.find((row: {path: string}) => row.path === binding.path)?.digest ?? later?.digest ?? binding.digest;
+    const latest = v400Minimal.bindings.find((row: {path: string}) => row.path === binding.path)?.digest ?? v400.bindings.find((row: {path: string}) => row.path === binding.path)?.digest ?? later?.digest ?? binding.digest;
     expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (later) expect(current.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => current.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -97,8 +100,8 @@ it("D38 DR01-04 appends five exact r37 bindings and preserves all audit span ide
         expect([row.bytes, row.digest]).toEqual([actual.length, hash(actual)]); rebound++;
       } else {expect(row).toBeUndefined(); expect(span).toEqual(old); unchanged++;}
       if (!actual.equals(prior)) changed.push(`independent-audit-gate:${group}[${index}]`);
-      // A source the 3.9.0 successor rebinds is checked against the current inventory in that successor's test.
-      if (!laterBinding(span.path)) expect(skill[group]).toContain(actual.toString("utf8").trim());
+      // A source the 3.9.0 or r40 successor rebinds is checked against the current inventory in that successor's test.
+      if (!laterBinding(span.path) && !r40Binding(span.path)) expect(skill[group]).toContain(actual.toString("utf8").trim());
       compared++;
     }
   }

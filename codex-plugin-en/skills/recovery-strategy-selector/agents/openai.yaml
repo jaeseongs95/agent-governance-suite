@@ -1,7 +1,0 @@
-interface:
-  display_name: "Recovery Strategy Selector"
-  short_description: "확인된 실패 원인에 맞는 안전한 복구 전략 선택"
-  default_prompt: "Use $recovery-strategy-selector to compare recovery strategies for this confirmed failure cause."
-
-policy:
-  allow_implicit_invocation: true

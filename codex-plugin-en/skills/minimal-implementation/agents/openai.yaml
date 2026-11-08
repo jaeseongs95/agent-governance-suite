@@ -1,6 +1,0 @@
-interface:
-  display_name: "minimal-implementation"
-  short_description: "필요한 것만, 대체물 없이 가장 작은 완전한 결과를 만듭니다"
-  default_prompt: "Use $minimal-implementation to build the requested result with nothing unneeded and no substitute paths, and report what was verified."
-policy:
-  allow_implicit_invocation: true

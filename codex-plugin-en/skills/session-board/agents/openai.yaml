@@ -1,6 +1,0 @@
-interface:
-  display_name: "Session Board"
-  short_description: "동시에 일하는 세션들이 지금 하는 일을 한 줄로 공유합니다"
-  default_prompt: "Use $session-board to record this session's current work in one line and to check other sessions before merges, pushes, releases or installs."
-policy:
-  allow_implicit_invocation: true

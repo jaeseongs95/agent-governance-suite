@@ -17,15 +17,15 @@
       "path": "skills/workspace-convention-profiler/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
+      "digest": "sha256:cc19f66a63f78350d9ac1bf34e44682b5564c3bf9d48dce47765ce04398dc4c1",
       "startByte": 0,
-      "endByte": 141
+      "endByte": 147
     },
     {
       "path": "skills/workspace-convention-profiler/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
+      "digest": "sha256:cc19f66a63f78350d9ac1bf34e44682b5564c3bf9d48dce47765ce04398dc4c1",
       "startByte": 0,
       "endByte": 87
     },
@@ -33,7 +33,7 @@
       "path": "skills/workspace-convention-profiler/SKILL.md",
       "startLine": 15,
       "endLine": 19,
-      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
+      "digest": "sha256:cc19f66a63f78350d9ac1bf34e44682b5564c3bf9d48dce47765ce04398dc4c1",
       "startByte": 0,
       "endByte": 353
     },
@@ -51,15 +51,15 @@
       "path": "skills/workspace-convention-profiler/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
-      "startByte": 142,
-      "endByte": 236
+      "digest": "sha256:cc19f66a63f78350d9ac1bf34e44682b5564c3bf9d48dce47765ce04398dc4c1",
+      "startByte": 148,
+      "endByte": 211
     },
     {
       "path": "skills/workspace-convention-profiler/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
+      "digest": "sha256:cc19f66a63f78350d9ac1bf34e44682b5564c3bf9d48dce47765ce04398dc4c1",
       "startByte": 88,
       "endByte": 231
     },
@@ -67,7 +67,7 @@
       "path": "skills/workspace-convention-profiler/SKILL.md",
       "startLine": 21,
       "endLine": 21,
-      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
+      "digest": "sha256:cc19f66a63f78350d9ac1bf34e44682b5564c3bf9d48dce47765ce04398dc4c1",
       "startByte": 0,
       "endByte": 173
     },

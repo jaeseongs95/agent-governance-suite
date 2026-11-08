@@ -949,7 +949,6 @@ export class ContinuityService implements ContinuityGateway {
         msg("hooks.checkpointCue.skills", {}),
         msg("hooks.checkpointCue.save", {}),
         msg("hooks.checkpointCue.resume", {}),
-        msg("hooks.checkpointCue.notice", {}),
       ];
     });
     return selected.kind === "available" ? selected.value : null;

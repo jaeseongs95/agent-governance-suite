@@ -17,7 +17,7 @@ test("the shipped CLI runs without node_modules in an isolated install tree", as
     await cp(path.join(repository, "skills/solid-design"), path.join(root, "skills/solid-design"), { recursive: true });
     await cp(path.join(repository, "runtime/schema-validation.mjs"), path.join(root, "runtime/schema-validation.mjs"));
     // The shipped runtime directory carries the message renderer next to the schema validator.
-    for (const file of ["i18n.mjs", "locale.json"]) await cp(path.join(repository, "runtime", file), path.join(root, "runtime", file));
+    await cp(path.join(repository, "runtime/i18n.mjs"), path.join(root, "runtime/i18n.mjs"));
     await cp(path.join(repository, "tests/solid-design/fixtures"), path.join(root, "fixtures"), { recursive: true });
     assert.equal(existsSync(path.join(root, "node_modules")), false);
     const cli = ["skills/solid-design/scripts/check-report.mjs", "--request", "fixtures/request.json", "--report", "fixtures/report.json"];

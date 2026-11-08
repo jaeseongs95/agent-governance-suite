@@ -1,6 +1,6 @@
 ---
 name: acceptance-evidence-validator
-description: 고정된 작업 결과물과 실제 시험·검사 근거를 수용 기준별로 대조해 충족, 실패, 증거 부족을 판정한다. 구현, 반복 실패 원인 분석, 고위험 독립 감사나 릴리스 승인에는 사용하지 않는다.
+description: "Judge each acceptance criterion as met, failed or lacking evidence by matching a frozen work product against actual test and check evidence. Not for implementation, repeated-failure diagnosis, high-risk independent audit or release approval."
 license: MIT
 metadata:
   version: "1.0.0"

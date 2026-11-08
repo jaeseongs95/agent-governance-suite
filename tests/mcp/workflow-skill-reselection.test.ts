@@ -3,11 +3,12 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { describe, expect, it } from "vitest";
 
 import { contractErrorBody, type ApiResultV1, type WorkflowPlanV1, type WorkflowReceiptV1 } from "../../contracts/types.js";
-import { msg, render, type SupportedLocale } from "../../mcp-server/src/i18n.js";
+import { msg, render } from "../../mcp-server/src/i18n.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer, workflowChangeNotice } from "../../mcp-server/src/server.js";
+import { skillTargetsContext } from "../../mcp-server/src/skill-intake.js";
 import type { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import type { SkillClassificationGateway } from "../../mcp-server/src/skill-classification/gateway.js";
 import type { WorkflowService } from "../../mcp-server/src/workflow-service.js";
@@ -17,7 +18,10 @@ import { callerMeta, metaIngress } from "../helpers/caller.js";
 // is recorded under, yet responses showed only the next stage ID, so the agent kept the skills it had and read the
 // provider as the one skill of the stage. Every workflow change now asks to match the next judgment against every
 // installed skill, names the provider as a contract only, and limits an earlier skill to the judgment it was for.
-const stage = { stageId: "stage-02", requiredCapability: "minimal-implementation", skillId: "ponytail" };
+// 4.0.0 (token optimization): the notice points at the installed skill targets every context start carries
+// (instructions.intake.skills, checked in d0360-skill-purpose-cue) instead of repeating the list, and the rule limiting
+// an earlier skill is read there once.
+const stage = { stageId: "stage-02", requiredCapability: "minimal-implementation", skillId: "minimal-implementation" };
 const receipt = {
   runId: "run-synthetic", revision: 3, state: "running",
   plan: { currentStageId: "stage-02", nextStageId: null, stages: [{ ...stage, stageId: "stage-01" }, stage] },
@@ -36,7 +40,10 @@ function updateService(): PluginUpdateService {
   return new PluginUpdateService(store);
 }
 
-async function call(tool: string, outcome: ApiResultV1<unknown>, options: { classification?: boolean; locale?: SupportedLocale } = {}) {
+// The SEP-2792 request key the server used to honor; 4.0.0 renders the notice in MODEL_LOCALE (en) and ignores it.
+const ACCEPT_LANGUAGE_META = "io.modelcontextprotocol/acceptLanguage";
+
+async function call(tool: string, outcome: ApiResultV1<unknown>, options: { classification?: boolean; language?: string } = {}) {
   const service = {
     abortWorkflow: () => outcome,
     getWorkflowStatus: () => apiOk(receipt),
@@ -44,15 +51,16 @@ async function call(tool: string, outcome: ApiResultV1<unknown>, options: { clas
   // A gateway that says advice can be asked now (D-0075: the notice follows readiness, not the gateway's presence).
   const classification = options.classification ? { adviceReady: () => true } as unknown as SkillClassificationGateway : null;
   const server = createMcpServer(service, updateService(), undefined, undefined, undefined, new ContractValidator(), "default",
-    null, null, {} as SessionMessageService, null, classification, metaIngress(), options.locale ?? "ko");
+    null, null, {} as SessionMessageService, null, classification, metaIngress());
   const client = new Client({ name: "workflow-skill-reselection", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   await client.connect(clientTransport);
   try {
-    const response = await client.callTool({ name: tool, arguments: { runId: "run-synthetic", expectedRevision: 3 }, _meta: callerMeta() });
-    // Other notices (such as the plugin update notice) may follow; the reselection notice is found by its skill list.
-    return (response.content as Array<{ type: string; text: string }>).map(item => item.text).filter(text => text.includes("- ponytail: "));
+    const meta = { ...callerMeta(), ...(options.language ? { [ACCEPT_LANGUAGE_META]: options.language } : {}) };
+    const response = await client.callTool({ name: tool, arguments: { runId: "run-synthetic", expectedRevision: 3 }, _meta: meta });
+    // Other notices (such as the plugin update notice) may follow; the reselection notice is found by its skill line.
+    return (response.content as Array<{ type: string; text: string }>).map(item => item.text).filter(text => text.includes("The workflow changed: "));
   } finally {
     await client.close();
     await server.close();
@@ -61,28 +69,38 @@ async function call(tool: string, outcome: ApiResultV1<unknown>, options: { clas
 
 describe("skill reselection at a workflow change", () => {
   it("asks to match the next judgment against every installed skill and names the stage provider as a contract only", async () => {
+    // Tool results are rendered in MODEL_LOCALE (en, 4.0.0); written from locales/en/server.json.
     const [notice] = await call("abort_workflow", apiOk(receipt));
-    expect(notice).toContain("다음 단계: stage-02(capability minimal-implementation). 그 결과는 ponytail provider 계약으로 기록한다.");
-    expect(notice).toContain("설치된 스킬 전체의 대상과 대조하고, 맞는 스킬은 모두 지금 호출한다(없으면 0개, 여럿이면 여럿)");
-    expect(notice).toContain("단계의 provider는 그 단계 결과를 기록하는 계약일 뿐이다. 그 단계에서 쓸 스킬을 제한하지 않으며, 다른 스킬을 쓰는 데 계획 수정이 필요하지 않다.");
-    expect(notice).toContain("앞 단계에서 호출한 스킬의 지침은 그때의 판단·행동에만 적용한다.");
+    expect(notice).toContain("[AGS workflow change] Next stage: stage-02 (capability minimal-implementation); record its result under the minimal-implementation provider contract.");
+    expect(notice).toContain("before the next judgment or action, re-match it against the skill targets and call every match now.");
+    expect(notice).toContain("A stage's provider is only the contract its result is recorded under; it does not limit the skills used, and another skill needs no plan change.");
+    // The targets of every installed skill are the list each context start carries, with the earlier-skill limit.
     // Expected lines written from skills/*/classification.json by hand, not by the function under test.
-    expect(notice).toContain("- cs-engineering: concurrency, database, messaging, algorithms, resource-lifetime, performance");
-    expect(notice).toContain("- test-engineering: tests, regression-tests");
-    expect(notice).toContain("- blocker-diagnostician: failure-episodes, evidence");
+    const targets = skillTargetsContext("en");
+    expect(targets).toContain("an earlier skill's guidance covers only what it was called for.");
+    expect(targets).toContain("- cs-engineering: concurrency, database, messaging, algorithms, resource-lifetime, performance");
+    expect(targets).toContain("- test-engineering: tests, regression-tests");
+    expect(targets).toContain("- blocker-diagnostician: failure-episodes, evidence");
+    // The notice does not repeat that list.
+    expect(notice).not.toContain("- cs-engineering: ");
     expect(notice).not.toContain("classify_skills");
   });
 
   it("offers classification advice only when the server has classification support configured", async () => {
     const [notice] = await call("abort_workflow", apiOk(receipt), { classification: true });
-    expect(notice).toContain("스킬 분류 지원이 설정돼 있다. 다음 단계의 실제 작업과 전체 inventory를 classify_skills에 넘겨 조언을 받을 수 있다. 조언은 채택·교정·기각하고 최종 선택은 직접 한다.");
+    expect(notice).toContain("Skill classification support is configured: you may pass the next stage's actual work and the full inventory to classify_skills for advice. Adopt, correct or reject the advice and make the final selection yourself.");
   });
 
-  it("speaks the request locale", async () => {
-    const [notice] = await call("abort_workflow", apiOk(receipt), { locale: "en" });
-    expect(notice).toContain("call every matching skill now (none, one or several)");
-    expect(notice).toContain("it does not limit the skills used in that stage, and using another skill needs no plan change");
-    expect(notice).toContain("Next stage: stage-02 (capability minimal-implementation). Its result is recorded under the ponytail provider contract.");
+  it("speaks the model locale whatever language the request names", async () => {
+    const [unnamed] = await call("abort_workflow", apiOk(receipt));
+    for (const language of ["ko", "en"]) {
+      const [notice] = await call("abort_workflow", apiOk(receipt), { language });
+      expect(notice).toBe(unnamed);
+      expect(notice).not.toMatch(/[가-힣]/u);
+    }
+    // The ko catalog keeps the translation.
+    expect(render(msg("server.workflowChange.stage", { stageId: "stage-02", capability: "minimal-implementation", provider: "minimal-implementation" }), "ko"))
+      .toBe("[AGS workflow 변경] 다음 단계: stage-02(capability minimal-implementation). 그 결과는 minimal-implementation provider 계약으로 기록한다.");
   });
 
   it("adds nothing to a refused change or to a tool that changes no workflow", async () => {
@@ -98,14 +116,16 @@ describe("skill reselection at a workflow change", () => {
     const fromPlanMessages = workflowChangeNotice(plan, () => null, false);
     expect(fromPlanMessages.map(line => line.key)).toEqual(["server.workflowChange.stage", "server.workflowChange.skills", "hooks.checkpointCue.refresh"]);
     const fromPlan = fromPlanMessages.map(line => render(line, "en"));
-    expect(fromPlan[0]).toBe("[AGS workflow change] Next stage: stage-01 (capability change-baseline). Its result is recorded under the change-scope-guardian provider contract.");
+    expect(fromPlan[0]).toBe("[AGS workflow change] Next stage: stage-01 (capability change-baseline); record its result under the change-scope-guardian provider contract.");
     const finished = { ...receipt, plan: { ...receipt.plan, currentStageId: null, nextStageId: null } } as WorkflowReceiptV1;
     const doneMessages = workflowChangeNotice({ runId: "run-synthetic" }, () => finished, false);
     expect(doneMessages.map(line => line.key)).toEqual(["server.workflowChange.skills", "hooks.checkpointCue.refresh"]);
     const done = doneMessages.map(line => render(line, "en"));
     expect(done).toHaveLength(2);
-    expect(done[0]).toContain("match it against the targets of every installed skill below");
+    expect(done[0]).toContain("re-match it against the skill targets and call every match now");
     expect(done.join("\n")).not.toContain("Next stage:");
-    expect(done[1]).toBe("Keep essential current state for compaction/resume. When a completed step or failure changes goals, remaining work or needed evidence, update checkpoint_context; skip saves if unchanged.");
+    expect(done[1]).toBe("Update checkpoint_context when a finished step or failure changes goals, remaining work or needed evidence.");
+    // 4.0.0: "essential state only" and "skip unchanged saves" are read once, in the checkpoint_context description
+    // (d0347-checkpoint-cue).
   });
 });

@@ -1,7 +1,0 @@
-interface:
-  display_name: "Subagent Model Effort Advisor"
-  short_description: "호출 전 작업에 맞는 지원 모델·추론 조합 선택"
-  default_prompt: "Use $model-effort-advisor to choose a supported model and reasoning effort for an approved subagent assignment before dispatch."
-
-policy:
-  allow_implicit_invocation: true

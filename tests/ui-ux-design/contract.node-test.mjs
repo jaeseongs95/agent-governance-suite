@@ -135,8 +135,11 @@ const skillText = await readFile(new URL("../../skills/ui-ux-design/SKILL.md", i
 const classification = await readJson("../../skills/ui-ux-design/classification.json");
 const descriptor = await readJson("../../skills/ui-ux-design/integration/skill-descriptor.json");
 const verificationText = await readFile(new URL("../../skills/ui-ux-design/references/verification.md", import.meta.url), "utf8");
-const span = (group) => classification[group].map(({ startLine, endLine }) =>
-  skillText.split(/\r?\n/u).slice(startLine - 1, endLine).join("\n")).join("\n");
+// A span selects its lines joined by "\n", then startByte..endByte (4.0.0: one description line holds both clauses).
+const span = (group) => classification[group].map(({ startLine, endLine, startByte, endByte }) => {
+  const block = Buffer.from(skillText.split(/\r?\n/u).slice(startLine - 1, endLine).join("\n"));
+  return block.subarray(startByte ?? 0, endByte ?? block.length).toString("utf8");
+}).join("\n");
 const preconditions = descriptor.providers[0].preconditions.join("\n").toLowerCase();
 
 for (const item of cases.selection.select) {

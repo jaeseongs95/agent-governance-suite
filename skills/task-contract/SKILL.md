@@ -1,6 +1,6 @@
 ---
 name: task-contract
-description: 해석이 갈리거나 실패 영향이 큰 요청을 목표·범위·수용 기준·작업 단위·위험도·권한·검증 근거가 추적되는 TaskEnvelope.v1으로 정리한다. 요청이 이미 명확하고 작은 작업, 구현, 실행 계획 수립이나 완료 판정에는 사용하지 않는다.
+description: "Turn requests open to interpretation or with high failure impact into a TaskEnvelope.v1 tracing goal, scope, acceptance criteria, work units, risk, permissions and verification evidence. Not for clear small tasks, implementation, execution planning or completion judgment."
 license: MIT
 metadata:
   version: "1.1.0"

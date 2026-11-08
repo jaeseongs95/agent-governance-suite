@@ -234,7 +234,8 @@ function taskContract(recoveryHandoff, { allowedActions = ["local-edit", "rollba
   return { taskContractRequest, taskContractReport };
 }
 
-// The assertions below compare the Korean source sentences (catalog domain skillChecksKo); the host locale is not left to the environment.
+// The assertions below compare the English model-locale sentences (catalog domain skillChecksKo, locales/en); the host
+// locale is set to ko on purpose, since it must not change the output.
 beforeAll(() => { vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "ko"); });
 afterAll(() => { vi.unstubAllEnvs(); });
 
@@ -283,16 +284,16 @@ describe("recovery strategy selector", () => {
     expect(validateHandoff(request, unresolved)).toEqual([]);
     for (const deliberation of [undefined, { selectedStrategyId: null, evidenceRefs: ["panel-record"] }]) {
       const claimed = handoff(request, strategies, { selected: "a", crossReview: tieReview(["a", "b"], [], deliberation) });
-      expect(validateHandoff(request, claimed)).toContain("handoff verdict는 NEEDS_INPUT여야 합니다.");
+      expect(validateHandoff(request, claimed)).toContain("The handoff verdict must be NEEDS_INPUT.");
     }
   });
 
   it("negative: a tie-breaking deliberation record citing only cause evidence, without the panel's DecisionRecord, keeps NEEDS_INPUT", () => {
-    const panelKind = "deliberation은 kind independent-deliberation-panel/decision-record.v1인 검증된 evidence를 하나 이상 참조해야 합니다.";
+    const panelKind = "The deliberation must reference at least one verified evidence of kind independent-deliberation-panel/decision-record.v1.";
     const strategies = [strategy("a"), strategy("b")];
     for (const request of [selectionRequest(), panelRequest()]) {
       const causeOnly = validateHandoff(request, handoff(request, strategies, { selected: "a", crossReview: tieReview(["a", "b"], [], { selectedStrategyId: "a", evidenceRefs: ["cause-evidence"] }) }));
-      expect(causeOnly).toContain("handoff verdict는 NEEDS_INPUT여야 합니다.");
+      expect(causeOnly).toContain("The handoff verdict must be NEEDS_INPUT.");
       expect(causeOnly).toContain(panelKind);
     }
     // The panel record kind is bound only to verified evidence.
@@ -300,7 +301,7 @@ describe("recovery strategy selector", () => {
     unverifiedPanel.evidenceIndex.push({ evidenceRef: "panel-record", locator: "artifact:decision-record", digest: digest({ panel: "tie" }), verified: false,
       kind: "independent-deliberation-panel/decision-record.v1" });
     const fallback = handoff(unverifiedPanel, strategies, { verdict: "NEEDS_INPUT", selected: null, crossReview: tieReview(["a", "b"], ["a", "b"], { selectedStrategyId: "a", evidenceRefs: ["panel-record"] }) });
-    expect(validateHandoff(unverifiedPanel, fallback)).toEqual(["deliberation이 검증되지 않은 evidence를 참조합니다.", panelKind]);
+    expect(validateHandoff(unverifiedPanel, fallback)).toEqual(["The deliberation references unverified evidence.", panelKind]);
   });
 
   it("negative: rejects a tie-breaking deliberation record that names a non-leader or cites unverified evidence", () => {
@@ -308,16 +309,16 @@ describe("recovery strategy selector", () => {
     const strategies = [strategy("a"), strategy("b"), strategy("c", { causeFit: "containment" })];
     const survivors = ["a", "b", "c"];
     const nonLeader = validateHandoff(request, handoff(request, strategies, { selected: "c", crossReview: tieReview(survivors, [], { selectedStrategyId: "c", evidenceRefs: ["panel-record"] }) }));
-    expect(nonLeader).toContain("handoff verdict는 NEEDS_INPUT여야 합니다.");
-    expect(nonLeader).toContain("deliberation selectedStrategyId는 동률 최상위 전략 중 하나여야 합니다.");
+    expect(nonLeader).toContain("The handoff verdict must be NEEDS_INPUT.");
+    expect(nonLeader).toContain("The deliberation selectedStrategyId must be one of the tied top strategies.");
 
     const unverifiedRecord = { selectedStrategyId: "a", evidenceRefs: ["unverified-panel-record"] };
     const unverified = validateHandoff(request, handoff(request, strategies, { selected: "a", crossReview: tieReview(survivors, [], unverifiedRecord) }));
-    expect(unverified).toContain("handoff verdict는 NEEDS_INPUT여야 합니다.");
-    expect(unverified).toContain("deliberation이 검증되지 않은 evidence를 참조합니다.");
+    expect(unverified).toContain("The handoff verdict must be NEEDS_INPUT.");
+    expect(unverified).toContain("The deliberation references unverified evidence.");
     const fallback = handoff(request, strategies, { verdict: "NEEDS_INPUT", selected: null, crossReview: tieReview(survivors, ["a", "b"], unverifiedRecord) });
-    expect(validateHandoff(request, fallback)).toEqual(["deliberation이 검증되지 않은 evidence를 참조합니다.",
-      "deliberation은 kind independent-deliberation-panel/decision-record.v1인 검증된 evidence를 하나 이상 참조해야 합니다."]);
+    expect(validateHandoff(request, fallback)).toEqual(["The deliberation references unverified evidence.",
+      "The deliberation must reference at least one verified evidence of kind independent-deliberation-panel/decision-record.v1."]);
   });
 
   it("policy: requires independent-deliberation-panel internal tie-breaking before escalating an unresolved tie to NEEDS_INPUT", () => {
@@ -387,7 +388,7 @@ describe("recovery strategy selector", () => {
     const request = selectionRequest();
     request.sourceWorkflow.receipt.plan.taskId = "unrelated-task";
     request.sourceWorkflow.receiptDigest = digest(request.sourceWorkflow.receipt);
-    expect(() => validateRequest(request)).toThrow(/원본 task envelope/);
+    expect(() => validateRequest(request)).toThrow("The source workflow receipt is not bound to the source task envelope.");
   });
 
   it("expected failure: derives prior-run mutation from action and write targets", () => {
@@ -398,7 +399,7 @@ describe("recovery strategy selector", () => {
     });
     const rejected = strategy("unsafe", { mutatesPriorRun: true, objectiveGate: { verdict: "FAIL", reasons: ["prior-run-mutation"] } });
     const output = handoff(request, [disguised, rejected]);
-    expect(validateHandoff(request, output).join("\n")).toMatch(/Objective Gate 결과/);
+    expect(validateHandoff(request, output).join("\n")).toMatch(/Objective Gate result/);
   });
 
   it("expected failure: rejects strategies with the same mechanism, actions, and write targets", () => {
@@ -411,7 +412,7 @@ describe("recovery strategy selector", () => {
       stopConditions: ["Stop after two failed verifications."],
     });
     const output = handoff(request, [first, second], { verdict: "NEEDS_INPUT", selected: null });
-    expect(validateHandoff(request, output).join("\n")).toMatch(/mechanism, actions, writeTargets/);
+    expect(validateHandoff(request, output).join("\n")).toMatch(/mechanism, actions, and writeTargets cannot be submitted twice/);
   });
 
   it("expected failure: rejects a recovery strategy bound to another cause", () => {
@@ -442,8 +443,8 @@ describe("recovery strategy selector", () => {
       { verdict: "PASS", taskEnvelope: { ...request.sourceTask.envelope, taskId: "new-task", authorization: { allowedActions: ["local-edit", "rollback", "deploy"], prohibitedActions: [], approvalRequired: [] } }, provenance: [] },
     );
     expect(result.valid).toBe(false);
-    expect(result.errors.join("\n")).toMatch(/TaskContractReport.v1 검증 실패/);
-    expect(result.errors.join("\n")).toMatch(/원본 prohibited action/);
+    expect(result.errors.join("\n")).toMatch(/TaskContractReport.v1 validation failed: /);
+    expect(result.errors.join("\n")).toMatch(/The new TaskEnvelope removed a prohibited action of the original: /);
   });
 
   it("expected failure: rejects stale request binding, duplicate strategies, and unverified evidence", () => {
@@ -454,9 +455,9 @@ describe("recovery strategy selector", () => {
     output.selectionRequestDigest = digest({ stale: true });
     output.strategies[0].evidenceRefs = ["missing-evidence"];
     const errors = validateHandoff(request, output, selectionRequestDigest(request));
-    expect(errors.join("\n")).toMatch(/동결된 selection request digest/);
-    expect(errors.join("\n")).toMatch(/중복 제출/);
-    expect(errors.join("\n")).toMatch(/검증되지 않은 evidence/);
+    expect(errors.join("\n")).toMatch(/externally frozen selection request digest/);
+    expect(errors.join("\n")).toMatch(/cannot be submitted twice/);
+    expect(errors.join("\n")).toMatch(/references unverified evidence/);
   });
 
   it("expected failure: rejects a recovery task that reuses the old task or expands authority", async () => {
@@ -468,27 +469,29 @@ describe("recovery strategy selector", () => {
     contract.taskContractReport.provenance = [];
     const result = await validateTaskBinding(request, output, contract.taskContractRequest, contract.taskContractReport);
     expect(result.valid).toBe(false);
-    expect(result.errors.join("\n")).toMatch(/다른 taskId/);
-    expect(result.errors.join("\n")).toMatch(/allowed action을 확대/);
+    expect(result.errors.join("\n")).toMatch(/taskId different from the original/);
+    expect(result.errors.join("\n")).toMatch(/expanded an allowed action without evidence/);
     expect(result.errors.join("\n")).toMatch(/provenance/);
     expect(validateBindingReportSchema(result)).toBe(true);
   });
 
-  it("i18n: renders validation errors in the host locale (en and ko)", async () => {
+  it("i18n: renders validation errors in the model locale, whatever the host locale", async () => {
     const request = selectionRequest();
     // A schema-valid handoff (two strategies), so the digest check is the one that reports.
     const output = handoff(request, [strategy("direct"), strategy("contained", { causeFit: "containment" })]);
     output.selectionRequestDigest = digest({ stale: true });
     const frozen = selectionRequestDigest(request);
-    vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "en");
-    expect(validateHandoff(request, output, frozen)).toContain("The handoff does not match the externally frozen selection request digest.");
-    request.sourceWorkflow.receipt.plan.taskId = "unrelated-task";
-    request.sourceWorkflow.receiptDigest = digest(request.sourceWorkflow.receipt);
-    expect(() => validateRequest(request)).toThrow("The source workflow receipt is not bound to the source task envelope.");
+    const unbound = selectionRequest();
+    unbound.sourceWorkflow.receipt.plan.taskId = "unrelated-task";
+    unbound.sourceWorkflow.receiptDigest = digest(unbound.sourceWorkflow.receipt);
+    for (const locale of ["en", "ko", undefined]) {
+      vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
+      const errors = validateHandoff(request, output, frozen);
+      expect(errors).toContain("The handoff does not match the externally frozen selection request digest.");
+      expect(errors.join("\n")).not.toMatch(/[가-힣]/u);
+      expect(() => validateRequest(unbound)).toThrow("The source workflow receipt is not bound to the source task envelope.");
+    }
     vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "ko");
-    const second = selectionRequest();
-    expect(validateHandoff(second, output, selectionRequestDigest(second))).toContain("handoff가 외부에 동결된 selection request digest와 일치하지 않습니다.");
-    expect(() => validateRequest(request)).toThrow("source workflow receipt가 원본 task envelope에 결속되지 않았습니다.");
   });
 
   it("contracts compile and the digest CLI accepts stdin JSON", () => {

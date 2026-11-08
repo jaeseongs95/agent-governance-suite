@@ -16,21 +16,21 @@
   "applicability": [
     {
       "path": "skills/solid-design/SKILL.md",
-      "startLine": 4,
-      "endLine": 5,
-      "digest": "sha256:402a4e5a5c44493b7dc4a33a21b6cd0f29e701ed9a060422975159caef609aac",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:f9a4344d4cc6ddaf7c6ed2dbee841a6a90bade593c1d34bc1932b70b7d545469",
       "startByte": 0,
-      "endByte": 368
+      "endByte": 327
     }
   ],
   "exclusions": [
     {
       "path": "skills/solid-design/SKILL.md",
-      "startLine": 6,
-      "endLine": 6,
-      "digest": "sha256:402a4e5a5c44493b7dc4a33a21b6cd0f29e701ed9a060422975159caef609aac",
-      "startByte": 0,
-      "endByte": 226
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:f9a4344d4cc6ddaf7c6ed2dbee841a6a90bade593c1d34bc1932b70b7d545469",
+      "startByte": 328,
+      "endByte": 554
     }
   ]
 }

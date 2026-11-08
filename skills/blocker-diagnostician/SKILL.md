@@ -1,6 +1,6 @@
 ---
 name: blocker-diagnostician
-description: 반복되는 실패를 관측 episode와 원인 가설로 분리하고, 새 정보를 얻을 수 있는 다음 판별 검사를 정한다. 수정 구현, 일반 설계 비교, 같은 검사의 반복 실행이나 최종 독립 감사에는 사용하지 않는다.
+description: "Split a repeated failure into observed episodes and cause hypotheses and pick the next discriminating check that yields new information. Not for fixes, general design comparison, rerunning the same check or final independent audit."
 license: MIT
 metadata:
   version: "1.1.0"

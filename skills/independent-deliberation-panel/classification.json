@@ -17,15 +17,15 @@
       "path": "skills/independent-deliberation-panel/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9",
+      "digest": "sha256:ce18f967eced69131623b4be36b3051f169bee50c609d33d35a9cc831f7c5abd",
       "startByte": 0,
-      "endByte": 165
+      "endByte": 160
     },
     {
       "path": "skills/independent-deliberation-panel/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9",
+      "digest": "sha256:ce18f967eced69131623b4be36b3051f169bee50c609d33d35a9cc831f7c5abd",
       "startByte": 0,
       "endByte": 106
     },
@@ -33,7 +33,7 @@
       "path": "skills/independent-deliberation-panel/SKILL.md",
       "startLine": 15,
       "endLine": 17,
-      "digest": "sha256:9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9",
+      "digest": "sha256:ce18f967eced69131623b4be36b3051f169bee50c609d33d35a9cc831f7c5abd",
       "startByte": 0,
       "endByte": 292
     },
@@ -41,7 +41,7 @@
       "path": "skills/independent-deliberation-panel/SKILL.md",
       "startLine": 19,
       "endLine": 19,
-      "digest": "sha256:9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9",
+      "digest": "sha256:ce18f967eced69131623b4be36b3051f169bee50c609d33d35a9cc831f7c5abd",
       "startByte": 0,
       "endByte": 365
     }
@@ -51,15 +51,15 @@
       "path": "skills/independent-deliberation-panel/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9",
-      "startByte": 166,
-      "endByte": 232
+      "digest": "sha256:ce18f967eced69131623b4be36b3051f169bee50c609d33d35a9cc831f7c5abd",
+      "startByte": 161,
+      "endByte": 216
     },
     {
       "path": "skills/independent-deliberation-panel/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9",
+      "digest": "sha256:ce18f967eced69131623b4be36b3051f169bee50c609d33d35a9cc831f7c5abd",
       "startByte": 107,
       "endByte": 445
     },
@@ -67,7 +67,7 @@
       "path": "skills/independent-deliberation-panel/SKILL.md",
       "startLine": 17,
       "endLine": 17,
-      "digest": "sha256:9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9",
+      "digest": "sha256:ce18f967eced69131623b4be36b3051f169bee50c609d33d35a9cc831f7c5abd",
       "startByte": 433,
       "endByte": 850
     },
@@ -75,7 +75,7 @@
       "path": "skills/independent-deliberation-panel/SKILL.md",
       "startLine": 43,
       "endLine": 43,
-      "digest": "sha256:9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9",
+      "digest": "sha256:ce18f967eced69131623b4be36b3051f169bee50c609d33d35a9cc831f7c5abd",
       "startByte": 0,
       "endByte": 924
     }

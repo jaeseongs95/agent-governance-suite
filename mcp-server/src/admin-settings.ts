@@ -10,13 +10,12 @@ import type { ProviderProfile, ProviderProfileRegistry } from "./skill-classific
  * The settings the admin page edits (AGS3-T-0024), read the one way every reader uses: the signed admin log, folded and
  * verified on each read (admin-log.ts). A record that fails is not applied; the setting keeps its last valid revision,
  * else its default. The precedence with the older environment settings (docs/user/admin-page.md):
- * - The display locale and the edit gate's exempt paths: an environment value set for the process wins; the page shows
- *   the item as locked by it. Without one, the signed value applies; without that, the earlier default.
+ * - The edit gate's exempt paths: an environment value set for the process wins; the page shows the item as locked by
+ *   it. Without one, the signed value applies; without that, the earlier default.
  * - JEV (4.0.0): only the signed settings and the provider AGS ships. The installation's classification config, its
  *   provider runtime and environment variables do not turn JEV on or off, bound its budget, name its route or model, or
  *   supply its key. With no signed record JEV is off.
  */
-export const LOCALE_ENVIRONMENT_NAME = "AGENT_GOVERNANCE_LOCALE";
 export const EDIT_EXEMPT_ENVIRONMENT = "AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS";
 export const CLASSIFICATION_CONFIG_ENVIRONMENT = "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG";
 
@@ -29,14 +28,6 @@ export function readVerifiedAdminState(databasePath: string): AdminState | null 
 
 export function verifiedAdminState(environment: NodeJS.ProcessEnv): AdminState | null {
   return readVerifiedAdminState(resolveContextLayerDatabasePath(environment));
-}
-
-/** The signed display locale: a value, a read failure, or null (none signed, or "follow the settings file"). */
-export function signedLocale(environment: NodeJS.ProcessEnv): { value: string } | { failure: "LOCALE_SIGNED_UNREADABLE" } | null {
-  let state: AdminState | null;
-  try { state = verifiedAdminState(environment); } catch { return { failure: "LOCALE_SIGNED_UNREADABLE" }; }
-  const locale = state?.locale?.locale ?? null;
-  return locale === null ? null : { value: locale };
 }
 
 /** The environment's list, read as the edit gate always did: the platform delimiter, absolute entries only. */
@@ -108,7 +99,6 @@ export function applyAdminJev<T extends { config: { jevEnabled: boolean }; regis
 export interface AdminSignedSettings {
   jev: AdminJevState | null;
   jevKeys: Array<{ name: string; fingerprint: string; setAt: string; stored: boolean }>;
-  locale: { locale: string | null; seq: number; issuedAt: string } | null;
   editExempt: { paths: string[]; seq: number; issuedAt: string } | null;
 }
 
@@ -138,7 +128,6 @@ export interface JevProviderView {
 }
 
 export interface AdminSettingsView {
-  locale: { value: string; source: string; signed: string | null; options: readonly string[]; lockedBy: string | null; editable: boolean };
   editGateExceptions: { paths: string[]; source: "environment" | "signed" | "none"; signedPaths: string[]; environmentPaths: string[];
     lockedBy: string | null; editable: boolean; maxPaths: number };
   jev: {
@@ -161,15 +150,12 @@ export interface AdminSettingsView {
 export function adminSettingsView(input: {
   environment: NodeJS.ProcessEnv;
   signed: AdminSignedSettings;
-  locale: { value: string; source: string };
-  localeOptions: readonly string[];
   installation: JevInstallationView;
   usage: { spentUsd: number | null; reservedUsd: number } | null;
   providers: JevProviderView[];
   profileFor: JevProfileFor;
 }): AdminSettingsView {
   const { environment, signed, installation } = input;
-  const localeLocked = environment[LOCALE_ENVIRONMENT_NAME] !== undefined;
   const environmentPaths = environmentExemptPaths(environment);
   const signedPaths = signed.editExempt?.paths ?? [];
   const jevNames = new Set(input.providers.map(provider => provider.credentialName));
@@ -180,8 +166,6 @@ export function adminSettingsView(input: {
   const keyStored = signed.jevKeys.some(key => key.name === (chosen?.credentialName ?? "") && key.stored);
   const readiness = jevReadiness(signed.jev, { keyStored, profileFor: input.profileFor, usage: input.usage });
   return {
-    locale: { value: input.locale.value, source: input.locale.source, signed: signed.locale?.locale ?? null, options: input.localeOptions,
-      lockedBy: localeLocked ? LOCALE_ENVIRONMENT_NAME : null, editable: !localeLocked },
     editGateExceptions: { paths: environmentPaths ?? signedPaths, source: environmentPaths ? "environment" : signedPaths.length ? "signed" : "none",
       signedPaths, environmentPaths: environmentPaths ?? [], lockedBy: environmentPaths ? EDIT_EXEMPT_ENVIRONMENT : null, editable: !environmentPaths,
       maxPaths: EDIT_EXEMPT_MAX_PATHS },

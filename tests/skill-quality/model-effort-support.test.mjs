@@ -107,30 +107,34 @@ describe("historical ModelEffortAdvice.v1 provider support boundary", () => {
   });
 });
 
-describe("historical ModelEffortAdvice.v1 notices follow the host locale", () => {
+describe("historical ModelEffortAdvice.v1 notices render in the model locale, whatever the host locale", () => {
   afterEach(() => vi.unstubAllEnvs());
+  const HOST_LOCALES = ["en", "ko", undefined];
   const noticeIn = (locale, item) => {
     vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
     return guardModelSupport(item.advice, item.context).advice.userNotice;
   };
-  it("renders the range notice in Korean and in English from the same verdict", () => {
+  it("renders the same English range notice from the same verdict for every host locale", () => {
     const item = cases.find((value) => value.id === "material-over-fit");
     const range = (value) => value.match(/(\w+)~(\w+) \/ (\w+)~(\w+)/u).slice(1, 5);
-    const korean = noticeIn("ko", item);
-    const english = noticeIn("en", item);
-    expect(korean).toMatch(/^설정 안내: 이 요청의 권장 범위는 .+입니다\. 현재 설정은 다소 과합니다\. 설정은 자동으로 바꾸지 않고 요청은 계속 진행합니다\.$/u);
+    const [english, ...others] = HOST_LOCALES.map((locale) => noticeIn(locale, item));
     expect(english).toMatch(/^Setting notice: the recommended range for this request is .+\. The current setting is somewhat excessive\. The setting is not changed automatically, and the request continues\.$/u);
-    expect(range(english)).toEqual(range(korean));
+    expect(english).not.toMatch(/[가-힣]/u);
+    for (const other of others) {
+      expect(other).toBe(english);
+      expect(range(other)).toEqual(range(english));
+    }
   });
-  it("renders the under-provisioned wording and the unobserved notice in both locales", () => {
+  it("renders the under-provisioned wording and the unobserved notice in English for every host locale", () => {
     const item = structuredClone(cases.find((value) => value.id === "material-over-fit"));
     item.context.currentSelection.model = "q-general";
     item.context.currentSelection.reasoningEffort = "medium";
     Object.assign(item.advice.recommendation, { modelClassMin: "deep", modelClassMax: "frontier", reasoningEffortMin: "high", reasoningEffortMax: "max" });
-    expect(noticeIn("ko", item)).toContain("현재 설정은 부족할 수 있습니다.");
-    expect(noticeIn("en", item)).toContain("The current setting may be insufficient.");
     const unobserved = cases.find((value) => value.id === "unmapped-current-model");
-    expect(noticeIn("ko", unobserved)).toBe("현재 설정 또는 해당 공급자의 지원 근거를 충분히 확인할 수 없습니다. 설정을 바꾸지 않고 요청을 계속 진행합니다.");
-    expect(noticeIn("en", unobserved)).toBe("Cannot sufficiently confirm the current setting or the provider's support evidence. The request continues without changing any setting.");
+    for (const locale of HOST_LOCALES) {
+      expect(noticeIn(locale, item)).toContain("The current setting may be insufficient.");
+      expect(noticeIn(locale, item)).not.toMatch(/[가-힣]/u);
+      expect(noticeIn(locale, unobserved)).toBe("Cannot sufficiently confirm the current setting or the provider's support evidence. The request continues without changing any setting.");
+    }
   });
 });

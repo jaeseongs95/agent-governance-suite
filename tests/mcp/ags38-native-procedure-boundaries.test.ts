@@ -4,7 +4,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { describe, expect, it } from "vitest";
 
-import { ACCEPT_LANGUAGE_META, type SupportedLocale } from "../../mcp-server/src/i18n.js";
+import { render, type SupportedLocale } from "../../mcp-server/src/i18n.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
@@ -19,17 +19,21 @@ import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 const root = new URL("../../", import.meta.url);
 const read = (file: string) => readFileSync(new URL(file, root), "utf8");
 
-async function checkpointDescription(locale: SupportedLocale): Promise<string> {
+// 4.0.0: tools/list is rendered in MODEL_LOCALE (en) whatever the SEP-2792 request language, which it now ignores; the
+// ko text stays in the catalog as translation material and is checked there.
+const ACCEPT_LANGUAGE_META = "io.modelcontextprotocol/acceptLanguage";
+
+async function listedCheckpointDescription(language?: string): Promise<string> {
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(fileURLToPath(new URL("skills/registry.json", root)), validator), validator, new InMemoryWorkflowStore());
   const server = createMcpServer(service, new PluginUpdateService(new InMemoryPluginUpdateStore()), undefined, undefined,
-    undefined, validator, "default", null, null, undefined, null, null, null, locale);
+    undefined, validator, "default", null, null, undefined, null, null, null);
   const client = new Client({ name: "ags38-native-procedure-contract", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   await client.connect(clientTransport);
   try {
-    const listed = await client.listTools({ _meta: { [ACCEPT_LANGUAGE_META]: locale } });
+    const listed = await client.listTools(language ? { _meta: { [ACCEPT_LANGUAGE_META]: language } } : undefined);
     const tool = listed.tools.find(candidate => candidate.name === "checkpoint_context");
     if (!tool?.description) throw new Error("checkpoint_context description is missing");
     return tool.description;
@@ -39,13 +43,23 @@ async function checkpointDescription(locale: SupportedLocale): Promise<string> {
   }
 }
 
+/** The published description (en) for each requested language, or the ko catalog translation. */
+async function checkpointDescriptions(locale: SupportedLocale): Promise<string[]> {
+  if (locale === "ko") return [render({ key: "tools.checkpoint_context.description", params: {} }, "ko")];
+  const listed = await Promise.all([undefined, "ko", "en"].map(listedCheckpointDescription));
+  for (const description of listed) expect(description).toBe(listed[0]);
+  expect(listed[0]).not.toMatch(/[가-힣]/u);
+  return listed;
+}
+
 describe("native pilot procedure contracts (D31/D32/D36/D38)", () => {
   it.each(["ko", "en"] as const)("NP01 keeps read-only restrictions ahead of shared checkpoint instructions in %s", locale => {
     const intake = skillIntakeText(locale);
     expect(intake).toContain("새 사용자 메시지의 교정·결정·승인·금지·추가 작업·범위 변경");
     expect(intake).toContain("읽기 전용·상태 쓰기 금지가 아니면 그 턴에");
-    // 3.9.0 (AGS3-D-0032): what to save (user quotes, changed remaining work) is stated once, in the per-message cue.
-    expect(intake).toContain("그 턴에 `checkpoint_context`로 현재 상태에 반영한다");
+    // 3.9.0 (AGS3-D-0032): what to save (user quotes, changed remaining work) is stated once; 4.0.0 keeps it in the
+    // checkpoint_context tool description (NP04 below) and the per-message cue only names the trigger.
+    expect(intake).toContain("그 턴에 `checkpoint_context`로 반영한다");
     expect(serverInstructions(locale)).toContain(intake);
     expect(read("skills/blocker-diagnostician/references/entry-details.md")).toContain("외부 workflow 상태 쓰기에도 적용한다");
   });
@@ -53,8 +67,8 @@ describe("native pilot procedure contracts (D31/D32/D36/D38)", () => {
   it.each([
     ["ko", "workflow 중에도 쓰며 읽기 전용·상태 쓰기 금지에서는 호출하지 않는다."],
     ["en", "Also use in workflows; never if read-only/state writes banned."],
-  ] as const)("NP02 preserves the same restriction in the %s tools/list description", async (locale, restriction) => {
-    expect(await checkpointDescription(locale)).toContain(restriction);
+  ] as const)("NP02 preserves the same restriction in the %s checkpoint_context description (en: tools/list for any requested language)", async (locale, restriction) => {
+    for (const description of await checkpointDescriptions(locale)) expect(description).toContain(restriction);
   });
 
   // D53: tools/list delivery only; these clauses do not prove reconstruction quality or model behaviour.
@@ -79,8 +93,8 @@ describe("native pilot procedure contracts (D31/D32/D36/D38)", () => {
       "STALE_REVISION: reload/rebuild.",
     ]],
   ] as const)("NP04 exposes the D53 reconstruction delivery contract in %s without claiming semantic quality", async (locale, clauses) => {
-    const description = await checkpointDescription(locale);
-    for (const clause of clauses) expect(description).toContain(clause);
+    for (const description of await checkpointDescriptions(locale))
+      for (const clause of clauses) expect(description).toContain(clause);
   });
 
   it("NP03 makes the test plan precede test implementation and execution, with root-relative CLI references", () => {

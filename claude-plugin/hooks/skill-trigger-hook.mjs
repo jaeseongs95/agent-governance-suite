@@ -27,10 +27,10 @@ try {
     // Reuse the shared context-start pointer and targets; only Claude invocation syntax belongs in this adapter.
     // The plugin's runtime/ and mcp-server/dist/ sit beside hooks/.
     stage = "import";
-    const { msg, render, resolveHostLocale } = await import("../runtime/i18n.mjs");
+    const { MODEL_LOCALE, msg, render } = await import("../runtime/i18n.mjs");
     const { intakeHookOutput } = await import("../mcp-server/dist/intake-hook.mjs");
     stage = "run";
-    const { locale } = resolveHostLocale();
+    const locale = MODEL_LOCALE;
     const output = intakeHookOutput(input, "claude-code", locale);
     output.hookSpecificOutput.additionalContext = `${render(msg("hooks.skillTrigger.invocation", {}), locale)}\n${output.hookSpecificOutput.additionalContext}`;
     stage = "stdout";

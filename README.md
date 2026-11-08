@@ -20,7 +20,7 @@ Agent Governance Suite(AGS)는 Claude Code, Codex, Antigravity(`agy`)에 설치�
 - **스킬:** 전문 스킬 23개, 흐름을 잇는 `orchestrator`, 현황판 사용을 돕는 `session-board`
 - **로컬 MCP 서버:** workflow, 작업 기록, 현황판, 세션 메시지, 상태 정리 도구
 - **호스트 hook:** 세션·턴·도구 경계에서 안내를 넣고 편집 대상을 관측합니다.
-- **로컬 관리자 페이지:** 전역 컨텍스트, 역할, JEV, 표시 언어처럼 사람이 정하는 설정을 패스키로 서명해 바꿉니다. 기본 주소는 `http://localhost:47615/`입니다.
+- **로컬 관리자 페이지:** 전역 컨텍스트, 역할, JEV처럼 사람이 정하는 설정을 패스키로 서명해 바꿉니다. 기본 주소는 `http://localhost:47615/`입니다.
 
 안내가 있다는 사실만으로 에이전트가 지시를 따랐거나 결과가 검증됐다고 볼 수는 없습니다. AGS가 보장하지 않는 것은 [사용하기](docs/user/usage.md#보장하지-않는-것)에 있습니다.
 
@@ -34,17 +34,15 @@ Agent Governance Suite(AGS)는 Claude Code, Codex, Antigravity(`agy`)에 설치�
 
 이미 설치했다면 [업데이트와 이전](docs/user/update.md)을 따릅니다.
 
-### 패키지 고르기
+### 패키지와 언어
 
-호스트마다 한국어 패키지와 영어 전용 패키지가 있습니다. 영어 전용 패키지는 AGS 메시지, MCP 도구 설명, hook 문구, 오류를 영어로 내고, 스킬 본문은 원문(대부분 한국어) 그대로 둡니다. 상태는 같은 위치에 저장되므로 다시 설치해서 언어를 바꿀 수 있습니다. **한 호스트에서는 둘 중 하나만 켜십시오.** 둘 다 켜면 Claude Code는 한쪽 hook만 불러오고 Codex는 둘 다 실행합니다.
+패키지는 호스트마다 하나입니다. 모델이 읽는 AGS 문구는 언어 설정 없이 문구마다 토큰이 적은 형태 하나로 고정됩니다. 그래서 hook 안내, MCP 도구 설명·결과, 오류, 스킬·hook CLI 출력, 스킬 description은 영어이고 MCP instructions의 공통 접수 기준은 한국어이며, 스킬 본문은 원문(대부분 한국어) 그대로입니다. 3.x의 영어 전용 패키지(`agent-governance-suite-en`)를 설치했다면 [업데이트와 이전](docs/user/update.md#이전-판에서-올릴-때)을 따릅니다.
 
-| 호스트 | 한국어 패키지 | 영어 전용 패키지 |
-| --- | --- | --- |
-| Claude Code | `agent-governance-suite@agent-governance-claude` | `agent-governance-suite-en@agent-governance-claude` |
-| Codex | `agent-governance-suite@agent-governance` | `agent-governance-suite-en@agent-governance` |
-| Antigravity | `agent-governance-suite-antigravity-<tag>.zip` | `agent-governance-suite-antigravity-<tag>-en.zip` |
-
-아래 명령은 한국어 패키지 기준입니다. 영어 전용 패키지는 표의 이름이나 파일로 바꿔 실행합니다. Claude Code에서는 두 패키지의 스킬 이름이 `agent-governance-suite:<스킬>`로 같고, Codex 영어 패키지는 항목 이름과 manifest 이름이 같아야 해서 `agent-governance-suite-en`입니다.
+| 호스트 | 패키지 |
+| --- | --- |
+| Claude Code | `agent-governance-suite@agent-governance-claude` |
+| Codex | `agent-governance-suite@agent-governance` |
+| Antigravity | `agent-governance-suite-antigravity-<tag>.zip` |
 
 ### Claude Code
 

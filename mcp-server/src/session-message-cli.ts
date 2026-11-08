@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { setTimeout as delay } from "node:timers/promises";
 import type { PeerWaitDecision } from "./peer-wait-policy.js";
-import { msg, render, resolveHostLocale, ROOT_LOCALE, type MessageRef, type SupportedLocale } from "./i18n.js";
+import { MODEL_LOCALE, msg, render, ROOT_LOCALE, type MessageRef, type SupportedLocale } from "./i18n.js";
 import { sessionMessageRequest } from "./session-message-client.js";
 import { SessionMessageError } from "./session-message-protocol.js";
 
@@ -77,7 +77,7 @@ export async function executeSessionMessageCliFromStdin(
 }
 
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
-  const { locale } = resolveHostLocale();
+  const locale = MODEL_LOCALE;
   void executeSessionMessageCliFromStdin(undefined, undefined, locale).then(
     (output) => {
       process.stdout.write(`${JSON.stringify(output)}\n`);

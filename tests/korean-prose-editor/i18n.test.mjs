@@ -5,8 +5,8 @@ import { requireObject } from "../../skills/korean-prose-editor/scripts/lib.mjs"
 import { validateProviderPlan } from "../../skills/korean-prose-editor/scripts/provider-plan.mjs";
 import { extractProtectedSpans } from "../../skills/korean-prose-editor/scripts/protected-spans.mjs";
 
-// The editing target of this skill is Korean prose; only the contract messages shown to the caller follow the host locale.
-describe("korean-prose-editor script messages follow the host locale", () => {
+// The editing target of this skill is Korean prose; the contract messages shown to the caller render in the model locale (en), whatever the host locale.
+describe("korean-prose-editor script messages render in the model locale, whatever the host locale", () => {
   afterEach(() => { vi.unstubAllEnvs(); });
 
   const messageOf = (action) => {
@@ -14,18 +14,13 @@ describe("korean-prose-editor script messages follow the host locale", () => {
     throw new Error("expected the action to throw");
   };
 
-  it("renders contract errors in English and Korean while keeping the error code", () => {
+  it.each([["en"], ["ko"], [undefined]])("renders contract errors in English with the error code when the host locale is %s", (locale) => {
     vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "en");
+    if (locale === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE; else vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
     expect(messageOf(() => requireObject(null, "input"))).toEqual({ code: "INVALID_OBJECT", message: "input must be an object" });
     expect(messageOf(() => validateProviderPlan({}, {}))).toEqual({ code: "SUBAGENTS_UNAVAILABLE", message: "three independent language actors are required" });
     expect(messageOf(() => finalizeRequest({ schemaVersion: "1.0.0", mode: "other" }))).toEqual({ code: "MODE", message: "mode must be mcp or direct" });
     expect(() => extractProtectedSpans(1)).toThrow("source must be a string");
-
-    vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "ko");
-    expect(messageOf(() => requireObject(null, "input"))).toEqual({ code: "INVALID_OBJECT", message: "객체여야 한다: input" });
-    expect(messageOf(() => validateProviderPlan({}, {}))).toEqual({ code: "SUBAGENTS_UNAVAILABLE", message: "서로 독립된 언어 행위자 3개가 필요하다" });
-    expect(messageOf(() => finalizeRequest({ schemaVersion: "1.0.0", mode: "other" }))).toEqual({ code: "MODE", message: "mode는 mcp 또는 direct여야 한다" });
-    expect(() => extractProtectedSpans(1)).toThrow("source는 문자열이어야 한다");
   });
 
   it("does not change the protected-span detection of Korean source text", () => {

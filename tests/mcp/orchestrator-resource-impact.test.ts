@@ -8,10 +8,14 @@ const shared = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import
 const sharedIntake = readFileSync(new URL("../../skills/orchestrator/references/intake.md", import.meta.url), "utf8");
 const intake = sharedIntake.match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1] ?? "";
 // 3.9.0 (AGS3-D-0032) shortened the lines; what to keep across a resume is saved by the checkpoint cue and tool.
-const impactLine = intake.split("\n").find((line) => line.startsWith("- 대규모·장시간·동시 실행 전에는")) ?? "";
+const impactLine = intake.split("\n").find((line) => line.startsWith("- 대규모·장시간·동시 실행 전:")) ?? "";
 const resumeLine = intake.split("\n").find((line) => line.startsWith("새 사용자 메시지의 교정")) ?? "";
-const gateLine = intake.split("\n").find((line) => line.startsWith("- 무거운 단계")) ?? "";
-const selectionLine = intake.split("\n").find((line) => line.startsWith("선택 결과를 출력하지 않아도")) ?? "";
+const selectionLine = intake.split("\n").find((line) => line.startsWith("첫 도구 호출(읽기 포함) 전, 출력 없이도")) ?? "";
+// 4.0.0 (token optimization): the heavy-step rule moved from the intake into the descriptions of the two gate skills it
+// names, read when a skill is chosen.
+const description = (skill: string) => /^description: (.*)$/mu.exec(readFileSync(new URL(`../../skills/${skill}/SKILL.md`, import.meta.url), "utf8"))?.[1] ?? "";
+const preflightDescription = description("mutation-risk-preflight");
+const scopeDescription = description("change-scope-guardian");
 const checkpointDescription = (JSON.parse(readFileSync(new URL("../../locales/ko/tools.json", import.meta.url), "utf8")) as Record<string, string>)["tools.checkpoint_context.description"] ?? "";
 
 /** Candidate-derived synthetic cases for a designated evaluator; none is a holdout or a model result. */
@@ -82,25 +86,25 @@ describe("orchestrator resource-impact prompt propagation", () => {
     expect(impactLine).toContain("승인·PRE를 붙이지 않는다");
     expect(impactLine).toContain("작은 읽기·편집마다 계측·보고·점검 도구를 더하거나");
     expect(impactLine).toContain("이미 허용된 준비·검증·작업본 저장·자동 검사에 승인·PRE를 붙이지 않는다");
-    expect(intake.indexOf(impactLine)).toBeLessThan(intake.indexOf(gateLine));
-    expect(selectionLine).toContain("해당 판단·행동 전에 호스트 방식으로 실제 호출하고");
-    expect(selectionLine).toContain("그 스킬이 정한 작업·필수 산출물·검증을 실제로 했는지 대조한다");
+    expect(selectionLine).toContain("그 판단·행동 전에 호스트 방식으로 실제 호출하고");
+    expect(selectionLine).toContain("그 스킬의 작업·필수 산출물·검증을 실제로 했는지 대조한다");
     // 3.8.0 (AGS3-D-0032): re-selection on a changed goal, scope, risk or needed judgment sits with the selection rules.
     expect(selectionLine).toContain("목표·범위·위험·필요 판단이 바뀌면 다음 해당 행동 전에 다시 고른다");
     expect(resumeLine).toContain("새 사용자 메시지의 교정");
-    expect(resumeLine).toContain("그 턴에 `checkpoint_context`로 현재 상태에 반영한다");
-    expect(resumeLine).toContain("근거 없이 이전 교정·실행·검증을 기억한다고 하지 않는다");
-    expect(resumeLine).toContain("압축·새 세션·재부팅·인계 뒤에는 `inspect_context`·`load_context`로");
-    expect(resumeLine).toContain("현재 상태와 대조하고 출처·범위를 보고해 지적된 행동을 반복하지 않");
+    expect(resumeLine).toContain("그 턴에 `checkpoint_context`로 반영한다");
+    expect(resumeLine).toContain("근거 없는 이전 교정·실행·검증 기억 주장을 하지 않는다");
+    expect(resumeLine).toContain("압축·새 세션·재부팅·인계 뒤엔 `inspect_context`·`load_context`로");
+    expect(resumeLine).toContain("현재 상태와 대조해 출처·범위를 보고하고, 지적된 행동 반복");
     // The corrected behavior, scope, remaining checks and resource-dependent location, parallelism and stop/resume
     // conditions are saved by the per-message cue and checkpoint_context (AGS3-D-0032).
     expect(checkpointDescription).toContain("실행 위치·병렬 수·중단·재개 조건은 보존한다");
     expect(intake).toContain("시작·재개·인계·새 시험·도구 단계 전: 기억한 전제 대신 현재 정본");
     expect(intake).toContain("가능한 검증을 사용자에게 넘기지 않고");
     expect(intake).toContain("사용자만 할 승인·비밀값 입력·본인 조작이 남으면 그 턴에 그 부분만");
-    expect(gateLine).toContain("mutation-risk-preflight");
-    expect(gateLine).toContain("change-scope-guardian");
-    expect(gateLine).toContain("같은 디스크 안 이동·이름 변경과 복구할 수 있는 편집·검증은 바로 한다");
+    // The resource assessment does not replace the existing high-impact gates: each gate skill still names when it runs.
+    expect(preflightDescription).toContain("Right before a hard-to-reverse change or one affecting others");
+    expect(scopeDescription).toContain("Call only when work overlaps other work or before a default-branch merge or publication.");
+    expect(preflightDescription).toContain("Same-disk moves and renames, reversible local edits and checks, and test or work-branch pushes are just done, without this skill");
     expect(impactLine).toContain("이미 허용된 준비·검증·작업본 저장·자동 검사에 승인·PRE를 붙이지 않는다");
 
     for (const instructions of [SKILL_INTAKE_SERVER_INSTRUCTIONS, serverInstructions()]) {

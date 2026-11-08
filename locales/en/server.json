@@ -19,7 +19,7 @@
   "server.trust.storeUnavailable": "The trust receipt store is unavailable.",
   "server.stateCleanup.unavailable": "State cleanup is unavailable because its local stores did not initialize.",
   "server.sessionMessage.sendInvalid": "{cause} Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.",
-  "server.workflowChange.stage": "[AGS workflow change] Next stage: {stageId} (capability {capability}). Its result is recorded under the {provider} provider contract.",
-  "server.workflowChange.skills": "The workflow changed, so the purpose of the work may have changed. Before the next judgment or action, match it against the targets of every installed skill below and call every matching skill now (none, one or several). A stage's provider is only the contract its result is recorded under: it does not limit the skills used in that stage, and using another skill needs no plan change. A skill called for an earlier stage applies only to the judgment or action it was called for.\n{targets}",
+  "server.workflowChange.stage": "[AGS workflow change] Next stage: {stageId} (capability {capability}); record its result under the {provider} provider contract.",
+  "server.workflowChange.skills": "The workflow changed: before the next judgment or action, re-match it against the skill targets and call every match now. A stage's provider is only the contract its result is recorded under; it does not limit the skills used, and another skill needs no plan change.",
   "server.workflowChange.classification": "Skill classification support is configured: you may pass the next stage's actual work and the full inventory to classify_skills for advice. Adopt, correct or reject the advice and make the final selection yourself."
 }

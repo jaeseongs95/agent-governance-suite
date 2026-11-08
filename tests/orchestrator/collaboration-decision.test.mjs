@@ -142,25 +142,28 @@ describe("CollaborationDecision.v1", () => {
     expect(validateCollaborationDecision(peer).length).toBeGreaterThan(0);
   });
 
-  it("renders the route error and the structural diagnostic in the host locale", () => {
+  it("renders the route error and the structural diagnostic in the model locale, whatever the host locale", () => {
     const forged = base();
     forged.route = "direct";
-    const english = collaborationDecisionStructuralDiagnostic(forged);
-    expect(english.errors).toEqual(["route must be delegate for the declared directive, benefit criteria, and audit separation."]);
-    expect(english.diagnostic).toBe("This check validates the schema and deterministic route only; it does not read or authenticate source receipts.");
-    vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "ko");
-    const korean = collaborationDecisionStructuralDiagnostic(forged);
-    expect(korean.errors).toEqual(["선언된 directive, 이익 기준, 감사 분리에 따르면 route는 delegate이어야 한다."]);
-    expect(korean.diagnostic).toBe("이 검사는 스키마와 결정적 route만 검증한다. source receipt를 읽거나 인증하지 않는다.");
-    expect(korean.valid).toBe(false);
+    for (const locale of ["en", "ko", undefined]) {
+      vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
+      const result = collaborationDecisionStructuralDiagnostic(forged);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toEqual(["route must be delegate for the declared directive, benefit criteria, and audit separation."]);
+      expect(result.diagnostic).toBe("This check validates the schema and deterministic route only; it does not read or authenticate source receipts.");
+      expect([...result.errors, result.diagnostic].join("\n")).not.toMatch(/[가-힣]/u);
+    }
   });
 
-  it("prints the structural diagnostic of the CLI in the host locale", () => {
+  it("prints the structural diagnostic of the CLI in the model locale, whatever the host locale", () => {
     const script = fileURLToPath(new URL("../../skills/orchestrator/scripts/validate-collaboration-decision.mjs", import.meta.url));
-    const run = (locale) => JSON.parse(spawnSync(process.execPath, [script], {
-      input: "{", encoding: "utf8", windowsHide: true, env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale },
-    }).stdout);
-    expect(run("en").diagnostic).toBe("This check validates the schema and deterministic route only; it does not read or authenticate source receipts.");
-    expect(run("ko").diagnostic).toBe("이 검사는 스키마와 결정적 route만 검증한다. source receipt를 읽거나 인증하지 않는다.");
+    const run = (locale) => {
+      const env = { ...process.env, AGENT_GOVERNANCE_LOCALE: locale };
+      if (locale === undefined) delete env.AGENT_GOVERNANCE_LOCALE;
+      return JSON.parse(spawnSync(process.execPath, [script], { input: "{", encoding: "utf8", windowsHide: true, env }).stdout);
+    };
+    for (const locale of ["en", "ko", undefined]) {
+      expect(run(locale).diagnostic).toBe("This check validates the schema and deterministic route only; it does not read or authenticate source receipts.");
+    }
   });
 });

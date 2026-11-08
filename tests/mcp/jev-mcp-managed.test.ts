@@ -227,8 +227,8 @@ describe("JEV managed by the MCP server (4.0.0)", () => {
     const { service, owner } = adminState();
     const { composed } = { composed: composeJev({ signed: () => service.verifiedState()?.jev ?? null, pageKey: name => service.jevKey(name) }) };
     const installation: JevInstallationView = { configured: false, vendorIds: [], credentials: [], ignoredJev: { routes: 0, profiles: 0 }, error: null };
-    const view = () => adminSettingsView({ environment: {}, signed: service.adminState().signedSettings, locale: { value: "ko", source: "root" },
-      localeOptions: ["ko"], installation, usage: { spentUsd: 0, reservedUsd: 0 }, profileFor: composed.profileFor,
+    const view = () => adminSettingsView({ environment: {}, signed: service.adminState().signedSettings,
+      installation, usage: { spentUsd: 0, reservedUsd: 0 }, profileFor: composed.profileFor,
       providers: [{ providerId: "typesafe", label: "TypeSafe", endpoint: ENDPOINT, credentialName: "JEV_API_KEY", perCallUsd: TYPESAFE_JEV.maximumCostUsd,
         catalog: { status: "bundled", updatedAt: null, refreshHours: 24, models: ["jev-1.14.0"] }, transmitted: { request: [], task: [], perSkill: [] } }] }).jev;
     expect(view()).toMatchObject({ switchOn: false, ready: false, missing: ["SWITCH_OFF", "MODEL_NOT_SELECTED", "TRANSMISSION_NOT_ALLOWED", "KEY_MISSING", "BUDGET_MISSING"] });
@@ -256,7 +256,8 @@ describe("JEV managed by the MCP server (4.0.0)", () => {
   });
 
   it("D0075-NOTICE: the workflow notice says classification support is configured only when advice can be asked", async () => {
-    const line = "스킬 분류 지원이 설정돼 있다. 다음 단계의 실제 작업과 전체 inventory를 classify_skills에 넘겨 조언을 받을 수 있다. 조언은 채택·교정·기각하고 최종 선택은 직접 한다.";
+    // Tool results are rendered in MODEL_LOCALE (en, 4.0.0); written from locales/en/server.json.
+    const line = "Skill classification support is configured: you may pass the next stage's actual work and the full inventory to classify_skills for advice. Adopt, correct or reject the advice and make the final selection yourself.";
     expect(await notice(false)).not.toContain(line);
     expect(await notice(true)).toContain(line);
   });
@@ -309,7 +310,7 @@ describe("JEV managed by the MCP server (4.0.0)", () => {
 
 async function notice(ready: boolean): Promise<string> {
   const receipt = { runId: "run-jev", revision: 3, state: "running",
-    plan: { currentStageId: "stage-02", nextStageId: null, stages: [{ stageId: "stage-02", requiredCapability: "minimal-implementation", skillId: "ponytail" }] } } as unknown as WorkflowReceiptV1;
+    plan: { currentStageId: "stage-02", nextStageId: null, stages: [{ stageId: "stage-02", requiredCapability: "minimal-implementation", skillId: "minimal-implementation" }] } } as unknown as WorkflowReceiptV1;
   const ok: ApiResultV1<unknown> = { schemaVersion: "1.0.0", ok: true, data: receipt, error: null };
   const store = new InMemoryPluginUpdateStore();
   store.putPluginUpdateState({ targetId: "agent-governance-suite", currentVersion: "4.0.0", latestVersion: "4.0.0", latestTag: "v4.0.0",
@@ -317,7 +318,7 @@ async function notice(ready: boolean): Promise<string> {
     nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null });
   const classification = { adviceReady: () => ready } as unknown as SkillClassificationGateway;
   const server = createMcpServer({ abortWorkflow: () => ok, getWorkflowStatus: () => ok } as unknown as WorkflowService, new PluginUpdateService(store),
-    undefined, undefined, undefined, new ContractValidator(), "default", null, null, {} as SessionMessageService, null, classification, metaIngress(), "ko");
+    undefined, undefined, undefined, new ContractValidator(), "default", null, null, {} as SessionMessageService, null, classification, metaIngress());
   const client = new Client({ name: "jev-notice", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);

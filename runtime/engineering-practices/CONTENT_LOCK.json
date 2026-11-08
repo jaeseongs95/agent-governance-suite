@@ -3,11 +3,11 @@
   "files": [
     {
       "path": "claude-overlay/adaptations/code-review.json",
-      "digest": "sha256:397155184d6b7e86144b3923370a4473237e4225617b6e497bcff9d4498b35d8"
+      "digest": "sha256:ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
     },
     {
       "path": "claude-overlay/adaptations/test-engineering.json",
-      "digest": "sha256:92a418a38cba69771073feaa970b61bafd37029c7cc6edcf659b95dd208b84b5"
+      "digest": "sha256:ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
     },
     {
       "path": "contracts/engineering-plan-result.v1.schema.json",
@@ -91,7 +91,7 @@
     },
     {
       "path": "skills/code-review/SKILL.md",
-      "digest": "sha256:35044d71897003c9c2ae21d6decd3bd7c37c87dfececb222aefbe2f4039760e6"
+      "digest": "sha256:e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b"
     },
     {
       "path": "skills/code-review/VERSION",
@@ -107,7 +107,7 @@
     },
     {
       "path": "skills/code-review/classification.json",
-      "digest": "sha256:65cc17db489b556082e9ce775fc23dbdb9d6d5d9a1f4113f33e12ee692fde22f"
+      "digest": "sha256:d90558325d4821c991f5ae56c501b2c345adb22930c40a881dcf7ac705a98a3b"
     },
     {
       "path": "skills/code-review/integration/skill-descriptor.json",
@@ -171,7 +171,7 @@
     },
     {
       "path": "skills/test-engineering/SKILL.md",
-      "digest": "sha256:c85f226a5b28c98891b6ed8a719a05e0c42463aa1a9fff83ce1c0b1f0aa2553a"
+      "digest": "sha256:5502a40df4d50f297a7d4b904a618624f40244fefabab4b6b901fa3daeb90651"
     },
     {
       "path": "skills/test-engineering/VERSION",
@@ -187,7 +187,7 @@
     },
     {
       "path": "skills/test-engineering/classification.json",
-      "digest": "sha256:00ed6899f4219dc0afa54b992dc94d3a7097ba9d786bb3eac1086cb84b79dc3a"
+      "digest": "sha256:2dcb163cb8ae6b0c5f42c16c89ab223db2e9ce890bd7754e32818d553c71c58e"
     },
     {
       "path": "skills/test-engineering/integration/skill-descriptor.json",

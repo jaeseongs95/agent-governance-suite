@@ -7,22 +7,21 @@ import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ADMIN_PAGE_HTML } from "../../mcp-server/src/admin-page.generated.js";
-import { type AdminChange, SETTING_CHANGE_REASONS } from "../../mcp-server/src/admin-log.js";
+import { ADMIN_DOMAIN, ADMIN_INTENT_VERSION, type AdminChange, adminRecordHash, canonicalJson, SETTING_CHANGE_REASONS, SETTING_TARGETS } from "../../mcp-server/src/admin-log.js";
 import { adminSettingsView, applyAdminJev, editExemptPaths, type JevInstallationView } from "../../mcp-server/src/admin-settings.js";
-import { AdminError } from "../../mcp-server/src/admin-webauthn.js";
+import { ADMIN_RP_ID, AdminError } from "../../mcp-server/src/admin-webauthn.js";
 import { ContextLayerService } from "../../mcp-server/src/context-layer-service.js";
 import { ContextLayerStore } from "../../mcp-server/src/context-layer-store.js";
 import { handleContinuityHook, runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
-import { resolveHostLocale } from "../../mcp-server/src/i18n.js";
 import { JevKeyVault, JevKeyVaultError, jevKeyFingerprint } from "../../mcp-server/src/jev-key-vault.js";
 import { InMemoryClassificationBudget } from "../../mcp-server/src/skill-classification/service.js";
 import type { ProviderProfile } from "../../mcp-server/src/skill-classification/types.js";
 import { ensureBootstrapped, fakeAuthenticator, type FakeAuthenticator, signAndCommit } from "../helpers/fake-authenticator.js";
 
 // The settings the admin page edits besides the contexts (AGS3-T-0024 completion condition 2): each is a signed record,
-// read through the verified fold by the hook (locale, edit gate), the MCP server (JEV switch, budget, preset, keys) and
+// read through the verified fold by the hook (edit gate), the MCP server (JEV switch, budget, preset, keys) and
 // the page. Each case signs the value, reads it at the real reader, then bends one thing (a tampered record, an
 // environment value, a moved ciphertext) and checks the fallback. A software authenticator stands in for the passkey.
 const directories: string[] = [];
@@ -79,36 +78,55 @@ function coversReason(reason: string): string {
   return reason;
 }
 
-function locale(environment: NodeJS.ProcessEnv) {
-  return resolveHostLocale({ environment, packageLocalePath: path.join(environment.AGENT_GOVERNANCE_SHARED_STATE_DIR!, "no-package-locale.json") });
+/** A locale.set intent in the canonical form a page before 4.0.0 signed; 4.0.0's prepareIntent no longer builds one. */
+function legacyLocaleIntent(value: string | null, prevTargetHash: string | null): string {
+  return canonicalJson({ v: ADMIN_INTENT_VERSION, domain: ADMIN_DOMAIN, rpId: ADMIN_RP_ID, target: "locale", prevTargetHash,
+    change: { op: "locale.set", locale: value }, issuedAt: new Date().toISOString() }, "Admin intent");
 }
 
-describe("display locale: signed, environment first", () => {
-  it("applies the signed locale, keeps the last valid one when a newer record is altered, and lets the environment win", () => {
-    const { service, owner, environment, file } = setup();
-    // No settings file and no package locale here: the root locale (en) is the default.
-    expect(locale(environment)).toMatchObject({ locale: "en", source: "root" });
-    const korean = signAndCommit(service, owner, { op: "locale.set", locale: "ko" }).record;
-    expect(locale(environment)).toMatchObject({ locale: "ko", source: "signed" });
-    const english = signAndCommit(service, owner, { op: "locale.set", locale: "en" }).record;
-    sql(file, "UPDATE admin_log SET signature = 'AAAA' WHERE seq = ?", english.seq);
-    expect(locale(environment)).toMatchObject({ locale: "ko", source: "signed" });
-    expect(service.adminState().failures).toMatchObject([{ target: "locale", code: "ADMIN_RECORD_ALTERED", revision: korean.seq }]);
-    // An environment value is never silently overridden: it wins, and the page shows the locale as locked by it.
-    expect(locale({ ...environment, AGENT_GOVERNANCE_LOCALE: "en" })).toMatchObject({ locale: "en", source: "environment" });
+/**
+ * A locale.set record signed before 4.0.0, as it sits in a log that 4.0.0 inherits. 4.0.0 removed the display locale
+ * (everything renders in MODEL_LOCALE) and commit refuses a new one, so the record is appended to the store directly,
+ * the way an older version wrote it; reading the log then replays and verifies it like any other record.
+ */
+function legacyLocaleRecord(file: string, signer: FakeAuthenticator, value: string | null, prevTargetHash: string | null = null) {
+  const intent = legacyLocaleIntent(value, prevTargetHash);
+  const assertion = signer.assert(intent);
+  const unsigned = { target: "locale", intent, credentialId: assertion.credentialId, authenticatorData: assertion.authenticatorData,
+    clientDataJSON: assertion.clientDataJSON, signature: assertion.signature, createdAt: new Date().toISOString() };
+  const store = ContextLayerStore.open(file, false)!;
+  try { return store.appendRecord({ ...unsigned, recordHash: adminRecordHash(unsigned) }, randomUUID()); } finally { store.close(); }
+}
+
+describe("display locale: removed in 4.0.0, older records still verify", () => {
+  it("refuses a new locale.set record and no longer offers a locale setting", () => {
+    const { service, owner } = setup();
+    const before = service.adminState().lastSeq;
+    expect(adminCode(() => signAndCommit(service, owner, { op: "locale.set", locale: "ko" }))).toBe("ADMIN_CHANGE_INVALID");
+    expect(adminCode(() => service.prepareIntent({ op: "locale.set", locale: null }, false))).toBe("ADMIN_CHANGE_INVALID");
+    // An intent built and signed outside prepareIntent is refused at commit too, not only at prepareIntent.
+    const outside = legacyLocaleIntent("ko", null);
+    expect(adminCode(() => service.commit({ intent: outside, assertion: owner.assert(outside), requestId: randomUUID(), proposalId: null })))
+      .toBe("ADMIN_CHANGE_INVALID");
+    expect(service.adminState().lastSeq).toBe(before);
+    expect(SETTING_TARGETS).not.toContain("locale");
+    expect(service.adminState().signedSettings).not.toHaveProperty("locale");
   });
 
-  it("falls back to the default when the only locale record was altered in the file", () => {
-    const { service, owner, environment, file } = setup();
-    const only = signAndCommit(service, owner, { op: "locale.set", locale: "ko" }).record;
-    sql(file, "UPDATE admin_log SET signature = 'AAAA' WHERE seq = ?", only.seq);
-    expect(locale(environment)).toMatchObject({ locale: "en", source: "root" });
-    expect(service.load("codex", "s").failures).toMatchObject([{ layer: "locale", code: "ADMIN_RECORD_ALTERED", revision: null }]);
+  it("verifies a locale.set record signed before 4.0.0 and lets it change nothing", () => {
+    const { service, owner, file } = setup();
+    const settings = service.adminState().signedSettings;
+    const record = legacyLocaleRecord(file, owner, "ko");
+    expect(record.target).toBe("locale");
+    expect(service.adminState().lastSeq).toBe(record.seq);
+    expect(service.adminState().failures).toEqual([]);
+    expect(service.load("codex", "s").failures).toEqual([]);
+    expect(service.adminState().signedSettings).toEqual(settings);
   });
 
-  it("renders the hook's text in the signed locale", () => {
-    const { service, owner, environment, directory } = setup();
-    signAndCommit(service, owner, { op: "global.set", body: "GLOBAL-RULE" });
+  it("renders the hook's text in English whatever locale record was signed and whatever the host locale", () => {
+    const { service, owner, environment, directory, file } = setup();
+    signAndCommit(service, owner, { op: "global.set", body: "GLOBAL-RULE 전역 본문" });
     const environmentFor = (extra: NodeJS.ProcessEnv) => ({ ...environment, AGENT_GOVERNANCE_DB_PATH: path.join(directory, "workflow.sqlite3"),
       AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(directory, "continuity.sqlite3"), AGENT_GOVERNANCE_ADMIN_PORT: "47615", ...extra });
     const start = (extra: NodeJS.ProcessEnv = {}) => {
@@ -116,10 +134,17 @@ describe("display locale: signed, environment first", () => {
         environmentFor(extra), "codex", true);
       return (JSON.parse(output) as { hookSpecificOutput: { additionalContext: string } }).hookSpecificOutput.additionalContext;
     };
-    expect(start()).toContain("[AGS 전역 컨텍스트");
-    signAndCommit(service, owner, { op: "locale.set", locale: "en" });
-    expect(start()).toContain("[AGS global context");
-    expect(start({ AGENT_GOVERNANCE_LOCALE: "ko" })).toContain("[AGS 전역 컨텍스트");
+    const english = start();
+    expect(english).toContain("[AGS global context");
+    expect(english).toContain("Standing instructions the user approved by passkey on the local admin page for every AGS session on this computer;");
+    // The user's own body may be Korean; the frame around it is not.
+    expect(english.replace("GLOBAL-RULE 전역 본문", "")).not.toMatch(/[가-힣]/u);
+    let head: string | null = null;
+    for (const value of ["ko", "en"]) {
+      head = legacyLocaleRecord(file, owner, value, head).recordHash;
+      for (const extra of [{}, { AGENT_GOVERNANCE_LOCALE: "ko" }, { AGENT_GOVERNANCE_LOCALE: "en" }]) expect(start(extra)).toBe(english);
+    }
+    expect(service.adminState().failures).toEqual([]);
   });
 });
 
@@ -258,7 +283,8 @@ describe("JEV switch, preset and budget", () => {
     const providers = [{ providerId: "typesafe", label: "TypeSafe", endpoint: "https://api.typesafe.ai/v1/systemone", credentialName: "JEV_API_KEY", perCallUsd: 0.01,
       catalog: { status: "bundled", updatedAt: null, refreshHours: 24, models: ["jev-1.14.0"] }, transmitted: { request: ["model"], task: ["originalPrompt"], perSkill: ["skillId"] } }];
     const view = adminSettingsView({ environment: { ...environment, JEV_ENV_KEY: "from-env", JEV_API_KEY: "jev-from-env" }, signed: service.adminState().signedSettings,
-      locale: { value: "ko", source: "root" }, localeOptions: ["ko", "en"], installation, usage: { spentUsd: 0.25, reservedUsd: 0.1 }, providers, profileFor: () => null });
+      installation, usage: { spentUsd: 0.25, reservedUsd: 0.1 }, providers, profileFor: () => null });
+    expect(view).not.toHaveProperty("locale");
     // Switched on but not ready: no model, no consent, no JEV key (an environment variable of that name does not count).
     expect(view.jev).toMatchObject({ switchOn: true, ready: false, missing: ["MODEL_NOT_SELECTED", "TRANSMISSION_NOT_ALLOWED", "KEY_MISSING"],
       presets: [{ presetId: "skill-classification", enabled: true }], budget: { signedLimitUsd: 3, perCallUsd: 0.01 }, usage: { spentUsd: 0.25, reservedUsd: 0.1 },
@@ -370,7 +396,9 @@ describe("shared file schema and the page", () => {
   });
 
   it("names every settings change the page signs", () => {
-    const ops: Array<AdminChange["op"]> = ["jev.set", "jevKey.set", "jevKey.delete", "locale.set", "editExempt.set"];
+    const ops: Array<AdminChange["op"]> = ["jev.set", "jevKey.set", "jevKey.delete", "editExempt.set"];
     for (const op of ops) expect(ADMIN_PAGE_HTML).toContain(`op: '${op}'`);
+    // 4.0.0 removed the display locale: the page signs no locale.set any more.
+    expect(ADMIN_PAGE_HTML).not.toContain("op: 'locale.set'");
   });
 });

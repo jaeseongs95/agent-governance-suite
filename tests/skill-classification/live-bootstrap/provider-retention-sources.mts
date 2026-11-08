@@ -8,6 +8,9 @@ export const PROVIDER_RETENTION_PURPOSE = "provider-observation-retention" as co
 // 3.9.0 wording successors keep the same purpose and spans: coordinate-subagents entry-details and its span digests
 // (AGS3-D-0038, 6b87904e; approved c899d687/0bca6a11) and model-effort-advisor SKILL.md and its span digests
 // (AGS3-D-0058, 6a313725; approved 3e47fe6b/fec98b36) now hold these digests.
+// 4.0.0 model-facing text optimization keeps the same purpose: both SKILL.md descriptions became one English line and
+// their description spans were rebound to its applicability and exclusion clauses (body spans unchanged), so the
+// coordinate-subagents and model-effort-advisor SKILL.md and classification.json hold these digests (r40 manifest).
 export const PROVIDER_RETENTION_SOURCE_CHANGES = Object.freeze([
   {path: "skills/codex-token-usage-analyzer/SKILL.md",
     previousDigest: "sha256:0de104afb13d2095c585ec64ca8a326dc8392f03749c70f0a21affab5e060e18", digest: null, bytes: 0},
@@ -15,19 +18,19 @@ export const PROVIDER_RETENTION_SOURCE_CHANGES = Object.freeze([
     previousDigest: "sha256:b9c2eca1a447e64000e57a8c25cd1faa279ad9487c6250b8fb44a15edba39082", digest: null, bytes: 0},
   {path: "skills/coordinate-subagents/SKILL.md",
     previousDigest: "sha256:9dfea8d94be467700ea4e8dac86a21040b57c1161ff46ddc0cf63cef97e305e7",
-    digest: "sha256:f5acb926234feda269ec7f0c5faa444fe31cc5f257ba854c505cd37fa4efe881", bytes: 2674},
+    digest: "sha256:33fcbf6591802dcbd865fb04365250aadf6658c586033a4d712ad6138182355f", bytes: 2850},
   {path: "skills/coordinate-subagents/classification.json",
     previousDigest: "sha256:bd2fd05d3e93cd4f4b08af021a0fa77ef3787b57550e17f75fbbe3ecdd629957",
-    digest: "sha256:1353938a8500fd23852ac71d64adcde2a9cd1275c22958823bf3d5c1dccc94af", bytes: 4370},
+    digest: "sha256:fc15c399cb59d536d77da0cf587e4c097c1b205a4764a39f0000d047750603fc", bytes: 4370},
   {path: "skills/coordinate-subagents/references/entry-details.md",
     previousDigest: "sha256:266ceb4fb5d7d3c553ef85485c93ac87c4df1bf0df5e2219fd99cc9a146bf882",
     digest: "sha256:301054a8d9a4a6e254315fbcc8eef1068cbed627afccc4d2f1dfc8e6bb799e46", bytes: 11026},
   {path: "skills/model-effort-advisor/SKILL.md",
     previousDigest: "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
-    digest: "sha256:5d554bb4fdb11ca9a2c833ff0a3403f23aaf28d5a9c459005a5222fb21cdd0ce", bytes: 2793},
+    digest: "sha256:a387ac3bf8532ab0def8c8e09b1262bf2563f3b03c67a7c5554b9515f3515f6d", bytes: 2738},
   {path: "skills/model-effort-advisor/classification.json",
     previousDigest: "sha256:2794ab01288c3d531c49b31704ba565bb554b64fb59369946c39237237038faf",
-    digest: "sha256:0e9f097f63f79e27dde80b433eb469df1fbe1a6decbbba2ad39c973f3c52eb21", bytes: 1516},
+    digest: "sha256:973040535da33d582888f8611ded9dd85ba3ab2dbf0fb9ef011e2e67fe1fef27", bytes: 1516},
 ]);
 
 /** Retention fixtures use current wire inputs, but never promote old skill-selection gold to the changed purpose. */

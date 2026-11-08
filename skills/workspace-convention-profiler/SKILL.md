@@ -1,6 +1,6 @@
 ---
 name: workspace-convention-profiler
-description: 낯선 저장소의 구조, 도구, 관례, 정의된 검증 명령과 변경 후보 지점을 읽기 전용으로 조사한다. AGENTS.md 우선순위 판정, 작업 범위 확정, diff 감사에는 사용하지 않는다.
+description: "Survey an unfamiliar repository's structure, tools, conventions, defined verification commands and candidate change points read-only. Not for AGENTS.md precedence, fixing task scope or diff audits."
 license: MIT
 metadata:
   version: "1.0.0"

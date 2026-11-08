@@ -1,6 +1,6 @@
 ---
 name: instruction-scope-resolver
-description: 특정 workspace 경로에 적용되는 AGENTS.md와 비어 있지 않은 AGENTS.override.md의 chain, 우선순위와 충돌 근거를 확인한다. 지침 파일 작성이나 일반 정책 검토에는 사용하지 않는다.
+description: "Resolve the chain, precedence and conflict evidence of AGENTS.md and non-empty AGENTS.override.md for a given workspace path. Not for writing instruction files or general policy review."
 license: MIT
 metadata:
   version: "1.0.0"

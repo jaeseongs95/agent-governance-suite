@@ -348,21 +348,26 @@ test("runtime scripts do not import Agent Governance Suite", async () => {
   }
 });
 
-test("i18n: errors render in the host locale, in process and from the CLI", () => {
+test("i18n: errors render in the model locale, whatever the host locale, in process and from the CLI", () => {
+  const hangul = /[가-힣]/u;
+  const withLocale = (locale) => {
+    const env = { ...process.env };
+    if (locale === undefined) delete env.AGENT_GOVERNANCE_LOCALE; else env.AGENT_GOVERNANCE_LOCALE = locale;
+    return env;
+  };
   const inLocale = (locale, action) => {
-    process.env.AGENT_GOVERNANCE_LOCALE = locale;
+    if (locale === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE; else process.env.AGENT_GOVERNANCE_LOCALE = locale;
     try { return action(); } finally { process.env.AGENT_GOVERNANCE_LOCALE = "en"; }
   };
   const thrown = () => { try { analyzeDiagnosis(null); } catch (error) { return error.message; } return null; };
-  assert.equal(inLocale("en", thrown), "Input must be an object.");
-  assert.equal(inLocale("ko", thrown), "입력은 객체여야 한다.");
-  assert.deepEqual(inLocale("en", () => validateReport(null)), ["report must be an object"]);
-  assert.deepEqual(inLocale("ko", () => validateReport(null)), ["report는 객체여야 한다"]);
-  for (const [locale, message] of [["en", "Input must be an object."], ["ko", "입력은 객체여야 한다."]]) {
+  for (const locale of ["en", "ko", undefined]) {
+    assert.equal(inLocale(locale, thrown), "Input must be an object.");
+    assert.deepEqual(inLocale(locale, () => validateReport(null)), ["report must be an object"]);
     const run = spawnSync(process.execPath, [path.join(skillRoot, "scripts", "cli.mjs")], {
-      encoding: "utf8", input: "null", env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale }
+      encoding: "utf8", input: "null", env: withLocale(locale)
     });
     assert.equal(run.status, 2);
-    assert.deepEqual(JSON.parse(run.stdout).error, { code: "INVALID_INPUT", message, details: null });
+    assert.deepEqual(JSON.parse(run.stdout).error, { code: "INVALID_INPUT", message: "Input must be an object.", details: null });
+    assert.doesNotMatch(run.stdout, hangul);
   }
 });

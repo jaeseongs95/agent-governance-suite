@@ -16,14 +16,15 @@ test('CLI blocked result has nonzero exit code, not silent success',t=>{const ro
 test('observe policy preserves negative verdict while reporting host policy outcome',t=>{const root=scratch(t,true),f=fixture();f.policy.mode='observe';f.binding.mode='observe';f.binding.policyDigest=hashJson(f.policy);f.review.verificationResults[0].result='FAIL';f.review.findings[0].status='VIOLATED';f.review.blockingFindingIds=['F-CLAIM'];f.review.verdict='FAIL';for(const k of ['policy','binding','review'])writeFileSync(path.join(root,k+'.json'),JSON.stringify(f[k]));const r=run(bundleArgs(root));assert.equal(r.status,3,r.stdout);assert.equal(JSON.parse(r.stdout).canProceedUnderSuppliedPolicy,true);assert.equal(JSON.parse(r.stdout).verdict,'FAIL');});
 test('skill-only clean-room installation works without repository or node_modules',t=>{const root=scratch(t);cpSync(SKILL,path.join(root,'skills/cs-engineering'),{recursive:true});const script=path.join(root,'skills/cs-engineering/scripts/validate.mjs'),example=path.join(root,'skills/cs-engineering/assets/examples/sqlite-queue');assert.equal(existsSync(path.join(root,'node_modules')),false);let r=run(['self-check'],script,root);assert.equal(r.status,0,r.stdout+r.stderr);assert.equal(JSON.parse(r.stdout).schemaEngine,'standalone-closed-schema-subset');r=run(bundleArgs(example),script,root);assert.equal(r.status,0,r.stdout+r.stderr);});
 test('an existing broken AGS runtime never silently falls back',t=>{const root=scratch(t);cpSync(SKILL,path.join(root,'skills/cs-engineering'),{recursive:true});mkdirSync(path.join(root,'runtime'));writeFileSync(path.join(root,'runtime/schema-validation.mjs'),'throw new Error("broken-existing-runtime");\n');const r=run(['self-check'],path.join(root,'skills/cs-engineering/scripts/validate.mjs'),root);assert.notEqual(r.status,0);assert.ok(r.stderr.includes('broken-existing-runtime'));});
-test('CLI error sentences follow the host locale (en and ko)',()=>{
-  const message=(args,locale)=>JSON.parse(run(args,cli,ROOT,locale).stdout).error.message;
-  assert.equal(message(['not-a-command'],'en'),'Unknown command.');
-  assert.equal(message(['not-a-command'],'ko'),'알 수 없는 명령이다.');
-  assert.equal(message(['rules','--domain','missing'],'en'),'Unknown domain: missing.');
-  assert.equal(message(['rules','--domain','missing'],'ko'),'알 수 없는 domain이다: missing.');
-  assert.equal(JSON.parse(run(['self-check'],cli,ROOT,'en').stdout).scope,'knowledge files, catalogue, rule digests and module structure');
-  assert.equal(JSON.parse(run(['self-check'],cli,ROOT,'ko').stdout).scope,'지식 파일, 카탈로그, 규칙 digest, 모듈 구조');
+test('CLI error sentences render in the model locale, whatever the host locale (en, ko, unset)',()=>{
+  const runIn=(args,locale)=>{const env={...process.env,NODE_PATH:''};if(locale===undefined)delete env.AGENT_GOVERNANCE_LOCALE;else env.AGENT_GOVERNANCE_LOCALE=locale;return spawnSync(process.execPath,[cli,...args],{cwd:ROOT,encoding:'utf8',timeout:15000,env});};
+  for(const locale of ['en','ko',undefined]){
+    const unknown=runIn(['not-a-command'],locale);
+    assert.equal(JSON.parse(unknown.stdout).error.message,'Unknown command.');
+    assert.doesNotMatch(unknown.stdout,/[가-힣]/u);
+    assert.equal(JSON.parse(runIn(['rules','--domain','missing'],locale).stdout).error.message,'Unknown domain: missing.');
+    assert.equal(JSON.parse(runIn(['self-check'],locale).stdout).scope,'knowledge files, catalogue, rule digests and module structure');
+  }
 });
 test('skill-only clean-room installation prints message keys because it has no AGS catalog',t=>{const root=scratch(t);cpSync(SKILL,path.join(root,'skills/cs-engineering'),{recursive:true});const script=path.join(root,'skills/cs-engineering/scripts/validate.mjs');
   assert.equal(existsSync(path.join(root,'runtime')),false);

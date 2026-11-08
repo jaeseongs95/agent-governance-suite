@@ -12,7 +12,7 @@ const script = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", 
 
 async function inLocale(locale, run) {
   const previous = process.env.AGENT_GOVERNANCE_LOCALE;
-  process.env.AGENT_GOVERNANCE_LOCALE = locale;
+  if (locale === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE; else process.env.AGENT_GOVERNANCE_LOCALE = locale;
   try { return await run(); } finally {
     if (previous === undefined) delete process.env.AGENT_GOVERNANCE_LOCALE; else process.env.AGENT_GOVERNANCE_LOCALE = previous;
   }
@@ -34,11 +34,12 @@ const request = (root, target, mayNotExist = false) => ({
   externalPolicyRefs: [],
 });
 
-for (const [locale, outside, finding, skipped] of [
-  ["en", "Target path is outside workspaceRoot.", "Target does not exist; future nested instructions cannot be observed: ", "Skipped unauthorized instruction root: "],
-  ["ko", "대상 경로가 workspaceRoot 밖에 있다.", "대상이 없어서, 앞으로 생길 하위 지침은 관찰할 수 없다: ", "승인되지 않은 지침 root를 건너뛰었다: "],
-]) {
-  test(`errors and findings are rendered in the ${locale} host locale`, async (t) => {
+// Script output renders in the model locale (en), whatever the host locale.
+const outside = "Target path is outside workspaceRoot.";
+const finding = "Target does not exist; future nested instructions cannot be observed: ";
+const skipped = "Skipped unauthorized instruction root: ";
+for (const locale of ["en", "ko", undefined]) {
+  test(`errors and findings are rendered in the model locale, whatever the host locale (${locale ?? "unset"})`, async (t) => {
     const root = await workspace(t);
     await inLocale(locale, async () => {
       await assert.rejects(resolveInstructionFiles(request(root, "../outside")), { code: "INVALID_INPUT", message: outside });
@@ -48,13 +49,14 @@ for (const [locale, outside, finding, skipped] of [
     });
   });
 
-  test(`the CLI writes its error sentence in the ${locale} host locale`, () => {
-    const result = spawnSync(process.execPath, [script], {
-      input: "", encoding: "utf8", windowsHide: true, env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale },
-    });
+  test(`the CLI writes its error sentence in the model locale, whatever the host locale (${locale ?? "unset"})`, () => {
+    const env = { ...process.env };
+    if (locale === undefined) delete env.AGENT_GOVERNANCE_LOCALE; else env.AGENT_GOVERNANCE_LOCALE = locale;
+    const result = spawnSync(process.execPath, [script], { input: "", encoding: "utf8", windowsHide: true, env });
     assert.equal(result.status, 1);
     const body = JSON.parse(result.stdout);
     assert.equal(body.error.code, "INVALID_INPUT");
-    assert.equal(body.error.message, locale === "en" ? "Expected JSON on stdin or --input <file>." : "stdin의 JSON 또는 --input <file>이 필요하다.");
+    assert.equal(body.error.message, "Expected JSON on stdin or --input <file>.");
+    assert.doesNotMatch(result.stdout, /[가-힣]/u);
   });
 }

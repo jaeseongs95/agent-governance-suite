@@ -16,15 +16,15 @@
       "path": "skills/code-review/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:35044d71897003c9c2ae21d6decd3bd7c37c87dfececb222aefbe2f4039760e6",
+      "digest": "sha256:e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b",
       "startByte": 0,
-      "endByte": 206
+      "endByte": 186
     },
     {
       "path": "skills/code-review/SKILL.md",
       "startLine": 14,
       "endLine": 14,
-      "digest": "sha256:35044d71897003c9c2ae21d6decd3bd7c37c87dfececb222aefbe2f4039760e6",
+      "digest": "sha256:e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b",
       "startByte": 0,
       "endByte": 46
     },
@@ -32,7 +32,7 @@
       "path": "skills/code-review/SKILL.md",
       "startLine": 13,
       "endLine": 14,
-      "digest": "sha256:35044d71897003c9c2ae21d6decd3bd7c37c87dfececb222aefbe2f4039760e6",
+      "digest": "sha256:e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b",
       "startByte": 0,
       "endByte": 66
     },
@@ -40,7 +40,7 @@
       "path": "skills/code-review/SKILL.md",
       "startLine": 14,
       "endLine": 14,
-      "digest": "sha256:35044d71897003c9c2ae21d6decd3bd7c37c87dfececb222aefbe2f4039760e6",
+      "digest": "sha256:e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b",
       "startByte": 165,
       "endByte": 264
     }
@@ -50,15 +50,15 @@
       "path": "skills/code-review/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:35044d71897003c9c2ae21d6decd3bd7c37c87dfececb222aefbe2f4039760e6",
-      "startByte": 207,
-      "endByte": 375
+      "digest": "sha256:e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b",
+      "startByte": 187,
+      "endByte": 330
     },
     {
       "path": "skills/code-review/SKILL.md",
       "startLine": 14,
       "endLine": 14,
-      "digest": "sha256:35044d71897003c9c2ae21d6decd3bd7c37c87dfececb222aefbe2f4039760e6",
+      "digest": "sha256:e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b",
       "startByte": 47,
       "endByte": 164
     },
@@ -66,7 +66,7 @@
       "path": "skills/code-review/SKILL.md",
       "startLine": 14,
       "endLine": 14,
-      "digest": "sha256:35044d71897003c9c2ae21d6decd3bd7c37c87dfececb222aefbe2f4039760e6",
+      "digest": "sha256:e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b",
       "startByte": 265,
       "endByte": 377
     }

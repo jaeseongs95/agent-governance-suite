@@ -104,8 +104,10 @@ describe("AGS3-D-0077 an ordinary step adds no skill check", () => {
   it("keeps the turn check an AGS progress tool already carries", () => {
     checkpoint("PROGRESS-D0065");
     const progress = hook("codex", { ...codexStep(), tool_name: "mcp__agent_governance_suite__record_stage_result", tool_input: {} });
-    expect(occurrences(progress.text, "[AGS 턴 확인]")).toBe(1);
+    // The turn check is model-only text in MODEL_LOCALE (English, 4.0.0), even with AGENT_GOVERNANCE_LOCALE=ko here.
+    expect(occurrences(progress.text, "[AGS turn check]")).toBe(1);
     expect(progress.text).not.toContain(STEP_KO);
+    expect(progress.text).not.toContain(STEP_EN);
   });
 });
 

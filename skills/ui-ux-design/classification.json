@@ -30,17 +30,21 @@
   "applicability": [
     {
       "path": "skills/ui-ux-design/SKILL.md",
-      "startLine": 4,
-      "endLine": 5,
-      "digest": "sha256:aafdde5ca740ccefe043207de25a6853da7936b4feb576de61a9dd3476f14e6f"
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:84b8cb1ae0228caa985054cd45ecd00c2547100f73d197c42ae14983ccb68b25",
+      "startByte": 0,
+      "endByte": 456
     }
   ],
   "exclusions": [
     {
       "path": "skills/ui-ux-design/SKILL.md",
-      "startLine": 6,
-      "endLine": 6,
-      "digest": "sha256:aafdde5ca740ccefe043207de25a6853da7936b4feb576de61a9dd3476f14e6f"
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:84b8cb1ae0228caa985054cd45ecd00c2547100f73d197c42ae14983ccb68b25",
+      "startByte": 457,
+      "endByte": 641
     }
   ]
 }

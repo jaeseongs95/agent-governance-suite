@@ -181,9 +181,13 @@ describe("signed source evidence and selection context regression", () => {
     }
     const tests = inventory.skills.find(skill => skill.skillId === "test-engineering")!;
     expect(tests.exclusions.join("\n")).not.toContain("테스트 설계·구현·회귀 보호가 요청되면 사용한다.");
-    const ponytail = inventory.skills.find(skill => skill.skillId === "ponytail")!;
-    expect(ponytail.applicability.join("\n")).not.toContain("Do NOT use for code review");
-    expect(ponytail.exclusions.join("\n")).not.toContain("Use on ANY");
+    // 4.0.0: minimal-implementation replaced ponytail; one sentence of its SKILL.md (line 70) splits into both sides.
+    expect(inventory.skills.some(skill => skill.skillId === "ponytail")).toBe(false);
+    const minimal = inventory.skills.find(skill => skill.skillId === "minimal-implementation")!;
+    expect(minimal.applicability.join("\n")).toContain("결과물을 만들거나 바꾸는 응답에 적용한다.");
+    expect(minimal.exclusions.join("\n")).toContain("검토·감사·검증·완료 판정");
+    expect(minimal.applicability.join("\n")).not.toContain("검토·감사·검증·완료 판정");
+    expect(minimal.exclusions.join("\n")).not.toContain("결과물을 만들거나 바꾸는 응답에 적용한다.");
   });
 
   it.each([
@@ -224,8 +228,7 @@ describe("signed source evidence and selection context regression", () => {
   it.each([
     // 3.8.0: the intake block lives in references/intake.md, and its continuity paragraph opens with the per-message check.
     ["orchestrator", "skills/orchestrator/references/intake.md", "새 사용자 메시지의 교정·결정·승인·금지·추가 작업·범위 변경"],
-    ["orchestrator", "skills/orchestrator/references/intake.md", "- 코드 작성·수정·설계·라이브러리·의존성 선택에는"],
-    ["orchestrator", "skills/orchestrator/references/intake.md", "- 대규모·장시간·동시 실행 전에는"],
+    ["orchestrator", "skills/orchestrator/references/intake.md", "- 대규모·장시간·동시 실행 전:"],
     ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", "- `pre-execution`에서는"],
     ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", "- `post-execution`에서는"],
     ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", "저장소의 동결 평가에서는"],
@@ -242,6 +245,16 @@ describe("signed source evidence and selection context regression", () => {
     const skill = inventory.skills.find(candidate => candidate.skillId === skillId)!;
     expect(skill.applicability.join("\n")).toContain(line);
     expect(skill.exclusions.some(text => line.includes(text))).toBe(false);
+  });
+
+  // 4.0.0 (token optimization): the "when making or changing any output" rule moved from the intake into the
+  // minimal-implementation description; the inventory keeps its subject (what is made or changed) intact.
+  it("retains the subject of the call-first rule in the minimal-implementation description", async () => {
+    const inventory = await loadSkillInventory({ root: process.cwd() });
+    expect(inventory.issues).toEqual([]);
+    const skill = inventory.skills.find(candidate => candidate.skillId === "minimal-implementation")!;
+    expect(skill.description).toContain("Use when making or changing any output (code, docs, data, config, procedures)");
+    expect(skill.description).toContain("invoke it first when available, active and not against user instructions");
   });
 
   it("keeps the no-specialist reply clause separate from orchestration exclusions", async () => {

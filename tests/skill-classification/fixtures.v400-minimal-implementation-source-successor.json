@@ -1,0 +1,354 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "v400-minimal-implementation-source-binding-r40",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "24c241d28e130912a0606090727b2b964c811757",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.v400-intake-source-successor.json",
+    "bytes": 2188,
+    "digest": "sha256:02ffdfefc1bca2a0e6116086025f0e40cf051e6d7652acf0b3acf251586c803b"
+  },
+  "sourceChangeRefs": [
+    {
+      "defectIds": [
+        "AGS3-D-0083",
+        "AGS3-D-0084"
+      ],
+      "sourceRevision": "22c512ddbe95cfcd07b8543c65a573139b52f18f",
+      "userDecision": {
+        "date": "2026-11-08",
+        "quote": "걍 ponytail 스킬을 빼고 AGS용으로 전면 재개편하자."
+      },
+      "observation": "외부 코드 전용 ponytail 스킬을 퇴역하고 모든 결과물(코드·문서·자료·설정·절차)에 쓰는 AGS 스킬 minimal-implementation 1.0.0으로 목적을 바꿔 계승했다. 모의·고정값·자리 채움·조용한 대체 경로·삼킨 오류가 낸 통과를 완료로 세지 않고 남은 대체물은 위치와 함께 적는다(D-0083). registry의 minimal-implementation provider는 실제 실패를 failed로 기록한다(D-0084, registry는 평가 원문 결속 밖). code-review·cs-engineering·test-engineering SKILL.md의 인계 대상 이름과 orchestrator entry-details의 인계·선택 문장이 ponytail에서 minimal-implementation으로 바뀌었다. 세 스킬과 orchestrator의 분류 span은 줄·시작 바이트 경계를 유지하고 digest만 다시 결속했으며 선택 텍스트가 바뀐 span은 cs-engineering applicability[1](endByte 305→319) 하나다. 원 평가 fixture·예산·라벨은 바꾸지 않는다."
+    },
+    {
+      "defectIds": [
+        "AGS3-D-0083"
+      ],
+      "sourceRevision": "86d3469a7ed2c74ca79c25c47bcd552558791cf5",
+      "observation": "공통 접수 기준은 24c241d2 블록에 4.0.0 변경 두 가지를 더했다: 결과물을 만들거나 바꿀 때 minimal-implementation을 먼저 호출하는 줄(ponytail 줄 대체)과 확인 3의 D-0083 문장「모의·고정값·자리 채움·조용한 대체 경로·삼킨 오류가 낸 통과는 근거로 세지 않고, 남은 대체물은 위치와 함께 미검증으로 적는다.」. 같은 판에서 분류 지원(classify_skills) 줄이 빠졌다. 원 평가 fixture·예산·라벨은 바꾸지 않는다."
+    },
+    {
+      "defectIds": [],
+      "sourceRevision": null,
+      "userDecision": {
+        "date": "2026-11-08",
+        "quote": "intake 뿐만이겠냐?",
+        "choice": "겹침 제거 + 턴·도구 큐까지"
+      },
+      "observation": "모델이 읽는 문구를 토큰이 적은 쪽으로 줄였다(이 manifest와 같은 커밋이라 sourceRevision은 null). 스킬 25개 SKILL.md description을 영어 한 줄로 바꿨고, 여러 줄이던 cs-engineering·prompt-engineering·solid-design·ui-ux-design은 본문이 6·3·3·3줄 당겨졌다. 공통 접수 기준은 압축했다: minimal-implementation 호출 줄은 그 스킬 description으로, 무거운 단계 줄은 mutation-risk-preflight·change-scope-guardian description으로 옮겼고 disable·부재 규칙은 첫 문단 끝으로 옮겼으며 분류 지원(classify_skills) 줄은 뺐다. 분류 span은 같은 규칙을 새 위치에서 가리킨다: description의 적용·제외 span은 영어 문장의 적용 절과 제외 절로, 본문 span은 줄만 옮기고 선택 바이트는 같으며, orchestrator intake span은 같은 문장을 새 줄·바이트에서 가리키고 classify_skills span은 그 줄이 가리키던 공통 분류 지원 계약(references/skill-classification.md) 3행 첫 문장으로 옮겼다. 다른 스킬로 옮겨 간 orchestrator 규칙은 분류 계약상 스킬 디렉터리 밖을 가리킬 수 없어 orchestrator span에서 빠지고 옮겨 간 스킬의 span이 가리킨다: 무거운 단계는 mutation-risk-preflight·change-scope-guardian description 적용 절, minimal-implementation 호출은 minimal-implementation classification에 새로 넣은 description 적용 span. classify_skills 줄의 계약 경로는 classify_skills 도구 설명 끝에 남았다. 목적 변경 원문 중 coordinate-subagents·model-effort-advisor의 SKILL.md·classification.json은 provider-retention 결속에서 같은 방식으로 다시 결속했다. 원 평가 fixture·예산·라벨은 바꾸지 않는다."
+    }
+  ],
+  "fixtureFileRewritten": false,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN",
+  "bindings": [
+    {
+      "path": "skills/orchestrator/classification.json",
+      "previousDigest": "sha256:36be943e9fa1d0acd8e1ccd2d98863fe4df6b7bc11cbe31481ef2c8d3114236e",
+      "digest": "sha256:3c36b6912957ff30b30177ea83d60a3ce77bf7caacbc6c5a5516fdc4c8d160bb",
+      "bytes": 4825
+    },
+    {
+      "path": "skills/orchestrator/references/intake.md",
+      "previousDigest": "sha256:982fa06a2765cd990c1a1e347dcc4f4744c2a2b6bff927e6dd485a0fd864f4cc",
+      "digest": "sha256:62b235d72ccee18c94a4fc2c4d40156079ac8b302f233fa0d4f8caa15fae9c64",
+      "bytes": 7355
+    },
+    {
+      "path": "skills/orchestrator/references/entry-details.md",
+      "previousDigest": "sha256:423e73afae8256f9834d149967aba3c818ef896597b08a3dd7c7fd67ae41cc20",
+      "digest": "sha256:8b71aed4e6c677ad30d80095496a1e5cf2a1c878e599be7e71c3a9f37f63ee8c",
+      "bytes": 25392
+    },
+    {
+      "path": "skills/code-review/classification.json",
+      "previousDigest": "sha256:7119963aff673aa5d95247ec90d77be9ebddf2ae64b9aba353e30a488a6b1510",
+      "digest": "sha256:d90558325d4821c991f5ae56c501b2c345adb22930c40a881dcf7ac705a98a3b",
+      "bytes": 1923
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "previousDigest": "sha256:e452e63ee1047d5162b348f16fa86a8c2464d054469ba7e1144960ef018cf2a6",
+      "digest": "sha256:e56c8d810d5105a25b24e737eaf4457f25345daf948a9a466dc7860cf57d3b6b",
+      "bytes": 3765
+    },
+    {
+      "path": "skills/cs-engineering/classification.json",
+      "previousDigest": "sha256:8eb3ed74d4d88977b9392a786f7ca23b3917ded3f584c377397b4a333a1003da",
+      "digest": "sha256:e61cb60d4c1246bf01db78ebba6439ec00fe280ab266ee175316ae90c0a9a77d",
+      "bytes": 2268
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "previousDigest": "sha256:624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51",
+      "digest": "sha256:cc53dfaf8586667655f585ec040f462c5523010e98c517ecd4af30399285b354",
+      "bytes": 6971
+    },
+    {
+      "path": "skills/test-engineering/classification.json",
+      "previousDigest": "sha256:1f0fd5742354b7d23d8656b34618786ff7502e08e4871595c08633df8c477d8c",
+      "digest": "sha256:2dcb163cb8ae6b0c5f42c16c89ab223db2e9ce890bd7754e32818d553c71c58e",
+      "bytes": 1746
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "previousDigest": "sha256:2541f44e4683adec7ca7037e088943bc01da17e6f6cca844be22a992d64a076b",
+      "digest": "sha256:5502a40df4d50f297a7d4b904a618624f40244fefabab4b6b901fa3daeb90651",
+      "bytes": 4850
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "previousDigest": "sha256:705c6f5aeff30330a5de661b4a28370a0e071e5fecd76cc6e8e88b074a96c250",
+      "digest": null,
+      "bytes": 0
+    },
+    {
+      "path": "skills/ponytail/classification.json",
+      "previousDigest": "sha256:6f263e26ab1bb4b49ebe751395f5323fed4f8074a72089fc8aa28b6a17765f18",
+      "digest": null,
+      "bytes": 0
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "previousDigest": "sha256:bffef87a7f7a2c88be3a5d778cb8dac01fcd25f11c2c55bf142da80a7031652f",
+      "digest": "sha256:3a21e6f3fb439651d475e5b4e5ea2ec8c09109996089a9b228160a2dee94b54e",
+      "bytes": 2594
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "previousDigest": "sha256:a67f069130fa3e03b93287088b035f4c2e7c663083d60e2bc5ec865e3032acb2",
+      "digest": "sha256:9811f52426e8cd62f7bab02e0d4e775eef07fce66aa480f234678e2bd1707647",
+      "bytes": 2725
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/classification.json",
+      "previousDigest": "sha256:4667c120a88582c292863a36d4406e68d54f3e4eb2286082ad00d4cc1e03cd1c",
+      "digest": "sha256:67d45fddb45a3d116a24808e9d1d7b3ec4f51e6cc2e121fc97e1179b17f2e375",
+      "bytes": 3942
+    },
+    {
+      "path": "skills/blocker-diagnostician/SKILL.md",
+      "previousDigest": "sha256:16ff661fbbbc380a3fdb711ebef884b44d5d06a891e7066c2e1e290c949d6862",
+      "digest": "sha256:aced0a996617743f726d5c337144b0dcc7b4e05f21c6fa8257ec08f2ac623256",
+      "bytes": 2904
+    },
+    {
+      "path": "skills/blocker-diagnostician/classification.json",
+      "previousDigest": "sha256:d406a448dc61ddfe51db6d715cee4c492e42a4204a77888bf0e3350a9c8ed762",
+      "digest": "sha256:f1fa438f4bcc679598ef207371b989d5863fa7c79cb6ca04261d2b1ca2c0055f",
+      "bytes": 3078
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "previousDigest": "sha256:c40977808a57ee10e97c4945caa8f5f9363140e745f2dbac002ece68cba6d7ca",
+      "digest": "sha256:cc9942a0075f497609f20738cb0ee44dacec9ed5708fab98de90112390f38a56",
+      "bytes": 3020
+    },
+    {
+      "path": "skills/change-scope-guardian/classification.json",
+      "previousDigest": "sha256:e42a9918e6bc6990352b532e24f905726516aa77922c23a143845c74e1eb7542",
+      "digest": "sha256:1ec81d58746875dd7206861b7cf2c47fdaa8661580d7f606868f2673fa2b4f59",
+      "bytes": 1266
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "previousDigest": "sha256:de0f1e1f294fdf0ec84844375816918f23431dddf92f43c2a18bbdf5ab3ba53d",
+      "digest": "sha256:9f1f333d95e030a52ce7481e4224e9a6f3a738563ae37f01c4d8a7b499b6d22d",
+      "bytes": 2381
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/classification.json",
+      "previousDigest": "sha256:53aa8cb62e1caf1972224de5d8b1cdc80e4e4687f3f0fec467f7db59371aabf7",
+      "digest": "sha256:f227a2ec1f3aa39904b1632842bf76c20ee82aff37b225d31747b2a64ffa6616",
+      "bytes": 1584
+    },
+    {
+      "path": "skills/independent-audit-gate/SKILL.md",
+      "previousDigest": "sha256:8ce58c59628bb7cff11f508e5bfebf7e2d2bf37b7fadea1890f41d7ed370c669",
+      "digest": "sha256:8e319bab46f7917c9a3db56f9e1c7a1a5382bf6d3f60ea5930a79df43a8f15c5",
+      "bytes": 4223
+    },
+    {
+      "path": "skills/independent-audit-gate/classification.json",
+      "previousDigest": "sha256:95dc4179c5f20b705957f236b377c5356cce183906fbaeb37745695a658e8332",
+      "digest": "sha256:9ffdc8f6a241bb71442b2b996f8c84c11d85079241e8d17061a0ec13cf32d29f",
+      "bytes": 3638
+    },
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "previousDigest": "sha256:9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9",
+      "digest": "sha256:ce18f967eced69131623b4be36b3051f169bee50c609d33d35a9cc831f7c5abd",
+      "bytes": 5749
+    },
+    {
+      "path": "skills/independent-deliberation-panel/classification.json",
+      "previousDigest": "sha256:0670008787912ad6e46c79ea8bc33e21726a14a23d0ee43069306bf11158bd03",
+      "digest": "sha256:301d03f986b68b333d8c314a44c279e80f099c912611c5a1833cd43da67c4ec5",
+      "bytes": 2373
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "previousDigest": "sha256:9873f1f03764a68e4f8c123510287308e229c156bdf5ed9fe5eec5306d729b8b",
+      "digest": "sha256:d88f23d4a48762f3feb3c229a0e23248aec6d29fe9c6cf3c0bbfd8a9b3932eef",
+      "bytes": 2169
+    },
+    {
+      "path": "skills/instruction-scope-resolver/classification.json",
+      "previousDigest": "sha256:eeed71b8551ec9fda0ed5aec40afa54de2e63b2c58a6bc1a9fe27d26673655a5",
+      "digest": "sha256:0477be108fbbf41867660d5e9eb0474dcdd8849a90ef6a640972dd838a71e905",
+      "bytes": 2297
+    },
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "previousDigest": "sha256:5557007286bec1081302f175b0047a4a2a8ce1aa2b66779ee93b43c698143f0c",
+      "digest": "sha256:1ad93bd29855c00ff1b8a4ef8d79fce60cf4513a1c7eacf681daf9683157ab6d",
+      "bytes": 2696
+    },
+    {
+      "path": "skills/iteration-frame-auditor/classification.json",
+      "previousDigest": "sha256:b8e50685024cbc3c9be4d37141ae377aa9aa383e1fcd511ddb59d029d04c7063",
+      "digest": "sha256:91a5470d1cd8e22c3b995e217fd0372fe642ccc6b3007d5299894441ffb41c70",
+      "bytes": 3366
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "previousDigest": "sha256:79e2d73edeab4edfe39d5b3663a67990aeeee47fcd65fbee8dcf176457cd9a25",
+      "digest": "sha256:ee07877c49b98b1feedcced70acc04c990e1597eea92f94efd4ba645de051c1f",
+      "bytes": 2164
+    },
+    {
+      "path": "skills/korean-prose-editor/classification.json",
+      "previousDigest": "sha256:0ed8b69e72dc6b156de412743084e7600a84d466f9d113cdc4c792608d768701",
+      "digest": "sha256:60a0a6aefa87435d82e6e22a7d325f1e0bf711e5726aeb056042909a663a0f61",
+      "bytes": 2791
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "previousDigest": "sha256:f029843b9eb899e3aa47f732db76476ba557e7f5d4604db6229fd260ca8acbc1",
+      "digest": "sha256:b4ce554d7b9ac3ed053653fc6ed59b481c60a53c4f4f028de9c4e5e7550e0e66",
+      "bytes": 5557
+    },
+    {
+      "path": "skills/mutation-risk-preflight/classification.json",
+      "previousDigest": "sha256:57535b32573ddc20846c419ce6c40700436e2e5b162b6ec5bcb97a29f1d6902a",
+      "digest": "sha256:ca97d7d2d25e2d5c4fc3c130c3195293db1d9d676e3e192f63e3f2f741fba013",
+      "bytes": 1840
+    },
+    {
+      "path": "skills/prompt-engineering/SKILL.md",
+      "previousDigest": "sha256:f6f48836e02c7940798a39f458a92d54836d6ce270e6f41db1d509a17970e46e",
+      "digest": "sha256:7c503e5ac1deb17145e3b919f28ce588eea41650885cfdd17e42f1616abb4e65",
+      "bytes": 8117
+    },
+    {
+      "path": "skills/prompt-engineering/classification.json",
+      "previousDigest": "sha256:df16346b0c5ad95902636b88287e8f67d80bdff8da40aeb9ed3a422ac079a589",
+      "digest": "sha256:f58c87aaaf8cc8cfe6f15fd7ab4a1b43e2500173caf34520141fe400f1f50c4c",
+      "bytes": 890
+    },
+    {
+      "path": "skills/recovery-strategy-selector/SKILL.md",
+      "previousDigest": "sha256:c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e",
+      "digest": "sha256:9c1e3a3a6b898627add1bac83b42a7759bcdd61d766957e94871ef5c1a34d06c",
+      "bytes": 2008
+    },
+    {
+      "path": "skills/recovery-strategy-selector/classification.json",
+      "previousDigest": "sha256:18879dd13ad1211d37bde3d4f8b24431e593947278cd0277f97d4c0c6500ada7",
+      "digest": "sha256:1465e2a62a0dc035978716030018df22d276c682dffa026957e7229d4ae97fec",
+      "bytes": 2917
+    },
+    {
+      "path": "skills/session-board/SKILL.md",
+      "previousDigest": "sha256:b1c3965810498674df78fe6f7c60290bd83aef03d7f07cc9e4313920524005a4",
+      "digest": "sha256:2fcbf631b54b00a554b180e8a0e0bc0d627698c8525753cf3948f4e220d63216",
+      "bytes": 2767
+    },
+    {
+      "path": "skills/session-board/classification.json",
+      "previousDigest": "sha256:b5ba10e642f740e0b40acab750c0909a88bfc6de2bfe5b24388863cd6334d63c",
+      "digest": "sha256:58862b4efbddfd024fb5fa923d37569200c9198900f5916b4c9c0afb1292df4c",
+      "bytes": 2817
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "previousDigest": "sha256:294e5f7314049536f8eab3f1799bc5879a1d95e740310ad6b163f047fe492081",
+      "digest": "sha256:c74b2c9b79ab8bbcce8984a5412e97f0dc523b7cf7165ca8e83994a2eab7f149",
+      "bytes": 3047
+    },
+    {
+      "path": "skills/software-security-auditor/classification.json",
+      "previousDigest": "sha256:ef252bf544e2f6917c10bb35456d173ea705de14b47c6d630b4ee2c2a92294de",
+      "digest": "sha256:d841e324b40ceccd19c8625663350fac4bf3f1d520d44a56cf2b66d7e3cb0133",
+      "bytes": 1806
+    },
+    {
+      "path": "skills/solid-design/SKILL.md",
+      "previousDigest": "sha256:402a4e5a5c44493b7dc4a33a21b6cd0f29e701ed9a060422975159caef609aac",
+      "digest": "sha256:f9a4344d4cc6ddaf7c6ed2dbee841a6a90bade593c1d34bc1932b70b7d545469",
+      "bytes": 7901
+    },
+    {
+      "path": "skills/solid-design/classification.json",
+      "previousDigest": "sha256:6c93f273ba7ed585f494d6043289e1bd6bac969390d788a50a69f021653f26f3",
+      "digest": "sha256:ef74b5dda1f011ffbb9a83f1bbabedfce88b9ca6ef4ff4eae6026b147ed8d6c5",
+      "bytes": 833
+    },
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "previousDigest": "sha256:92b529e3423386cce32d3b2eb6302c42b6aba344624604d413fc0e90f86ef61b",
+      "digest": "sha256:3545dd0730b8d322af7efe42e547496717ffa26b7276af136877e4d24dcb4369",
+      "bytes": 2597
+    },
+    {
+      "path": "skills/task-contract/classification.json",
+      "previousDigest": "sha256:cabfe58da82a63612b826fd9637ca20418b0d061b8c978218309733baeaa1aac",
+      "digest": "sha256:c3aebf6642a5a41f733da70d3725a373f869c1af41f5205a0e1dab0d1dfa4adb",
+      "bytes": 1235
+    },
+    {
+      "path": "skills/workspace-convention-profiler/SKILL.md",
+      "previousDigest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
+      "digest": "sha256:cc19f66a63f78350d9ac1bf34e44682b5564c3bf9d48dce47765ce04398dc4c1",
+      "bytes": 1983
+    },
+    {
+      "path": "skills/workspace-convention-profiler/classification.json",
+      "previousDigest": "sha256:7725b4d90a72e37bd9b2fa00f97c8e9d9ba760faf99b096e2ff4fa58d94d8f61",
+      "digest": "sha256:70c68b3048b682949cb5725b82bd59006a46d64def2df16473486df9e99b858b",
+      "bytes": 3468
+    }
+  ],
+  "retiredSkills": [
+    {
+      "skillId": "ponytail",
+      "replacement": "minimal-implementation",
+      "paths": [
+        "skills/ponytail/SKILL.md",
+        "skills/ponytail/classification.json"
+      ],
+      "retiredSpans": 7
+    }
+  ],
+  "purposeSuccessors": [
+    {
+      "skillId": "minimal-implementation",
+      "version": "1.0.0",
+      "predecessorSkillId": "ponytail",
+      "sources": [
+        {
+          "path": "skills/minimal-implementation/SKILL.md",
+          "bytes": 7827,
+          "digest": "sha256:6f22c2b35848ed62928abcc49647ef19784840c75f7c4790061227130127c5a8"
+        },
+        {
+          "path": "skills/minimal-implementation/classification.json",
+          "bytes": 2239,
+          "digest": "sha256:cb04c83de70c5486afa604a17029979d199a81ff9eef7104a4c0259c9a35a4ff"
+        }
+      ]
+    }
+  ]
+}

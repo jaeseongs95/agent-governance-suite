@@ -26,14 +26,19 @@ const v390 = JSON.parse(v390Bytes.toString("utf8"));
 const v390Later = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
 // The chain end since 3.9.0: 4.0.0 (r39) rebinds the orchestrator descriptor and intake again.
 const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
-const chainEnd = (file: string) => v400.bindings.find((row: {path: string}) => row.path === file) ?? v390Later(file);
+// 4.0.0 r40 rebinds the descriptor, intake and entry-details for the minimal-implementation successor (AGS3-D-0083).
+const v400Minimal = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-minimal-implementation-source-successor.json"), "utf8"));
+const chainEnd = (file: string) => v400Minimal.bindings.find((row: {path: string}) => row.path === file)
+  ?? v400.bindings.find((row: {path: string}) => row.path === file) ?? v390Later(file);
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], {cwd: root});
 /** r36 bytes: the v390 base for a source the 3.9.0 successor rebinds, otherwise the current file. */
 function deliverySource(file: string): Buffer {
-  const later = v390Later(file);
+  // A source only r40 rebinds (the orchestrator SKILL.md one-line description) still has its r36 bytes at the r40 base.
+  const later = v390Later(file) ?? v400Minimal.bindings.find((row: {path: string}) => row.path === file);
   if (!later) return readFileSync(path.join(root, file));
-  const source = execFileSync("git", ["show", `${v390.sourceBaseRevision}:${file}`], {cwd: root});
+  const base = v390Later(file) ? v390.sourceBaseRevision : v400Minimal.sourceBaseRevision;
+  const source = execFileSync("git", ["show", `${base}:${file}`], {cwd: root});
   expect(hash(source)).toBe(later.previousDigest);
   return source;
 }
@@ -99,7 +104,7 @@ it("D36 ID01-04 appends exact delivery sources after frozen r35 and rebinds only
         changed.push(`orchestrator:${group}[${index}]`);
         expect(actual.toString("utf8")).toBe(prior.toString("utf8").replace(oldCase, currentCase));
       }
-      if (!v390Later(span.path)) expect(skill[group]).toContain(actual.toString("utf8").trim());
+      if (!chainEnd(span.path)) expect(skill[group]).toContain(actual.toString("utf8").trim());
       compared++;
     }
   }

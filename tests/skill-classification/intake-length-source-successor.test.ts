@@ -22,12 +22,17 @@ const v390Bytes = readFileSync(path.join(root, "tests/skill-classification/fixtu
 const v390 = JSON.parse(v390Bytes.toString("utf8"));
 // The latest successor row since 3.9.0 (4.0.0 rebinds the orchestrator descriptor and intake again).
 const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
-const v390Later = (file: string) => v400.bindings.find((row: {path: string}) => row.path === file) ?? v390.bindings.find((row: {path: string}) => row.path === file);
+// 4.0.0 r40 rebinds the descriptor and intake once more for the minimal-implementation successor (AGS3-D-0083).
+const v400Minimal = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-minimal-implementation-source-successor.json"), "utf8"));
+const v390Later = (file: string) => v400Minimal.bindings.find((row: {path: string}) => row.path === file)
+  ?? v400.bindings.find((row: {path: string}) => row.path === file) ?? v390.bindings.find((row: {path: string}) => row.path === file);
 /** r34 assertions read its exact sources at the later r35 ancestor. */
 function intakeLengthSource(file: string): Buffer {
-  const binding = writtenCases.bindings.find((row: {path: string}) => row.path === file);
+  // A source only r40 rebinds (the orchestrator SKILL.md one-line description) still has its r34 bytes at the r40 base.
+  const nearest = writtenCases.bindings.some((row: {path: string}) => row.path === file) ? writtenCases : v400Minimal;
+  const binding = nearest.bindings.find((row: {path: string}) => row.path === file);
   if (!binding) return readFileSync(path.join(root, file));
-  const source = execFileSync("git", ["show", `${writtenCases.sourceBaseRevision}:${file}`], {cwd: root});
+  const source = execFileSync("git", ["show", `${nearest.sourceBaseRevision}:${file}`], {cwd: root});
   expect(hash(source)).toBe(binding.previousDigest);
   return source;
 }

@@ -11,16 +11,14 @@ import { fileURLToPath } from "node:url";
 import { types } from "node:util";
 import { failureContext, retainFailureCause, retainFailureSecondary } from "../../runtime/failure-diagnostics.mjs";
 import { diagnosticRecord, streamStderr, writeDiagnostic, writeStageFailure } from "../../runtime/diagnostic-record.mjs";
-import { msg, render, resolveHostLocale } from "../../runtime/i18n.mjs";
+import { MODEL_LOCALE, msg, render } from "../../runtime/i18n.mjs";
 import { cleanupLegacyServerKey, legacyCleanupActed } from "../scripts/legacy-server-key-cleanup.mjs";
 
-let denyLocale = null;
 // The component name of every stderr record this connector writes (AGS3-D-0023 common format).
 const COMPONENT = "antigravity-hook-runner";
-/** A deny reason in the host locale (docs/contributing/i18n.md 4.1 ①); the locale is read once, when the first reason is shown. */
+/** A deny reason; the model reads it, so it is rendered in MODEL_LOCALE. */
 function denyReason(key, params) {
-  denyLocale ??= resolveHostLocale().locale;
-  return render(msg(key, params), denyLocale);
+  return render(msg(key, params), MODEL_LOCALE);
 }
 
 // Queue wake defaults are passed per invocation; importing this module never changes user ENV.

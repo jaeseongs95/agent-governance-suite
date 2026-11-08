@@ -62,18 +62,21 @@ describe("compact orchestrator registry query", () => {
     expect(missing.missingCapabilities).toEqual(["not-installed-capability"]);
   });
 
-  it("reports usage errors in the host locale", () => {
-    const run = (locale) => spawnSync(process.execPath, [queryScript], {
-      cwd: fileURLToPath(new URL("../../", import.meta.url)),
-      encoding: "utf8",
-      windowsHide: true,
-      env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale },
-    });
-    const english = run("en");
-    const korean = run("ko");
-    expect(english.status).toBe(2);
-    expect(korean.status).toBe(2);
-    expect(english.stderr).toBe("Specify at least one --capability value or use --all.\n");
-    expect(korean.stderr).toBe("--capability 값을 하나 이상 지정하거나 --all을 쓴다.\n");
+  it("reports usage errors in the model locale, whatever the host locale", () => {
+    const run = (locale) => {
+      const env = { ...process.env, AGENT_GOVERNANCE_LOCALE: locale };
+      if (locale === undefined) delete env.AGENT_GOVERNANCE_LOCALE;
+      return spawnSync(process.execPath, [queryScript], {
+        cwd: fileURLToPath(new URL("../../", import.meta.url)),
+        encoding: "utf8",
+        windowsHide: true,
+        env,
+      });
+    };
+    for (const locale of ["en", "ko", undefined]) {
+      const result = run(locale);
+      expect(result.status).toBe(2);
+      expect(result.stderr).toBe("Specify at least one --capability value or use --all.\n");
+    }
   });
 });

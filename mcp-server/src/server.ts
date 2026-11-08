@@ -24,7 +24,7 @@ import {
   WorkflowContractError,
   contractErrorBody,
 } from "../../contracts/types.js";
-import { CONTENT_LANGUAGE_META, MODEL_LOCALE, msg, render, resolveHostLocale, resolveRequestLocale, ROOT_LOCALE, type MessageKey, type MessageRef, type SupportedLocale } from "./i18n.js";
+import { CONTENT_LANGUAGE_META, MODEL_LOCALE, msg, render, ROOT_LOCALE, type MessageKey, type MessageRef, type SupportedLocale } from "./i18n.js";
 import { CATALOGS } from "./i18n-catalog.generated.js";
 import { BoardFormatError, locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../runtime/session-board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
@@ -32,7 +32,7 @@ import { contractFailure, failureContext, failureReason, retainFailureSecondary 
 import { writeDiagnostic } from "./hook-error-diagnostics.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
-import { installedSkillTargets, skillIntakeText } from "./skill-intake.js";
+import { skillIntakeText } from "./skill-intake.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
 import { type ContinuityGateway, UnavailableContinuityService } from "./continuity-service.js";
 import {
@@ -357,7 +357,7 @@ export function workflowChangeNotice(data: unknown, receipt: (runId: string) => 
   const stage = plan?.stages.find(candidate => candidate.stageId === stageId);
   return [
     ...(stage ? [msg("server.workflowChange.stage", { stageId: stage.stageId, capability: stage.requiredCapability, provider: stage.skillId })] : []),
-    msg("server.workflowChange.skills", { targets: installedSkillTargets() }),
+    msg("server.workflowChange.skills", {}),
     msg("hooks.checkpointCue.refresh", {}),
     ...(classificationConfigured ? [msg("server.workflowChange.classification", {})] : []),
   ];
@@ -661,14 +661,11 @@ export function createMcpServer(
   trust: TrustService | null = null,
   classification: SkillClassificationGateway | null = null,
   callerIngress: CallerIngress | null = null,
-  /** The locale for requests that name none (docs/contributing/i18n.md 4.1 ②). */
-  defaultLocale: SupportedLocale = resolveHostLocale().locale,
   /** The shared global and role contexts; null leaves their tools unavailable. */
   contextLayers: ContextLayerService | null = null,
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
-    // SDK 1.30.0 fixes instructions at construction (private _oninitialize), so they use the service default locale.
     { capabilities: { tools: {} }, instructions: serverInstructions(MODEL_LOCALE) },
   );
 
@@ -928,14 +925,13 @@ export function createMcpServer(
     return tools;
   };
   // The default list is built now, so a schema that cannot be advertised fails at startup as before.
-  toolsFor(defaultLocale);
-  server.setRequestHandler(ListToolsRequestSchema, async (request) => {
-    const locale = resolveRequestLocale(request.params?._meta, defaultLocale);
-    return { tools: toolsFor(locale), _meta: { [CONTENT_LANGUAGE_META]: locale } };
+  toolsFor(MODEL_LOCALE);
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return { tools: toolsFor(MODEL_LOCALE), _meta: { [CONTENT_LANGUAGE_META]: MODEL_LOCALE } };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
-    const locale = resolveRequestLocale(request.params._meta, defaultLocale);
+    const locale = MODEL_LOCALE;
     const respond = <T>(result: ApiResultV1<T>) => toolResult(result, locale);
     const handle = async () => {
     const args = asRecord(request.params.arguments);

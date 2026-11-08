@@ -44,8 +44,9 @@ async function withServer(
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(path.join(repositoryRoot, "skills", "registry.json"), validator), validator, new InMemoryWorkflowStore());
   const updates = options.updates ?? new PluginUpdateService(new InMemoryPluginUpdateStore(), { fetcher: async () => { throw new Error("Unexpected network request."); } });
-  const server = createMcpServer(service, updates, undefined, undefined, undefined, validator, "default", options.hostAttestation, null, undefined, null, // The English source texts are compared here, so the service default locale is en.
-    options.classification, options.ingress ?? fixedIngress(), "en");
+  // The English source texts are compared here; tool results are rendered in MODEL_LOCALE (en).
+  const server = createMcpServer(service, updates, undefined, undefined, undefined, validator, "default", options.hostAttestation, null, undefined, null,
+    options.classification, options.ingress ?? fixedIngress());
   const client = new Client({ name: "al09-owned-regressions", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);

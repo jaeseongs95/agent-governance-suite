@@ -95,6 +95,8 @@ export const FIELD_TERMS = Object.freeze([
 // A sentence that only says where the skill is not used, or what it does not do
 // in place of another owner, does not narrow where it is used...
 const EXCLUSION = /(?:사용하지|쓰지|적용하지|대신하지|대신 수행하지) 않는다|범위가 아니다|\b[Dd]o not (?:use|activate|apply)\b/u;
+// English (4.0.0 descriptions) names the exclusion before the words it excludes: "Not for implementation, ...".
+const EXCLUSION_LEAD = /\b(?:[Nn]ot (?:automatically )?for|[Dd]o not (?:use|activate|apply)(?: it)? for)\b/gu;
 // ...unless it ties the skill to the field ("코드에만", "코드 이외에는", "only for code").
 const ONLY = /에만|이외|\bonly\b/u;
 const CLAUSE_END = /(?:고|며|지만|으나|는데),\s|[;:]|\b(?:and|but),\s/u;
@@ -166,6 +168,8 @@ function allowance(sentence, raw, index, length, underBranchHeading) {
   // The word must sit in the clause the exclusion closes, not in an earlier clause ("..판정하고, ..대신하지 않는다").
   const exclusion = EXCLUSION.exec(sentence.slice(index));
   if (exclusion && !CLAUSE_END.test(sentence.slice(index, index + exclusion.index)) && !ONLY.test(sentence)) return "exclusion";
+  const excludedBy = [...sentence.slice(0, index).matchAll(EXCLUSION_LEAD)].at(-1);
+  if (excludedBy && !CLAUSE_END.test(sentence.slice(excludedBy.index, index)) && !ONLY.test(sentence)) return "exclusion";
   return null;
 }
 

@@ -116,10 +116,13 @@ describe("substitutes never make a result complete (AGS3-D-0083)", () => {
     expect(skill).toContain("「완료」로 보고하지 않고 위치(파일·줄·항목), 이유, 실제 경로로 바꿀 조건을 적는다.");
     expect(skill).toContain("오류를 삼키거나 다른 원인·성공 상태로 바꾸지 않는다.");
     const intake = readFileSync(`${root}skills/orchestrator/references/intake.md`, "utf8");
-    expect(intake).toContain("모의·고정값·자리 채움·조용한 대체 경로·삼킨 오류가 낸 통과는 근거로 세지 않고, 남은 대체물은 위치와 함께 미검증으로 적는다.");
+    // Fragments, not the whole sentence: claude-plugin.test.mjs keeps every whole intake sentence in the shared source.
+    expect(intake).toContain("모의·고정값·자리 채움·조용한 대체 경로·삼킨 오류가 낸 통과는 근거가 아니며");
+    expect(intake).toContain("남은 대체물은 위치와 함께 미검증으로 적는다");
     // The rule sits in check 3 (making, changing and reporting), which applies to every field.
     const check3 = intake.split("\n").find((line) => line.startsWith("3. "))!;
-    expect(check3).toContain("삼킨 오류가 낸 통과는 근거로 세지 않고");
+    expect(check3).toContain("삼킨 오류가 낸 통과는 근거가 아니며");
+    expect(check3).toContain("남은 대체물은 위치와 함께 미검증으로 적는다");
   });
 });
 
@@ -129,9 +132,12 @@ describe("the implementation step records an actual failure as failed (AGS3-D-00
   function started() {
     const validator = new ContractValidator();
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-    const planned = service.planWorkflow(task(["minimal-implementation"]));
+    // Only an orchestrated plan starts a run; a direct plan is refused by startWorkflow.
+    const planned = service.planWorkflow({ ...task(["minimal-implementation"]), orchestration: { requested: true, mcpAvailable: true } });
     expect(planned.error).toBeNull();
-    const receipt = service.startWorkflow(planned.data!).data!;
+    const started = service.startWorkflow(planned.data!);
+    expect(started.error).toBeNull();
+    const receipt = started.data!;
     const stage = receipt.plan.stages.find((candidate) => candidate.requiredCapability === "minimal-implementation")!;
     return { service, receipt, stage };
   }

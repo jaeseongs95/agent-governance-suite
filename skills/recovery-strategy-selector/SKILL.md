@@ -1,6 +1,6 @@
 ---
 name: recovery-strategy-selector
-description: 확인된 반복 실패 원인 뒤에 실행 가능한 복구 전략을 비교하고, 새 작업 계약으로 안전하게 넘길 RecoveryHandoff.v1을 만든다. 원인 미확정 진단, 수정 실행, 기존 run 변경에는 사용하지 않는다.
+description: "After a repeated failure's cause is confirmed, compare executable recovery strategies and produce a RecoveryHandoff.v1 to pass safely to a new task contract. Not for unconfirmed-cause diagnosis, fixes or changing existing runs."
 license: MIT
 metadata:
   version: "0.2.0"

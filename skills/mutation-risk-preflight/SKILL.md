@@ -1,6 +1,6 @@
 ---
 name: mutation-risk-preflight
-description: 되돌리기 어려운 영구 삭제·덮어쓰기, 운영 데이터 변경·마이그레이션, 배포·게시, 권한·결제·전역 설정 변경 직전에 정확한 대상, 승인, 영향 범위와 복구 조건을 읽기 전용으로 점검한다. 같은 디스크 안 이동, 되돌릴 수 있는 로컬 편집, 시험·작업 브랜치 push, 실제 변경이나 변경 후 감사에는 사용하지 않는다.
+description: "Right before a hard-to-reverse change or one affecting others (permanent delete or overwrite, production data change or migration, deploy or publish, permission, payment or global setting change), check target, approval, impact and recovery read-only. Judge heaviness by scale, reversibility, real data, shared resources and public-state impact, not the action's name. Same-disk moves and renames, reversible local edits and checks, and test or work-branch pushes are just done, without this skill; not for performing the change or post-change audit."
 license: MIT
 metadata:
   version: "1.0.3"

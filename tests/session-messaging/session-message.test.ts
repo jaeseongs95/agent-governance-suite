@@ -1121,6 +1121,13 @@ describe("in-process messaging and vendor-neutral adapter", () => {
       expect(instructions).toMatch(/autoWake만으로 현재 깨어남이나 이후 전달을 단정하지 않는다/u);
       expect(instructions).not.toMatch(/available이 아니면 상대는 지금 깨어나지|깨어날 때 전달된다|대개 상대가 작업 중|앞선 깨우기가 이미 상대에게 넘어가/u);
     }
+    // 4.0.0: the delivered instructions and tool descriptions are the MODEL_LOCALE (en) rendering; the same rules there.
+    const english = serverInstructions();
+    expect(english).toBe(serverInstructions("en"));
+    expect(english).toContain("Report only confirmed queueing/delivery, not autoWake.");
+    const sendEn = render({ key: "tools.send_session_message.description", params: {} }, "en");
+    expect(sendEn).toContain("Success means queued, not received.");
+    expect(sendEn).toContain("Advisory autoWake (state, reason, basisAt) tells whether the recipient's idle wake works now; it is not proof of delivery, completion or permission.");
   });
   it("keeps the send-act rules where a send is prepared (AGS3-D-0032)", () => {
     // 3.9.0: the once-only, one-recipient and no-re-query rules moved from the MCP guide to prepare_session_message,
@@ -1139,6 +1146,8 @@ describe("in-process messaging and vendor-neutral adapter", () => {
     for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions("ko")]) {
       expect(instructions).toMatch(/no-live-relay·unsupported이고 상대의 처리가 지금 필요하면 확인된 전달 상태와 AGS 자동 깨우기 경로를 사용할 수 없다는 사실을 사용자에게 알린다/u);
     }
+    // The delivered (MODEL_LOCALE, en) guide keeps the same rule.
+    expect(serverInstructions()).toContain("no-live-relay/unsupported → if needed now, wake once via host and tell the user confirmed delivery and that auto-wake is unavailable;");
   });
 
   it("limits extra host wake to an unavailable path needed now and preserves empty-wake handling (AGS-D-0354)", () => {
@@ -1153,6 +1162,15 @@ describe("in-process messaging and vendor-neutral adapter", () => {
       expect(instructions).toMatch(/본문을 받지 못한 메시지의 내용은 짐작하지 않는다/u);
       expect(koTools["tools.acknowledge_session_messages.description"]).toContain("이는 처리 근거이며 완료나 승인이 아니다");
     }
+    // The delivered (MODEL_LOCALE, en) guide and descriptions keep the same rules.
+    const english = serverInstructions();
+    expect(english).toContain("After send: autoWake available → no extra wake;");
+    expect(english).toContain("no-live-relay/unsupported → if needed now, wake once via host");
+    expect(english).not.toMatch(/latched/u);
+    expect(english).toContain("wake-unanswered → wake not answered yet.");
+    expect(english).toContain("Empty wakes/messages don't stop work; don't guess unreceived bodies.");
+    expect(render({ key: "tools.send_session_message.description", params: {} }, "en")).toContain("degraded: it may wait for its next turn end, tool boundary or input;");
+    expect(render({ key: "tools.acknowledge_session_messages.description", params: {} }, "en")).toContain("This is evidence of processing, not completion or approval.");
   });
 
   it("escapes peer bodies inside one bounded JSON block", async () => {
@@ -1344,7 +1362,7 @@ describe("session message MCP tools", () => {
       lastNotifiedAt: null, lastErrorCode: null,
     });
     const workflow = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-    const server = createMcpServer(workflow, new PluginUpdateService(updateStore), undefined, undefined, undefined, validator, "default", null, null, new SessionMessageService(directory), null, null, metaIngress(), "en");
+    const server = createMcpServer(workflow, new PluginUpdateService(updateStore), undefined, undefined, undefined, validator, "default", null, null, new SessionMessageService(directory), null, null, metaIngress());
     const client = new Client({ name: "session-messages", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
@@ -1388,7 +1406,8 @@ describe("session message MCP tools", () => {
       messageKey: "services.sessionMessage.cli.stdinReadFailed",
       params: { errorCode: "EBADF", reason: "bad file descriptor" },
     });
-    // The same key renders in the host locale the CLI resolved; the operating system's reason stays as it is.
+    // The CLI renders in MODEL_LOCALE (en, 4.0.0); an explicit locale still renders that catalog (ko kept as translation
+    // material). The operating system's reason stays as it is.
     expect(formatSessionMessageStdinReadError(Object.assign(new Error("bad file descriptor"), { code: "EBADF" }), "ko")).toMatchObject({
       errorCode: "EBADF",
       error: "stdin에서 세션 메시지 요청을 읽지 못했다(EBADF): bad file descriptor",

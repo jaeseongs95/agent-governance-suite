@@ -127,25 +127,31 @@ describe("workflow gate", () => {
     expect(handleContinuityHook(write("a.ts"), target, "claude-code", NO_ENV)).toEqual({});
     const denied = handleContinuityHook(write("c.ts"), target, "claude-code", NO_ENV);
     expect(denied).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny",
-      permissionDecisionReason: `[AGS] workflow 없이 제품 파일 3개째 변경: ${file("c.ts")} (앞서 바꾼 제품 파일 2개 포함). 먼저 workflow를 시작하라(최소 시작 호출 예: ${KO_EXAMPLE}).` } });
+      permissionDecisionReason: `[AGS] Product file #3 changed without a workflow: ${file("c.ts")} (incl. 2 changed earlier). Start a workflow first (minimal call: ${EN_EXAMPLE}).` } });
     // Only refusals and distinct files are rows; the refused file is not counted.
     expect(events(target).filter(event => event === "phase-file")).toHaveLength(2);
     expect(events(target).filter(event => event === "phase-deny")).toHaveLength(1);
   });
 
-  it("renders the refusal and its start example in the host locale (AGENT_GOVERNANCE_LOCALE=en)", () => {
+  // The deny reason is model-only text: the same English (MODEL_LOCALE, 4.0.0) whatever the host locale. The ko start
+  // example stays in the ko catalog as translation material.
+  it("renders the refusal and its start example in the same English whatever the host locale", () => {
     expect(minimalWorkflowStartExample("ko")).toBe(KO_EXAMPLE);
     expect(minimalWorkflowStartExample("en")).toBe(EN_EXAMPLE);
-    const target = service();
-    for (const name of ["a.ts", "b.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", EN_ENV)).toEqual({});
-    expect(reason(handleContinuityHook(write("c.ts"), target, "claude-code", EN_ENV))).toBe(
-      `[AGS] Changing a 3rd product file without a workflow: ${file("c.ts")} (including 2 product files changed earlier). Start a workflow first (minimal start call: ${EN_EXAMPLE}).`);
-    // An unreadable target is shown in the same locale; the locale changes only the text, never the count.
-    const unread = service();
-    const patch = (name: string) => edit("codex", "apply_patch", { command: `*** Begin Patch\n*** Update File: ${name}\n*** End Patch` });
-    for (const name of ["a.ts", "b.ts"]) expect(handleContinuityHook(patch(name), unread, "codex", EN_ENV)).toEqual({});
-    expect(reason(handleContinuityHook(edit("codex", "apply_patch", {}), unread, "codex", EN_ENV)))
-      .toMatch(/^\[AGS\] Changing a 3rd product file without a workflow: \(path unknown: apply_patch\) \(including 2 product files changed earlier\)\./u);
+    for (const environment of [NO_ENV, { AGENT_GOVERNANCE_LOCALE: "ko" }, EN_ENV]) {
+      const target = service();
+      for (const name of ["a.ts", "b.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", environment)).toEqual({});
+      const refused = reason(handleContinuityHook(write("c.ts"), target, "claude-code", environment));
+      expect(refused).toBe(
+        `[AGS] Product file #3 changed without a workflow: ${file("c.ts")} (incl. 2 changed earlier). Start a workflow first (minimal call: ${EN_EXAMPLE}).`);
+      expect(refused).not.toMatch(/[가-힣]/u);
+      // An unreadable target is shown in the same text; the host locale changes nothing, least of all the count.
+      const unread = service();
+      const patch = (name: string) => edit("codex", "apply_patch", { command: `*** Begin Patch\n*** Update File: ${name}\n*** End Patch` });
+      for (const name of ["a.ts", "b.ts"]) expect(handleContinuityHook(patch(name), unread, "codex", environment)).toEqual({});
+      expect(reason(handleContinuityHook(edit("codex", "apply_patch", {}), unread, "codex", environment)))
+        .toMatch(/^\[AGS\] Product file #3 changed without a workflow: \(path unknown: apply_patch\) \(incl\. 2 changed earlier\)\./u);
+    }
   });
 
   it("refuses the third agy CLI write_file by its Path", () => {
@@ -162,7 +168,7 @@ describe("workflow gate", () => {
     expect(handleContinuityHook(unread(), target, "claude-code", NO_ENV)).toEqual({});
     expect(handleContinuityHook(unread(), target, "claude-code", NO_ENV)).toEqual({});
     const denied = handleContinuityHook(unread(), target, "claude-code", NO_ENV);
-    expect(reason(denied)).toContain("(경로 미확인: Write)");
+    expect(reason(denied)).toContain("(path unknown: Write)");
   });
 
   it("refuses one patch that adds three files at once, and Codex gets the same deny shape", () => {
@@ -170,7 +176,7 @@ describe("workflow gate", () => {
     const patch = ["*** Begin Patch", "*** Add File: a.ts", "*** Add File: b.ts", "*** Add File: c.ts", "*** End Patch"].join("\n");
     const output = handleContinuityHook(edit("codex", "apply_patch", { command: patch }), target, "codex", NO_ENV);
     expect(isDeny(output)).toBe(true);
-    expect(reason(output)).toContain("workflow 없이 제품 파일 3개째 변경");
+    expect(reason(output)).toContain("Product file #3 changed without a workflow");
   });
 
   it("does not count the OS temporary directory, the host's memory folder or a configured exempt path", () => {
@@ -297,7 +303,7 @@ describe("infrastructure failures fail open with their cause", () => {
     for (const name of ["a.ts", "b.ts", "c.ts", "d.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", NO_ENV)).toEqual({});
     const output = handleContinuityHook(stop(), target, "claude-code", NO_ENV);
     expect(output).toEqual({ hookSpecificOutput: { hookEventName: "Stop",
-      additionalContext: "[AGS] workflow 상태를 확인하지 못해 이번 구간의 제품 파일 변경을 막지 않았다. 원인 코드: phase-gate-unavailable:WORKFLOW_MCP_UNAVAILABLE." } });
+      additionalContext: "[AGS] The workflow state could not be checked, so product file changes in this window were not blocked. Cause codes: phase-gate-unavailable:WORKFLOW_MCP_UNAVAILABLE." } });
     expect(handleContinuityHook(stop(), target, "claude-code", NO_ENV)).toEqual({});
   });
 
@@ -307,7 +313,7 @@ describe("infrastructure failures fail open with their cause", () => {
     target.recordWorkflowStartFailure(session, new WorkflowContractError("BINDING_REQUIRED", msg("workflow.service.unkeyedFailure", { message: "No host observation." }), { reasonCode: "TRANSCRIPT_LIMIT_EXCEEDED" }));
     expect(handleContinuityHook(write("c.ts"), target, "claude-code", NO_ENV)).toEqual({});
     expect(handleContinuityHook(stop(), target, "claude-code", NO_ENV)).toMatchObject({ hookSpecificOutput: {
-      additionalContext: expect.stringContaining("원인 코드: workflow-start-failed:BINDING_REQUIRED:TRANSCRIPT_LIMIT_EXCEEDED.") } });
+      additionalContext: expect.stringContaining("Cause codes: workflow-start-failed:BINDING_REQUIRED:TRANSCRIPT_LIMIT_EXCEEDED.") } });
     // The pass ends with the window: the next window is enforced again.
     for (const name of ["d.ts", "e.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", NO_ENV)).toEqual({});
     expect(isDeny(handleContinuityHook(write("f.ts"), target, "claude-code", NO_ENV))).toBe(true);
@@ -319,8 +325,8 @@ describe("infrastructure failures fail open with their cause", () => {
     target.recordWorkflowStartFailure(session, new WorkflowContractError("BINDING_REQUIRED", msg("workflow.service.unkeyedFailure", { message: "No host observation." }), { reasonCode: "TRANSCRIPT_LIMIT_EXCEEDED" }));
     expect(handleContinuityHook(write("alpha/1.ts"), target, "claude-code", NO_ENV)).toEqual({});
     const text = String((handleContinuityHook(stop(), target, "claude-code", NO_ENV).hookSpecificOutput as Record<string, unknown>).additionalContext);
-    expect(text).toContain("[AGS] 이번 구간에 workflow 시작이 실패했다. 원인 코드: workflow-start-failed:BINDING_REQUIRED:TRANSCRIPT_LIMIT_EXCEEDED. 편집 관문은 평소대로 판정했다.");
-    expect(text).not.toContain("막지 않았다");
+    expect(text).toContain("[AGS] A workflow start failed in this window. Cause codes: workflow-start-failed:BINDING_REQUIRED:TRANSCRIPT_LIMIT_EXCEEDED. The edit gate judged edits as usual.");
+    expect(text).not.toContain("were not blocked");
   });
 });
 
@@ -366,7 +372,7 @@ describe("phase checks per actor (AGS3-D-0060, AGS3-D-0061, AGS3-D-0063)", () =>
     expect(handleContinuityHook(stop(), target, "claude-code", NO_ENV)).toEqual({});
     expect(events(target)).not.toContain("phase-edit");
     expect(handleContinuityHook(write("src/b.ts"), target, "claude-code", NO_ENV)).toEqual({});
-    expect(text(handleContinuityHook(stop(), target, "claude-code", NO_ENV))).toContain("[AGS 단계 확인]");
+    expect(text(handleContinuityHook(stop(), target, "claude-code", NO_ENV))).toContain("[AGS stage check]");
   });
 
   it("passes every edit a subagent makes inside the workflow it started, past the file limit (AGS3-D-0063)", () => {
@@ -493,11 +499,10 @@ describe("several workflows in one session", () => {
     const target = service(workflowWith([{ state: "open", rootId: "root-alpha", runState: "running", scope: "alpha" }]));
     target.prepareWorkflowStart(session, "root-alpha");
     for (const name of ["alpha/1.ts", "a.ts", "b.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", NO_ENV)).toEqual({});
-    expect(reason(handleContinuityHook(write("c.ts"), target, "claude-code", NO_ENV))).toBe(`[AGS] 진행 중인 workflow의 writeTargets 밖 제품 파일 3개째 변경: ${file("c.ts")} (앞서 바꾼 범위 밖 제품 파일 2개 포함). `
-      + `진행 중인 작업과 다른 작업이면 겹치지 않는 writeTargets로 workflow를 하나 더 시작하라. 한 세션은 workflow 여러 개를 함께 진행할 수 있다(최소 시작 호출 예: ${KO_EXAMPLE}).`);
-    expect(reason(handleContinuityHook(write("d.ts"), target, "claude-code", EN_ENV))).toBe(`[AGS] Changing a 3rd product file outside the writeTargets of the running workflows: ${file("d.ts")} `
-      + `(including 2 product files changed earlier outside them). If this is a different task from the running work, start another workflow with writeTargets that do not overlap. `
-      + `One session can run several workflows together (minimal start call: ${EN_EXAMPLE}).`);
+    expect(reason(handleContinuityHook(write("c.ts"), target, "claude-code", NO_ENV))).toBe(`[AGS] Product file #3 changed outside the running workflows' writeTargets: ${file("c.ts")} `
+      + `(incl. 2 changed earlier outside them). If this is separate work, start another workflow with non-overlapping writeTargets; a session can run several at once (minimal call: ${EN_EXAMPLE}).`);
+    expect(reason(handleContinuityHook(write("d.ts"), target, "claude-code", EN_ENV))).toBe(`[AGS] Product file #3 changed outside the running workflows' writeTargets: ${file("d.ts")} `
+      + `(incl. 2 changed earlier outside them). If this is separate work, start another workflow with non-overlapping writeTargets; a session can run several at once (minimal call: ${EN_EXAMPLE}).`);
   });
 
   it("shows the pending stages and goal of every active root at Stop", () => {

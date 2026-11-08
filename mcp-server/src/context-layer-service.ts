@@ -88,7 +88,7 @@ export interface ProposalResult {
   adminUrl: string | null;
 }
 
-/** The text a hook adds, as catalog messages (rendered by the hook in the host locale). */
+/** The text a hook adds, as catalog messages (rendered by the hook in MODEL_LOCALE). */
 export type ContextLayerText = readonly MessageRef[];
 
 function invalid(ref: MessageRef, reasonCode: string, details: Record<string, unknown> = {}): WorkflowContractError {
@@ -142,7 +142,7 @@ function failureLayer(target: string): string {
 
 /**
  * The failures that change what this session works with: the keys, the global context, the roles, the settings the page
- * edits (locale, edit gate exceptions, JEV and its keys) and its own binding.
+ * edits (edit gate exceptions, JEV and its keys) and its own binding.
  */
 function sessionFailures(state: AdminState, host: string, sessionId: string): LayerFailureView[] {
   const own = new Set<string>(["keys", "global", "roles", ...SETTING_TARGETS, bindingTarget(host, sessionId)]);
@@ -166,7 +166,7 @@ export interface AdminPageState {
   lastSeq: number;
 }
 
-const NO_SETTINGS: AdminSignedSettings = { jev: null, jevKeys: [], locale: null, editExempt: null };
+const NO_SETTINGS: AdminSignedSettings = { jev: null, jevKeys: [], editExempt: null };
 
 /**
  * The shared context policy every entry point uses: MCP tools, lifecycle hooks and the local admin page. What the user
@@ -414,7 +414,6 @@ export class ContextLayerService {
           jev: state.jev,
           jevKeys: [...state.jevKeys.values()].map(key => ({ name: key.name, fingerprint: key.fingerprint, setAt: key.issuedAt,
             stored: store.jevKey(key.name)?.fingerprint === key.fingerprint })),
-          locale: state.locale,
           editExempt: state.editExempt,
         },
         lastSeq: state.lastSeq,
@@ -486,6 +485,9 @@ export class ContextLayerService {
       }
       const issued = Date.parse(intent.issuedAt);
       if (now.getTime() - issued > ADMIN_INTENT_TTL_MS || issued - now.getTime() > 60_000) throw new AdminError("ADMIN_INTENT_EXPIRED");
+      // Retired in 4.0.0: older signed locale.set records still verify when the log is replayed (fold), but no new one
+      // is appended, whether its intent came from prepareIntent or was built and signed elsewhere.
+      if (intent.change.op === "locale.set") throw new AdminError("ADMIN_CHANGE_INVALID", { op: intent.change.op });
       const state = this.fold(store);
       if (intent.target === "keys" && intent.prevTargetHash === null && intent.change.op === "key.add" && state.keys.size > 0) {
         throw new AdminError("ADMIN_ALREADY_BOOTSTRAPPED", { bootstrap: state.bootstrap });

@@ -5,7 +5,8 @@
 // V3: outside the reselected orchestrator descriptor, every rebound descriptor keeps its span identities and line
 //     bounds; only the reviewed wording spans change their selected text.
 // V4: every span of every rebound descriptor selects valid UTF-8 from the current bytes and the live inventory holds it
-//     (earlier successor tests leave these live checks to this test).
+//     (earlier successor tests leave these live checks to this test). A source a 4.0.0 successor rebinds again is read
+//     at that successor's base (its r38 bytes), and its live check moves to that successor's test.
 // V5: a one-byte change to the r38 manifest is rejected.
 // TEST: pnpm exec vitest run tests/skill-classification/v390-source-successor.test.ts (Linux test server).
 import {execFileSync} from "node:child_process";
@@ -50,6 +51,8 @@ it("V1-V2 binds every 3.9.0 source after frozen r37 and ends the chain at the cu
   expect(current).toMatchObject({manifest: {revision: CURRENT_SOURCE_MANIFEST.revision}, digest: CURRENT_SOURCE_MANIFEST.digest});
   const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
   expect(v400.frozenPredecessor).toEqual({path: file, bytes: bytes.length, digest: hash(bytes)});
+  // 4.0.0 r40 follows r39: it rebinds the orchestrator descriptor, intake and entry-details once more.
+  const v400Minimal = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-minimal-implementation-source-successor.json"), "utf8"));
   const paths = (manifest.bindings as Binding[]).map(row => row.path);
   expect(new Set(paths).size).toBe(paths.length);
   expect(paths).toHaveLength(21);
@@ -57,7 +60,9 @@ it("V1-V2 binds every 3.9.0 source after frozen r37 and ends the chain at the cu
     expect(hash(atBase(binding.path))).toBe(binding.previousDigest);
     const later = (v400.bindings as Binding[]).find(row => row.path === binding.path);
     if (later) expect(later.previousDigest).toBe(binding.digest);
-    const latest = later ?? binding;
+    const afterLater = (v400Minimal.bindings as Binding[]).find(row => row.path === binding.path);
+    if (afterLater) expect(afterLater.previousDigest).toBe((later ?? binding).digest);
+    const latest = afterLater ?? later ?? binding;
     const actual = readFileSync(path.join(root, binding.path));
     expect([actual.length, hash(actual)]).toEqual([latest.bytes, latest.digest]);
     expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest.digest);
@@ -72,18 +77,32 @@ it("V3-V4 keeps rebound span identities and holds every current selection in the
   expect(descriptors.map(relative => relative.split("/")[1])).toEqual(["acceptance-evidence-validator", "orchestrator",
     "blocker-diagnostician", "evaluation-validity-auditor", "independent-audit-gate", "iteration-frame-auditor",
     "mutation-risk-preflight", "recovery-strategy-selector", "session-board"]);
+  // 4.0.0 successors (r39, r40) rebind these descriptors and sources again (r40: one-line English descriptions and the
+  // compressed intake). A source they rebind holds its r38 bytes at the first such successor's base, and its live
+  // selections are compared with the inventory in that successor's test.
+  const later400 = [JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8")),
+    JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-minimal-implementation-source-successor.json"), "utf8"))];
+  const reboundAfter = (relative: string) => later400.find(later => (later.bindings as Binding[]).some(row => row.path === relative));
+  const r38Source = (relative: string): Buffer => {
+    const later = reboundAfter(relative);
+    if (!later) return readFileSync(path.join(root, relative));
+    const source = execFileSync("git", ["show", `${later.sourceBaseRevision}:${relative}`], {cwd: root, maxBuffer: 4 * 1024 * 1024});
+    expect(hash(source)).toBe((later.bindings as Binding[]).find(row => row.path === relative)!.previousDigest);
+    return source;
+  };
   const inventory = await loadSkillInventory({root}); expect(inventory.issues).toEqual([]);
   const changed: string[] = []; let compared = 0;
   for (const descriptor of descriptors) {
     const skillId = descriptor.split("/")[1]!;
-    const before = JSON.parse(atBase(descriptor).toString("utf8")), after = JSON.parse(readFileSync(path.join(root, descriptor), "utf8"));
+    const before = JSON.parse(atBase(descriptor).toString("utf8")), after = JSON.parse(r38Source(descriptor).toString("utf8"));
     const skill = inventory.skills.find(row => row.skillId === skillId)!;
     for (const group of ["applicability", "exclusions"] as const) {
       // WP-F reselected the orchestrator spans over the shortened intake (AGS3-D-0032); only their live evidence is compared.
       if (skillId !== "orchestrator") expect(after[group]).toHaveLength(before[group].length);
       for (const [index, span] of (after[group] as Span[]).entries()) {
-        const actual = selected(readFileSync(path.join(root, span.path)), span);
-        expect(skill[group]).toContain(actual.toString("utf8").trim()); compared++;
+        const actual = selected(r38Source(span.path), span);
+        if (!reboundAfter(descriptor) && !reboundAfter(span.path)) expect(skill[group]).toContain(actual.toString("utf8").trim());
+        compared++;
         if (skillId === "orchestrator") continue;
         const old = before[group][index] as Span;
         expect([span.path, span.startLine, span.endLine]).toEqual([old.path, old.startLine, old.endLine]);

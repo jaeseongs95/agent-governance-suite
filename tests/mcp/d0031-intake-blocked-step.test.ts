@@ -50,7 +50,9 @@ describe("shared intake: a blocked step holds only itself and its dependents (AG
     // What each narrower sentence said besides continuing stays where it was.
     expect(source).toContain("빠진 제약은 권한 내 작업에 결속된 정본부터 찾고 없으면 그 부분만 묻는다");
     // 3.9.0 (AGS3-D-0032): the refused-classification handling is read in the classification contract the intake names.
-    expect(source).toContain("[공통 분류 지원 계약](references/skill-classification.md)대로 쓴다");
+    // 4.0.0 (token optimization): the classify_skills description (MODEL_LOCALE catalog) names that contract instead.
+    const classify = (JSON.parse(readFileSync(new URL("locales/en/tools.json", root), "utf8")) as Record<string, string>)["tools.classify_skills.description"];
+    expect(classify).toContain("follow the shared classification contract failure handling and continue the independent work with skills you choose");
     expect(readFileSync(new URL("skills/orchestrator/references/skill-classification.md", root), "utf8")).toContain("미확정 상태에서");
   });
 
@@ -59,7 +61,7 @@ describe("shared intake: a blocked step holds only itself and its dependents (AG
       expect(count(instructions, blockedStep)).toBe(1);
       expect(count(instructions, "독립적인 작업은 계속한다")).toBe(0);
     }
-    for (const pkg of ["claude-plugin", "claude-plugin-en", "codex-plugin-en"]) {
+    for (const pkg of ["claude-plugin"]) { // 4.0.0: the English packages were removed
       const installed = block(readFileSync(new URL(`${pkg}/skills/orchestrator/references/intake.md`, root), "utf8"));
       expect(installed, pkg).toBe(source);
     }

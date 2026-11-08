@@ -124,7 +124,10 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     // 3.8.0 (AGS3-D-0032): the shared intake moved to references/intake.md, which every host gets at context start.
     // 3.9.0 (AGS3-D-0032): the intake names the contract; the AGENT's final selection and scores-are-not-approval are
     // read in the classify_skills description at the call and in the contract.
-    expect(instructions("references/intake.md")).toContain("[공통 분류 지원 계약](references/skill-classification.md)대로 쓴다");
+    // 4.0.0 (token optimization): the classify_skills description names the contract and the configured-only rule
+    // instead of the intake.
+    expect(classifyDescription).toContain("이 도구가 노출됐다는 사실만으로 분류 지원이 설정됐다고 추정하지 않는다");
+    expect(classifyDescription).toContain("공통 분류 지원 계약의 실패 처리대로");
     expect(classifyDescription).toContain("최종 선택은 여전히 AGENT가 한다");
     expect(classifyDescription).toContain("점수·조언은 정답이나 실행 승인이 아니며");
     const classification = instructions("references/skill-classification.md");

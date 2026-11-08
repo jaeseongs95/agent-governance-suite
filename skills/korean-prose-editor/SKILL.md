@@ -1,6 +1,6 @@
 ---
 name: korean-prose-editor
-description: 한국어 README, 안내문, 보고서와 여러 문단의 산문을 자연스럽게 편집하면서 사실·숫자·인용·링크·코드와 주장 강도를 보존하고, 별도 검증과 결정적 최종화가 필요할 때 사용한다. 일반 질문, 짧은 답변, 영어 전용 편집에는 사용하지 않는다.
+description: "Edit Korean READMEs, notices, reports and multi-paragraph prose to read naturally while preserving facts, numbers, quotes, links, code and claim strength, when separate verification and deterministic finalization are needed. Not for general questions, short answers or English-only editing."
 license: MIT
 metadata:
   version: 0.1.0

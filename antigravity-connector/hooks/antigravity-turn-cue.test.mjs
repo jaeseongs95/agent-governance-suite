@@ -97,15 +97,17 @@ describe("agy turn cue (behavior 6)", () => {
     const start = out.injectSteps[0].ephemeralMessage;
     const cue = out.injectSteps[1].ephemeralMessage;
     expect(Object.keys(out.injectSteps[1])).toEqual(["ephemeralMessage"]);
-    expect(cue).toContain("[AGS 턴 확인]");
+    // Hook text is rendered in the model locale (en, locales/en/hooks.json), although the host locale above is ko.
+    expect(cue).toContain("[AGS turn check]");
     expect(cue).toContain("checkpoint_context");
-    expect(cue).toContain("스킬 선택을 다시 판단");
+    // 4.0.0 (token optimization): the save line names the trigger and re-selection for it.
+    expect(cue).toContain("re-select skills for it, then checkpoint_context");
     expect(cue).not.toContain("context-continuity");
     // AGS3-D-0032 candidate: the built intake hook finds the installed skills next to mcp-server/dist and lists their
     // purposes at the context start (for agy, each turn's first model call); the turn cue points at that list.
     expect(start).toMatch(/references[\\/]intake\.md/u);
     expect(start).toContain("- cs-engineering: concurrency, database, messaging, algorithms, resource-lifetime, performance");
-    expect(cue).toContain("맥락 시작에 받은 AGS 스킬별 대상 목록과 대조하고");
+    expect(cue).toContain("against the skill targets and call each match");
     expect(cue).not.toContain("- cs-engineering:");
     // AGS3-D-0079: the built bundle ran in this process, not as a second node process.
     expect(bundleChildren(), trace).toEqual([]);
