@@ -23,11 +23,13 @@ describe("model locale", () => {
 describe("rendering", () => {
   const denied = (earlier: number) => msg("hooks.editGate.denied", { limit: 3, paths: "a.ts, b.ts", earlier, example: "start_workflow {\"goal\":\"<목표>\"}" });
 
-  it("renders the same key and params in each locale, with plural and ordinal rules", () => {
+  // 4.0.0: the English text dropped its ordinal and one/other forms for fewer tokens; the plural =0/other branches remain.
+  it("renders the same key and params in each locale, with the plural rule", () => {
     expect(render(denied(0), "ko")).toBe("[AGS] workflow 없이 제품 파일 3개째 변경: a.ts, b.ts. 먼저 workflow를 시작하라(최소 시작 호출 예: start_workflow {\"goal\":\"<목표>\"}).");
     expect(render(denied(2), "ko")).toContain("a.ts, b.ts (앞서 바꾼 제품 파일 2개 포함).");
     expect(render(denied(1), "en")).toBe("[AGS] Product file #3 changed without a workflow: a.ts, b.ts (incl. 1 changed earlier). Start a workflow first (minimal call: start_workflow {\"goal\":\"<목표>\"}).");
-    expect(render(denied(2), "en")).toContain("(including 2 product files changed earlier)");
+    expect(render(denied(2), "en")).toContain("a.ts, b.ts (incl. 2 changed earlier). Start");
+    expect(render(denied(0), "en")).toContain("a.ts, b.ts. Start");
   });
 
   it("renders a message nested in params in the same locale", () => {
