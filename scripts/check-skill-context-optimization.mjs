@@ -111,6 +111,16 @@ function changedBetween(from, to, path) {
 //   Only these five reviewed documentation deltas project onto the unchanged a2811393 context.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
+  // 5.1.1 hotfix, user request 2026-11-13 「독립감사 스킬에 베타적 적대적 검수라는 말을 꼭 넣어줘.」 (spelling chosen:
+  // 「배타적 적대적 검수」): independent-audit-gate gains one paragraph after its opening paragraph; the applicability span
+  // grows over it and the two exclusion lines move down two lines with their text unchanged.
+  Object.freeze({
+    revision: "c43874c9de7c69163f606ef4c59fcd0822eedeff",
+    hashes: Object.freeze({
+      "skills/independent-audit-gate/SKILL.md": ["8e319bab46f7917c9a3db56f9e1c7a1a5382bf6d3f60ea5930a79df43a8f15c5", "a95f2ae0f5fb5be59a6a0f4b2ae9be1e4ab2f09c82d221c26b3153783a4a9d9c"],
+      "skills/independent-audit-gate/classification.json": ["9ffdc8f6a241bb71442b2b996f8c84c11d85079241e8d17061a0ec13cf32d29f", "b900d0007bd13037c4b7f1a1728ffc1030efd78b458b6e5afaa5792c4da965d2"],
+    }),
+  }),
   // AGS3-D-0095: coordinate-subagents is selected on an independent work unit or a separate check, so its net-benefit
   // check is reached. 5.0.0: a run start names its skills (mcp-execution).
   Object.freeze({
