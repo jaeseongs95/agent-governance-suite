@@ -14,8 +14,10 @@ AGS 5.1.1 is a hotfix release. It adds one paragraph to the `independent-audit-g
 
 Candidate: the `hotfix/5.1.1` commit tagged `v5.1.1`.
 
-- Run on Windows (this machine): `pnpm lint`, `pnpm release:check`, `pnpm claude:check`, `pnpm bundle:check`, `pnpm source:check`, `git diff --check` and `pnpm test`. The results are listed in the GitHub Release of this version.
-- Not run: GitHub Actions CI (this project no longer runs it), Linux, and real-host checks on Codex and Antigravity.
+- Windows (developer PC): `pnpm lint`, `pnpm build`, `pnpm release:check`, `pnpm claude:check`, `pnpm bundle:check`, `pnpm source:check` and `git diff --check` passed. `pnpm test` ran 5,068 Vitest tests (5,024 passed, 29 skipped, 8 todo, 7 failed) and 600 Node tests (599 passed, 1 skipped, 0 failed).
+- The 7 Vitest failures are environment failures of this PC and fail identically on v5.1.0: six live-bootstrap tests take Git Bash `tar` from `PATH` (they pass when Windows `tar` comes first; rerun: 0 failures), and one admin-page test expects the default admin port while this PC's AGS uses another.
+- The change is registered as source-binding successor r42 (`tests/skill-classification/fixtures.v511-independent-audit-source-successor.json`) and as a reviewed guidance successor in `scripts/check-skill-context-optimization.mjs`.
+- Not run: GitHub Actions CI (this project no longer runs it), the Linux test server, and real-host checks on Codex and Antigravity.
 
 ---
 
@@ -35,5 +37,7 @@ AGS 5.1.1은 핫픽스 판입니다. `independent-audit-gate` 스킬에 문단 �
 
 후보는 `v5.1.1` tag가 붙은 `hotfix/5.1.1` 커밋입니다.
 
-- Windows(이 PC)에서 실행: `pnpm lint`, `pnpm release:check`, `pnpm claude:check`, `pnpm bundle:check`, `pnpm source:check`, `git diff --check`, `pnpm test`. 결과는 이 판의 GitHub Release에 적습니다.
-- 실행하지 않음: GitHub Actions CI(이 프로젝트는 더 이상 돌리지 않습니다), Linux, Codex·Antigravity 실호스트 확인.
+- Windows(개발 PC): `pnpm lint`, `pnpm build`, `pnpm release:check`, `pnpm claude:check`, `pnpm bundle:check`, `pnpm source:check`, `git diff --check`가 통과했습니다. `pnpm test`는 Vitest 5,068건(통과 5,024, 건너뜀 29, todo 8, 실패 7)과 Node 시험 600건(통과 599, 건너뜀 1, 실패 0)입니다.
+- Vitest 실패 7건은 이 PC의 환경 때문이며 v5.1.0에서도 똑같이 실패합니다. live-bootstrap 시험 6건은 `PATH`의 Git Bash `tar`를 쓰기 때문입니다(Windows `tar`를 앞에 두고 다시 돌리면 실패 0건). 관리자 페이지 시험 1건은 기본 관리자 포트를 기대하는데 이 PC의 AGS는 다른 포트를 씁니다.
+- 이 변경은 원문 결속 후속 r42(`tests/skill-classification/fixtures.v511-independent-audit-source-successor.json`)와 `scripts/check-skill-context-optimization.mjs`의 검토된 후속으로 등록했습니다.
+- 실행하지 않음: GitHub Actions CI(이 프로젝트는 더 이상 돌리지 않습니다), Linux 시험 서버, Codex·Antigravity 실호스트 확인.

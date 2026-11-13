@@ -13,7 +13,7 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
 import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
-import {CURRENT_SOURCE_MANIFEST, loadCurrentSourceBindings, oracleDigest, V400_MINIMAL_IMPLEMENTATION_MANIFEST_DIGEST} from "./evaluation.js";
+import {CURRENT_SOURCE_MANIFEST, loadCurrentSourceBindings, oracleDigest, V400_MINIMAL_IMPLEMENTATION_MANIFEST_DIGEST, V410_CODE_REVIEW_MANIFEST_DIGEST} from "./evaluation.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const file = "tests/skill-classification/fixtures.v410-code-review-source-successor.json";
@@ -22,9 +22,8 @@ const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).dig
 const git = (...args: string[]) => execFileSync("git", args, {cwd: root, maxBuffer: 4 * 1024 * 1024});
 type Binding = {path: string; previousDigest: string; digest: string; bytes: number};
 
-it("R1 follows frozen r40 and ends the chain", () => {
-  expect(hash(bytes)).toBe(CURRENT_SOURCE_MANIFEST.digest);
-  expect(CURRENT_SOURCE_MANIFEST.revision).toBe(manifest.revision);
+it("R1 follows frozen r40 and is followed by r42 (5.1.1)", () => {
+  expect(hash(bytes)).toBe(V410_CODE_REVIEW_MANIFEST_DIGEST);
   expect(bytes.includes(Buffer.from("\r\n"))).toBe(false);
   expect(manifest).toMatchObject({schemaVersion: "1.0.0", revision: "v410-code-review-source-binding-r41",
     role: "source-binding-only-not-evaluation-or-install-authority", fixtureFileRewritten: false, labelChanges: [], priceAndBudgetChanges: [], modelBehavior: "NOT_RUN"});
@@ -35,8 +34,8 @@ it("R1 follows frozen r40 and ends the chain", () => {
   expect(manifest.sourceChangeRefs.flatMap((ref: {defectIds: string[]}) => ref.defectIds)).toEqual(["AGS3-D-0094"]);
   for (const ref of manifest.sourceChangeRefs) git("merge-base", "--is-ancestor", ref.sourceRevision, "HEAD");
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: manifest.revision}, digest: hash(bytes)});
-  expect(current.files.map(source => path.relative(root, source).split(path.sep).join("/")).at(-1)).toBe(file);
+  expect(current).toMatchObject({manifest: {revision: CURRENT_SOURCE_MANIFEST.revision}, digest: CURRENT_SOURCE_MANIFEST.digest});
+  expect(current.files.map(source => path.relative(root, source).split(path.sep).join("/")).at(-2)).toBe(file);
 });
 
 it("R2 moves the exact r40 bytes to the exact current bytes", () => {

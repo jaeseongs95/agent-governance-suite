@@ -53,6 +53,7 @@ it("V1-V2 binds every 3.9.0 source after frozen r37 and ends the chain at the cu
   expect(v400.frozenPredecessor).toEqual({path: file, bytes: bytes.length, digest: hash(bytes)});
   // 4.0.0 r40 follows r39: it rebinds the orchestrator descriptor, intake and entry-details once more.
   const v400Minimal = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-minimal-implementation-source-successor.json"), "utf8"));
+  const v511 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v511-independent-audit-source-successor.json"), "utf8"));
   const paths = (manifest.bindings as Binding[]).map(row => row.path);
   expect(new Set(paths).size).toBe(paths.length);
   expect(paths).toHaveLength(21);
@@ -62,7 +63,10 @@ it("V1-V2 binds every 3.9.0 source after frozen r37 and ends the chain at the cu
     if (later) expect(later.previousDigest).toBe(binding.digest);
     const afterLater = (v400Minimal.bindings as Binding[]).find(row => row.path === binding.path);
     if (afterLater) expect(afterLater.previousDigest).toBe((later ?? binding).digest);
-    const latest = afterLater ?? later ?? binding;
+    // 5.1.1 r42 rebinds the independent-audit-gate descriptor once more (exclusive adversarial review).
+    const r42 = (v511.bindings as Binding[]).find(row => row.path === binding.path);
+    if (r42) expect(r42.previousDigest).toBe((afterLater ?? later ?? binding).digest);
+    const latest = r42 ?? afterLater ?? later ?? binding;
     const actual = readFileSync(path.join(root, binding.path));
     expect([actual.length, hash(actual)]).toEqual([latest.bytes, latest.digest]);
     expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest.digest);

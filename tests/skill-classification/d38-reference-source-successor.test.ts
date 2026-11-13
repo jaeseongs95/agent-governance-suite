@@ -29,6 +29,8 @@ const v390 = JSON.parse(v390Bytes.toString("utf8"));
 const laterBinding = (file: string) => v390.bindings.find((row: {path: string}) => row.path === file);
 const v400 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-intake-source-successor.json"), "utf8"));
 const v400Minimal = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v400-minimal-implementation-source-successor.json"), "utf8"));
+// 5.1.1 r42 rebinds the independent-audit-gate descriptor and SKILL.md (exclusive adversarial review).
+const v511 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v511-independent-audit-source-successor.json"), "utf8"));
 /** A source only r40 rebinds (the independent-audit-gate SKILL.md one-line description) still has its r37 bytes at the r40 base. */
 const r40Binding = (file: string) => laterBinding(file) ? undefined : v400Minimal.bindings.find((row: {path: string}) => row.path === file);
 function boundSource(file: string): Buffer {
@@ -73,7 +75,7 @@ it("D38 DR01-04 appends five exact r37 bindings and preserves all audit span ide
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
     const later = laterBinding(binding.path);
     expect(later ? later.previousDigest : binding.digest).toBe(binding.digest);
-    const latest = v400Minimal.bindings.find((row: {path: string}) => row.path === binding.path)?.digest ?? v400.bindings.find((row: {path: string}) => row.path === binding.path)?.digest ?? later?.digest ?? binding.digest;
+    const latest = v511.bindings.find((row: {path: string}) => row.path === binding.path)?.digest ?? v400Minimal.bindings.find((row: {path: string}) => row.path === binding.path)?.digest ?? v400.bindings.find((row: {path: string}) => row.path === binding.path)?.digest ?? later?.digest ?? binding.digest;
     expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (later) expect(current.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => current.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");

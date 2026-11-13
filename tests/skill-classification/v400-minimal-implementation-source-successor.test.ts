@@ -33,11 +33,13 @@ const bytes = readFileSync(path.join(root, file)), manifest = JSON.parse(bytes.t
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const atBase = (relative: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${relative}`], {cwd: root, maxBuffer: 4 * 1024 * 1024});
 const v410 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v410-code-review-source-successor.json"), "utf8"));
-const rebound = (relative: string) => (v410.bindings as Binding[]).find(row => row.path === relative);
-/** r41 moves code-review on (AGS3-D-0094); this file keeps judging r40 against the bytes r41 started from. */
+const v511 = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.v511-independent-audit-source-successor.json"), "utf8"));
+const v511Rebound = (relative: string) => (v511.bindings as Binding[]).find(row => row.path === relative);
+const rebound = (relative: string) => v511Rebound(relative) ?? (v410.bindings as Binding[]).find(row => row.path === relative);
+/** r41 moves code-review on (AGS3-D-0094) and r42 independent-audit-gate (5.1.1); this file keeps judging r40 against the bytes they started from. */
 // 5.0.0 rewords coordinate-subagents (AGS3-D-0095), a purpose change outside this chain; it too is judged at the bytes before.
 const v500Reworded = (relative: string) => ["skills/coordinate-subagents/SKILL.md", "skills/coordinate-subagents/classification.json"].includes(relative);
-const r40Base = (relative: string) => rebound(relative) ? v410.sourceBaseRevision as string : v500Reworded(relative) ? "e67caf843ae94b752def7d0cf4a1f8fb66c2b208" : null;
+const r40Base = (relative: string) => v511Rebound(relative) ? v511.sourceBaseRevision as string : rebound(relative) ? v410.sourceBaseRevision as string : v500Reworded(relative) ? "e67caf843ae94b752def7d0cf4a1f8fb66c2b208" : null;
 const r40Source = (relative: string) => {
   const base = r40Base(relative);
   return base ? execFileSync("git", ["show", `${base}:${relative}`], {cwd: root, maxBuffer: 4 * 1024 * 1024}) : readFileSync(path.join(root, relative));
@@ -90,7 +92,7 @@ it("MI1-MI2 binds every changed 4.0.0 evaluation source after frozen r39 and end
 
   const current = loadCurrentSourceBindings(root);
   expect(current).toMatchObject({manifest: {revision: CURRENT_SOURCE_MANIFEST.revision}, digest: CURRENT_SOURCE_MANIFEST.digest});
-  expect(current.files.map(source => path.relative(root, source).split(path.sep).join("/")).at(-2)).toBe(file);
+  expect(current.files.map(source => path.relative(root, source).split(path.sep).join("/")).at(-3)).toBe(file);
   // The chain end before r40, folded from every earlier successor the loader reads. The frozen fixture and the frozen
   // sidecars (fixtures.source-successor.json; field-neutral-wording, the integrated successor's sidecar) are not in its chain.
   const unavailable = JSON.parse(readFileSync(current.files[0]!, "utf8"));
@@ -99,7 +101,7 @@ it("MI1-MI2 binds every changed 4.0.0 evaluation source after frozen r39 and end
     return sidecar ? [sidecar.path] : [];
   });
   expect(sidecars).toEqual(["tests/skill-classification/fixtures.source-successor.json", "tests/skill-classification/fixtures.field-neutral-wording-source-successor.json"]);
-  const notChain = new Set([unavailable.frozenFixture.path, ...sidecars, file, "tests/skill-classification/fixtures.v410-code-review-source-successor.json"].map(relative => path.resolve(root, relative)));
+  const notChain = new Set([unavailable.frozenFixture.path, ...sidecars, file, "tests/skill-classification/fixtures.v410-code-review-source-successor.json", "tests/skill-classification/fixtures.v511-independent-audit-source-successor.json"].map(relative => path.resolve(root, relative)));
   const beforeR40 = new Map<string, string | null>();
   for (const source of current.files.filter(item => !notChain.has(path.resolve(item)))) {
     for (const row of JSON.parse(readFileSync(source, "utf8")).bindings as Binding[]) {

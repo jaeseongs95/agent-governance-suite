@@ -221,10 +221,12 @@ export const V390_INTAKE_MANIFEST_DIGEST = "sha256:9a322f2aa89b6e61754a9c129171b
 export const V400_INTAKE_MANIFEST_DIGEST = "sha256:02ffdfefc1bca2a0e6116086025f0e40cf051e6d7652acf0b3acf251586c803b";
 /** Digest of the frozen 4.0.0 source-binding manifest, fixtures.v400-minimal-implementation-source-successor.json. */
 export const V400_MINIMAL_IMPLEMENTATION_MANIFEST_DIGEST = "sha256:4de33dbcc7da9927e1704c0c1cac206393df8d78cdda5d351b60fd58318c360e";
-/** Digest of the current (last) source-binding manifest, fixtures.v410-code-review-source-successor.json. */
+/** Digest of the frozen 4.1.0 source-binding manifest, fixtures.v410-code-review-source-successor.json. */
 export const V410_CODE_REVIEW_MANIFEST_DIGEST = "sha256:2cdb50b39fa6067c8f97da026d5c3ff825c95ef0211b1ae20dfca662cbcef90c";
+/** Digest of the current (last) source-binding manifest, fixtures.v511-independent-audit-source-successor.json. */
+export const V511_INDEPENDENT_AUDIT_MANIFEST_DIGEST = "sha256:aa725c1a03d1532d8cb5cb1d2eb09702076abec4083469cc5b4c247334324e88";
 /** The chain end every successor test checks; the next successor changes only this. */
-export const CURRENT_SOURCE_MANIFEST = Object.freeze({revision: "v410-code-review-source-binding-r41", digest: V410_CODE_REVIEW_MANIFEST_DIGEST});
+export const CURRENT_SOURCE_MANIFEST = Object.freeze({revision: "v511-independent-audit-source-binding-r42", digest: V511_INDEPENDENT_AUDIT_MANIFEST_DIGEST});
 
 /** 동결 fixture는 덮지 않는다. 검토된 후속 manifest만 현재 원문 결속을 바꾼다. */
 export function loadCurrentSourceBindings(repo: string) {
@@ -482,17 +484,25 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, v410CodeReview.frozenPredecessor.path) !== v400MinimalPath || v400MinimalBytes.length !== v410CodeReview.frozenPredecessor.bytes || hashBytes(v400MinimalBytes) !== v410CodeReview.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings,...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings, ...intakeLength.bindings, ...writtenCases.bindings, ...delivery.bindings, ...d38References.bindings, ...v390Intake.bindings, ...v400Intake.bindings, ...v400Minimal.bindings, ...v410CodeReview.bindings];
+  // 5.1.1: independent-audit-gate states the exclusive adversarial review (user request 2026-11-13).
+  const v511AuditPath = resolve(repo, "tests/skill-classification/fixtures.v511-independent-audit-source-successor.json");
+  const v511AuditBytes = readFileSync(v511AuditPath);
+  if (hashBytes(v511AuditBytes) !== V511_INDEPENDENT_AUDIT_MANIFEST_DIGEST) throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const v511Audit = JSON.parse(v511AuditBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, v511Audit.frozenPredecessor.path) !== v410CodeReviewPath || v410CodeReviewBytes.length !== v511Audit.frozenPredecessor.bytes || hashBytes(v410CodeReviewBytes) !== v511Audit.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings,...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings, ...intakeLength.bindings, ...writtenCases.bindings, ...delivery.bindings, ...d38References.bindings, ...v390Intake.bindings, ...v400Intake.bindings, ...v400Minimal.bindings, ...v410CodeReview.bindings, ...v511Audit.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: v410CodeReview.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath, intakeLengthPath, writtenCasesPath, deliveryPath, d38ReferencesPath, v390IntakePath, v400IntakePath, v400MinimalPath, v410CodeReviewPath);
+  const currentManifest = {...manifest, revision: v511Audit.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath, intakeLengthPath, writtenCasesPath, deliveryPath, d38ReferencesPath, v390IntakePath, v400IntakePath, v400MinimalPath, v410CodeReviewPath, v511AuditPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(v410CodeReviewBytes),
+    manifest: currentManifest, files, digest: hashBytes(v511AuditBytes),
     /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
     resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);
